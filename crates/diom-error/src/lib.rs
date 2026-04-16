@@ -47,8 +47,8 @@ impl Error {
         })
     }
 
-    pub fn not_found(detail: impl Into<Option<String>>) -> Self {
-        Self::new(ErrorType::NotFound(StandardErrorBody::new(
+    pub fn entity_not_found(detail: impl Into<Option<String>>) -> Self {
+        Self::new(ErrorType::EntityNotFound(StandardErrorBody::new(
             "not_found",
             detail
                 .into()
@@ -111,13 +111,8 @@ impl Error {
     /// Decompose into HTTP status, optional error code, and optional detail message.
     pub fn into_parts(self) -> (StatusCode, Option<String>, Option<String>) {
         match *self.0 {
-            ErrorType::BadRequest(body) => (
+            ErrorType::BadRequest(body) | ErrorType::EntityNotFound(body) => (
                 StatusCode::BAD_REQUEST,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
-            ),
-            ErrorType::NotFound(body) => (
-                StatusCode::NOT_FOUND,
                 Some(body.code().to_owned()),
                 Some(body.detail().to_owned()),
             ),
@@ -180,7 +175,7 @@ impl IntoResponse for Error {
                 tracing::debug!(error = %body, "bad request");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
-            ErrorType::NotFound(body) => {
+            ErrorType::EntityNotFound(body) => {
                 tracing::debug!(error = %body, "entity not found");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
@@ -301,7 +296,7 @@ pub enum ErrorType {
     BadRequest(StandardErrorBody),
 
     /// Entity not found
-    NotFound(StandardErrorBody),
+    EntityNotFound(StandardErrorBody),
 
     /// A conflict occurred
     Conflict {
@@ -339,7 +334,7 @@ impl fmt::Display for ErrorType {
             Self::Internal { message, .. } => message.fmt(f),
             Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
-            Self::NotFound(s) => write!(f, "not_found {s}"),
+            Self::EntityNotFound(s) => write!(f, "not_found {s}"),
             Self::Conflict { body, .. } => write!(f, "conflict {body}"),
             Self::Authentication(s) => write!(f, "authn {s}"),
             Self::Authorization(s) => write!(f, "authz {s}"),
