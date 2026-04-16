@@ -9,7 +9,7 @@
 Go library for interacting with the Diom API
 
 ![GitHub tag](https://img.shields.io/github/tag/svix/diom.svg)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/svix/diom)](https://pkg.go.dev/github.com/svix/diom/z-clients/go)
+[![PkgGoDev](https://pkg.go.dev/badge/diom.svix.com/go/diom)](https://pkg.go.dev/diom.svix.com/go/diom)
 
 
 # Usage Documentation
@@ -20,7 +20,7 @@ You can find general usage documentation at <https://diom.svix.com/docs>.
 # Installation
 
 ```sh
-go get https://diom.svix.com/diom/go
+go get diom.svix.com/go/diom
 ```
 
 ## Usage
