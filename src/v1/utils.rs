@@ -1,27 +1,10 @@
-use std::{
-    sync::LazyLock,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use aide::transform::{TransformOperation, TransformPathItem};
-use diom_core::validation::validation_error;
-use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::ValidationError;
 
 use crate::error::Result;
-
-pub fn validate_no_control_characters(str: &str) -> Result<(), ValidationError> {
-    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\x00-\x08]").unwrap());
-    if RE.is_match(str) {
-        return Err(validation_error(
-            Some("illegal_character"),
-            Some("Control characters 0x00-0x08 not allowed."),
-        ));
-    }
-    Ok(())
-}
 
 pub fn openapi_tag<T: AsRef<str>>(
     tag: T,
@@ -154,8 +137,6 @@ mod tests {
     use diom_core::validation::{ValidationErrorItem, validation_errors};
     use validator::Validate;
 
-    use super::validate_no_control_characters;
-
     #[derive(Debug, Validate)]
     struct ValidationErrorTestStruct {
         #[validate(range(min = 10, message = "Below 10"))]
@@ -222,14 +203,5 @@ mod tests {
             msg: "Above 10".to_owned(),
             ty: "value_error".to_owned(),
         }));
-    }
-
-    #[test]
-    fn test_validate_no_control_characters() {
-        let a = "A good string";
-        let b = "A\u{0000} bad string";
-
-        assert!(validate_no_control_characters(a).is_ok());
-        assert!(validate_no_control_characters(b).is_err());
     }
 }
