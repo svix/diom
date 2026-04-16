@@ -80,10 +80,9 @@ impl PublishOperation {
                 if let Some(existing) = existing
                     && existing.expiry > now
                 {
-                    let retry_after = now.saturating_duration_until(existing.expiry);
                     return Err(Error::conflict(
                         "idempotency key already used".to_owned(),
-                        Some(retry_after),
+                        None,
                     ));
                 }
 
