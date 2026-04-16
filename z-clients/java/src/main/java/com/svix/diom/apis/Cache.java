@@ -31,7 +31,7 @@ public class Cache {
         this.client = client;
     }
 
-    public CacheNamespace getNamespace() {
+    public CacheNamespace namespace() {
         return new CacheNamespace(this.client);
     }
 

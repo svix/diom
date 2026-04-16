@@ -38,7 +38,7 @@ public class Diom {
     {%- for resource in api.resources %}
 
     {% set resource_name = resource.name | to_upper_camel_case -%}
-    public {{ resource_name }} get{{ resource_name }}() {
+    public {{ resource_name }} {{ resource.name | to_lower_camel_case }}() {
         return new {{ resource_name }}(this.httpClient);
     }
     {%- endfor %}

@@ -40,35 +40,35 @@ public class Diom {
                 = new HttpClient(parsedUrl, defaultHeaders, options.getRetrySchedule());
     }
 
-    public Admin getAdmin() {
+    public Admin admin() {
         return new Admin(this.httpClient);
     }
 
-    public Cache getCache() {
+    public Cache cache() {
         return new Cache(this.httpClient);
     }
 
-    public ClusterAdmin getClusterAdmin() {
+    public ClusterAdmin clusterAdmin() {
         return new ClusterAdmin(this.httpClient);
     }
 
-    public Health getHealth() {
+    public Health health() {
         return new Health(this.httpClient);
     }
 
-    public Idempotency getIdempotency() {
+    public Idempotency idempotency() {
         return new Idempotency(this.httpClient);
     }
 
-    public Kv getKv() {
+    public Kv kv() {
         return new Kv(this.httpClient);
     }
 
-    public Msgs getMsgs() {
+    public Msgs msgs() {
         return new Msgs(this.httpClient);
     }
 
-    public RateLimit getRateLimit() {
+    public RateLimit rateLimit() {
         return new RateLimit(this.httpClient);
     }
 }

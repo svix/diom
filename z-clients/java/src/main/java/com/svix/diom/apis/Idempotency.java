@@ -31,7 +31,7 @@ public class Idempotency {
         this.client = client;
     }
 
-    public IdempotencyNamespace getNamespace() {
+    public IdempotencyNamespace namespace() {
         return new IdempotencyNamespace(this.client);
     }
 

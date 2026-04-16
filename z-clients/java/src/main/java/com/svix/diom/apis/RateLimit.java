@@ -28,7 +28,7 @@ public class RateLimit {
         this.client = client;
     }
 
-    public RateLimitNamespace getNamespace() {
+    public RateLimitNamespace namespace() {
         return new RateLimitNamespace(this.client);
     }
 

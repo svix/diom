@@ -22,15 +22,15 @@ public class Admin {
         this.client = client;
     }
 
-    public AdminAuthPolicy getAuthPolicy() {
+    public AdminAuthPolicy authPolicy() {
         return new AdminAuthPolicy(this.client);
     }
 
-    public AdminAuthRole getAuthRole() {
+    public AdminAuthRole authRole() {
         return new AdminAuthRole(this.client);
     }
 
-    public AdminAuthToken getAuthToken() {
+    public AdminAuthToken authToken() {
         return new AdminAuthToken(this.client);
     }
 }
