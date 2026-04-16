@@ -22,13 +22,13 @@ pub enum MsgsStreamCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"batch_size\": \"...\",
-  \"lease_duration_ms\": \"...\",
-  \"default_starting_position\": \"...\",
-  \"batch_wait_ms\": \"...\"
+  \"batch_size\": 123,
+  \"lease_duration_ms\": 60000,
+  \"default_starting_position\": \"earliest\",
+  \"batch_wait_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"msgs\": \"...\"
+  \"msgs\": [{\"offset\": 123, \"topic\": \"...\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
 }")]
     Receive {
         topic: String,
@@ -42,7 +42,7 @@ pub enum MsgsStreamCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"offset\": \"...\"
+  \"offset\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
@@ -59,8 +59,8 @@ pub enum MsgsStreamCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"offset\": \"...\",
-  \"position\": \"...\"
+  \"offset\": 123,
+  \"position\": \"earliest\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

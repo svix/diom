@@ -21,7 +21,7 @@ pub enum IdempotencyCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"lock_period_ms\": \"...\"
+  \"lock_period_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
@@ -34,8 +34,8 @@ pub enum IdempotencyCommands {
 {
   \"namespace\": \"some_namespace\",
   \"response\": \"...\",
-  \"context\": \"...\",
-  \"ttl_ms\": \"...\"
+  \"context\": {\"key\": \"...\"},
+  \"ttl_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

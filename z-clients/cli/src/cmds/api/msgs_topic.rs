@@ -21,10 +21,10 @@ pub enum MsgsTopicCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"partitions\": \"...\"
+  \"partitions\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"partitions\": \"...\"
+  \"partitions\": 123
 }")]
     Configure {
         topic: String,

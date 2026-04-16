@@ -21,13 +21,13 @@ pub enum KvCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"ttl_ms\": \"...\",
-  \"behavior\": \"...\",
-  \"version\": \"...\"
+  \"ttl_ms\": 60000,
+  \"behavior\": \"upsert\",
+  \"version\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"success\": \"...\",
-  \"version\": \"...\"
+  \"success\": true,
+  \"version\": 123
 }")]
     Set {
         key: String,
@@ -38,12 +38,12 @@ pub enum KvCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"consistency\": \"...\"
+  \"consistency\": \"strong\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"expiry\": \"...\",
+  \"expiry\": 1234567890123,
   \"value\": \"...\",
-  \"version\": \"...\"
+  \"version\": 123
 }")]
     Get {
         key: String,
@@ -53,10 +53,10 @@ pub enum KvCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"version\": \"...\"
+  \"version\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"success\": \"...\"
+  \"success\": true
 }")]
     Delete {
         key: String,

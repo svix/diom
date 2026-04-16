@@ -15,11 +15,58 @@ use crate::prelude::*;
 use super::{{ sub.name | to_upper_camel_case }}Args;
 {% endfor %}
 
-{%- macro render_schema_example(title, schema) -%}
+{%- macro get_type_example(field, api) -%}
+    {%- if field.type.is_string_const() -%}
+        \"{{ field.type.string_const_val() }}\"
+    {%- elif field.type.is_unix_timestamp_ms() -%}
+        1234567890123
+    {%- elif field.type.is_duration_ms() -%}
+        60000
+    {%- elif field.type.is_datetime() -%}
+        \"2030-01-01T00:00:00Z\"
+    {%- elif field.type.is_u64() -%}
+        123
+    {%- elif field.type.is_bytes() -%}
+        \"...\"
+    {%- elif field.type.is_bool() -%}
+        true
+    {%- elif field.type.is_int_or_uint() -%}
+        123
+    {%- elif field.type.is_list() or field.type.is_set() -%}
+        [{{ get_type_example({"type": field.type.inner_type()}, api) }}]
+    {%- elif field.type.is_map() -%}
+        {\"key\": {{ get_type_example({"type": field.type.value_type()}, api) }}}
+    {%- elif field.type.is_json_object() -%}
+        {\"key\": \"...\"}
+    {%- elif field.type.is_schema_ref() -%}
+        {%- set ref_type = api.types[field.type.to_rust()] -%}
+        {%- if ref_type is defined and ref_type.kind == "string_enum" -%}
+            \"{{ ref_type.values[0] }}\"
+        {%- elif ref_type is defined and ref_type.kind == "integer_enum" -%}
+            {{ ref_type.variants[0][1] }}
+        {%- elif ref_type is defined and ref_type.kind == "struct" -%}
+            {{ render_inline_object(ref_type, api) }}
+        {%- else -%}
+            {\"...\": \"...\"}
+        {%- endif -%}
+    {%- else -%}
+        \"...\"
+    {%- endif -%}
+{%- endmacro -%}
+
+{%- macro render_inline_object(schema, api) -%}
+    {
+    {%- for f in schema.fields -%}
+        \"{{ f.name }}\": {% if f.example is defined %}\"{{ f.example }}\"{% else %}{{ get_type_example(f, api) }}{% endif %}{{ ", " if not loop.last else "" }}
+    {%- endfor -%}
+    }
+{%- endmacro -%}
+
+{%- macro render_schema_example(title, schema, api) -%}
 \x1b[1;4m{{ title }}:\x1b[0m
 {
 {%- for field in schema.fields | selectattr("positional", "false") %}
-  \"{{ field.name }}\": \"{{ field.example if field.example is defined else '...' }}\"{{ "," if not loop.last else "" }}
+  \"{{ field.name }}\": {% if field.example is defined %}\"{{ field.example }}\"{% else %}{{ get_type_example(field, api) }}{% endif %}{{ "," if not loop.last else "" }}
 {%- endfor %}
 }
 {%- endmacro -%}
@@ -47,13 +94,13 @@ pub enum {{ resource_type_name }}Commands {
         {% if op.request_body_schema_name is defined or op.response_body_schema_name is defined -%}
             #[command(after_long_help = "
             {%- if op.request_body_schema_name is defined -%}
-                {{- render_schema_example("Example body", api.types[op.request_body_schema_name]) -}}
+                {{- render_schema_example("Example body", api.types[op.request_body_schema_name], api) -}}
             {%- endif -%}
             {%- if op.request_body_schema_name is defined and op.response_body_schema_name is defined -%}
 \n\n
             {%- endif -%}
             {%- if op.response_body_schema_name is defined -%}
-                {{- render_schema_example("Example response", api.types[op.response_body_schema_name]) -}}
+                {{- render_schema_example("Example response", api.types[op.response_body_schema_name], api) -}}
             {%- endif -%}
 ")]
         {% endif -%}

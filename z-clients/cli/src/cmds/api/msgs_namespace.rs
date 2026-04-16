@@ -18,13 +18,13 @@ pub enum MsgsNamespaceCommands {
     /// Configures a msgs namespace with the given name.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"retention\": \"...\"
+  \"retention\": {\"period_ms\": 60000}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"name\": \"some_namespace\",
-  \"retention\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"retention\": {\"period_ms\": 60000},
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Configure {
         name: String,
@@ -37,9 +37,9 @@ pub enum MsgsNamespaceCommands {
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"name\": \"some_namespace\",
-  \"retention\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"retention\": {\"period_ms\": 60000},
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Get {
         name: String,
