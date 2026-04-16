@@ -2,6 +2,8 @@ use std::{collections::HashMap, sync::LazyLock};
 
 use crate::Permissions;
 
+const USER_CONTEXT_PREFIX: &str = "context.";
+
 #[derive(Clone, Copy)]
 pub struct Context<'a> {
     pub role: &'a str,
@@ -28,7 +30,7 @@ impl<'a> Context<'a> {
     pub fn get(&self, key: &str) -> Option<&str> {
         if key == "role" {
             Some(self.role)
-        } else if let Some(name) = key.strip_prefix("context.") {
+        } else if let Some(name) = key.strip_prefix(USER_CONTEXT_PREFIX) {
             self.map.get(name).map(|s| s.as_str())
         } else {
             None
