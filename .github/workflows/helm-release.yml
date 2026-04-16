@@ -1,0 +1,37 @@
+name: Helm Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      operator_image_tag:
+        required: true
+        type: string
+      server_image_tag:
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      dry_run:
+        required: false
+        type: boolean
+        default: false
+      operator_image_tag:
+        required: false
+        type: string
+        default: ''
+      server_image_tag:
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  publish:
+    uses: ./.github/workflows/helm-publish.yml
+    with:
+      operator_image_tag: ${{ inputs.operator_image_tag }}
+      server_image_tag: ${{ inputs.server_image_tag }}
+      is_release: true
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write

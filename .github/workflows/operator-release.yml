@@ -1,0 +1,45 @@
+name: Operator Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Dry run (skip pushes)
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  operator-release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read version from Cargo.toml
+        id: version
+        run: |
+          VERSION=$(cargo metadata --manifest-path infra/operator/Cargo.toml --no-deps --format-version 1 | jq -r '.packages[0].version')
+          echo "version=v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "=== DRY RUN ==="
+          echo "Would release operator: ${{ steps.version.outputs.version }}"
+          echo "Would push Docker image: svix/diom-operator:${{ steps.version.outputs.version }}"
+
+  docker-build:
+    needs: operator-release
+    uses: ./.github/workflows/docker-build-release.yml
+    with:
+      image_repo: svix/diom-operator
+      version: ${{ needs.operator-release.outputs.version }}
+      dockerfile: ./infra/operator/Dockerfile
+      dry_run: ${{ inputs.dry_run }}
+    secrets: inherit

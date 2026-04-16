@@ -1,14 +1,21 @@
-name: Helm Publish
+name: Helm Publish to GHCR
 
 on:
   workflow_call:
     inputs:
       version:
+        required: false
+        type: string
+        description: 'Override the version specified in Chart.yaml (only used for private deployments)'
+      operator_image_tag:
         required: true
         type: string
-      image_tag:
+      server_image_tag:
         required: true
         type: string
+      is_release:
+        type: boolean
+        default: false
 
 jobs:
   helm-publish:
@@ -32,9 +39,21 @@ jobs:
 
       - name: Set image tags
         run: |
-          sed -i 's/tag: ""/tag: "${{ inputs.image_tag }}"/g' infra/helm-diom/values.yaml
+          yq -i '.cluster.image.tag = "${{ inputs.server_image_tag }}"' infra/helm-diom/values.yaml
+          yq -i '.operator.image.tag = "${{ inputs.operator_image_tag }}"' infra/helm-diom/values.yaml
+
+      - name: Mangle charts for private deploys
+        if: ${{ !inputs.is_release }}
+        run: |
+          yq -i '.name = "diom-private"' infra/helm-diom/Chart.yaml
+          yq -i '.operator.image.repository = "ghcr.io/svix/diom-operator"' infra/helm-diom/values.yaml
+          yq -i '.cluster.image.repository = "ghcr.io/svix/diom-server"' infra/helm-diom/values.yaml
 
       - name: Package and push chart
         run: |
-          helm package ./infra/helm-diom --version ${{ inputs.version }}
-          helm push diom-${{ inputs.version }}.tgz oci://ghcr.io/svix/charts
+          if [ -n "${{ inputs.version }}" ]; then
+            helm package ./infra/helm-diom --version ${{ inputs.version }}
+          else
+            helm package ./infra/helm-diom
+          fi
+          helm push diom*.tgz oci://ghcr.io/svix/charts
