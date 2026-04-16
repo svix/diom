@@ -11,10 +11,6 @@ on:
         type: string
   workflow_call:
     inputs:
-      dry_run:
-        required: false
-        type: boolean
-        default: false
       operator_image_tag:
         required: false
         type: string
