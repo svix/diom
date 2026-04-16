@@ -1,4 +1,4 @@
-module diom.svix.com/go/diom
+module diom.com/go/diom
 
 go 1.20
 
