@@ -9,7 +9,7 @@ pub trait OptionExt<T>: Sized {
 
 impl<T> OptionExt<T> for Option<T> {
     fn ok_or_not_found(self) -> Result<T> {
-        self.ok_or_else(|| Error::not_found(None::<String>))
+        self.ok_or_else(|| Error::entity_not_found(None::<String>))
     }
 
     #[track_caller]
