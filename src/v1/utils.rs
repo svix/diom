@@ -8,7 +8,7 @@ use diom_core::validation::validation_error;
 use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::{Validate, ValidationError};
+use validator::ValidationError;
 
 use crate::error::Result;
 
@@ -96,23 +96,17 @@ impl<T: ListResponseItem> ListResponse<T> {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Pagination<T> {
     /// Limit the number of returned items
-    #[validate(nested)]
     #[serde(default)]
-    // This needs to be manually kept in sync with 'PAGINATION_LIMIT_CAP_LIMIT',
+    // This needs to be manually kept in sync with the `Deserialize` impl,
     // since schemars requires a literal
     #[schemars(range(min = 1, max = 250))]
     pub limit: PaginationLimit,
     /// The iterator returned from a prior invocation
-    // FIXME: #[validate(nested)]
     pub iterator: Option<T>,
 }
-
-pub const PAGINATION_LIMIT_CAP_LIMIT: u64 = 250;
-static PAGINATION_LIMIT_ERROR: LazyLock<String> =
-    LazyLock::new(|| format!("Given limit must not exceed {PAGINATION_LIMIT_CAP_LIMIT}"));
 
 #[derive(Clone, Serialize, Copy, Debug, JsonSchema)]
 #[schemars(transparent)]
@@ -140,22 +134,18 @@ impl<'de> Deserialize<'de> for PaginationLimit {
     {
         let limit = u64::deserialize(deserializer)?;
 
-        Ok(PaginationLimit(limit.min(PAGINATION_LIMIT_CAP_LIMIT)))
-    }
-}
-
-impl Validate for PaginationLimit {
-    fn validate(&self) -> Result<(), validator::ValidationErrors> {
-        let mut errs = validator::ValidationErrors::new();
-
-        if self.0 > PAGINATION_LIMIT_CAP_LIMIT {
-            errs.add(
-                "limit",
-                validation_error(Some("pagination"), Some(&PAGINATION_LIMIT_ERROR)),
-            );
+        if limit < 1 {
+            return Err(serde::de::Error::custom(
+                "Pagination limit must be at least 1",
+            ));
+        }
+        if limit > 250 {
+            return Err(serde::de::Error::custom(
+                "Pagination limit be no larger than 250",
+            ));
         }
 
-        if errs.is_empty() { Ok(()) } else { Err(errs) }
+        Ok(PaginationLimit(limit))
     }
 }
 
