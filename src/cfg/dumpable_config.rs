@@ -11,21 +11,21 @@ pub(crate) trait DumpableConfig {
     }
 }
 
-pub(crate) fn dump_field<T: Serialize + ?Sized>(
+pub(crate) fn dump_field<T: Serialize + ?Sized, W: Write>(
     name: &str,
     value: &T,
-    writer: &mut impl Write,
+    writer: &mut W,
 ) -> Result<(), anyhow::Error> {
     let mut buffer = String::new();
-    let serialized = value.serialize(toml::ser::ValueSerializer::new(&mut buffer))?;
-    writeln!(writer, "{name} = {serialized}")?;
+    value.serialize(toml::ser::ValueSerializer::new(&mut buffer))?;
+    writeln!(writer, "{name} = {buffer}")?;
     Ok(())
 }
 
-pub(crate) fn dump_optional_field<T: Serialize + ?Sized>(
+pub(crate) fn dump_optional_field<T: Serialize + ?Sized, W: Write>(
     name: &str,
     value: Option<&T>,
-    writer: &mut impl Write,
+    writer: &mut W,
 ) -> anyhow::Result<()> {
     if let Some(value) = value {
         dump_field(name, value, writer)?;
