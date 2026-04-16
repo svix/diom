@@ -11,7 +11,7 @@ homepage = "https://diom.com"
 [package.metadata.dist]
 dist = true
 
-[package.metadata.wix]
+[package.metadata.dist.wix]
 upgrade-guid = "4851F30C-9296-4304-9AD5-93A5E64CA1A8"
 path-guid = "638CF75E-C776-4550-9F17-DA577552CFF7"
 
