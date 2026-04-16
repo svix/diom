@@ -112,7 +112,11 @@ fn dump_variables(path: Option<PathBuf>) -> anyhow::Result<()> {
             bf,
             "The diom server accepts the following environment variables:\n"
         )?;
-        writeln!(bf, "{table}")?;
+        writeln!(bf, "{table}\n")?;
+        writeln!(
+            bf,
+            "This list can be shown at runtime with `diom-server describe-environment-variables`"
+        )?;
     } else {
         println!("{table}");
     }
