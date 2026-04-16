@@ -20,7 +20,7 @@ You can find general usage documentation at <https://diom.svix.com/docs>.
 # Installation
 
 ```sh
-go get https://diom.svix.com/diom/go
+go get diom.svix.com/diom/go
 ```
 
 ## Usage
