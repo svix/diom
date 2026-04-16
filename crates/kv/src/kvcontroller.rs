@@ -174,7 +174,7 @@ impl KvController {
             if let Some(expected) = model.version {
                 let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
                 if current_version != expected {
-                    return Err(Error::conflict("version mismatch", None));
+                    return Err(Error::conflict("version mismatch"));
                 }
             }
 
@@ -199,7 +199,7 @@ impl KvController {
                 }
                 OperationBehavior::Insert => {
                     if current.is_some() {
-                        return Err(Error::conflict("key already exists", None));
+                        return Err(Error::conflict("key already exists"));
                     } else {
                         Self::insert_with_expiration(
                             &db,
@@ -222,7 +222,7 @@ impl KvController {
                             current.and_then(|c| c.expiry),
                         )?;
                     } else {
-                        return Err(Error::conflict("key not found", None));
+                        return Err(Error::conflict("key not found"));
                     }
                 }
             };
@@ -253,7 +253,7 @@ impl KvController {
             if let Some(expected) = version {
                 let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
                 if current_version != expected {
-                    return Err(Error::conflict("version mismatch", None));
+                    return Err(Error::conflict("version mismatch"));
                 }
             }
 

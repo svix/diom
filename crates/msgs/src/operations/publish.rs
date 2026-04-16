@@ -80,10 +80,7 @@ impl PublishOperation {
                 if let Some(existing) = existing
                     && existing.expiry > now
                 {
-                    return Err(Error::conflict(
-                        "idempotency key already used".to_owned(),
-                        None,
-                    ));
+                    return Err(Error::conflict("idempotency key already used"));
                 }
 
                 batch.insert_row(
