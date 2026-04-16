@@ -58,16 +58,6 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorBody"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -4754,16 +4744,6 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorBody"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -4811,16 +4791,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StandardErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorBody"
                 }
               }
             }
