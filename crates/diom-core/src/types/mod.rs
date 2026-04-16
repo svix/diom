@@ -133,12 +133,6 @@ macro_rules! string_wrapper {
             }
         }
 
-        impl From<String> for $name_id {
-            fn from(s: String) -> Self {
-                $name_id(s)
-            }
-        }
-
         impl $crate::__reexport::schemars::JsonSchema for $name_id {
             fn schema_name() -> std::borrow::Cow<'static, str> {
                 stringify!($name_id).into()
