@@ -3,7 +3,7 @@ package diom
 // This file is @generated DO NOT EDIT
 
 import (
-	diom_apis "github.com/svix/diom/z-clients/go/internal/apis"
+	diom_apis "diom.svix.com/go/diom/internal/apis"
 )
 
 type Admin = diom_apis.Admin
