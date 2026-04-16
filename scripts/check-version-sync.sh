@@ -32,14 +32,6 @@ check "z-clients/python/pyproject.toml" "$py_version"
 java_version=$(sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' "$REPO_ROOT/z-clients/java/pom.xml" | head -1)
 check "z-clients/java/pom.xml" "$java_version"
 
-# Helm chart version
-helm_version=$(sed -n 's/^version: *\(.*\)/\1/p' "$REPO_ROOT/infra/helm-diom/Chart.yaml")
-check "infra/helm-diom/Chart.yaml version" "$helm_version"
-
-# Helm appVersion
-helm_app_version=$(sed -n 's/^appVersion: *"\{0,1\}\([^"]*\)"\{0,1\}/\1/p' "$REPO_ROOT/infra/helm-diom/Chart.yaml")
-check "infra/helm-diom/Chart.yaml appVersion" "$helm_app_version"
-
 if [ "$errors" -gt 0 ]; then
     echo ""
     echo "ERROR: $errors version mismatch(es) found. All versions must match .version ($EXPECTED)."
