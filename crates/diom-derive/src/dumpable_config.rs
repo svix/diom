@@ -134,25 +134,18 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
                 self.#field.dump_fields(writer, prefix)?;
             }
         } else {
-            let dump_serialized = quote! {
-                let serialized = serde::Serialize::serialize(
-                    &self.#field,
-                    toml::ser::ValueSerializer::new(&mut buffer)
-                )?;
-                write!(writer, "{} = {}\n", #name, serialized)?;
-                buffer.clear();
-            };
-
             if is_optional {
                 quote! {
-                    if self.#field.is_none() {
-                        write!(writer, "# {} =\n", #name)?;
-                    } else {
-                        #dump_serialized
-                    }
+                    crate::cfg::dumpable_config::dump_optional_field(
+                        #name,
+                        self.#field.as_ref(),
+                        writer,
+                    )?;
                 }
             } else {
-                dump_serialized
+                quote! {
+                    crate::cfg::dumpable_config::dump_field(#name, &self.#field, writer)?;
+                }
             }
         };
 
@@ -168,7 +161,6 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
     quote! {
         impl #impl_generics crate::cfg::dumpable_config::DumpableConfig for #name #ty_generics #where_clause {
             fn dump_fields<W: std::io::Write>(&self, writer: &mut W, prefix: String) -> ::anyhow::Result<()> {
-                let mut buffer = String::new();
                 #(#lists)*
                 Ok(())
             }

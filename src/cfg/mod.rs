@@ -24,7 +24,7 @@ mod memory_size;
 mod validators;
 
 use self::{
-    dumpable_config::DumpableConfig,
+    dumpable_config::{DumpableConfig, dump_optional_field},
     env_overridable::{EnvOverridable, env_var},
 };
 pub use self::{env_overridable::Variable, memory_size::MemorySize};
@@ -737,7 +737,7 @@ impl DumpableConfig for Option<JwtKey> {
         writer: &mut W,
         _prefix: String,
     ) -> anyhow::Result<()> {
-        let mut buffer = String::new();
+        let key = self.as_ref();
 
         // algorithm
         writeln!(writer, "# JWT algorithm.")?;
@@ -750,28 +750,12 @@ impl DumpableConfig for Option<JwtKey> {
             writer,
             "# values in its `aud` claim. When absent, `aud` is not validated.",
         )?;
-        if let Some(key) = self {
-            let serialized = key
-                .algorithm()
-                .serialize(toml::ser::ValueSerializer::new(&mut buffer))?;
-            writeln!(writer, "algorithm = {serialized}")?;
-            buffer.clear();
-        } else {
-            writeln!(writer, "# algorithm =")?;
-        }
+        dump_optional_field("algorithm", key.map(JwtKey::algorithm), writer)?;
 
         // secret
         writeln!(writer)?;
         writeln!(writer, "# Secret for JWT algorithm HS256, HS384 or HS512")?;
-        if let Some(key) = self
-            && let Some(secret) = key.secret()
-        {
-            let serialized = secret.serialize(toml::ser::ValueSerializer::new(&mut buffer))?;
-            writeln!(writer, "secret = {serialized}")?;
-            buffer.clear();
-        } else {
-            writeln!(writer, "# secret =")?;
-        };
+        dump_optional_field("secret", key.and_then(JwtKey::secret), writer)?;
 
         // public_key_pem
         writeln!(writer)?;
@@ -779,16 +763,11 @@ impl DumpableConfig for Option<JwtKey> {
             writer,
             "# Public key PEM for JWT algorithm RS256, RS384, RS512, ES256, ES384, PS256, PS384 or PS512",
         )?;
-        if let Some(key) = self
-            && let Some(public_key_pem) = key.public_key_pem()
-        {
-            let serialized =
-                public_key_pem.serialize(toml::ser::ValueSerializer::new(&mut buffer))?;
-            writeln!(writer, "public_key_pem = {serialized}")?;
-            buffer.clear();
-        } else {
-            writeln!(writer, "# public_key_pem =")?;
-        };
+        dump_optional_field(
+            "public_key_pem",
+            key.and_then(JwtKey::public_key_pem),
+            writer,
+        )?;
 
         Ok(())
     }
