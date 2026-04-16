@@ -5,7 +5,7 @@ use diom_core::{
 };
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
-use fjall_utils::{TableKey, TableRow, WriteBatchExt};
+use fjall_utils::{FjallKeyAble, TableKey, TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -35,14 +35,13 @@ impl TableRow for AuthTokenRow {
     const ROW_TYPE: u8 = RowType::Token as u8;
 }
 
-impl AuthTokenRow {
-    pub fn key_for(namespace_id: NamespaceId, token_hashed: &TokenHashed) -> TableKey<Self> {
-        TableKey::init_key(
-            Self::ROW_TYPE,
-            &[namespace_id.as_bytes(), token_hashed.inner()],
-            &[],
-        )
-    }
+#[derive(FjallKeyAble)]
+#[table_key(prefix = RowType::Token)]
+pub(crate) struct AuthTokenKey {
+    #[key(0)]
+    pub(crate) namespace_id: NamespaceId,
+    #[key(1)]
+    pub(crate) token_hashed: TokenHashed,
 }
 
 /// Secondary index: maps (namespace_id, id) → token_hashed for ID-based lookups.
@@ -55,15 +54,16 @@ impl TableRow for IdIndexRow {
     const ROW_TYPE: u8 = RowType::IdIndex as u8;
 }
 
-impl IdIndexRow {
-    pub fn key_for(namespace_id: NamespaceId, id: AuthTokenId) -> TableKey<Self> {
-        TableKey::init_key(
-            Self::ROW_TYPE,
-            &[namespace_id.as_bytes(), id.as_bytes()],
-            &[],
-        )
-    }
+#[derive(FjallKeyAble)]
+#[table_key(prefix = RowType::IdIndex)]
+pub(crate) struct IdIndexKey {
+    #[key(0)]
+    pub(crate) namespace_id: NamespaceId,
+    #[key(1)]
+    pub(crate) id: AuthTokenId,
+}
 
+impl IdIndexRow {
     pub fn extract_token_hashed(value: fjall::UserValue) -> Result<TokenHashed> {
         let row = IdIndexRow::from_fjall_value(value)?;
         Ok(row.token_hashed)
@@ -160,12 +160,12 @@ impl AuthTokenEntity {
     ) -> Result<()> {
         batch.insert_row(
             ks,
-            AuthTokenRow::key_for(self.namespace_id, &self.token_hashed),
+            AuthTokenKey::build_key(&self.namespace_id, &self.token_hashed),
             &self.row,
         )?;
         batch.insert_row(
             ks,
-            IdIndexRow::key_for(self.namespace_id, self.row.id),
+            IdIndexKey::build_key(&self.namespace_id, &self.row.id),
             &IdIndexRow {
                 token_hashed: self.token_hashed.clone(),
             },
@@ -188,11 +188,14 @@ impl AuthTokenEntity {
         batch: &mut fjall::OwnedWriteBatch,
         ks: &fjall::Keyspace,
     ) -> Result<()> {
-        batch.remove_row(
+        batch.remove_row::<AuthTokenRow, _>(
             ks,
-            AuthTokenRow::key_for(self.namespace_id, &self.token_hashed),
+            AuthTokenKey::build_key(&self.namespace_id, &self.token_hashed),
         )?;
-        batch.remove_row(ks, IdIndexRow::key_for(self.namespace_id, self.row.id))?;
+        batch.remove_row::<IdIndexRow, _>(
+            ks,
+            IdIndexKey::build_key(&self.namespace_id, &self.row.id),
+        )?;
         batch.remove_row(
             ks,
             OwnerIndexRow::key_for(

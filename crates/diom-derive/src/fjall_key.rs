@@ -176,26 +176,51 @@ fn gen_key_parse(struct_name: &Ident, prefix: &Expr, fields: &[KeyField]) -> Tok
     }
 }
 
-/// Generates `build_key()`: takes all fields by reference, returns `UserKey`.
+/// Generates `build_key()`: takes all fields as `&(impl KeyComponent + ?Sized)`,
+/// returns `UserKey`. This allows callers to pass `&str` for `String` fields
+/// without allocating.
 fn gen_build_key_method(prefix: &Expr, fields: &[KeyField]) -> TokenStream {
     let params: Vec<TokenStream> = fields
         .iter()
         .map(|f| {
             let ident = &f.ident;
-            let ty = &f.ty;
-            quote! { #ident: &#ty }
+            quote! { #ident: &(impl ::fjall_utils::KeyComponent + ?Sized) }
         })
         .collect();
 
-    let body = gen_key_build(prefix, fields, |f| {
-        let ident = &f.ident;
-        quote! { *#ident }
-    });
+    let field_refs: Vec<TokenStream> = fields
+        .iter()
+        .map(|f| {
+            let ident = &f.ident;
+            quote! { #ident }
+        })
+        .collect();
 
     quote! {
         /// Serialize a key from borrowed fields without constructing the struct.
         pub fn build_key(#(#params),*) -> ::fjall_utils::UserKey {
-            #body
+            let total_len = 1 #(+ ::fjall_utils::KeyComponent::key_len(#field_refs))*;
+
+            let mut stack_buf = [0u8; 64];
+            let mut heap_buf;
+            let buf: &mut [u8] = if total_len <= stack_buf.len() {
+                &mut stack_buf[..total_len]
+            } else {
+                heap_buf = vec![0u8; total_len];
+                &mut heap_buf
+            };
+            let mut pos = 0;
+
+            buf[pos] = #prefix as u8;
+            pos += 1;
+
+            #({
+                let written = ::fjall_utils::KeyComponent::write_to_key(#field_refs, &mut buf[pos..]);
+                pos += written;
+            })*
+
+            debug_assert_eq!(pos, total_len);
+            ::fjall_utils::UserKey::from(&*buf)
         }
     }
 }

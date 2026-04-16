@@ -8,7 +8,9 @@ use diom_id::{AuthTokenId, NamespaceId};
 use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
 use serde::{Deserialize, Serialize};
 
-use crate::tables::{AuthTokenEntity, AuthTokenRow, IdIndexRow, OwnerIndexRow};
+use crate::tables::{
+    AuthTokenEntity, AuthTokenKey, AuthTokenRow, IdIndexKey, IdIndexRow, OwnerIndexRow,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthTokenModel {
@@ -93,8 +95,10 @@ impl AuthTokenController {
         token_hashed: &TokenHashed,
         now: UnixTimestampMs,
     ) -> Result<Option<AuthTokenRow>> {
-        let Some(row) =
-            AuthTokenRow::fetch(keyspace, AuthTokenRow::key_for(namespace_id, token_hashed))?
+        let Some(row) = AuthTokenRow::fetch(
+            keyspace,
+            AuthTokenKey::build_key(&namespace_id, token_hashed),
+        )?
         else {
             return Ok(None);
         };
@@ -114,7 +118,8 @@ impl AuthTokenController {
         id: AuthTokenId,
         now: UnixTimestampMs,
     ) -> Result<Option<(IdIndexRow, AuthTokenRow)>> {
-        let Some(index_row) = IdIndexRow::fetch(keyspace, IdIndexRow::key_for(namespace_id, id))?
+        let Some(index_row) =
+            IdIndexRow::fetch(keyspace, IdIndexKey::build_key(&namespace_id, &id))?
         else {
             return Ok(None);
         };
@@ -222,17 +227,17 @@ impl AuthTokenController {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
             let Some(id_index) =
-                IdIndexRow::fetch(&keyspace, IdIndexRow::key_for(namespace_id, id))?
+                IdIndexRow::fetch(&keyspace, IdIndexKey::build_key(&namespace_id, &id))?
             else {
                 return Ok(false);
             };
             let Some(row) = AuthTokenRow::fetch(
                 &keyspace,
-                AuthTokenRow::key_for(namespace_id, &id_index.token_hashed),
+                AuthTokenKey::build_key(&namespace_id, &id_index.token_hashed),
             )?
             else {
                 tracing::warn!(?id, ?id_index.token_hashed, "Found idx but not token. Cleaning up index.");
-                keyspace.remove(IdIndexRow::key_for(namespace_id, id).into_fjall_key())?;
+                keyspace.remove(IdIndexKey::build_key(&namespace_id, &id))?;
                 return Ok(true);
             };
             let entity = AuthTokenEntity {
@@ -266,7 +271,7 @@ impl AuthTokenController {
                 let token_hashed = OwnerIndexRow::extract_token_hashed(&key)?;
                 match AuthTokenRow::fetch(
                     &keyspace,
-                    AuthTokenRow::key_for(namespace_id, &token_hashed),
+                    AuthTokenKey::build_key(&namespace_id, &token_hashed),
                 )? {
                     Some(row) => tokens.push(row.into()),
                     None => tracing::warn!("Skipping missing owner."),

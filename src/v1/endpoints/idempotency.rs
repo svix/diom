@@ -55,12 +55,8 @@ pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyStartIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
-
-    #[validate(nested)]
     pub key: EntityKey,
-
     /// How long to hold the lock on start before releasing it.
     #[serde(rename = "lock_period_ms")]
     #[validate(range(min = 1))]
@@ -103,10 +99,8 @@ impl From<IdempotencyStartResult> for IdempotencyStartOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyCompleteIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
-    #[validate(nested)]
     pub key: EntityKey,
 
     /// The response to cache
@@ -131,10 +125,7 @@ pub struct IdempotencyCompleteOut {}
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyAbortIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
-
-    #[validate(nested)]
     pub key: EntityKey,
 }
 
@@ -209,7 +200,6 @@ async fn idempotency_abort(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceIn {
-    #[validate(nested)]
     pub name: NamespaceName,
 }
 
@@ -224,7 +214,6 @@ struct IdempotencyGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct IdempotencyConfigureNamespaceIn {
-    #[validate(nested)]
     pub name: NamespaceName,
 }
 

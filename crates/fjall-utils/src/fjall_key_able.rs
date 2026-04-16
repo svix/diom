@@ -272,6 +272,27 @@ impl KeyComponent for String {
     }
 }
 
+impl KeyComponent for str {
+    const FIXED_SIZE: bool = false;
+    const BYTE_SIZE: usize = 0;
+    type Ref<'a> = &'a str;
+
+    fn key_len(&self) -> usize {
+        self.len()
+    }
+
+    fn write_to_key(&self, buf: &mut [u8]) -> usize {
+        buf[..self.len()].copy_from_slice(self.as_bytes());
+        self.len()
+    }
+
+    fn read_ref_from_key(buf: &[u8]) -> Result<(Self::Ref<'_>, usize), Cow<'static, str>> {
+        let s = std::str::from_utf8(buf)
+            .map_err(|e| Cow::Owned(format!("invalid utf8 in str key component: {e}")))?;
+        Ok((s, buf.len()))
+    }
+}
+
 impl<const N: usize> KeyComponent for [u8; N] {
     const FIXED_SIZE: bool = true;
     const BYTE_SIZE: usize = N;
@@ -319,6 +340,25 @@ impl KeyComponent for Vec<u8> {
 
     fn read_from_key(buf: &[u8]) -> Result<(Self, usize), Cow<'static, str>> {
         Ok((buf.to_vec(), buf.len()))
+    }
+
+    fn read_ref_from_key(buf: &[u8]) -> Result<(Self::Ref<'_>, usize), Cow<'static, str>> {
+        Ok((buf, buf.len()))
+    }
+}
+
+impl KeyComponent for [u8] {
+    const FIXED_SIZE: bool = false;
+    const BYTE_SIZE: usize = 0;
+    type Ref<'a> = &'a [u8];
+
+    fn key_len(&self) -> usize {
+        self.len()
+    }
+
+    fn write_to_key(&self, buf: &mut [u8]) -> usize {
+        buf[..self.len()].copy_from_slice(self);
+        self.len()
     }
 
     fn read_ref_from_key(buf: &[u8]) -> Result<(Self::Ref<'_>, usize), Cow<'static, str>> {
@@ -536,7 +576,7 @@ mod tests {
             group: "test".to_owned(),
         };
         let from_struct = key.fjall_key();
-        let from_build = ExampleCompositeKey::build_key(&42u32, &"test".to_owned());
+        let from_build = ExampleCompositeKey::build_key(&42u32, "test");
         assert_eq!(&*from_struct, &*from_build);
     }
 
@@ -548,7 +588,7 @@ mod tests {
             tag: "abc".to_owned(),
         };
         let from_struct = key.fjall_key();
-        let from_build = ExampleTripleKey::build_key(&1u32, &2u16, &"abc".to_owned());
+        let from_build = ExampleTripleKey::build_key(&1u32, &2u16, "abc");
         assert_eq!(&*from_struct, &*from_build);
     }
 }

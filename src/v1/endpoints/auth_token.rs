@@ -91,7 +91,6 @@ impl From<AuthTokenModel> for AuthTokenOut {
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenCreateIn {
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub name: String,
     #[serde(default = "default_prefix")]
@@ -164,7 +163,6 @@ async fn auth_token_create(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenExpireIn {
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
     /// Milliseconds from now until the token expires. `None` means expire immediately.
@@ -197,7 +195,6 @@ async fn auth_token_expire(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenDeleteIn {
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
 }
@@ -236,7 +233,6 @@ async fn auth_token_delete(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenVerifyIn {
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub token: String,
 }
@@ -278,7 +274,6 @@ async fn auth_token_verify(
 
 #[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenListIn {
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub owner_id: String,
     #[serde(flatten)]
@@ -323,7 +318,6 @@ async fn auth_token_list(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenUpdateIn {
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
     pub name: Option<String>,
@@ -366,7 +360,6 @@ async fn auth_token_update(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenRotateIn {
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
     #[serde(default = "default_prefix")]
@@ -416,7 +409,6 @@ async fn auth_token_rotate(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct AuthTokenGetNamespaceIn {
-    #[validate(nested)]
     pub name: NamespaceName,
 }
 
@@ -431,7 +423,6 @@ struct AuthTokenGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct AuthTokenConfigureNamespaceIn {
-    #[validate(nested)]
     pub name: NamespaceName,
 }
 

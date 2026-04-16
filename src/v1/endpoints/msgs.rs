@@ -58,7 +58,6 @@ macro_rules! request_input {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
 pub(crate) struct MsgNamespaceConfigureIn {
-    #[validate(nested)]
     pub name: NamespaceName,
     #[serde(default)]
     pub retention: Retention,
@@ -100,7 +99,6 @@ async fn configure_namespace(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
 struct MsgNamespaceGetIn {
-    #[validate(nested)]
     pub name: NamespaceName,
 }
 
@@ -144,7 +142,6 @@ async fn get_namespace(
 #[schemars(extend("x-positional" = ["topic"]))]
 struct MsgPublishIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub msgs: Vec<diom_msgs::entities::MsgIn>,
@@ -217,7 +214,6 @@ const fn default_lease_duration_ms() -> DurationMs {
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamReceiveIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub consumer_group: ConsumerGroup,
@@ -331,7 +327,6 @@ async fn stream_receive(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamCommitIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicPartition,
     pub consumer_group: ConsumerGroup,
@@ -373,7 +368,6 @@ async fn stream_commit(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamSeekIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub consumer_group: ConsumerGroup,
@@ -431,7 +425,6 @@ const fn default_queue_lease_duration() -> DurationMs {
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueReceiveIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub consumer_group: ConsumerGroup,
@@ -540,7 +533,6 @@ async fn queue_receive(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueAckIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -585,7 +577,6 @@ async fn queue_ack(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueExtendLeaseIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -634,7 +625,6 @@ async fn queue_extend_lease(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueConfigureIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -689,7 +679,6 @@ async fn queue_configure(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueNackIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -740,7 +729,6 @@ async fn queue_nack(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueRedriveDlqIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -777,7 +765,6 @@ async fn queue_redrive_dlq(
 #[schemars(extend("x-positional" = ["topic"]))]
 struct MsgTopicConfigureIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub partitions: u16,
