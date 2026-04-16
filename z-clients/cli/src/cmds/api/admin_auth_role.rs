@@ -20,7 +20,7 @@ pub enum AdminAuthRoleCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": [{\"effect\": {\"...\": \"...\"}, \"resource\": \"...\", \"actions\": [\"...\"]}],
+  \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"policies\": [\"...\"],
   \"context\": {\"key\": \"...\"}
 }\n\n\x1b[1;4mExample response:\x1b[0m
@@ -51,7 +51,7 @@ pub enum AdminAuthRoleCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": [{\"effect\": {\"...\": \"...\"}, \"resource\": \"...\", \"actions\": [\"...\"]}],
+  \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"policies\": [\"...\"],
   \"context\": {\"key\": \"...\"},
   \"created\": 1234567890123,
@@ -67,7 +67,7 @@ pub enum AdminAuthRoleCommands {
   \"iterator\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"data\": [{\"id\": \"...\", \"description\": \"...\", \"rules\": [\"...\"], \"policies\": [\"...\"], \"context\": {\"key\": \"...\"}, \"created\": 1234567890123, \"updated\": 1234567890123}],
+  \"data\": [{\"id\": \"...\", \"description\": \"...\", \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}], \"policies\": [\"...\"], \"context\": {\"key\": \"...\"}, \"created\": 1234567890123, \"updated\": 1234567890123}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": true

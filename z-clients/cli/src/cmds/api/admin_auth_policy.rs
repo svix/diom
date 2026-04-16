@@ -20,7 +20,7 @@ pub enum AdminAuthPolicyCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": [{\"effect\": {\"...\": \"...\"}, \"resource\": \"...\", \"actions\": [\"...\"]}]
+  \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}]
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"id\": \"...\",
@@ -50,7 +50,7 @@ pub enum AdminAuthPolicyCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": [{\"effect\": {\"...\": \"...\"}, \"resource\": \"...\", \"actions\": [\"...\"]}],
+  \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"created\": 1234567890123,
   \"updated\": 1234567890123
 }")]
@@ -64,7 +64,7 @@ pub enum AdminAuthPolicyCommands {
   \"iterator\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"data\": [{\"id\": \"...\", \"description\": \"...\", \"rules\": [\"...\"], \"created\": 1234567890123, \"updated\": 1234567890123}],
+  \"data\": [{\"id\": \"...\", \"description\": \"...\", \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}], \"created\": 1234567890123, \"updated\": 1234567890123}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": true

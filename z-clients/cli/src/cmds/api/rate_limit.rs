@@ -23,7 +23,7 @@ pub enum RateLimitCommands {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
   \"tokens\": 123,
-  \"config\": {\"...\": \"...\"}
+  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"allowed\": true,
@@ -38,7 +38,7 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"config\": {\"...\": \"...\"}
+  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"remaining\": 123,
@@ -52,7 +52,7 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"config\": {\"...\": \"...\"}
+  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

@@ -24,7 +24,7 @@ pub enum MsgsStreamCommands {
   \"namespace\": \"some_namespace\",
   \"batch_size\": 123,
   \"lease_duration_ms\": 60000,
-  \"default_starting_position\": {\"...\": \"...\"},
+  \"default_starting_position\": \"earliest\",
   \"batch_wait_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
@@ -60,7 +60,7 @@ pub enum MsgsStreamCommands {
 {
   \"namespace\": \"some_namespace\",
   \"offset\": 123,
-  \"position\": {\"...\": \"...\"}
+  \"position\": \"earliest\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

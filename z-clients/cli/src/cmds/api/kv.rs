@@ -22,7 +22,7 @@ pub enum KvCommands {
 {
   \"namespace\": \"some_namespace\",
   \"ttl_ms\": 60000,
-  \"behavior\": {\"...\": \"...\"},
+  \"behavior\": \"upsert\",
   \"version\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
@@ -38,7 +38,7 @@ pub enum KvCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"consistency\": {\"...\": \"...\"}
+  \"consistency\": \"strong\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"expiry\": 1234567890123,
