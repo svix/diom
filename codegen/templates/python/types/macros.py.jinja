@@ -3,8 +3,8 @@
     {%- if field_name != field.name %}
         {%- do panic("diom API does not use non-snake_case field names") %}
     {%- endif %}
-    {%- if field_name is endingwith "_ms" -%}
-        {%- if not (field.type.is_u64() or field.type.is_duration_ms() or field.type.is_unix_timestamp_ms()) %}{% do panic("_ms type should be uint64, current type is " ~ field.type) %}{% endif -%}
+    {%- if field.type.is_duration_ms() -%}
+        {%- if field_name is not endingwith "_ms" %}{% do panic("duration field must have _ms suffix") %}{% endif %}
         {%- set field_name = field_name | strip_trailing_str("_ms") -%}
     {%- endif -%}
     {{ field_name }}
@@ -13,7 +13,7 @@
     {% set field_ty = field.type.to_python() -%}
     {% if field.type.is_unix_timestamp_ms() -%}
         {% set field_ty = "UnixTimestampMs" -%}
-    {% elif field.name is endingwith "_ms" -%}
+    {% elif field.type.is_duration_ms() -%}
         {% set field_ty = "TimeDeltaMs" -%}
     {% endif -%}
     {{ field_ty }}
