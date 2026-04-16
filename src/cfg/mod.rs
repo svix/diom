@@ -170,9 +170,9 @@ impl DatabaseConfig {
         let dir = Dir::new(&self.path)?;
         let path = dir.join(&self.filename);
         if path.exists() {
-            tracing::info!(path = %path.display(), "loading existing {} database", label);
+            tracing::info!(path = %path.display(), "loading existing {label} database");
         } else {
-            tracing::debug!(path = %path.display(), "initializing new {} database", label);
+            tracing::debug!(path = %path.display(), "initializing new {label} database");
         }
         let cache_size = self.cache_size;
         fjall::Database::builder(path)

@@ -54,7 +54,11 @@ impl Workers {
                     Ok(())
                 }
                 other => {
-                    tracing::debug!(job_name = W::NAME, res=?other, "background worker has finished");
+                    tracing::debug!(
+                        job_name = W::NAME,
+                        res = ?other,
+                        "background worker has finished",
+                    );
                     other
                 }
             }

@@ -179,12 +179,12 @@ async fn check_initialized(
         .send()
         .await?;
     if response.status() != 200 {
-        tracing::debug!(status=%response.status(), "server returned an error");
+        tracing::debug!(status = %response.status(), "server returned an error");
         return Ok(None);
     }
     let body: HealthResponse = response.json().await?;
     if body.server_state.is_candidate() {
-        tracing::warn!(state=?body.server_state, "booted, but just a candidate");
+        tracing::warn!(state = ?body.server_state, "booted, but just a candidate");
         return Ok(None);
     }
     if let Some(cluster_id) = body.cluster_id {

@@ -335,7 +335,7 @@ impl Sender {
                         let err: RPCError<TypeConfig, RaftError<TypeConfig, InstallSnapshotError>> =
                             err;
 
-                        tracing::warn!("failed to send InstallSnapshot RPC: {}", err);
+                        tracing::warn!("failed to send InstallSnapshot RPC: {err}");
 
                         match err {
                             RPCError::Timeout(_)
@@ -346,8 +346,7 @@ impl Sender {
                                 RaftError::APIError(snapshot_err) => match snapshot_err {
                                     InstallSnapshotError::SnapshotMismatch(mismatch) => {
                                         tracing::warn!(
-                                            "snapshot mismatch, reset offset and retry: mismatch: {}",
-                                            mismatch
+                                            "snapshot mismatch, reset offset and retry: mismatch: {mismatch}",
                                         );
                                         offset = 0;
                                     }
@@ -358,7 +357,7 @@ impl Sender {
                     }
                 },
                 Err(err) => {
-                    tracing::warn!("timeout sending InstallSnapshot RPC: {}", err);
+                    tracing::warn!("timeout sending InstallSnapshot RPC: {err}");
                     continue;
                 }
             };

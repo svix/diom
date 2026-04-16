@@ -167,7 +167,7 @@ async fn leadership_changes(handle: RaftState) -> tokio::sync::broadcast::Receiv
                 |m| {
                     let mut l = last_leader.lock().unwrap();
                     if m.current_leader != *l {
-                        tracing::debug!(old_leader=?l, new_leader=?m, "leader has changed");
+                        tracing::debug!(old_leader = ?l, new_leader = ?m, "leader has changed");
                         *l = m.current_leader;
                         if tx.send(m.current_leader).is_err() {
                             return true;
