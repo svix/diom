@@ -65,17 +65,17 @@ pub trait TableRow:
         })
     }
 
-    fn keys<K: ReadableKeyspace>(keyspace: &K) -> Result<impl Iterator<Item = fjall::Slice>> {
+    fn keys<K: ReadableKeyspace>(keyspace: &K) -> impl Iterator<Item = fjall::Slice> {
         let prefix = &[Self::ROW_TYPE];
-        Ok(keyspace.prefix(prefix).map(|g| g.key().expect("key error")))
+        keyspace.prefix(prefix).map(|g| g.key().expect("key error"))
     }
 
-    fn values<K: ReadableKeyspace>(keyspace: &K) -> Result<impl Iterator<Item = Self>> {
+    fn values<K: ReadableKeyspace>(keyspace: &K) -> impl Iterator<Item = Self> {
         let prefix = &[Self::ROW_TYPE];
-        Ok(keyspace.prefix(prefix).map(|g| {
+        keyspace.prefix(prefix).map(|g| {
             let v = g.value().expect("iter error?");
             Self::from_fjall_value(v).expect("deserialize error?")
-        }))
+        })
     }
 
     /// Scan rows in key order within `prefix`, stopping after `limit` rows.

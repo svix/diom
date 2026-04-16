@@ -276,7 +276,7 @@ impl KvController {
         .await?
     }
 
-    pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
+    pub fn iter(&self) -> impl Iterator<Item = KvPairRow> {
         KvPairRow::values(&self.keyspace)
     }
 
@@ -700,7 +700,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(controller.iter().unwrap().count(), 7);
+        assert_eq!(controller.iter().count(), 7);
 
         // the key should have expired by now, so key_exists should already be false
         assert!(!key_exists(&controller, "expired:key").await);
@@ -764,9 +764,8 @@ mod tests {
             .await
             .unwrap();
 
-        let expiration_rows = ExpirationRow::keys(&controller.keyspace)
-            .unwrap()
-            .collect::<Vec<fjall::UserKey>>();
+        let expiration_rows =
+            ExpirationRow::keys(&controller.keyspace).collect::<Vec<fjall::UserKey>>();
         assert_eq!(expiration_rows.len(), 1);
         let ts = ExpirationKey::extract_expiration_time(&expiration_rows[0]).unwrap();
         let (namespace_id, found_key) = (
@@ -794,9 +793,8 @@ mod tests {
             .await
             .unwrap();
 
-        let expiration_rows = ExpirationRow::keys(&controller.keyspace)
-            .unwrap()
-            .collect::<Vec<fjall::UserKey>>();
+        let expiration_rows =
+            ExpirationRow::keys(&controller.keyspace).collect::<Vec<fjall::UserKey>>();
         // the old index row should be deleted
         assert_eq!(expiration_rows.len(), 1);
         let ts = ExpirationKey::extract_expiration_time(&expiration_rows[0]).unwrap();
