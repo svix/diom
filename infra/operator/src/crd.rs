@@ -13,8 +13,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-pub(crate) const DEFAULT_API_PORT: u16 = 8624;
-pub(crate) const INTRACLUSTER_PORT: u16 = 8625;
+pub const DEFAULT_API_PORT: u16 = 8624;
+pub const INTRACLUSTER_PORT: u16 = 8625;
 
 fn default_api_port() -> u16 {
     DEFAULT_API_PORT
@@ -38,7 +38,7 @@ fn default_replicas() -> i32 {
     printcolumn = r#"{"name":"Phase","type":"string","jsonPath":".status.phase"}"#,
     printcolumn = r#"{"name":"Ready","type":"integer","jsonPath":".status.readyReplicas"}"#
 )]
-pub(crate) struct DiomClusterSpec {
+pub struct DiomClusterSpec {
     /// Cluster/replication configuration.
     #[serde(flatten)]
     pub diom: DiomSpec,
@@ -100,7 +100,7 @@ pub(crate) struct DiomClusterSpec {
 
 /// Storage configuration for a Diom cluster.
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
-pub(crate) struct DiomStorageSpec {
+pub struct DiomStorageSpec {
     /// Persistent database storage
     pub persistent: VolumeSpec,
 
@@ -121,7 +121,7 @@ pub(crate) struct DiomStorageSpec {
 /// Configuration for a single persistent volume.
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct VolumeSpec {
+pub struct VolumeSpec {
     /// Storage size, e.g. "10Gi".
     pub size: Quantity,
 
@@ -133,7 +133,7 @@ pub(crate) struct VolumeSpec {
 /// Diom configuration.
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct DiomSpec {
+pub struct DiomSpec {
     /// Number of Diom replicas.
     ///
     /// Should be an odd number. Recommended value is 3, or 1 if you want only a single node.
@@ -204,7 +204,7 @@ pub(crate) struct DiomSpec {
 
 /// Configuration for the client-facing Service.
 #[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema)]
-pub(crate) struct ServiceSpec {
+pub struct ServiceSpec {
     /// Service type (ClusterIP, LoadBalancer, NodePort). Defaults to ClusterIP.
     #[serde(default)]
     pub r#type: Option<String>,
@@ -217,7 +217,7 @@ pub(crate) struct ServiceSpec {
 /// Status of a DiomCluster.
 #[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct DiomClusterStatus {
+pub struct DiomClusterStatus {
     #[serde(default)]
     pub phase: Phase,
 
@@ -226,7 +226,7 @@ pub(crate) struct DiomClusterStatus {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema, PartialEq)]
-pub(crate) enum Phase {
+pub enum Phase {
     #[default]
     Initializing,
     Running,
@@ -237,7 +237,7 @@ pub(crate) enum Phase {
 /// Set either `value` for a plain string or `valueFrom` to reference a Kubernetes Secret.
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema, PartialEq)]
 #[serde(untagged)]
-pub(crate) enum ValueOrSecretRef {
+pub enum ValueOrSecretRef {
     Value {
         value: String,
     },
