@@ -27,7 +27,8 @@ impl EoField {
         let is_vec;
         let is_duration;
         let is_optional;
-        let mut docstring = vec![];
+        let mut docstring_lines: Vec<String> = vec![];
+        let mut current_docstring = String::new();
 
         if let Some(option_inner) = as_ty_option(&field.ty) {
             is_optional = true;
@@ -51,7 +52,19 @@ impl EoField {
                     && let syn::Lit::Str(lit) = &lit.lit
                 {
                     let value = lit.value();
-                    docstring.push(value.trim_start().to_string())
+                    if value.trim_start().is_empty() {
+                        if !current_docstring.is_empty() {
+                            docstring_lines.push(current_docstring.trim().to_owned());
+                            current_docstring = String::new();
+                        }
+                    } else {
+                        if !(current_docstring.is_empty()
+                            || current_docstring.ends_with(|f: char| f.is_whitespace()))
+                        {
+                            current_docstring.push(' ')
+                        }
+                        current_docstring.push_str(value.trim_start())
+                    }
                 }
             } else if attr.path().is_ident("env_overridable") {
                 attr.parse_nested_meta(|meta| {
@@ -88,6 +101,9 @@ impl EoField {
                 })?;
             }
         }
+        if !current_docstring.is_empty() {
+            docstring_lines.push(current_docstring);
+        }
         if !render {
             return Ok(None);
         }
@@ -100,7 +116,7 @@ impl EoField {
             is_vec,
             is_duration,
             flatten,
-            docstring,
+            docstring: docstring_lines,
             ty: field.ty.clone(),
         }))
     }
@@ -175,7 +191,7 @@ pub(crate) fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_mac
             let docstring = if parsed.docstring.is_empty() {
                 quote! { None }
             } else {
-                let ds = parsed.docstring.join("\n");
+                let ds = parsed.docstring.join("\n\n");
                 let ds = ds.trim();
                 quote! { Some(#ds) }
             };

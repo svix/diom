@@ -74,9 +74,10 @@ fn dump_variables(path: Option<PathBuf>) -> anyhow::Result<()> {
     let mut table = Table::new();
     let mut variables = cfg::describe_environment();
     variables.sort();
-    let (preset, rows) = if path.is_none() {
+    let (preset, arrangement, rows) = if path.is_none() {
         (
             comfy_table::presets::UTF8_FULL,
+            comfy_table::ContentArrangement::DynamicFullWidth,
             variables
                 .into_iter()
                 .map(|var| {
@@ -90,6 +91,7 @@ fn dump_variables(path: Option<PathBuf>) -> anyhow::Result<()> {
     } else {
         (
             comfy_table::presets::ASCII_MARKDOWN,
+            comfy_table::ContentArrangement::Disabled,
             variables
                 .into_iter()
                 .map(|var| {
@@ -103,6 +105,7 @@ fn dump_variables(path: Option<PathBuf>) -> anyhow::Result<()> {
     };
     table
         .load_preset(preset)
+        .set_content_arrangement(arrangement)
         .set_header(["Environment Variable", "Description"])
         .add_rows(rows);
     if let Some(path) = path {
