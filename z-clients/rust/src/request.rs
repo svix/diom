@@ -1,7 +1,7 @@
 // Modified version of the file openapi-generator would usually put in
 // apis/request.rs
 
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 use headers::{ContentType, Header as _};
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HeaderValue, USER_AGENT};
@@ -28,9 +28,7 @@ pub(crate) struct Request {
     method: http::Method,
     path: &'static str,
     op_id: &'static str,
-    query_params: HashMap<&'static str, String>,
     no_return_type: bool,
-    header_params: HashMap<&'static str, String>,
     serialized_body: Option<Vec<u8>>,
 }
 
@@ -45,8 +43,6 @@ impl Request {
             method,
             path,
             op_id,
-            query_params: HashMap::new(),
-            header_params: HashMap::new(),
             serialized_body: None,
             no_return_type: false,
         }
@@ -163,20 +159,9 @@ impl Request {
 
     fn build_request(self, conf: &Configuration) -> Result<http::Request<Full<Bytes>>, Error> {
         let op_id = self.op_id;
-        let mut uri = format!("{}{}", conf.server_url, self.path);
 
-        let mut query_string = form_urlencoded::Serializer::new("".to_owned());
-        for (key, val) in self.query_params {
-            query_string.append_pair(key, &val);
-        }
-
-        let query_string_str = query_string.finish();
-        if !query_string_str.is_empty() {
-            uri += "?";
-            uri += &query_string_str;
-        }
-
-        let uri = http::Uri::try_from(uri).map_err(|e| Error::other(op_id, e))?;
+        let uri = http::Uri::try_from(format!("{}{}", conf.server_url, self.path))
+            .map_err(|e| Error::other(op_id, e))?;
         let mut req_builder = http::Request::builder().uri(uri).method(self.method);
 
         let mut request = if let Some(body) = self.serialized_body {
@@ -216,11 +201,6 @@ impl Request {
         if let Some(user_agent) = &conf.user_agent {
             let value = user_agent.try_into().map_err(|e| Error::other(op_id, e))?;
             request_headers.insert(USER_AGENT, value);
-        }
-
-        for (k, v) in self.header_params {
-            let v = v.try_into().map_err(|e| Error::other(op_id, e))?;
-            request_headers.insert(k, v);
         }
 
         Ok(request)

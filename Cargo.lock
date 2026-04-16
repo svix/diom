@@ -1389,7 +1389,6 @@ dependencies = [
 name = "diom"
 version = "0.1.0"
 dependencies = [
- "form_urlencoded",
  "headers",
  "http",
  "http-body-util",
