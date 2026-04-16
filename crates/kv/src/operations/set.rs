@@ -16,7 +16,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetResponseData {
-    pub success: bool,
     pub version: u64,
 }
 
@@ -73,7 +72,6 @@ impl SetOperation {
             )
             .await?;
         Ok(SetResponseData {
-            success: result.success,
             version: result.version,
         })
     }

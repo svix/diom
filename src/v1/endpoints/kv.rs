@@ -70,8 +70,6 @@ request_input!(KvSetIn, "set");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct KvSetOut {
-    /// Whether the operation succeeded or was a noop due to pre-conditions.
-    pub success: bool,
     pub version: u64,
 }
 
@@ -155,11 +153,9 @@ async fn kv_set(
         data.behavior,
         data.version,
     );
-    let SetResponseData { version, success } =
-        repl.client_write(operation).await.or_internal_error()?.0?;
+    let SetResponseData { version } = repl.client_write(operation).await.or_internal_error()?.0?;
 
-    let ret = KvSetOut { version, success };
-    Ok(MsgPackOrJson(ret))
+    Ok(MsgPackOrJson(KvSetOut { version }))
 }
 
 /// KV Get

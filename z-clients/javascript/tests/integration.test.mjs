@@ -31,8 +31,7 @@ describe("SDK Integration Tests", () => {
     const value = toBytes("js-integration-kv-value");
 
     // Set
-    const setResp = await client.kv.set(key, value, {});
-    assert.strictEqual(setResp.success, true);
+    await client.kv.set(key, value, {});
 
     // Get
     const getResp = await client.kv.get(key, {});

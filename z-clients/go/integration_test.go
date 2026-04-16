@@ -47,12 +47,9 @@ func TestKvSetGetDelete(t *testing.T) {
 	value := []uint8("go-integration-kv-value")
 
 	// Set
-	setResp, err := client.Kv().Set(ctx, key, value, diom.KvSetIn{})
+	_, err := client.Kv().Set(ctx, key, value, diom.KvSetIn{})
 	if err != nil {
 		t.Fatalf("kv set failed: %v", err)
-	}
-	if !setResp.Success {
-		t.Fatal("kv set: expected success=true")
 	}
 
 	// Get
