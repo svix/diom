@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
 use diom_core::{PersistableValue, types::UnixTimestampMs};
-use diom_error::{Result, ResultExt as _};
-use fjall_utils::{TableKey, TableRow};
+use fjall_utils::{FjallKeyAble, TableRow};
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -30,10 +29,11 @@ impl TableRow for RoleRow {
     const ROW_TYPE: u8 = RowType::Role as u8;
 }
 
-impl RoleRow {
-    pub fn key_for(id: &RoleId) -> TableKey<Self> {
-        TableKey::init_key(Self::ROW_TYPE, &[], &[id.as_str()])
-    }
+#[derive(FjallKeyAble)]
+#[table_key(prefix = RowType::Role)]
+pub(crate) struct RoleKey {
+    #[key(0)]
+    pub(crate) id: String,
 }
 
 /// Primary row for an AccessPolicy, keyed by `[ROW_TYPE][policy_id_bytes]`.
@@ -49,16 +49,9 @@ impl TableRow for AccessPolicyRow {
     const ROW_TYPE: u8 = RowType::AccessPolicy as u8;
 }
 
-impl AccessPolicyRow {
-    pub fn key_for(id: &AccessPolicyId) -> TableKey<Self> {
-        TableKey::init_key(Self::ROW_TYPE, &[], &[id.as_str()])
-    }
-
-    pub fn decode_fjall_key(key: &fjall::UserKey) -> Result<AccessPolicyId> {
-        assert!(key.len() >= 3);
-        assert!(key[0] == Self::ROW_TYPE);
-
-        let s = str::from_utf8(&key[1..]).or_internal_error()?.to_owned();
-        Ok(AccessPolicyId(s))
-    }
+#[derive(FjallKeyAble)]
+#[table_key(prefix = RowType::AccessPolicy)]
+pub(crate) struct AccessPolicyKey {
+    #[key(0)]
+    pub(crate) id: String,
 }

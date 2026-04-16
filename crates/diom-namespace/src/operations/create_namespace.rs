@@ -9,7 +9,7 @@ use tracing::Span;
 use crate::{
     State,
     entities::{ModuleConfig, NamespaceName},
-    tables::Namespace,
+    tables::{Namespace, NamespaceKey},
 };
 
 #[derive(Deserialize, Serialize)]
@@ -69,7 +69,10 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
                 };
 
                 {
-                    let k1 = Namespace::<C>::key_for(&namespace.name);
+                    let k1 = NamespaceKey::build_key(
+                        &Namespace::<C>::module_id(),
+                        namespace.name.as_ref(),
+                    );
                     let mut batch = db.batch().durability(Some(fjall::PersistMode::SyncAll));
                     batch.insert_row(&keyspace, k1, &namespace)?;
                     batch.commit()?;

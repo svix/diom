@@ -2,9 +2,9 @@ use diom_core::{
     PersistableValue,
     types::{ByteString, UnixTimestampMs},
 };
-use diom_error::{Result, ResultExt};
+use diom_error::Result;
 use diom_id::NamespaceId;
-use fjall_utils::{TableKey, TableRow};
+use fjall_utils::{FjallKeyAble, TableRow};
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -25,10 +25,13 @@ impl TableRow for KvPairRow {
     const ROW_TYPE: u8 = RowType::Pair as u8;
 }
 
-impl KvPairRow {
-    pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> TableKey<Self> {
-        TableKey::init_key(Self::ROW_TYPE, &[namespace_id.as_bytes()], &[key])
-    }
+#[derive(FjallKeyAble)]
+#[table_key(prefix = RowType::Pair)]
+pub(crate) struct KvPairKey {
+    #[key(0)]
+    pub(crate) namespace_id: NamespaceId,
+    #[key(1)]
+    pub(crate) key: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, PersistableValue)]
@@ -38,41 +41,17 @@ impl ExpirationRow {
     pub(crate) fn new() -> Self {
         Self {}
     }
+}
 
-    pub(crate) fn key_for(
-        namespace_id: NamespaceId,
-        expiration_time: UnixTimestampMs,
-        key: &str,
-    ) -> TableKey<Self> {
-        let ts_ms = expiration_time.as_millisecond();
-        let ts_bytes = ts_ms.to_be_bytes();
-
-        TableKey::init_key(
-            Self::ROW_TYPE,
-            &[&ts_bytes, namespace_id.as_bytes()],
-            &[key],
-        )
-    }
-
-    #[cfg(test)]
-    pub(crate) fn extract_ts_from_fjall_key(key: &fjall::UserKey) -> UnixTimestampMs {
-        let offset = 1 /* row_type */;
-        let array: [u8; 8] = (&key[offset..=size_of::<i64>()])
-            .try_into()
-            .expect("incorrect key size");
-        let millis = i64::from_be_bytes(array);
-        UnixTimestampMs::try_from_millisecond(millis)
-            .expect("failed to extract timestamp from fjall key")
-    }
-
-    pub(crate) fn extract_key_from_fjall_key(key: &fjall::UserKey) -> Result<(NamespaceId, &str)> {
-        let namespace_offset = 1 /* row_type */ + size_of::<i64>() /* timestamp */;
-        let fixed_sizes = namespace_offset + size_of::<NamespaceId>() /* namespace */;
-        let namespace_id =
-            NamespaceId::from_slice(&key[namespace_offset..fixed_sizes]).or_internal_error()?;
-        let main_key = str::from_utf8(&key[fixed_sizes..]).or_internal_error()?;
-        Ok((namespace_id, main_key))
-    }
+#[derive(FjallKeyAble)]
+#[table_key(prefix = RowType::Expiration)]
+pub(crate) struct ExpirationKey {
+    #[key(0)]
+    pub(crate) expiration_time: UnixTimestampMs,
+    #[key(1)]
+    pub(crate) namespace_id: NamespaceId,
+    #[key(2)]
+    pub(crate) key: String,
 }
 
 impl TableRow for ExpirationRow {
