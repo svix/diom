@@ -3,7 +3,7 @@ package diom_apis
 // This file is @generated DO NOT EDIT
 
 import (
-	diom_proto "diom.svix.com/go/diom/internal/proto"
+	diom_proto "diom.com/go/diom/internal/proto"
 )
 
 type Admin struct {

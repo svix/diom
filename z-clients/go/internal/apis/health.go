@@ -5,8 +5,8 @@ package diom_apis
 import (
 	"context"
 
-	diom_models "diom.svix.com/go/diom/internal/models"
-	diom_proto "diom.svix.com/go/diom/internal/proto"
+	diom_models "diom.com/go/diom/internal/models"
+	diom_proto "diom.com/go/diom/internal/proto"
 )
 
 type Health struct {

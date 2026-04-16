@@ -3,7 +3,7 @@ package diom_models
 // This file is @generated DO NOT EDIT
 
 import (
-	diom_types "diom.svix.com/go/diom/internal/types"
+	diom_types "diom.com/go/diom/internal/types"
 )
 
 type QueueMsgOut struct {

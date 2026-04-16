@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	diom "diom.svix.com/go/diom"
+	diom "diom.com/go/diom"
 )
 
 func newClient(t *testing.T) *diom.Diom {
