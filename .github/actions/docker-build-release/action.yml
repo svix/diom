@@ -45,8 +45,8 @@ runs:
           type=ref,event=tag
           type=semver,pattern={{version}},value=${{inputs.version}}
           type=semver,pattern={{major}},value=${{inputs.version}}
-      secrets:
-        registry-auths: |
-          - registry: docker.io
-            username: ${{ inputs.docker-username }}
-            password: ${{ inputs.docker-password }}
+        secrets:
+          registry-auths: |
+            - registry: docker.io
+              username: ${{ inputs.docker-username }}
+              password: ${{ inputs.docker-password }}
