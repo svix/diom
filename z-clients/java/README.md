@@ -27,7 +27,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>com.svix</groupId>
   <artifactId>diom</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -37,7 +37,7 @@ Add this dependency to your project's POM:
 Add this dependency to your project's build file:
 
 ```groovy
-implementation "com.svix:diom:0.1.0"
+implementation "com.svix:diom:0.2.0"
 ```
 
 ## Usage

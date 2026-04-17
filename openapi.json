@@ -3,7 +3,7 @@
   "info": {
     "title": "Diom API",
     "description": "Welcome to the Diom API documentation!\n",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "x-logo": {
       "altText": "Svix Logo",
       "url": "https://www.svix.com/static/img/brand-padded.svg"

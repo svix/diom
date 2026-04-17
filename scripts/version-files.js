@@ -39,9 +39,9 @@ const versionFiles = [
         regex: /(<version>)([^<]*)(<\/version>)/,
     },
     {
-        path: "z-clients/java/src/main/java/com/svix/diom/Diom.java",
-        label: "z-clients/java/src/main/java/com/svix/diom/Diom.java user-agent",
-        regex: /("user-agent",\s*"diom-libs\/)([^/]*)(\/java")/,
+        path: "z-clients/java/src/main/java/com/svix/diom/Version.java",
+        label: "z-clients/java/src/main/java/com/svix/diom/Version.java VERSION",
+        regex: /(public static final String VERSION\s*=\s*")([^"]*)(")/,
     },
     {
         path: "z-clients/java/README.md",
