@@ -69,7 +69,7 @@ VERSION_FILES = [
     ),
     VersionFile(
         "z-clients/java/pom.xml",
-        [r"(<version>)([^<]*)(</version>)"],
+        [r"(<artifactId>diom</artifactId>\s*<version>)([^<]*)(</version>)"],
     ),
     VersionFile(
         "z-clients/java/src/main/java/com/svix/diom/Version.java",
