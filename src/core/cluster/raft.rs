@@ -52,7 +52,7 @@ pub(crate) async fn initialize_cluster(
         .log_index_at_least(Some(1), "waiting for someone to become the leader")
         .await?;
     let new_id = ClusterId::generate();
-    tracing::info!(cluster_id=%new_id, "cluster initialized, setting cluster_id");
+    tracing::info!(cluster_id = %new_id, "cluster initialized, setting cluster_id");
     #[allow(clippy::disallowed_methods)]
     raft.client_write(Arc::new(RequestWithContext::new(
         Request::ClusterInternal(SetClusterUuidOperation(new_id).into()),
@@ -61,7 +61,7 @@ pub(crate) async fn initialize_cluster(
     )))
     .await
     .tap_err(|err| tracing::error!(?err, "failed to set initial cluster id"))?;
-    tracing::debug!(elapsed=?start.elapsed(), "initialization finished");
+    tracing::debug!(elapsed = ?start.elapsed(), "initialization finished");
     Ok(new_id)
 }
 

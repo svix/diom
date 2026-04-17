@@ -156,7 +156,8 @@ fn deserialize_keyspace<R: Read + Seek>(
         name = %keyspace.name(),
         path = %keyspace.path().display(),
         len = keyspace.len()?,
-        "clearing and then deserializing keyspace");
+        "clearing and then deserializing keyspace",
+    );
     // TODO: remove this slow path after
     // https://github.com/fjall-rs/fjall/issues/277 is fixed
     if keyspace.is_kv_separated() {
@@ -220,7 +221,7 @@ pub(crate) fn serialize_to_file<F: Write + Seek>(
             ..Default::default()
         };
         for keyspace_name in keyspaces {
-            tracing::debug!(keyspace=%keyspace_name, "serializing a keyspace");
+            tracing::debug!(keyspace = %keyspace_name, "serializing a keyspace");
             let options = keyspace_manifests
                 .keyspace_schemas
                 .options_for_keyspace(&keyspace_name);

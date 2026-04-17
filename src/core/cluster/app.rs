@@ -138,9 +138,10 @@ async fn append_entries(
     MsgPack(body): MsgPack<AppendEntriesRequest<TypeConfig>>,
 ) -> impl IntoResponse {
     tracing::trace!(
-        num_entries=body.entries.len(),
-        leader_commit=?body.leader_commit,
-        "appending some entries to the log");
+        num_entries = body.entries.len(),
+        leader_commit = ?body.leader_commit,
+        "appending some entries to the log",
+    );
     state.raft.append_entries(body).await.pipe(rpc_response)
 }
 
@@ -150,7 +151,7 @@ async fn vote(
     MsgPack(body): MsgPack<VoteRequest<TypeConfig>>,
 ) -> impl IntoResponse {
     tracing::trace!(
-        vote=?body.vote,
+        vote = ?body.vote,
         "recording a vote",
     );
     state.raft.vote(body).await.pipe(rpc_response)
@@ -221,7 +222,11 @@ async fn discover(
                     if let Ok(peer) = n.clone().try_into() {
                         Some((*nid, peer))
                     } else {
-                        tracing::warn!(node_id = ?nid, node = ?n, "could not construct peer address for node");
+                        tracing::warn!(
+                            node_id = ?nid,
+                            node = ?n,
+                            "could not construct peer address for node",
+                        );
                         None
                     }
                 })
