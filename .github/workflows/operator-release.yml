@@ -8,6 +8,10 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   operator-release:
     runs-on: ubuntu-24.04
@@ -34,11 +38,16 @@ jobs:
           echo "Would push Docker image: svix/diom-operator:${{ steps.version.outputs.version }}"
 
   docker-build:
-    needs: operator-release
-    uses: ./.github/workflows/docker-build-release.yml
-    with:
-      image_repo: svix/diom-operator
-      version: ${{ needs.operator-release.outputs.version }}
-      dockerfile: ./infra/operator/Dockerfile
-      dry_run: ${{ inputs.dry_run }}
-    secrets: inherit
+    needs: [operator-release]
+    runs-on: ubuntu-24.04
+    environment: release
+    steps:
+      - name: "build and deploy operator"
+        uses: ./.github/actions/docker-build-release
+        with:
+          image_repo: svix/diom-operator
+          dockerfile: ./infra/operator/Dockerfile
+          version: ${{ needs.operator-release.outputs.version }}
+          dry_run: ${{ inputs.dry_run || false }}
+          docker-username: ${{ secrets.DOCKERHUB_USERNAME }}
+          docker-password: ${{ secrets.DOCKERHUB_TOKEN }}
