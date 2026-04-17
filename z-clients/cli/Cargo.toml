@@ -5,7 +5,7 @@ version.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 edition = "2024"
-description = "CLI for Diom"
+description = "CLI for interacting with the Diom components platform"
 homepage = "https://diom.com"
 
 [package.metadata.dist]
