@@ -43,7 +43,7 @@ func New(token string, options *DiomOptions) (*Diom, error) {
 	}
 
 	httpClient.DefaultHeaders["Authorization"] = fmt.Sprintf("Bearer %s", token)
-	httpClient.DefaultHeaders["User-Agent"] = "diom-sdks/0.0.1/go"
+	httpClient.DefaultHeaders["User-Agent"] = "diom-sdks/0.2.0/go"
 
 	client := Diom{httpClient}
 	return &client, nil
