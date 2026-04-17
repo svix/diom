@@ -7,11 +7,11 @@ on:
         description: Dry run (skip pushes)
         type: boolean
         default: false
-  workflow_run:
-    workflows:
-      - Mega Releaser
-    types:
-      - completed
+  workflow_call:
+    inputs:
+      dry_run:
+        type: boolean
+        default: false
 
 jobs:
   get-version:
