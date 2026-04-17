@@ -1,0 +1,52 @@
+name: Release a Docker project
+description: Release a docker project
+inputs:
+  image_repo:
+    required: true
+    type: string
+  version:
+    required: true
+    type: string
+  dockerfile:
+    required: false
+    type: string
+    default: ./Dockerfile
+  target:
+    required: false
+    type: string
+    default: prod
+  context:
+    required: false
+    type: string
+    default: .
+  dry_run:
+    required: false
+    type: boolean
+    default: false
+  docker-username:
+    required: false
+    type: string
+  docker-password:
+    required: false
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - uses: docker/github-builder/.github/workflows/build.yml@v1
+      with:
+        output: image
+        file: ${{ inputs.dockerfile }}
+        context: ${{ inputs.context }}
+        target: ${{ inputs.target }}
+        push: ${{ inputs.dry_run != true }}
+        platforms: linux/amd64,linux/arm64
+        meta-images: ${{ inputs.image_repo }}
+        meta-tags: |
+          type=ref,event=tag
+          type=semver,pattern={{version}},value=${{inputs.version}}
+          type=semver,pattern={{major}},value=${{inputs.version}}
+      secrets:
+        registry-auths: |
+          - registry: docker.io
+            username: ${{ inputs.docker-username }}
+            password: ${{ inputs.docker-password }}
