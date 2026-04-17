@@ -2,9 +2,28 @@ name: Mega Releaser
 
 on: workflow_dispatch
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  kick-off:
-    name: Kick-off Releases
-    runs-on: ubuntu-latest
-    steps:
-      - run: /bin/true
+  docker:
+    uses: ./.github/workflows/docker-release.yml
+    with:
+      dry_run: false
+    secrets: inherit
+
+  java:
+    uses: ./.github/workflows/java-release.yml
+    secrets: inherit
+
+  javascript:
+    uses: ./.github/workflows/javascript-release.yml
+    secrets: inherit
+
+  python:
+    uses: ./.github/workflows/python-release.yml
+
+  rust:
+    uses: ./.github/workflows/rust-release.yml
+    secrets: inherit
