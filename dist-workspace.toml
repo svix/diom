@@ -20,7 +20,7 @@ install-updater = true
 # Whether CI should trigger releases with dispatches instead of tag pushes
 dispatch-releases = true
 # A GitHub repo to push Homebrew formulas to
-tap = "svix/homebrew-svix"
+tap = "svix/homebrew-diom"
 # Publish jobs to run in CI
 publish-jobs = ["homebrew"]
 # Skip checking whether the specified configuration files are up to date
