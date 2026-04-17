@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-24.04
     environment: release
     steps:
+      - uses: actions/checkout@v6
       - name: "build and deploy operator"
         uses: ./.github/actions/docker-build-release
         with:

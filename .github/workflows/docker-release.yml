@@ -49,6 +49,7 @@ jobs:
           - {label: "server", repo: svix/diom-server, target: prod}
           - {label: "cli", repo: svix/diom-cli, target: cliprod}
     steps:
+      - uses: actions/checkout@v6
       - name: "build and deploy ${{ matrix.package.label }}"
         uses: ./.github/actions/docker-build-release
         with:
