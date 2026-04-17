@@ -33,7 +33,7 @@ public class Diom {
         }
 
         Map<String, String> defaultHeaders = new TreeMap<>();
-        defaultHeaders.put("user-agent", "diom-libs/0.2.0/java");
+        defaultHeaders.put("user-agent", "diom-libs/" + Version.VERSION + "/java");
         defaultHeaders.put("Authorization", "Bearer " + token);
 
         this.httpClient
