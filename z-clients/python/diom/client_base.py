@@ -13,7 +13,7 @@ class ClientBase:
         client = AuthenticatedHttpClient(
             base_url=host,
             token=auth_token,
-            headers={"user-agent": "svix-libs/0.2.1/python"},
+            headers={"user-agent": "svix-libs/0.2.2/python"},
             verify_ssl=True,
             retry_schedule=options.retry_schedule,
             timeout=options.timeout,

@@ -115,7 +115,7 @@ resolver = "2"
 
 [workspace.package]
 license = "MIT"
-version = "0.2.1"
+version = "0.2.2"
 rust-version = "1.91"
 repository = "https://github.com/svix/diom"
 
