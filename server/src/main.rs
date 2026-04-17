@@ -10,6 +10,7 @@ use diom_backend::{
 use dotenvy::dotenv;
 use mimalloc::MiMalloc;
 use std::{
+    fmt::Write as _,
     io::{BufWriter, Write},
     path::PathBuf,
 };
@@ -74,37 +75,38 @@ fn dump_variables(path: Option<PathBuf>) -> anyhow::Result<()> {
     let mut table = Table::new();
     let mut variables = cfg::describe_environment();
     variables.sort();
-    let (preset, rows) = if path.is_none() {
-        (
-            comfy_table::presets::UTF8_FULL,
-            variables
-                .into_iter()
-                .map(|var| {
-                    [
-                        Cell::new(var.env_var),
-                        Cell::new(var.docstring.unwrap_or_default()),
-                    ]
-                })
-                .collect::<Vec<_>>(),
-        )
+    let table = if path.is_none() {
+        let rows = variables.into_iter().map(|var| {
+            [
+                Cell::new(var.env_var),
+                Cell::new(var.docstring.unwrap_or_default()),
+            ]
+        });
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::DynamicFullWidth)
+            .set_header(["Environment Variable", "Description"])
+            .add_rows(rows)
+            .to_string()
     } else {
-        (
-            comfy_table::presets::ASCII_MARKDOWN,
-            variables
-                .into_iter()
-                .map(|var| {
-                    [
-                        Cell::new(format!("`{}`", var.env_var)),
-                        Cell::new(var.docstring.unwrap_or_default().replace("\n", " ")),
-                    ]
-                })
-                .collect::<Vec<_>>(),
-        )
+        // comfy_table's markdown formatter tries to keep constant-width cells, which results
+        // in huge diffs whenever the length of the longest env var changes; just write our own
+        let mut buffer = String::new();
+        writeln!(&mut buffer, "| Environment Variable | Description |")?;
+        writeln!(&mut buffer, "|----------------------|-------------|")?;
+        for var in variables {
+            writeln!(
+                &mut buffer,
+                "| `${}` | {} |",
+                var.env_var,
+                var.docstring
+                    .unwrap_or_default()
+                    .replace("\n\n", "<br/><br/>")
+                    .replace("\n", " ")
+            )?;
+        }
+        buffer
     };
-    table
-        .load_preset(preset)
-        .set_header(["Environment Variable", "Description"])
-        .add_rows(rows);
     if let Some(path) = path {
         let f = fs_err::File::create(path)?;
         let mut bf = BufWriter::new(f);
