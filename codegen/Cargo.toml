@@ -3,7 +3,12 @@ name = "codegen"
 license.workspace = true
 version.workspace = true
 rust-version.workspace = true
+repository.workspace = true
 edition = "2024"
+publish = false
+
+[package.metadata.dist]
+dist = false
 
 [features]
 # This Cargo feature flag exists so rust-analyzer doesn't enable diom's
