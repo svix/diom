@@ -75,15 +75,18 @@ class MsgsStreamAsync(ApiBase):
     ) -> MsgStreamSeekOut:
         """Repositions a consumer group's read cursor on a topic.
 
-        Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
-        partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
-        `"latest"` and may be used with or without a partition suffix."""
+        Provide exactly one of `offset`, `position`, or `timestamp`. When using `offset`, the topic
+        must include a partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts
+        `"earliest"` or `"latest"` and may be used with or without a partition suffix. The `timestamp`
+        field accepts a Unix timestamp in milliseconds and seeks to the first message at or after that
+        time."""
         body = _MsgStreamSeekIn(
             namespace=msg_stream_seek_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             offset=msg_stream_seek_in.offset,
             position=msg_stream_seek_in.position,
+            timestamp=msg_stream_seek_in.timestamp,
         ).model_dump(exclude_none=True)
 
         response = await self._request_asyncio(
@@ -154,15 +157,18 @@ class MsgsStream(ApiBase):
     ) -> MsgStreamSeekOut:
         """Repositions a consumer group's read cursor on a topic.
 
-        Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
-        partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
-        `"latest"` and may be used with or without a partition suffix."""
+        Provide exactly one of `offset`, `position`, or `timestamp`. When using `offset`, the topic
+        must include a partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts
+        `"earliest"` or `"latest"` and may be used with or without a partition suffix. The `timestamp`
+        field accepts a Unix timestamp in milliseconds and seeks to the first message at or after that
+        time."""
         body = _MsgStreamSeekIn(
             namespace=msg_stream_seek_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             offset=msg_stream_seek_in.offset,
             position=msg_stream_seek_in.position,
+            timestamp=msg_stream_seek_in.timestamp,
         ).model_dump(exclude_none=True)
 
         response = self._request_sync(

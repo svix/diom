@@ -282,6 +282,51 @@ impl MsgRow {
         }
     }
 
+    /// Finds the offset of the first message whose timestamp is >= `target_ts`.
+    ///
+    /// Returns `next_offset` if every message is older than the target (or the
+    /// partition is empty), which positions the cursor at the tail — equivalent
+    /// to a "latest" seek.
+    ///
+    /// Uses binary search over offsets, leveraging the invariant that timestamps
+    /// increase monotonically with offsets.
+    #[tracing::instrument(skip_all, level = "debug")]
+    pub(crate) fn first_offset_at_or_after(
+        keyspace: &impl fjall_utils::ReadableKeyspace,
+        topic_id: TopicId,
+        partition: Partition,
+        target_ts: UnixTimestampMs,
+    ) -> Result<Offset> {
+        let high = Self::next_offset(keyspace, topic_id, partition)?;
+        if high == 0 {
+            return Ok(0);
+        }
+
+        let mut lo: Offset = 0;
+        let mut hi: Offset = high;
+
+        while lo < hi {
+            let mid = lo + (hi - lo) / 2;
+
+            let prefix = MsgKey::prefix_offset(&topic_id, &partition, &mid);
+            let ts = if let Some(entry) = keyspace.prefix(prefix).next() {
+                let k = entry.key()?;
+                Some(MsgKey::extract_timestamp(&k).expect("valid MsgKey in msg table"))
+            } else {
+                None
+            };
+
+            match ts {
+                Some(ts) if ts < target_ts => lo = mid + 1,
+                Some(_) => hi = mid,
+                // Offset has no entry (deleted by cleanup) — treat as older than target.
+                None => lo = mid + 1,
+            }
+        }
+
+        Ok(lo)
+    }
+
     /// Fetch a single message by offset, skipping it if expired.
     #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn fetch_by_offset(
@@ -425,9 +470,118 @@ mod tests {
     use super::*;
     use crate::entities::{ConsumerGroup, Partition};
 
+    fn ts(millis: i64) -> UnixTimestampMs {
+        UnixTimestampMs::try_from_millisecond(millis).unwrap()
+    }
+
+    /// Helper: insert a message at a given offset and timestamp.
+    fn insert_msg(
+        db: &fjall::Database,
+        ks: &fjall::Keyspace,
+        topic_id: TopicId,
+        partition: Partition,
+        offset: u64,
+        timestamp: UnixTimestampMs,
+    ) {
+        use fjall_utils::WriteBatchExt as _;
+        let mut batch = db.batch();
+        batch
+            .insert_row(
+                ks,
+                MsgKey {
+                    topic_id,
+                    partition,
+                    offset,
+                    timestamp,
+                },
+                &MsgRow {
+                    value: b"msg".into(),
+                    headers: HashMap::new(),
+                    timestamp,
+                    scheduled_at: None,
+                },
+            )
+            .unwrap();
+        batch.commit().unwrap();
+    }
+
+    #[test]
+    fn first_offset_at_or_after_binary_search() {
+        use TopicId;
+
+        let dir = tempfile::tempdir().unwrap();
+        let db = fjall::Database::builder(dir.path())
+            .temporary(true)
+            .open()
+            .unwrap();
+        let ks = db
+            .keyspace("msgs", fjall::KeyspaceCreateOptions::default)
+            .unwrap();
+        let topic_id = TopicId::new(ts(0), UuidV7RandomBytes::new_random());
+        let p = Partition::new(0).unwrap();
+
+        // Empty partition returns 0
+        assert_eq!(
+            MsgRow::first_offset_at_or_after(&ks, topic_id, p, ts(5000)).unwrap(),
+            0
+        );
+
+        // Insert messages: offset 0 @ t=1000, 1 @ t=2000, 2 @ t=3000, 3 @ t=5000
+        insert_msg(&db, &ks, topic_id, p, 0, ts(1000));
+        insert_msg(&db, &ks, topic_id, p, 1, ts(2000));
+        insert_msg(&db, &ks, topic_id, p, 2, ts(3000));
+        insert_msg(&db, &ks, topic_id, p, 3, ts(5000));
+
+        // Before all -> offset 0
+        assert_eq!(
+            MsgRow::first_offset_at_or_after(&ks, topic_id, p, ts(0)).unwrap(),
+            0
+        );
+        assert_eq!(
+            MsgRow::first_offset_at_or_after(&ks, topic_id, p, ts(500)).unwrap(),
+            0
+        );
+
+        // Exact match on first -> offset 0
+        assert_eq!(
+            MsgRow::first_offset_at_or_after(&ks, topic_id, p, ts(1000)).unwrap(),
+            0
+        );
+
+        // Between t=1000 and t=2000 -> offset 1
+        assert_eq!(
+            MsgRow::first_offset_at_or_after(&ks, topic_id, p, ts(1500)).unwrap(),
+            1
+        );
+
+        // Exact match on middle-> offset 2
+        assert_eq!(
+            MsgRow::first_offset_at_or_after(&ks, topic_id, p, ts(3000)).unwrap(),
+            2
+        );
+
+        // Between t=3000 and t=5000 -> offset 3
+        assert_eq!(
+            MsgRow::first_offset_at_or_after(&ks, topic_id, p, ts(4000)).unwrap(),
+            3
+        );
+
+        // Exact match on last -> offset 3
+        assert_eq!(
+            MsgRow::first_offset_at_or_after(&ks, topic_id, p, ts(5000)).unwrap(),
+            3
+        );
+
+        // After all-> next_offset (4)
+        assert_eq!(
+            MsgRow::first_offset_at_or_after(&ks, topic_id, p, ts(9999)).unwrap(),
+            4
+        );
+    }
+
     #[test]
     fn test_consumer_group_from_key() {
-        use diom_id::TopicId;
+        use TopicId;
         let topic_id = TopicId::new(UnixTimestampMs::UNIX_EPOCH, UuidV7RandomBytes::new_random());
         let partition = Partition::new(0).unwrap();
         let cg = ConsumerGroup::try_from("my-group").unwrap();
@@ -442,7 +596,7 @@ mod tests {
     fn fetch_range_filters_expired_messages() {
         use std::collections::HashMap;
 
-        use diom_id::TopicId;
+        use TopicId;
         use fjall_utils::WriteBatchExt as _;
 
         let dir = tempfile::tempdir().unwrap();

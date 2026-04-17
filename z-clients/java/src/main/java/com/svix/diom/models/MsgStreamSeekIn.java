@@ -39,6 +39,7 @@ public class MsgStreamSeekIn {
     @JsonProperty private String namespace;
     @JsonProperty private Long offset;
     @JsonProperty private SeekPosition position;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant timestamp;
     public MsgStreamSeekIn() {}
 
     public MsgStreamSeekIn namespace(String namespace) {
@@ -96,5 +97,24 @@ public class MsgStreamSeekIn {
 
     public void setPosition(SeekPosition position) {
         this.position = position;
+    }
+
+    public MsgStreamSeekIn timestamp(Instant timestamp) {
+        this.timestamp = timestamp;
+        return this;
+    }
+
+    /**
+    * Get timestamp
+    *
+     * @return timestamp
+     */
+    @javax.annotation.Nullable
+    public Instant getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Instant timestamp) {
+        this.timestamp = timestamp;
     }
 }

@@ -16,6 +16,7 @@ use super::super::{MsgsRaftState, MsgsRequest, StreamSeekResponse};
 pub enum SeekTarget {
     Offset(Offset),
     Position(SeekPosition),
+    Timestamp(UnixTimestampMs),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
@@ -81,6 +82,12 @@ impl StreamSeekOperation {
                         MsgRow::next_offset(&state.msg_table, topic_row.id, partition)?
                     }
                     SeekTarget::Offset(o) => *o,
+                    SeekTarget::Timestamp(ts) => MsgRow::first_offset_at_or_after(
+                        &state.msg_table,
+                        topic_row.id,
+                        partition,
+                        *ts,
+                    )?,
                 };
 
                 let lease = StreamLeaseRow {

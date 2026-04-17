@@ -53,14 +53,17 @@ pub enum MsgsStreamCommands {
     },
     /// Repositions a consumer group's read cursor on a topic.
     ///
-    /// Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
-    /// partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
-    /// `"latest"` and may be used with or without a partition suffix.
+    /// Provide exactly one of `offset`, `position`, or `timestamp`. When using `offset`, the topic
+    /// must include a partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts
+    /// `"earliest"` or `"latest"` and may be used with or without a partition suffix. The `timestamp`
+    /// field accepts a Unix timestamp in milliseconds and seeks to the first message at or after that
+    /// time.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"offset\": 123,
-  \"position\": \"earliest\"
+  \"position\": \"earliest\",
+  \"timestamp\": 1234567890123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
