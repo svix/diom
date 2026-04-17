@@ -27,71 +27,37 @@ on:
         default: false
 
 jobs:
-  docker-build-release:
-    runs-on: ubuntu-24.04
+  extract-secrets:
+    # reusable workflows can't be invoked in an environment, so we need to run this step
+    # in the environment, extract the credentials, and then pass them in as inputs to the other
+    # job
+    runs-on: ubuntu-latest
     environment: release
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Derive Docker tags
-        id: docker_tags
-        run: |
-          VERSION="${{ inputs.version }}"
-          VERSION_BARE="${VERSION#v}"
-          IFS='.' read -r major minor patch <<< "$VERSION_BARE"
-          REPO="${{ inputs.image_repo }}"
-          TAGS="${REPO}:latest,${REPO}:v${major}.${minor}.${patch},${REPO}:v${major}.${minor},${REPO}:v${major}"
-          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
-          echo "latest_tag=${REPO}:latest" >> "$GITHUB_OUTPUT"
-          echo "Generated tags: ${TAGS}"
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        if: ${{ !inputs.dry_run }}
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build Docker image (scan only)
-        uses: docker/build-push-action@v6
-        with:
-          context: ${{ inputs.context }}
-          file: ${{ inputs.dockerfile }}
-          target: ${{ inputs.target }}
-          push: false
-          tags: ${{ steps.docker_tags.outputs.tags }}
-          platforms: linux/amd64
-          load: true
-
-      - name: Scan image with Grype
-        id: scan
-        uses: anchore/scan-action@v6
-        with:
-          image: "${{ steps.docker_tags.outputs.latest_tag }}"
-          fail-build: true
-          severity-cutoff: high
-          only-fixed: true
-          output-file: grype.sarif
-
-      - name: Inspect SARIF report
-        if: ${{ !cancelled() && hashFiles('grype.sarif') != '' }}
-        run: cat ${{ steps.scan.outputs.sarif }}
-
-      - name: Build and push Docker image
-        if: ${{ !inputs.dry_run }}
-        uses: docker/build-push-action@v6
-        with:
-          context: ${{ inputs.context }}
-          file: ${{ inputs.dockerfile }}
-          target: ${{ inputs.target }}
-          push: true
-          tags: ${{ steps.docker_tags.outputs.tags }}
-          platforms: linux/amd64,linux/arm64
+      - run: echo "no-op"
+    outputs:
+      docker-username: ${{ secrets.DOCKERHUB_USERNAME }}
+      docker-password: ${{ secrets.DOCKERHUB_TOKEN }}
+  build:
+    needs: [extract-secrets]
+    uses: docker/github-builder/.github/workflows/build.yml@v1
+    permissions:
+      contents: read # to fetch the repository content
+      id-token: write # for signing attestation(s) with GitHub OIDC Token
+    with:
+      output: image
+      file: ${{ inputs.dockerfile }}
+      context: ${{ inputs.context }}
+      target: ${{ inputs.target }}
+      push: ${{ inputs.dry_run != true }}
+      platforms: linux/amd64,linux/arm64
+      meta-images: ${{ inputs.image_repo }}
+      meta-tags: |
+        type=ref,event=tag
+        type=semver,pattern={{version}},value=${{inputs.version}}
+        type=semver,pattern={{major}},value=${{inputs.version}}
+    secrets:
+      registry-auths: |
+        - registry: docker.io
+          username: ${{ needs.extract-secrets.outputs.docker-username }}
+          username: ${{ needs.extract-secrets.outputs.docker-password }}
