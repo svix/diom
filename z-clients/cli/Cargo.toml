@@ -10,6 +10,7 @@ homepage = "https://diom.com"
 
 [package.metadata.dist]
 dist = true
+npm-package = "diom-cli"
 
 [package.metadata.dist.wix]
 upgrade-guid = "4851F30C-9296-4304-9AD5-93A5E64CA1A8"
