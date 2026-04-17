@@ -123,4 +123,4 @@ EXPOSE 8625/tcp
 
 COPY --chown=root:root --chmod=755 --from=build-server /app/target/release/diom-server /usr/local/bin/diom-server
 
-CMD ["/usr/local/bin/diom-server"]
+ENTRYPOINT ["/usr/local/bin/diom-server"]
