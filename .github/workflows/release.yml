@@ -282,7 +282,8 @@ jobs:
           # If we're editing a release in place, we need to upload things ahead of time
           gh release upload "${{ needs.plan.outputs.tag }}" artifacts/*
 
-          gh release edit "${{ needs.plan.outputs.tag }}" --target "$RELEASE_COMMIT" "$PRERELEASE_FLAG" --draft=false
+          # shellcheck disable=SC2086
+          gh release edit "${{ needs.plan.outputs.tag }}" --target "$RELEASE_COMMIT" $PRERELEASE_FLAG --draft=false
 
   publish-homebrew-formula:
     # figure out if we can set this w/o `allow-dirty = ["ci"]` in dist-workspace.toml
