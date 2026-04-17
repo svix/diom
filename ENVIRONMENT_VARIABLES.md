@@ -11,12 +11,12 @@ The diom server accepts the following environment variables:
 | `$DIOM_CLUSTER_AUTO_INITIALIZE` | Automatically initialize the cluster on bootup if we can't discover any peers and we don't have any existing state.<br/><br/>If you initialize all peers at exactly the same time, this can potentially cause errors. |
 | `$DIOM_CLUSTER_CONNECTION_TIMEOUT_MS` | Timeout for new connections.<br/><br/>If you want to be tolerant of dropped packets, this should be set to at least TO + ε, where TO is the initial TCP retransmission timer (typically either 1s or 3s, depending on your operating system). |
 | `$DIOM_CLUSTER_DISCOVERY_REQUEST_TIMEOUT_MS` | Timeout for discovery requests.<br/><br/>This should be set to approximately 2X the RTT of your farthest-apart nodes. |
-| `$DIOM_CLUSTER_DISCOVERY_TIMEOUT_MS` |  |
+| `$DIOM_CLUSTER_DISCOVERY_TIMEOUT_MS` | Timeout for the entire discovery process |
 | `$DIOM_CLUSTER_ELECTION_TIMEOUT_MAX_MS` | The minimum time to let an election run for.<br/><br/>This should be set to at least 5x the RTT of your farthest-apart nodes and must not be less than `cluster_election_timeout_max`. |
 | `$DIOM_CLUSTER_ELECTION_TIMEOUT_MIN_MS` | The minimum time to let an election run for.<br/><br/>This should be set to at least 4x the RTT of your farthest-apart nodes, and must not be less than `heartbeat_interval_ms`. |
 | `$DIOM_CLUSTER_HEARTBEAT_INTERVAL_MS` | How often to send heartbeats.<br/><br/>This controls how fast lost leaders can be detected. Must not be less than `replication_request_timeout`. |
 | `$DIOM_CLUSTER_LISTEN_ADDRESS` | The address to listen on for replication. |
-| `$DIOM_CLUSTER_LOG_INDEX_INTERVAL_MS` |  |
+| `$DIOM_CLUSTER_LOG_INDEX_INTERVAL_MS` | How often to write log indexes<br/><br/>This controls the granularity for purging of old logs, and should not be set to a value smaller than 1 second or larger than one hour |
 | `$DIOM_CLUSTER_LOG_PATH` | Location to store logs. For high-throughput systems, this should be a separate volume.<br/><br/>Defaults to a subdirectory under the persistent DB path if not passed. |
 | `$DIOM_CLUSTER_LOG_SYNC_INTERVAL_AUTO` | Automatically attempt to determine the log sync interval from observed fsync timings |
 | `$DIOM_CLUSTER_LOG_SYNC_INTERVAL_COMMITS` | Interval (in transactions) between fsyncing the commit log.<br/><br/>This can be used to force transactions to fsync logs more often than the default `log_sync_interval_ms` timer. If `log_sync_mode` is set to "buffer", it's reasonable to set this value to `1` to flush to the OS buffer on every log.<br/><br/>If this is set to 0, only the interval timer will be used<br/><br/>If this is set to a value higher than 1 and the interval timer is long, then single-threaded clients (including bootstrap) will be extremely slow. |
@@ -31,7 +31,6 @@ The diom server accepts the following environment variables:
 | `$DIOM_CLUSTER_SNAPSHOT_AFTER_TIME_MS` | Trigger a background snapshot after this many milliseconds |
 | `$DIOM_CLUSTER_SNAPSHOT_AFTER_WRITES` | Trigger a background snapshot after this many writes |
 | `$DIOM_CLUSTER_SNAPSHOT_PATH` | Location to store snapshots.<br/><br/>This volume must have at least as much space as the persistent DB path and ephemeral DB path combined. Defaults to a subdirectory under the persistent DB path if not passed. |
-| `$DIOM_CLUSTER_STARTUP_DISCOVERY_DELAY_MS` |  |
 | `$DIOM_ENVIRONMENT` | The environment (dev, staging, or prod) that the server is running in. |
 | `$DIOM_EPHEMERAL_DB_CACHE_SIZE` | Amount of memory to reserve for the database layer's caches for this database type.<br/><br/>Can be specified as a bare value of bytes (e.g., 1024000), a unit-ed amount (e.g., 1024MiB), or a percentage (e.g., 20%), which will be applied against the current cgroup limit if present and the total system memory otherwise |
 | `$DIOM_EPHEMERAL_DB_FILENAME` | Filename under the directory specified in `path`. |
@@ -47,7 +46,7 @@ The diom server accepts the following environment variables:
 | `$DIOM_LOG_LEVEL` | The log level to run the service with. Supported: info, debug, trace |
 | `$DIOM_OPENTELEMETRY_ADDRESS` | The OpenTelemetry address to send events to if given.<br/><br/>Currently only GRPC exports are supported. |
 | `$DIOM_OPENTELEMETRY_METRICS_ADDRESS` | The OpenTelemetry address to send metrics to if given.<br/><br/>If not specified, the server will attempt to fall back to `opentelemetry_address`. |
-| `$DIOM_OPENTELEMETRY_METRICS_PERIOD_MS` |  |
+| `$DIOM_OPENTELEMETRY_METRICS_PERIOD_MS` | How often to send metrics to opentelemetry receivers |
 | `$DIOM_OPENTELEMETRY_METRICS_PROTOCOL` | OpenTelemetry metrics protocol<br/><br/>By default, metrics are sent via GRPC. Some metrics destinations, most notably Prometheus, only support receiving metrics via HTTP. |
 | `$DIOM_OPENTELEMETRY_SAMPLE_RATIO` | The ratio at which to sample spans when sending to OpenTelemetry.<br/><br/>When not given it defaults to always sending. If the OpenTelemetry address is not set, this will do nothing. |
 | `$DIOM_OPENTELEMETRY_SERVICE_NAME` | The service name to use for OpenTelemetry. If not provided, it defaults to "diom". |

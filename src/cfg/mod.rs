@@ -315,22 +315,33 @@ pub struct ClusterConfiguration {
     #[serde(default = "defaults::cluster_auto_initialize")]
     pub auto_initialize: bool,
 
+    /// Timeout for the entire discovery process
     #[serde(
         rename = "discovery_timeout_ms",
         default = "defaults::cluster_discovery_timeout"
     )]
     pub discovery_timeout: DurationMs,
 
+    /// How long to wait on startup before initiating discovery.
+    ///
+    /// This should only be configured if you're actively working on the discovery subsystem.
+    #[env_overridable(skip)]
+    #[dumpable_config(skip)]
     #[serde(
         rename = "startup_discovery_delay_ms",
         default = "defaults::cluster_startup_discovery_delay"
     )]
     pub startup_discovery_delay: DurationMs,
 
+    /// How often to write log indexes
+    ///
+    /// This controls the granularity for purging of old logs, and should not be set to a value
+    /// smaller than 1 second or larger than one hour
     #[serde(
         rename = "log_index_interval_ms",
         default = "defaults::log_index_interval"
     )]
+    #[validate(range(min = 1000, max = 3600000))]
     pub log_index_interval: DurationMs,
 
     /// Interval (in transactions) between fsyncing the commit log.
@@ -463,6 +474,7 @@ pub struct OpenTelemetryConfig {
     #[serde(default)]
     pub metrics_protocol: OpenTelemetryProtocol,
 
+    /// How often to send metrics to opentelemetry receivers
     #[serde(
         rename = "metrics_period_ms",
         default = "defaults::opentelemetry_metrics_period"

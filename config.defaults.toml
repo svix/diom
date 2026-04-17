@@ -74,6 +74,7 @@ connection_timeout_ms = 3100
 # This should be set to approximately 2X the RTT of your farthest-apart nodes.
 discovery_request_timeout_ms = 10000
 
+# Timeout for the entire discovery process
 discovery_timeout_ms = 30000
 
 # The minimum time to let an election run for.
@@ -97,6 +98,10 @@ heartbeat_interval_ms = 500
 # The address to listen on for replication.
 listen_address = "[::]:8625"
 
+# How often to write log indexes
+#
+# This controls the granularity for purging of old logs, and should not be set to a value
+# smaller than 1 second or larger than one hour
 log_index_interval_ms = 600000
 
 # Location to store logs. For high-throughput systems, this should be a separate volume.
@@ -178,8 +183,6 @@ snapshot_after_ms = 900000
 # persistent DB path if not passed.
 # snapshot_path =
 
-startup_discovery_delay_ms = 10
-
 # Storage configuration for the ephemeral database, which is used by rate-limiting and some
 # other modules, and can be placed on less-durable storage, such as local instance storage
 [ephemeral_db]
@@ -237,6 +240,7 @@ path = "./db"
 # to `opentelemetry_address`.
 # metrics_address =
 
+# How often to send metrics to opentelemetry receivers
 metrics_period_ms = 10000
 
 # OpenTelemetry metrics protocol
