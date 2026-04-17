@@ -37,7 +37,6 @@ POST_BUMP_COMMANDS = [
     "cd z-clients/python/ && uv sync",
     # Rust
     "cargo check",
-    "just codegen",
 ]
 
 VERSION_FILES = [
@@ -86,6 +85,10 @@ VERSION_FILES = [
     VersionFile(
         "z-clients/go/client.go",
         [r'("diom-sdks/)([^/]*)(\/go")'],
+    ),
+    VersionFile(
+        "openapi.json",
+        [r'("info"[\s\S]*?"version"\s*:\s*")([^"]*)(")', ],
     ),
 ]
 
