@@ -11,16 +11,19 @@ use crate::{
 
 pub(crate) struct Context {
     pub client: Client,
+    pub requeue_interval: Duration,
 }
 
 struct Reconciler {
     ctx: ClusterCtx,
+    requeue_interval: Duration,
 }
 
 impl Reconciler {
-    fn new(cluster: Arc<DiomCluster>, client: Client) -> Result<Self> {
+    fn new(cluster: Arc<DiomCluster>, client: Client, requeue_interval: Duration) -> Result<Self> {
         Ok(Self {
             ctx: ClusterCtx::new(cluster, client)?,
+            requeue_interval,
         })
     }
 
@@ -32,7 +35,7 @@ impl Reconciler {
 
         self.update_status().await?;
         tracing::info!(name = %self.ctx.name, ns = %self.ctx.ns, "Reconcile complete");
-        Ok(Action::requeue(Duration::from_secs(60)))
+        Ok(Action::requeue(self.requeue_interval))
     }
 
     async fn update_status(&self) -> Result<()> {
@@ -92,7 +95,7 @@ pub(crate) async fn reconcile(cluster: Arc<DiomCluster>, ctx: Arc<Context>) -> R
         return Ok(Action::await_change());
     }
 
-    let r = Reconciler::new(cluster, ctx.client.clone())?;
+    let r = Reconciler::new(cluster, ctx.client.clone(), ctx.requeue_interval)?;
     tracing::info!(name = %r.ctx.name, ns = %r.ctx.ns, "Reconciling DiomCluster");
     r.run().await
 }

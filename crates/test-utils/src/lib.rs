@@ -2,7 +2,8 @@ use std::fmt::{Debug, Display};
 
 pub use reqwest::StatusCode;
 
-mod json;
+pub mod json;
+pub mod retry;
 pub mod server;
 mod test_client;
 mod time;
