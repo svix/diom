@@ -36,7 +36,7 @@ POST_BUMP_COMMANDS = [
     # Python
     "cd z-clients/python/ && uv sync",
     # Rust
-    "cargo check",
+    "cargo update --workspace",
 ]
 
 VERSION_FILES = [
