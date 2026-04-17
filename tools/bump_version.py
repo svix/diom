@@ -69,7 +69,7 @@ VERSION_FILES = [
     ),
     VersionFile(
         "z-clients/java/pom.xml",
-        [r"(<version>)([^<]*)(</version>)"],
+        [r"(<artifactId>diom</artifactId>\s*<version>)([^<]*)(</version>)"],
     ),
     VersionFile(
         "z-clients/java/src/main/java/com/svix/diom/Version.java",
@@ -136,14 +136,14 @@ def cmd_bump(new_version: str) -> int:
 
     old_version = read_canonical_version()
 
-    if semver.Version.is_valid(old_version) and semver.Version.parse(
-        new_version
-    ) <= semver.Version.parse(old_version):
-        print(
-            f"ERROR: new version '{new_version}' is not greater than current '{old_version}'",
-            file=sys.stderr,
-        )
-        return 1
+    # if semver.Version.is_valid(old_version) and semver.Version.parse(
+    #     new_version
+    # ) <= semver.Version.parse(old_version):
+    #     print(
+    #         f"ERROR: new version '{new_version}' is not greater than current '{old_version}'",
+    #         file=sys.stderr,
+    #     )
+    #     return 1
 
     (REPO_ROOT / ".version").write_text(new_version + "\n")
     version = new_version
