@@ -118,6 +118,7 @@ resolver = "2"
 license = "MIT"
 version = "0.1.0"
 rust-version = "1.91"
+repository = "https://github.com/svix/diom"
 
 [workspace.dependencies]
 addr = "0.15"
@@ -295,3 +296,8 @@ inherits = "release"
 debug = true
 opt-level = 3
 strip = false
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

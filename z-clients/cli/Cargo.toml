@@ -3,7 +3,17 @@ name = "diom-cli"
 license.workspace = true
 version.workspace = true
 rust-version.workspace = true
+repository.workspace = true
 edition = "2024"
+description = "CLI for Diom"
+homepage = "https://diom.com"
+
+[package.metadata.dist]
+dist = true
+
+[package.metadata.dist.wix]
+upgrade-guid = "4851F30C-9296-4304-9AD5-93A5E64CA1A8"
+path-guid = "638CF75E-C776-4550-9F17-DA577552CFF7"
 
 [package.metadata.cargo-machete]
 ignored = [
