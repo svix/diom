@@ -133,19 +133,17 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
             quote! {
                 self.#field.dump_fields(writer, prefix)?;
             }
+        } else if is_optional {
+            quote! {
+                crate::cfg::dumpable_config::dump_optional_field(
+                    #name,
+                    self.#field.as_ref(),
+                    writer,
+                )?;
+            }
         } else {
-            if is_optional {
-                quote! {
-                    crate::cfg::dumpable_config::dump_optional_field(
-                        #name,
-                        self.#field.as_ref(),
-                        writer,
-                    )?;
-                }
-            } else {
-                quote! {
-                    crate::cfg::dumpable_config::dump_field(#name, &self.#field, writer)?;
-                }
+            quote! {
+                crate::cfg::dumpable_config::dump_field(#name, &self.#field, writer)?;
             }
         };
 
