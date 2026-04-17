@@ -10,3 +10,5 @@ __pycache__/
 
 # vacuum HTML report
 /report.html
+
+node_modules
