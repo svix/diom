@@ -8,7 +8,7 @@ cargo-dist-version = "0.31.0"
 # CI backends to support
 ci = "github"
 # The installers to generate for each app
-installers = ["shell", "powershell", "homebrew"]
+installers = ["shell", "powershell", "npm", "homebrew"]
 # Target platforms to build apps for (Rust target-triple syntax)
 targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
 # Whether dist should create a Github Release or use an existing draft
@@ -22,8 +22,10 @@ dispatch-releases = true
 # A GitHub repo to push Homebrew formulas to
 tap = "svix/homebrew-diom"
 # Publish jobs to run in CI
-publish-jobs = ["homebrew"]
+publish-jobs = ["homebrew", "npm"]
 # Skip checking whether the specified configuration files are up to date
 allow-dirty = ["ci"]
 # Don't build the entire workspace, only the CLI package.
 precise-builds = true
+# A namespace to use when publishing this package to the npm registry
+npm-scope = "@diomhq"

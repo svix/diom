@@ -104,6 +104,21 @@ Diom ships with client libraries for a variety of languages, as well as a CLI na
 
 </table>
 
+## Trying out the CLI
+
+The Diom CLI is published on npm as [`@diomhq/diom-cli`](https://www.npmjs.com/package/@diomhq/diom-cli). You can run it directly with `npx` without installing anything:
+
+```sh
+npx @diomhq/diom-cli --help
+```
+
+Or install it globally:
+
+```sh
+npm install -g @diomhq/diom-cli
+diom --help
+```
+
 ## Running the server
 
 Diom is designed to be run on a cluster of machines with stable network identities (e.g., a Kubernetes StatefulSet). It's recommended to run it as a three-node cluster for high-availability and easy operations, but it can also run as a single-node.
