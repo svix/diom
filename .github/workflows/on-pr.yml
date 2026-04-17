@@ -120,6 +120,8 @@ jobs:
       - javascript
       - python
       - main-docker-test-build
+      - main-docker-cli-test-build
+      - operator-docker-test-build
     # Always run so that this job is a stable required status check: if an
     # upstream job is skipped (e.g. due to path filters added in the future)
     # that is fine; we only fail if something actually failed or was cancelled.
