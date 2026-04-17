@@ -4096,7 +4096,7 @@
           "Msgs"
         ],
         "summary": "Stream Seek",
-        "description": "Repositions a consumer group's read cursor on a topic.\n\nProvide exactly one of `offset` or `position`. When using `offset`, the topic must include a\npartition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `\"earliest\"` or\n`\"latest\"` and may be used with or without a partition suffix.",
+        "description": "Repositions a consumer group's read cursor on a topic.\n\nProvide exactly one of `offset`, `position`, or `timestamp`. When using `offset`, the topic\nmust include a partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts\n`\"earliest\"` or `\"latest\"` and may be used with or without a partition suffix. The `timestamp`\nfield accepts a Unix timestamp in milliseconds and seeks to the first message at or after that\ntime.",
         "operationId": "v1.msgs.stream.seek",
         "requestBody": {
           "content": {
@@ -7541,6 +7541,13 @@
           },
           "position": {
             "$ref": "#/components/schemas/SeekPosition",
+            "nullable": true
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           }
         },

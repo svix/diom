@@ -8,6 +8,7 @@ export interface MsgStreamSeekIn {
     namespace?: string | null;
     offset?: number | null;
     position?: SeekPosition | null;
+    timestamp?: Date | null;
 }
 
 export interface MsgStreamSeekIn_ {
@@ -16,6 +17,7 @@ export interface MsgStreamSeekIn_ {
     consumerGroup: string;
     offset?: number | null;
     position?: SeekPosition | null;
+    timestamp?: Date | null;
 }
 
 export const MsgStreamSeekInSerializer = {
@@ -27,6 +29,7 @@ export const MsgStreamSeekInSerializer = {
             consumerGroup: object['consumer_group'],
             offset: object['offset'],
             position: object['position'] != null ? SeekPositionSerializer._fromJsonObject(object['position']): undefined,
+            timestamp: object['timestamp'] ? new Date(Number(object['timestamp'])) : null,
         };
     },
 
@@ -38,6 +41,7 @@ export const MsgStreamSeekInSerializer = {
             'consumer_group': self.consumerGroup,
             'offset': self.offset,
             'position': self.position != null ? SeekPositionSerializer._toJsonObject(self.position) : undefined,
+            'timestamp': self.timestamp != null ? self.timestamp.getTime() : undefined,
         };
     }
 }

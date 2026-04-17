@@ -36,19 +36,22 @@ public class MsgStreamSeekIn_ {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty private Long offset;
     @JsonProperty private SeekPosition position;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant timestamp;
 
     public MsgStreamSeekIn_(
         String namespace,
         String topic,
         String consumerGroup,
         Long offset,
-        SeekPosition position
+        SeekPosition position,
+        Instant timestamp
     ) {
         this.namespace = namespace;
         this.topic = topic;
         this.consumerGroup = consumerGroup;
         this.offset = offset;
         this.position = position;
+        this.timestamp = timestamp;
     }
 
     /**

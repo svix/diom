@@ -1,6 +1,7 @@
 # this file is @generated
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 from .seek_position import SeekPosition
 
@@ -11,6 +12,8 @@ class MsgStreamSeekIn(BaseModel):
     offset: int | None = None
 
     position: SeekPosition | None = None
+
+    timestamp: UnixTimestampMs | None = None
 
 
 class _MsgStreamSeekIn(BaseModel):
@@ -23,3 +26,5 @@ class _MsgStreamSeekIn(BaseModel):
     offset: int | None = None
 
     position: SeekPosition | None = None
+
+    timestamp: UnixTimestampMs | None = None

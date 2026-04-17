@@ -13,6 +13,12 @@ pub struct MsgStreamSeekIn {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub position: Option<SeekPosition>,
+
+    #[serde(
+        with = "crate::unix_timestamp_ms_serde::optional",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub timestamp: Option<jiff::Timestamp>,
 }
 
 impl MsgStreamSeekIn {
@@ -21,6 +27,7 @@ impl MsgStreamSeekIn {
             namespace: None,
             offset: None,
             position: None,
+            timestamp: None,
         }
     }
 
@@ -36,6 +43,11 @@ impl MsgStreamSeekIn {
 
     pub fn with_position(mut self, value: impl Into<Option<SeekPosition>>) -> Self {
         self.position = value.into();
+        self
+    }
+
+    pub fn with_timestamp(mut self, value: impl Into<Option<jiff::Timestamp>>) -> Self {
+        self.timestamp = value.into();
         self
     }
 }
@@ -54,4 +66,10 @@ pub(crate) struct MsgStreamSeekIn_ {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub position: Option<SeekPosition>,
+
+    #[serde(
+        with = "crate::unix_timestamp_ms_serde::optional",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub timestamp: Option<jiff::Timestamp>,
 }
