@@ -1,6 +1,6 @@
 package diom
 
-import diom_types "github.com/svix/diom/z-clients/go/internal/types"
+import diom_types "diom.com/go/diom/internal/types"
 
 type (
 	DurationMs = diom_types.DurationMs

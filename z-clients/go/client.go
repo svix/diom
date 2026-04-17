@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	diom_proto "github.com/svix/diom/z-clients/go/internal/proto"
+	diom_proto "diom.com/go/diom/internal/proto"
 )
 
 type DiomOptions struct {

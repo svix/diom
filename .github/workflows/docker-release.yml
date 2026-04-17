@@ -2,6 +2,11 @@ name: Docker Release
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Dry run (skip pushes)
+        type: boolean
+        default: false
   workflow_run:
     workflows:
       - Mega Releaser
@@ -23,6 +28,13 @@ jobs:
         id: version
         run: echo "version=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
 
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "=== DRY RUN ==="
+          echo "Would release Docker images for version: ${{ steps.version.outputs.version }}"
+          echo "Would push Docker images: svix/diom-server:${{ steps.version.outputs.version }}, svix/diom-cli:${{ steps.version.outputs.version }}"
+
   docker-server:
     name: release docker - server
     needs: get-version
@@ -30,6 +42,7 @@ jobs:
     with:
       image_repo: svix/diom-server
       version: ${{ needs.get-version.outputs.version }}
+      dry_run: ${{ inputs.dry_run || false }}
     secrets: inherit
 
   docker-cli:
@@ -40,4 +53,5 @@ jobs:
       image_repo: svix/diom-cli
       version: ${{ needs.get-version.outputs.version }}
       target: cli-prod
+      dry_run: ${{ inputs.dry_run || false }}
     secrets: inherit

@@ -1,4 +1,4 @@
-module github.com/svix/diom/z-clients/go
+module diom.com/go/diom
 
 go 1.20
 

@@ -5,8 +5,8 @@ package diom_apis
 import (
 	"context"
 
-	diom_models "github.com/svix/diom/z-clients/go/internal/models"
-	diom_proto "github.com/svix/diom/z-clients/go/internal/proto"
+	diom_models "diom.com/go/diom/internal/models"
+	diom_proto "diom.com/go/diom/internal/proto"
 )
 
 type MsgsQueue struct {

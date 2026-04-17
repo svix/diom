@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	diom "github.com/svix/diom/z-clients/go"
+	diom "diom.com/go/diom"
 )
 
 func newClient(t *testing.T) *diom.Diom {
