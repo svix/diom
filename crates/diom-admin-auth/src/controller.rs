@@ -6,7 +6,7 @@ use diom_error::Result;
 use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
 use serde::{Deserialize, Serialize};
 
-use crate::tables::{AccessPolicyKey, AccessPolicyRow, RoleKey, RoleRow};
+use crate::storage::{AccessPolicyKey, AccessPolicyRow, RoleKey, RoleRow};
 
 // ── Role model ───────────────────────────────────────────────────────────────
 

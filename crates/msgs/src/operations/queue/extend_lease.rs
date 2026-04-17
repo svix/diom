@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, TopicName},
-    tables::{QueueLeaseKey, QueueLeaseRow, TopicKey, TopicRow},
+    storage::{QueueLeaseKey, QueueLeaseRow, TopicKey, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueExtendLeaseResponse};

@@ -10,7 +10,7 @@ use fjall_utils::TableRow;
 use crate::{
     RATE_LIMIT_KEYSPACE,
     algorithms::TokenBucket,
-    tables::{TokenBucketKey, TokenBucketRow},
+    storage::{TokenBucketKey, TokenBucketRow},
 };
 
 #[derive(Clone)]

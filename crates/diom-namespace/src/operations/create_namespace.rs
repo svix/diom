@@ -9,7 +9,7 @@ use tracing::Span;
 use crate::{
     State,
     entities::{ModuleConfig, NamespaceName},
-    tables::{Namespace, NamespaceKey},
+    storage::{Namespace, NamespaceKey},
 };
 
 #[derive(Deserialize, Serialize)]

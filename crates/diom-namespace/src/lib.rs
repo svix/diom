@@ -8,9 +8,9 @@ use crate::entities::{ModuleConfig, NamespaceName};
 
 pub mod entities;
 pub mod operations;
-mod tables;
+mod storage;
 
-pub use self::tables::Namespace;
+pub use self::storage::Namespace;
 
 pub static DEFAULT_NAMESPACE_NAME: LazyLock<NamespaceName> =
     LazyLock::new(|| NamespaceName("default".to_owned()));

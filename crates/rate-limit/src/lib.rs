@@ -1,7 +1,7 @@
 pub mod algorithms;
 pub mod controller;
 pub mod operations;
-pub mod tables;
+pub mod storage;
 
 use std::time::Duration;
 
