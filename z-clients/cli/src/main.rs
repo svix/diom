@@ -31,8 +31,13 @@ mod utils;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const BIN_NAME: &str = env!("CARGO_BIN_NAME");
 
+/// CLI for interacting with the Diom components platform
+///
+/// In addition to these arguments, the CLI will automatically load
+/// configuration from the `diom-cli-config.toml` file under your
+/// system's configuration directory (e.g., `~/.config` on Unix).
 #[derive(Parser)]
-#[command(version, about, long_about = None, bin_name = BIN_NAME)]
+#[command(version, bin_name = BIN_NAME)]
 #[clap(color = concolor_clap::color_choice())]
 struct Cli {
     #[command(flatten)]
@@ -47,7 +52,8 @@ struct Cli {
     #[arg(
         short,
         long,
-        help = format!("Base url for server. Overrides any config file. If not passed, {DEFAULT_URL} is used"),
+        default_value = DEFAULT_URL,
+        help = format!("Base url for server. Overrides any config file."),
         env = "DIOM_SERVER_URL"
     )]
     server_url: Option<String>,
@@ -75,11 +81,17 @@ impl Cli {
 // N.b Ordering matters here for how clap presents the help.
 #[derive(Subcommand)]
 enum RootCommands {
+    /// Set, get, and delete cache keys, as well as managing cache namespaces
     Cache(CacheArgs),
+    /// Start, complete, and abort idempotent requests, as well as managing idempotency namespaces
     Idempotency(IdempotencyArgs),
+    /// Set, get, and delete KV keys, as well as managing KV namespaces
     Kv(KvArgs),
+    /// Interact with streams and queues, as well as managing message-broker namespaces
     Msgs(MsgsArgs),
+    /// Inspect and control rate limiters, as well as managing rate-limiter namespaces
     RateLimit(RateLimitArgs),
+    /// Helpers for healthchecking the Diom server
     Health(HealthArgs),
     /// Send administrative commands.
     Admin(AdminArgs),
@@ -95,9 +107,7 @@ enum RootCommands {
     /// Get the version of the Diom CLI
     Version,
     /// Generate the autocompletion script for the specified shell
-    Completion {
-        shell: Shell,
-    },
+    Completion { shell: Shell },
 }
 
 #[tokio::main]
@@ -116,7 +126,7 @@ async fn main() -> Result<()> {
         .init();
 
     // rustls requires a crypto backend ("provider") choice to be made explicitly
-    // The Svix SDK uses the default provider if a default is not installed, but
+    // The Diom SDK uses the default provider if a default is not installed, but
     // we use reqwest directly in some code paths, which does not do this.
     _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
 
