@@ -108,7 +108,7 @@ Diom ships with client libraries for a variety of languages, as well as a CLI na
 
 Diom is designed to be run on a cluster of machines with stable network identities (e.g., a Kubernetes StatefulSet). It's recommended to run it as a three-node cluster for high-availability and easy operations, but it can also run as a single-node.
 
-The `diom-server` binary is configured through a TOML file which can be passed with the `--config-path` command line option. Settings can also be overridden by setting environment variables.
+The `diom-server` binary is configured through a TOML file which can be passed with the `--config-path` command line option. Settings can also be overridden by setting environment variables; for more information, see [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)
 
 ## Server configuration
 

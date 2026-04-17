@@ -130,6 +130,8 @@ jobs:
         run: cargo codegen
       - name: Regerate config.defaults.toml
         run: cargo run -- write-config config.defaults.toml
+      - name: Regerate ENVIRONMENT_VARIABLES.md
+        run: cargo run -- describe-environment-variables ENVIRONMENT_VARIABLES.md
       - name: Check for uncommitted changes
         run: |
           gs=$(git status -s)
