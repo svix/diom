@@ -25,3 +25,5 @@ tap = "svix/homebrew-diom"
 publish-jobs = ["homebrew"]
 # Skip checking whether the specified configuration files are up to date
 allow-dirty = ["ci"]
+# Don't build the entire workspace, only the CLI package.
+precise-builds = true
