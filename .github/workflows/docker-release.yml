@@ -16,6 +16,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  packages: write
 
 jobs:
   get-version:
@@ -39,23 +40,27 @@ jobs:
           echo "Would release Docker images for version: ${{ steps.version.outputs.version }}"
           echo "Would push Docker images: svix/diom-server:${{ steps.version.outputs.version }}, svix/diom-cli:${{ steps.version.outputs.version }}"
 
-  release:
-    needs: [get-version]
-    runs-on: ubuntu-24.04
-    environment: release
-    strategy:
-      matrix:
-        package:
-          - {label: "server", repo: svix/diom-server, target: prod}
-          - {label: "cli", repo: svix/diom-cli, target: cliprod}
-    steps:
-      - uses: actions/checkout@v6
-      - name: "build and deploy ${{ matrix.package.label }}"
-        uses: ./.github/actions/docker-build-release
-        with:
-          image_repo: ${{ matrix.package.repo }}
-          target: ${{ matrix.package.target }}
-          version: ${{ needs.get-version.outputs.version }}
-          dry_run: ${{ inputs.dry_run || false }}
-          docker-username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker-password: ${{ secrets.DOCKERHUB_TOKEN }}
+  docker-server:
+    name: release docker - server
+    needs: get-version
+    uses: ./.github/workflows/docker-build-release.yml
+    with:
+      image_repo: svix/diom-server
+      staging_image_repo: ghcr.io/svix/diom-server-staging
+      version: ${{ needs.get-version.outputs.version }}
+      dry_run: ${{ inputs.dry_run || false }}
+      cache-scope: docker-release-server
+    secrets: inherit
+
+  docker-cli:
+    name: release docker - cli
+    needs: get-version
+    uses: ./.github/workflows/docker-build-release.yml
+    with:
+      image_repo: svix/diom-cli
+      staging_image_repo: ghcr.io/svix/diom-cli-staging
+      version: ${{ needs.get-version.outputs.version }}
+      target: cli-prod
+      dry_run: ${{ inputs.dry_run || false }}
+      cache-scope: docker-release-cli
+    secrets: inherit

@@ -1,0 +1,98 @@
+name: Docker Build Release
+
+on:
+  workflow_call:
+    inputs:
+      image_repo:
+        required: true
+        type: string
+      staging_image_repo:
+        description: "Repo to write staging artifacts. Must be under ghcr.io/"
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      dockerfile:
+        required: false
+        type: string
+        default: ./Dockerfile
+      target:
+        required: false
+        type: string
+        default: prod
+      context:
+        required: false
+        type: string
+        default: .
+      dry_run:
+        required: false
+        type: boolean
+        default: false
+      cache-scope:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+jobs:
+  build:
+    uses: docker/github-builder/.github/workflows/build.yml@v1
+    permissions:
+      contents: read # to fetch the repository content
+      id-token: write # for signing attestation(s) with GitHub OIDC Token
+      packages: write # for pushing to GHCR
+    with:
+      output: image
+      file: ${{ inputs.dockerfile }}
+      context: ${{ inputs.context }}
+      target: ${{ inputs.target }}
+      push: ${{ inputs.dry_run != true }}
+      platforms: linux/amd64,linux/arm64
+      meta-images: ${{ inputs.staging_image_repo }}
+      cache: true
+      cache-scope: ${{ inputs.cache-scope }}
+      cache-mode: max
+      flavor: |
+        latest=true
+      meta-tags: |
+        type=ref,event=tag
+        type=semver,pattern={{version}},value=${{inputs.version}}
+        type=semver,pattern={{major}},value=${{inputs.version}}
+    secrets:
+      registry-auths: |
+        - registry: ghcr.io
+          username: ${{ github.actor }}
+          username: ${{ secrets.GITHUB_TOKEN }}
+  release:
+    environment: release
+    needs: [build]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install regctl
+        uses: iarekylew00t/regctl-installer@v4
+      - name: Recompute meta tags
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ inputs.staging_image_repo }}
+          sep-tags: " "
+          flavor: |
+            latest=true
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}},value=${{inputs.version}}
+            type=semver,pattern={{major}},value=${{inputs.version}}
+      - name: "Copy images"
+        run: |
+          for source in ${{ steps.meta.outputs.tags }}; do
+            # TODO: do this better
+            dest="$(echo tag | sed -e 's,${{ inputs.staging_image_repo }},${{ inputs.image_repo }}'),"
+            echo "Copying $source to $dest"
+            regctl image copy "$source" "$dest"
+          done
