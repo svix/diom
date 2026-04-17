@@ -89,8 +89,20 @@ RUN <<EOF
     chown -R appuser: /home/appuser
 EOF
 
+# CLI Production
+FROM base AS cli-prod
+
+USER appuser
+WORKDIR /home/appuser
+
+COPY --chown=root:root --chmod=755 --from=build-cli /app/target/release/diom /usr/local/bin/diom
+
+ENTRYPOINT ["/usr/local/bin/diom"]
+
 # Production
-FROM base AS prod
+FROM cli-prod AS prod
+
+USER root
 
 RUN <<EOF
     #!/bin/bash
@@ -110,16 +122,5 @@ EXPOSE 8624/tcp
 EXPOSE 8625/tcp
 
 COPY --chown=root:root --chmod=755 --from=build-server /app/target/release/diom-server /usr/local/bin/diom-server
-COPY --chown=root:root --chmod=755 --from=build-cli /app/target/release/diom /usr/local/bin/diom
 
 CMD ["/usr/local/bin/diom-server"]
-
-# CLI Production
-FROM base AS cli-prod
-
-USER appuser
-WORKDIR /home/appuser
-
-COPY --chown=root:root --chmod=755 --from=build-cli /app/target/release/diom /usr/local/bin/diom
-
-ENTRYPOINT ["/usr/local/bin/diom"]
