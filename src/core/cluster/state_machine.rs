@@ -1,6 +1,5 @@
 use std::{
     io::{Seek, SeekFrom},
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     pin::Pin,
     sync::Arc,
@@ -45,6 +44,16 @@ struct LastSnapshot {
 
 fn io_err(e: anyhow::Error) -> std::io::Error {
     std::io::Error::other(e)
+}
+
+fn tempfile() -> tempfile::Builder<'static, 'static> {
+    let mut builder = tempfile::Builder::new();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        builder.permissions(std::fs::Permissions::from_mode(0o600));
+    }
+    builder
 }
 
 #[derive(
@@ -547,9 +556,7 @@ impl Store {
     }
 
     async fn begin_receiving_snapshot_(&mut self) -> anyhow::Result<SnapshotData> {
-        let tempfile = tempfile::Builder::new()
-            .permissions(std::fs::Permissions::from_mode(0o600))
-            .tempfile_in(&self.snapshot_directory)?;
+        let tempfile = tempfile().tempfile_in(&self.snapshot_directory)?;
         let (f, path) = tempfile.keep()?;
         self.snapshot_idx += 1;
         let f = tokio::fs::File::from_std(f);
@@ -752,9 +759,7 @@ impl StoredSnapshot {
         let directory = directory.to_owned();
         let path_c = path.clone();
         let file = spawn_blocking_in_current_span(move || -> anyhow::Result<std::fs::File> {
-            let mut tf = tempfile::Builder::new()
-                .permissions(std::fs::Permissions::from_mode(0o600))
-                .tempfile_in(directory)?;
+            let mut tf = tempfile().tempfile_in(directory)?;
             tracing::debug!(final_path=%path_c.display(), temp_path = %tf.path().display(), "writing snapshot");
             serialized_state_machine::serialize_to_file(targets, tf.as_file_mut())?;
             tf.as_file_mut().sync_all()?;
