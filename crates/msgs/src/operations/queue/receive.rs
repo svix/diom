@@ -14,7 +14,7 @@ use tracing::Span;
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, Offset, Partition, TopicIn, TopicName},
-    tables::{MsgRow, QueueLeaseKey, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
+    storage::{MsgRow, QueueLeaseKey, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueReceiveResponse};

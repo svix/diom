@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, TopicName},
-    tables::{QueueConfigKey, QueueConfigRow, TopicRow},
+    storage::{QueueConfigKey, QueueConfigRow, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueConfigureResponse};

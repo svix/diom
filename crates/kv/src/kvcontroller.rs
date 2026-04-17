@@ -12,7 +12,7 @@ use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow, WriteBatchExt};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::tables::{ExpirationKey, ExpirationRow, KvPairKey, KvPairRow};
+use crate::storage::{ExpirationKey, ExpirationRow, KvPairKey, KvPairRow};
 
 const EXPIRATION_BATCH_SIZE: usize = 10_000;
 

@@ -16,7 +16,7 @@ use crate::{
     entities::{
         ConsumerGroup, Offset, Partition, SeekPosition, TopicIn, TopicName, TopicPartition,
     },
-    tables::{MsgRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
+    storage::{MsgRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};

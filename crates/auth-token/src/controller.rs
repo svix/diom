@@ -8,7 +8,7 @@ use diom_id::{AuthTokenId, NamespaceId};
 use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
 use serde::{Deserialize, Serialize};
 
-use crate::tables::{
+use crate::storage::{
     AuthTokenEntity, AuthTokenKey, AuthTokenRow, IdIndexKey, IdIndexRow, OwnerIndexRow,
 };
 

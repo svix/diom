@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, Offset, TopicPartition},
-    tables::{StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow},
+    storage::{StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, StreamCommitResponse};

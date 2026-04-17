@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, Partition, TopicName},
-    tables::{
+    storage::{
         MsgKey, MsgRow, QueueConfigKey, QueueConfigRow, QueueLeaseKey, QueueLeaseRow, TopicKey,
         TopicRow,
     },

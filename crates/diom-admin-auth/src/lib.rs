@@ -3,7 +3,7 @@ use fjall_utils::Databases;
 
 pub mod controller;
 pub mod operations;
-pub mod tables;
+pub mod storage;
 
 use crate::controller::AdminAuthController;
 

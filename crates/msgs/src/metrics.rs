@@ -3,7 +3,7 @@ use opentelemetry::metrics::{Counter, Gauge, Meter};
 use crate::{
     State,
     entities::{ConsumerGroup, Partition, TopicName},
-    tables::{MsgRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
+    storage::{MsgRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
 };
 use diom_error::Result;
 
@@ -333,7 +333,7 @@ mod tests {
     use fjall_utils::WriteBatchExt as _;
 
     use super::*;
-    use crate::tables::{MsgKey, MsgRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow};
+    use crate::storage::{MsgKey, MsgRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow};
 
     fn make_db() -> (fjall::Database, tempfile::TempDir) {
         let dir = tempfile::tempdir().unwrap();

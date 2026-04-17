@@ -10,7 +10,7 @@ use fjall::KeyspaceCreateOptions;
 
 use entities::{ConsumerGroup, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
-use tables::{
+use storage::{
     MsgRow, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow,
     delete_expired_partition,
 };
@@ -21,7 +21,7 @@ pub mod compaction;
 pub mod entities;
 pub mod metrics;
 pub mod operations;
-pub(crate) mod tables;
+pub(crate) mod storage;
 mod topic_publish_notifier;
 
 pub use topic_publish_notifier::*;
@@ -283,7 +283,7 @@ mod delete_expired_tests {
     use super::*;
     use crate::{
         entities::{Partition, TopicName},
-        tables::{MsgKey, MsgRow, TopicKey, TopicRow},
+        storage::{MsgKey, MsgRow, TopicKey, TopicRow},
     };
 
     struct Fixture {

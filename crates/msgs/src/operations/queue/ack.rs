@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, TopicName},
-    tables::{QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow},
+    storage::{QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow},
 };
 
 use super::{

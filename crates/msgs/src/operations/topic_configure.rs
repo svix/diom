@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{MAX_PARTITION_COUNT, TopicName},
-    tables::{TopicKey, TopicRow},
+    storage::{TopicKey, TopicRow},
 };
 
 use super::{MsgsRaftState, MsgsRequest, TopicConfigureResponse};

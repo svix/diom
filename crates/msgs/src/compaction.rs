@@ -9,7 +9,7 @@ use fjall::compaction::filter::{
 };
 use fjall_utils::TableRow;
 
-use crate::tables::IdempotencyRow;
+use crate::storage::IdempotencyRow;
 
 struct IdempotencyExpiryFilter {
     now: UnixTimestampMs,
@@ -65,7 +65,7 @@ mod tests {
     use crate::{
         METADATA_KEYSPACE,
         entities::{MsgsIdempotencyKey, TopicName},
-        tables::{IdempotencyKey, IdempotencyRow, TopicKey, TopicRow},
+        storage::{IdempotencyKey, IdempotencyRow, TopicKey, TopicRow},
     };
     use diom_core::{Monotime, types::UnixTimestampMs};
     use diom_id::{NamespaceId, UuidV7RandomBytes};

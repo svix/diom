@@ -19,7 +19,7 @@ use crate::{
         MsgIn, MsgsIdempotencyKey, Offset, Partition, TopicIn, TopicName, TopicPartition,
         partition_for_key,
     },
-    tables::{IdempotencyKey, IdempotencyRow, MsgKey, MsgRow, TopicKey, TopicRow},
+    storage::{IdempotencyKey, IdempotencyRow, MsgKey, MsgRow, TopicKey, TopicRow},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]

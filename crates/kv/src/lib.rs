@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod kvcontroller;
 pub mod operations;
-pub mod tables;
+pub mod storage;
 
 use crate::kvcontroller::KvController;
 
