@@ -12,12 +12,6 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 jobs:
-  # check-version-sync:
-  #   name: Version sync
-  #   runs-on: ubuntu-24.04
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - run: bash scripts/check-version-sync.sh
   check-fmt:
     name: Formatting
     runs-on: ubuntu-24.04

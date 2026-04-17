@@ -25,7 +25,7 @@ It offers high-level APIs for commonly used components such as cache, rate-limit
 [![Crates.io](https://img.shields.io/crates/v/diom)](https://crates.io/crates/diom)
 [![NPM version](https://img.shields.io/npm/v/@diomhq/diom.svg)](https://www.npmjs.com/package/@diomhq/diom)
 [![Maven Central (Java)](https://img.shields.io/maven-central/v/com.svix/diom?label=maven-central%20(java))](https://search.maven.org/artifact/com.svix/diom)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/svix/diom)](https://pkg.go.dev/github.com/svix/diom)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/svix/diom)](https://pkg.go.dev/diom.com/go/diom)
 
 
 Useful links:
@@ -58,11 +58,11 @@ Diom ships with client libraries for a variety of languages, as well as a CLI na
     <tr>
     <th><a href="https://github.com/svix/diom/tree/main/z-clients/python/">Python</a></th>
     <th>✅</th>
-    <th colspan="4"></th>
+    <th colspan="4">Sync and async.</th>
   </tr>
     </tr>
     <tr>
-    <th><a href="https://github.com/svix/diom/tree/main/z-clients/javascript/">Typescript/Javascript</a></th>
+    <th><a href="https://github.com/svix/diom/tree/main/z-clients/javascript/">TypeScript/JavaScript</a></th>
     <th>✅</th>
     <th colspan="4"></th>
   </tr>
