@@ -13,6 +13,10 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   get-version:
     runs-on: ubuntu-24.04
