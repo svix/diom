@@ -56,7 +56,7 @@ jobs:
       cache: true
       cache-scope: ${{ inputs.cache-scope }}
       cache-mode: max
-      flavor: |
+      meta-flavor: |
         latest=true
       meta-tags: |
         type=ref,event=tag
