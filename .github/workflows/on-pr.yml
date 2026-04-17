@@ -93,6 +93,14 @@ jobs:
       target: prod
       file: ./Dockerfile
 
+  main-docker-cli-test-build:
+    needs: filter
+    if: needs.filter.outputs.main-docker == 'true'
+    uses: ./.github/workflows/docker-test-build.yml
+    with:
+      target: cli-prod
+      file: ./Dockerfile
+
   operator-docker-test-build:
     needs: filter
     if: needs.filter.outputs.operator-docker == 'true'
