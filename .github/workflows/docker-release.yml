@@ -48,6 +48,7 @@ jobs:
       image_repo: svix/diom-server
       staging_image_repo: ghcr.io/svix/diom-server-staging
       version: ${{ needs.get-version.outputs.version }}
+      target: prod
       dry_run: ${{ inputs.dry_run || false }}
       cache-scope: docker-release-server
     secrets: inherit
