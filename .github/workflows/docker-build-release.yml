@@ -26,6 +26,10 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   extract-secrets:
     # reusable workflows can't be invoked in an environment, so we need to run this step
