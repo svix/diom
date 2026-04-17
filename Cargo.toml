@@ -138,7 +138,7 @@ concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 constant_time_eq = "0.4"
 criterion = "0.8.2"
-ctor = "0.6.3"
+ctor = "0.10.0"
 diom.path = "z-clients/rust"
 diom-admin-auth.path = "crates/diom-admin-auth"
 diom-auth-token.path = "crates/auth-token"
@@ -208,7 +208,7 @@ serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_bytes = "0.11.19"
 serde_json = "1.0.74"
 serde_path_to_error = "0.1.7"
-sha2 = "0.10.2"
+sha2 = "0.11.0"
 syn = "2.0.48"
 sysinfo = "0.38.2"
 tap = "1"
@@ -231,7 +231,7 @@ uuid = { version = "1.19.0", features = ["v4", "v7", "serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
 which = "8"
 yansi = "1.0.1"
-zip = "7"
+zip = "8.5.1"
 
 [workspace.lints.rust]
 # Can't forbid as we use at least one macro that expands to unsafe code
