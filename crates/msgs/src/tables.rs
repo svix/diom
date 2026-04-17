@@ -347,6 +347,60 @@ impl TableRow for MsgRow {
     const ROW_TYPE: u8 = RowType::Msg as u8;
 }
 
+const CLEANUP_BATCH_SIZE: usize = 1_000;
+
+/// Deletes expired messages for a single topic partition, returning the number deleted.
+///
+/// Scans from the beginning of the partition and stops at the first non-expired message,
+/// since timestamps increase monotonically with offsets.
+#[tracing::instrument(skip_all, level = "debug")]
+pub(crate) fn delete_expired_partition(
+    db: &fjall::Database,
+    msg_table: &fjall::Keyspace,
+    topic_id: TopicId,
+    partition: Partition,
+    cutoff: UnixTimestampMs,
+) -> Result<usize> {
+    let prefix = MsgKey::prefix_partition(&topic_id, &partition);
+    let mut deleted = 0;
+
+    loop {
+        let mut hit_non_expired = false;
+        let mut keys = Vec::with_capacity(CLEANUP_BATCH_SIZE);
+
+        for entry in msg_table.prefix(&prefix) {
+            let k = entry.key()?;
+            let ts = MsgKey::extract_timestamp(&k).expect("valid MsgKey in msg table");
+            if ts >= cutoff {
+                hit_non_expired = true;
+                break;
+            }
+            keys.push(k);
+            if keys.len() >= CLEANUP_BATCH_SIZE {
+                break;
+            }
+        }
+
+        if keys.is_empty() {
+            break;
+        }
+
+        let batch_len = keys.len();
+        let mut batch = db.batch();
+        for key in keys {
+            batch.remove(msg_table, key);
+        }
+        batch.commit().map_err(diom_error::Error::from)?;
+        deleted += batch_len;
+
+        if hit_non_expired || batch_len < CLEANUP_BATCH_SIZE {
+            break;
+        }
+    }
+
+    Ok(deleted)
+}
+
 #[derive(Clone, Serialize, Deserialize, PersistableValue)]
 pub(crate) struct IdempotencyRow {
     pub expiry: UnixTimestampMs,
