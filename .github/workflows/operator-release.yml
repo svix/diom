@@ -47,4 +47,5 @@ jobs:
       version: ${{ needs.operator-release.outputs.version }}
       dockerfile: ./infra/operator/Dockerfile
       dry_run: ${{ inputs.dry_run }}
+      cache-scope: docker-release-operator
     secrets: inherit

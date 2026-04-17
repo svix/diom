@@ -29,6 +29,9 @@ on:
         required: false
         type: boolean
         default: false
+      cache-scope:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -50,6 +53,9 @@ jobs:
       push: ${{ inputs.dry_run != true }}
       platforms: linux/amd64,linux/arm64
       meta-images: ${{ inputs.staging_image_repo }}
+      cache: true
+      cache-scope: ${{ inputs.cache-scope }}
+      cache-mode: max
       flavor: |
         latest=true
       meta-tags: |
