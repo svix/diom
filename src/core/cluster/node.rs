@@ -1,4 +1,5 @@
 use anyhow::Context;
+use http::HeaderValue;
 use opentelemetry::{KeyValue, Value};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -144,5 +145,12 @@ impl From<NodeId> for Value {
 impl From<NodeId> for KeyValue {
     fn from(value: NodeId) -> Self {
         KeyValue::new("node_id", value)
+    }
+}
+
+impl From<NodeId> for HeaderValue {
+    fn from(value: NodeId) -> Self {
+        // node IDs are serialized as 32 hex characters and trivially satisfy HeaderValue
+        HeaderValue::from_str(&value.to_string()).unwrap()
     }
 }
