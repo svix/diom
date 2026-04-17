@@ -28,7 +28,7 @@ on:
 
 jobs:
   docker-build-release:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-8-cores
     environment: release
 
     steps:
@@ -70,6 +70,8 @@ jobs:
           tags: ${{ steps.docker_tags.outputs.tags }}
           platforms: linux/amd64
           load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Scan image with Grype
         id: scan
@@ -95,3 +97,5 @@ jobs:
           push: true
           tags: ${{ steps.docker_tags.outputs.tags }}
           platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
