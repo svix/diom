@@ -21,9 +21,14 @@ use itertools::Itertools;
 use jiff::Timestamp;
 use maplit::btreeset;
 use openraft::{RaftNetworkFactory, ServerState};
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tokio::sync::mpsc::Sender;
+
+tokio::task_local! {
+    pub(super) static APPLIED_LOG_ID: Mutex<Option<LogId>>;
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResponseParseError {
@@ -374,10 +379,10 @@ impl RaftState {
         );
         let request = Arc::new(request);
         let mut write_type = WriteType::Local;
-        let response = match self.raft.client_write(Arc::clone(&request)).await {
+        let (response, log_id) = match self.raft.client_write(Arc::clone(&request)).await {
             Ok(resp) => {
                 tracing::trace!(log_id=?resp.log_id(), "request applied to log");
-                resp.data
+                (resp.data, resp.log_id)
             }
             Err(err) => {
                 if let Some(forward_to_leader) = err.forward_to_leader() {
@@ -395,7 +400,7 @@ impl RaftState {
                                 request: Arc::unwrap_or_clone(request),
                             })
                             .await
-                            .map(|r| r.response)
+                            .map(|r| (r.response, r.log_id))
                             .map_err(|e| anyhow::anyhow!(e))?
                     } else {
                         tracing::error!(
@@ -408,6 +413,14 @@ impl RaftState {
                 }
             }
         };
+        let _ = APPLIED_LOG_ID.try_with(|val| {
+            let mut opt = val.lock();
+            *opt = Some(if let Some(existing) = *opt {
+                existing.max(log_id)
+            } else {
+                log_id
+            });
+        });
         self.metrics.record_write(write_type, start.elapsed());
         let module_response = <O::Response as OperationResponse>::ResponseParent::try_from(
             response,
