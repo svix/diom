@@ -37,6 +37,8 @@ POST_BUMP_COMMANDS = [
     "cd z-clients/python/ && uv sync",
     # Rust
     "cargo update --workspace",
+    # JavaScript
+    "cd z-clients/javascript && npm i --package-lock-only"
 ]
 
 VERSION_FILES = [
