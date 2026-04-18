@@ -59,8 +59,8 @@ jobs:
       meta-flavor: |
         latest=true
       meta-tags: |
-        type=ref,event=tag
         type=semver,pattern={{version}},value=${{inputs.version}}
+        type=semver,pattern={{major}}.{{minor}},value=${{inputs.version}}
         type=semver,pattern={{major}},value=${{inputs.version}}
     secrets:
       registry-auths: |
@@ -97,8 +97,8 @@ jobs:
           flavor: |
             latest=true
           tags: |
-            type=ref,event=tag
             type=semver,pattern={{version}},value=${{inputs.version}}
+            type=semver,pattern={{major}}.{{minor}},value=${{inputs.version}}
             type=semver,pattern={{major}},value=${{inputs.version}}
       - name: "Copy images"
         run: |
