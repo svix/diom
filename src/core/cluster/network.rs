@@ -5,7 +5,7 @@ use std::{
 
 use crate::cfg::{Configuration, PeerAddr};
 
-use super::{LogId, Node, NodeId, proto, raft::TypeConfig};
+use super::{LogId, Node, NodeId, app::V0Wrapper, proto, raft::TypeConfig};
 use anyhow::Context;
 use diom_proto::prelude::*;
 use http::{HeaderMap, HeaderValue, header};
@@ -76,6 +76,69 @@ pub(super) struct NetworkClient {
     default_timeout: Duration,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Format {
+    Msgpack,
+    Postcard,
+}
+
+fn serialization_error<
+    Err: std::error::Error,
+    E: std::error::Error + std::fmt::Debug + Send + 'static,
+>(
+    err: E,
+) -> RPCError<Err> {
+    tracing::error!(
+        ?err,
+        "serialization error on RPC! this should be impossible!"
+    );
+    RPCError::Network(NetworkError::new(&err))
+}
+
+fn deserialization_error<
+    Err: std::error::Error,
+    E: std::error::Error + std::fmt::Debug + Send + 'static,
+>(
+    err: E,
+) -> RPCError<Err> {
+    tracing::error!(?err, "error deserializing remote RPC; this might be fatal");
+    RPCError::Network(NetworkError::new(&err))
+}
+
+struct RequestBuilder<'a, Req>
+where
+    Req: Serialize + Sized,
+{
+    path: &'a str,
+    req: Req,
+    format: Format,
+    timeout: Duration,
+}
+
+impl<'a, Req> RequestBuilder<'a, Req>
+where
+    Req: Serialize + Sized,
+{
+    fn new(path: &'a str, req: Req, timeout: Duration) -> Self {
+        Self {
+            path,
+            req,
+            format: Format::Msgpack,
+            timeout,
+        }
+    }
+
+    fn with_timeout(mut self, timeout: Duration) -> Self {
+        self.timeout = timeout;
+        self
+    }
+
+    fn with_format(mut self, format: Format) -> Self {
+        self.format = format;
+        self
+    }
+}
+
 impl NetworkClient {
     #[allow(clippy::result_large_err)]
     async fn send_request<Req, Resp, Err>(&self, path: &str, req: Req) -> RPCResult<Resp, Err>
@@ -84,16 +147,21 @@ impl NetworkClient {
         Resp: DeserializeOwned + Sized,
         Err: std::error::Error + DeserializeOwned + Sized,
     {
-        self.send_request_with_timeout(path, req, self.default_timeout)
-            .await
+        let request = self.build_request(path, req).with_format(Format::Msgpack);
+        self.send(request).await
+    }
+
+    fn build_request<'a, Req>(&self, path: &'a str, req: Req) -> RequestBuilder<'a, Req>
+    where
+        Req: Serialize + Sized,
+    {
+        RequestBuilder::new(path, req, self.default_timeout)
     }
 
     #[allow(clippy::result_large_err)]
-    async fn send_request_with_timeout<Req, Resp, Err>(
+    async fn send<'a, Req, Resp, Err>(
         &self,
-        path: &str,
-        req: Req,
-        timeout: Duration,
+        builder: RequestBuilder<'a, Req>,
     ) -> RPCResult<Resp, Err>
     where
         Req: Serialize + Sized,
@@ -102,7 +170,7 @@ impl NetworkClient {
     {
         let start = Instant::now();
         // TODO(jbrown|2026-02-20) handle multiple addresses
-        let Ok(url) = self.node.url_for(path) else {
+        let Ok(url) = self.node.url_for(builder.path) else {
             tracing::warn!(node_id=?self.target, node=?self.node, "node has no valid addresses, cannot send rpc");
             return Err(RPCError::Unreachable(Unreachable::new(
                 &crate::Error::internal("no has no known addresses"),
@@ -110,18 +178,17 @@ impl NetworkClient {
         };
         tracing::trace!(%url, target=?self.target, "sending internal RPC");
 
-        let response = self
-            .client
-            .post(url)
-            .timeout(timeout)
-            .msgpack(&req)
-            .map_err(|err| {
-                tracing::warn!(
-                    ?err,
-                    "serialization error on RPC! this should be impossible!"
-                );
-                RPCError::Network(NetworkError::new(&err))
-            })?
+        let request = self.client.post(url).timeout(builder.timeout);
+        let request = match builder.format {
+            Format::Msgpack => request
+                .msgpack(&builder.req)
+                .map_err(serialization_error::<Err, _>)?,
+            Format::Postcard => request
+                .postcard(&V0Wrapper::V0(builder.req))
+                .map_err(serialization_error::<Err, _>)?,
+        };
+
+        let response = request
             .pipe(|this| -> Result<reqwest::RequestBuilder, RPCError<Err>> {
                 if let Some(secret) = &self.cfg.cluster.secret {
                     let auth = format!("Bearer {secret}");
@@ -155,10 +222,20 @@ impl NetworkClient {
             duration = ?start.elapsed(),
             "response from peer server");
 
-        response
-            .msgpack()
-            .await
-            .map_err(|e| RPCError::Network(NetworkError::new(&e)))
+        match builder.format {
+            Format::Msgpack => response
+                .msgpack()
+                .await
+                .map_err(deserialization_error::<Err, _>),
+            Format::Postcard => {
+                let wrapped = response
+                    .postcard()
+                    .await
+                    .map_err(deserialization_error::<Err, _>)?;
+                let V0Wrapper::V0(resp) = wrapped;
+                Ok(resp)
+            }
+        }
     }
 
     #[tracing::instrument(skip_all)]
@@ -166,8 +243,10 @@ impl NetworkClient {
         &self,
         req: proto::ForwardedWriteRequest,
     ) -> RPCResult<proto::ForwardedWriteResponse> {
-        self.send_request("/repl/raft/handle-forwarded-write", req)
-            .await
+        let req = self
+            .build_request("/repl/raft/handle-forwarded-write", req)
+            .with_format(Format::Postcard);
+        self.send(req).await
     }
 
     pub(super) async fn add_learner(
@@ -202,9 +281,12 @@ impl NetworkClient {
     pub(super) async fn get_last_committed_log_id(&self) -> Result<Option<LogId>, RPCError> {
         let proto::LastIdResponse {
             last_committed_log_id,
-        } = self
-            .send_request("/repl/raft/last-id", proto::LastIdRequest {})
-            .await?;
+        } = {
+            let request = self
+                .build_request("/repl/raft/last-id", proto::LastIdRequest {})
+                .with_format(Format::Postcard);
+            self.send(request).await?
+        };
         Ok(last_committed_log_id)
     }
 
@@ -217,8 +299,11 @@ impl NetworkClient {
         openraft::raft::InstallSnapshotResponse<TypeConfig>,
         RPCError<openraft::errors::RaftError<TypeConfig, openraft::errors::InstallSnapshotError>>,
     > {
-        self.send_request_with_timeout("/repl/raft/stream-snapshot", rpc, option.soft_ttl())
-            .await
+        let req = self
+            .build_request("/repl/raft/stream-snapshot", rpc)
+            .with_timeout(option.soft_ttl())
+            .with_format(Format::Postcard);
+        self.send(req).await
     }
 }
 
@@ -229,8 +314,11 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
         rpc: openraft::raft::AppendEntriesRequest<TypeConfig>,
         option: RPCOption,
     ) -> Result<openraft::raft::AppendEntriesResponse<TypeConfig>, RPCError> {
-        self.send_request_with_timeout("/repl/raft/append_entries", rpc, option.soft_ttl())
-            .await
+        let req = self
+            .build_request("/repl/raft/append_entries", rpc)
+            .with_timeout(option.soft_ttl())
+            .with_format(Format::Postcard);
+        self.send(req).await
     }
 
     #[tracing::instrument(skip_all)]
@@ -239,8 +327,11 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
         rpc: openraft::raft::VoteRequest<TypeConfig>,
         option: RPCOption,
     ) -> Result<openraft::raft::VoteResponse<TypeConfig>, RPCError> {
-        self.send_request_with_timeout("/repl/raft/vote", rpc, option.soft_ttl())
-            .await
+        let req = self
+            .build_request("/repl/raft/vote", rpc)
+            .with_timeout(option.soft_ttl())
+            .with_format(Format::Msgpack);
+        self.send(req).await
     }
 
     #[tracing::instrument(skip_all, fields(?vote))]

@@ -1,8 +1,9 @@
+use http::header::CONTENT_TYPE;
 use serde::{Serialize, de::DeserializeOwned};
 use tap::Pipe;
 
-const CONTENT_TYPE: http::HeaderName = http::HeaderName::from_static("content-type");
-const MSGPACK: http::HeaderValue = http::HeaderValue::from_static("application/msgpack");
+pub(crate) const APPLICATION_MSGPACK: http::HeaderValue =
+    http::HeaderValue::from_static("application/msgpack");
 
 pub trait MsgpackRequestBuilder: Sized {
     fn msgpack<T: Serialize + ?Sized>(self, body: &T) -> Result<Self, rmp_serde::encode::Error>;
@@ -11,7 +12,9 @@ pub trait MsgpackRequestBuilder: Sized {
 impl MsgpackRequestBuilder for reqwest::RequestBuilder {
     fn msgpack<T: Serialize + ?Sized>(self, body: &T) -> Result<Self, rmp_serde::encode::Error> {
         let serialized = rmp_serde::to_vec_named(body)?;
-        self.header(CONTENT_TYPE, MSGPACK).body(serialized).pipe(Ok)
+        self.header(CONTENT_TYPE, APPLICATION_MSGPACK)
+            .body(serialized)
+            .pipe(Ok)
     }
 }
 
@@ -19,6 +22,7 @@ impl MsgpackRequestBuilder for reqwest::RequestBuilder {
 pub enum MsgpackResponseError {
     Network(reqwest::Error),
     Serialization(rmp_serde::decode::Error),
+    InvalidResponseContentType(http::HeaderValue),
 }
 
 impl From<reqwest::Error> for MsgpackResponseError {
@@ -38,6 +42,12 @@ impl std::fmt::Display for MsgpackResponseError {
         match self {
             Self::Network(e) => e.fmt(f),
             Self::Serialization(e) => e.fmt(f),
+            Self::InvalidResponseContentType(ct) => {
+                write!(
+                    f,
+                    "invalid response content-type: got {ct:?}, expected {APPLICATION_MSGPACK:?}"
+                )
+            }
         }
     }
 }
@@ -51,6 +61,7 @@ impl std::error::Error for MsgpackResponseError {
         match self {
             Self::Network(e) => Some(e),
             Self::Serialization(e) => Some(e),
+            Self::InvalidResponseContentType(_) => None,
         }
     }
 }
@@ -64,6 +75,14 @@ pub trait MsgpackResponse {
 
 impl MsgpackResponse for reqwest::Response {
     async fn msgpack<T: DeserializeOwned>(self) -> Result<T, MsgpackResponseError> {
+        if let Some(content_type) = self.headers().get(CONTENT_TYPE)
+            && content_type != APPLICATION_MSGPACK
+        {
+            return Err(MsgpackResponseError::InvalidResponseContentType(
+                content_type.clone(),
+            ));
+        }
+
         let full = self.bytes().await?;
 
         rmp_serde::from_slice(&full).map_err(Into::into)

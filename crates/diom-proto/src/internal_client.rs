@@ -6,7 +6,7 @@ use serde::{Serialize, de::DeserializeOwned};
 use tap::Tap;
 use tokio::sync::{mpsc, oneshot};
 
-const APPLICATION_MSGPACK: HeaderValue = HeaderValue::from_static("application/msgpack");
+use super::msgpack_client::APPLICATION_MSGPACK;
 
 /// API client for interacting with the internal "loopback" API server.
 #[derive(Clone)]
