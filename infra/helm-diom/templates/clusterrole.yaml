@@ -30,17 +30,25 @@ rules:
     resources: ["pods"]
     verbs: ["get", "list", "watch"]
 
+  # Emit Kubernetes events (core API group, legacy).
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+
+  # Emit Kubernetes events (events.k8s.io API group, used by kube-runtime Recorder).
+  - apiGroups: ["events.k8s.io"]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+
+  # Read and resize PersistentVolumeClaims during storage autogrow.
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "patch", "update"]
 
+  # Read StorageClasses to check allowVolumeExpansion.
   - apiGroups: ["storage.k8s.io"]
     resources: ["storageclasses"]
     verbs: ["get", "list", "watch"]
-
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["create", "patch"]
 
 ---
 

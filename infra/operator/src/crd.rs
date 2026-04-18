@@ -6,7 +6,7 @@ use k8s_openapi::{
         Affinity, EnvVar, EnvVarSource, ResourceRequirements, SecretKeySelector, Toleration,
         TopologySpreadConstraint,
     },
-    apimachinery::pkg::api::resource::Quantity,
+    apimachinery::pkg::{api::resource::Quantity, apis::meta::v1::Condition},
 };
 use kube::CustomResource;
 use schemars::JsonSchema;
@@ -223,6 +223,15 @@ pub(crate) struct DiomClusterStatus {
 
     #[serde(default)]
     pub ready_replicas: i32,
+
+    /// Human-readable description of the last reconcile error, if any.
+    /// Cleared automatically on the next successful reconcile.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_error: Option<String>,
+
+    /// Standard Kubernetes conditions for this cluster.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub conditions: Vec<Condition>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema, PartialEq)]
@@ -231,6 +240,8 @@ pub(crate) enum Phase {
     Initializing,
     Running,
     Degraded,
+    /// Actively expanding PVCs and recreating the StatefulSet.
+    Resizing,
 }
 
 /// Source for the admin token.
