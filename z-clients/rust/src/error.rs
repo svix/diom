@@ -82,7 +82,7 @@ impl Error {
         matches!(self.0.kind, ErrorKind::Other(_))
     }
 
-    pub(crate) fn is_retryable(&self) -> bool {
+    pub fn is_retryable(&self) -> bool {
         match self.0.kind {
             ErrorKind::Network(_) | ErrorKind::Server(_) | ErrorKind::Timeout(_) => true,
             ErrorKind::Client(_) | ErrorKind::Other(_) => false,
