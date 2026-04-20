@@ -1,12 +1,6 @@
-use std::{ops::Deref, sync::LazyLock};
-
-use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::ValidationErrors;
-
-use crate::validation::validation_error;
 
 mod byte_string;
 mod duration_ms;
@@ -38,64 +32,6 @@ impl AsMillisecond for UnixTimestampMs {
     /// Get this UnixTimestampMs as the number of milliseconds since the unix epoch
     fn as_millisecond(&self) -> u64 {
         UnixTimestampMs::as_millisecond(*self)
-    }
-}
-
-fn validate_limited_str(s: &str) -> Result<(), ValidationErrors> {
-    const MAX_LENGTH: usize = 256;
-    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-_.:]+$").unwrap());
-    let mut errors = ValidationErrors::new();
-    if s.is_empty() {
-        errors.add(
-            ALL_ERROR,
-            validation_error(
-                Some("length"),
-                Some("String must be at least one character"),
-            ),
-        );
-    } else if s.len() > MAX_LENGTH {
-        errors.add(
-            ALL_ERROR,
-            validation_error(Some("length"), Some("String too long")),
-        );
-    } else if !RE.is_match(s) {
-        errors.add(
-            ALL_ERROR,
-            validation_error(
-                Some("illegal_string_pattern"),
-                Some("String must match the following pattern: [a-zA-Z0-9\\-_.:]."),
-            ),
-        );
-    }
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        Err(errors)
-    }
-}
-
-pub trait BaseUid: Deref<Target = String> {
-    const ID_PREFIX: &'static str;
-
-    fn validate_(&self) -> Result<(), ValidationErrors> {
-        let mut errors = match validate_limited_str(self) {
-            Ok(_) => ValidationErrors::new(),
-            Err(x) => x,
-        };
-        if self.starts_with(Self::ID_PREFIX) {
-            errors.add(
-                ALL_ERROR,
-                validation_error(
-                    Some("invalid_uid_prefix"),
-                    Some("Uids are not allowed to have the same prefix as the ID. Prefix with _?"),
-                ),
-            );
-        }
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
     }
 }
 
