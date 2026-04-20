@@ -25,12 +25,6 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
 
 pub(crate) async fn generate(api: &Api) -> anyhow::Result<()> {
     generate_outputs(api, OUTPUTS)?;
-
-    exec(
-        "cargo",
-        ["+nightly", "fmt", "--package=diom", "--package=diom-cli"],
-    )
-    .await?;
-
+    exec("cargo", ["fmt", "--package=diom", "--package=diom-cli"]).await?;
     Ok(())
 }

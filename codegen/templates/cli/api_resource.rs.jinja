@@ -11,9 +11,13 @@ use clap::{Args, Subcommand};
 #[allow(unused)]
 use crate::prelude::*;
 
+{% if resource.subresources | length > 0 -%}
+use super::{
 {% for _, sub in resource.subresources | items -%}
-use super::{{ sub.name | to_upper_camel_case }}Args;
+{{ sub.name | to_upper_camel_case }}Args,
 {% endfor %}
+};
+{%- endif %}
 
 {%- macro get_type_example(field, api) -%}
     {%- if field.type.is_string_const() -%}
