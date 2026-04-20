@@ -163,6 +163,7 @@ struct ErrorImpl {
 
 /// The error type returned from the Diom API
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum ErrorKind {
     /// Could not make the intended request and fully receive the response.
     Network(NetworkError),
