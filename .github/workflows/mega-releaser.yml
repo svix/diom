@@ -22,8 +22,9 @@ jobs:
     uses: ./.github/workflows/javascript-release.yml
     secrets: inherit
 
-  python:
-    uses: ./.github/workflows/python-release.yml
+  # See commit message, Python trusted publishing is broken with sub workflows
+  # python:
+  #  uses: ./.github/workflows/python-release.yml
 
   rust:
     uses: ./.github/workflows/rust-release.yml
