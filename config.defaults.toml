@@ -14,10 +14,10 @@
 # Correctness should never be affected by this, just wasted memory/disk.
 background_cleanup_interval_ms = 10000
 
-# Inline YAML bootstrap data, applied before any `bootstrap_cfg_paths`.
+# Inline bootstrap script, applied before any `bootstrap_cfg_paths`.
 # bootstrap_cfg =
 
-# Paths to YAML bootstrap files, applied in order.
+# Paths to bootstrap scripts, applied in order.
 bootstrap_cfg_paths = []
 
 # Maximum time to wait for cluster initialization at startup

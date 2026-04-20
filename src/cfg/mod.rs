@@ -542,7 +542,7 @@ pub struct ConfigurationInner {
     #[dumpable_config(nest)]
     pub cluster: ClusterConfiguration,
 
-    /// Paths to YAML bootstrap files, applied in order.
+    /// Paths to bootstrap scripts, applied in order.
     #[serde(default)]
     pub bootstrap_cfg_paths: Vec<String>,
 
@@ -552,7 +552,7 @@ pub struct ConfigurationInner {
     #[dumpable_config(skip)]
     pub bootstrap_cfg_path: Option<String>,
 
-    /// Inline YAML bootstrap data, applied before any `bootstrap_cfg_paths`.
+    /// Inline bootstrap script, applied before any `bootstrap_cfg_paths`.
     #[serde(default)]
     pub bootstrap_cfg: Option<String>,
 
