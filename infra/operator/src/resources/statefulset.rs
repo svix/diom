@@ -210,19 +210,21 @@ fn build_env(
         env.push(env_var("DIOM_LOG_FORMAT", format));
     }
 
-    if let Some(addr) = &spec.diom.opentelemetry_address {
-        env.push(env_var("DIOM_OPENTELEMETRY_ADDRESS", addr));
-    }
+    if let Some(opentelemetry) = &spec.diom.opentelemetry {
+        if let Some(addr) = &opentelemetry.address {
+            env.push(env_var("DIOM_OPENTELEMETRY_ADDRESS", addr));
+        }
 
-    if let Some(addr) = &spec.diom.opentelemetry_metrics_address {
-        env.push(env_var("DIOM_OPENTELEMETRY_METRICS_ADDRESS", addr));
-    }
+        if let Some(addr) = &opentelemetry.metrics_address {
+            env.push(env_var("DIOM_OPENTELEMETRY_METRICS_ADDRESS", addr));
+        }
 
-    if let Some(use_http) = spec.diom.opentelemetry_metrics_use_http {
-        env.push(env_var(
-            "DIOM_OPENTELEMETRY_METRICS_USE_HTTP",
-            use_http.to_string(),
-        ));
+        if let Some(proto) = &opentelemetry.metrics_protocol {
+            env.push(env_var(
+                "DIOM_OPENTELEMETRY_METRICS_PROTOCOL",
+                proto.to_string(),
+            ));
+        }
     }
 
     if let Some(bootstrap) = &spec.diom.bootstrap {
@@ -482,6 +484,9 @@ async fn wait_for_sts_deleted(sts_api: &kube::Api<StatefulSet>, name: &str) -> R
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::crd::{
+        DiomSpec, DiomStorageSpec, OpenTelemetryProtocol, OpenTelemetrySpec, VolumeSpec,
+    };
     use k8s_openapi::{
         api::core::v1::{
             PersistentVolumeClaim, PersistentVolumeClaimSpec, VolumeResourceRequirements,
@@ -489,6 +494,82 @@ mod tests {
         apimachinery::pkg::{api::resource::Quantity, apis::meta::v1::ObjectMeta},
     };
     use std::collections::BTreeMap;
+
+    fn make_spec() -> DiomClusterSpec {
+        DiomClusterSpec {
+            diom: DiomSpec {
+                replicas: 1,
+                api_port: crate::crd::DEFAULT_API_PORT,
+                storage: DiomStorageSpec {
+                    persistent: VolumeSpec {
+                        size: Quantity("1Gi".to_string()),
+                        storage_class: None,
+                    },
+                    logs: None,
+                    snapshots: None,
+                },
+                opentelemetry: None,
+                internode_secret: None,
+                log_level: None,
+                log_format: None,
+                bootstrap: None,
+                admin_token: None,
+                env_var: vec![],
+            },
+            image: "test-image".to_string(),
+            image_pull_policy: None,
+            service: Default::default(),
+            resources: Default::default(),
+            pod_annotations: Default::default(),
+            topology_spread_constraints: vec![],
+            node_selector: None,
+            tolerations: None,
+            affinity: None,
+        }
+    }
+
+    // In the absence of code (for now, anyway) that actually couples backend
+    // configuration with the operator definition, add a test asserting that
+    // the given spec maps to expected configuration values.
+    #[test]
+    fn test_build_env() {
+        let mut spec = make_spec();
+        spec.diom.opentelemetry = Some(OpenTelemetrySpec {
+            address: Some("grpc://otel:4317".to_string()),
+            metrics_address: Some("http://otel:4318".to_string()),
+            metrics_protocol: Some(OpenTelemetryProtocol::Http),
+        });
+
+        let env = build_env(&spec, "my-cluster", "my-cluster-headless", "my-ns");
+        let get = |name: &str| {
+            env.iter()
+                .find(|e| e.name == name)
+                .and_then(|e| e.value.as_deref())
+        };
+
+        assert_eq!(get("DIOM_LISTEN_ADDRESS"), Some("0.0.0.0:8624"));
+        assert_eq!(get("DIOM_CLUSTER_AUTO_INITIALIZE"), Some("true"));
+        assert_eq!(get("DIOM_PERSISTENT_DB_PATH"), Some("/data/persistent"));
+        assert_eq!(get("DIOM_CLUSTER_LOG_PATH"), Some("/data/persistent/logs"));
+        assert_eq!(
+            get("DIOM_CLUSTER_SNAPSHOT_PATH"),
+            Some("/data/persistent/snapshots")
+        );
+        assert_eq!(
+            get("DIOM_CLUSTER_ADVERTISED_ADDRESS"),
+            Some("$(POD_NAME).my-cluster-headless.$(POD_NAMESPACE).svc.cluster.local:8625"),
+        );
+        assert_eq!(
+            get("DIOM_CLUSTER_SEED_NODES"),
+            Some("my-cluster-0.my-cluster-headless.my-ns.svc.cluster.local:8625"),
+        );
+        assert_eq!(get("DIOM_OPENTELEMETRY_ADDRESS"), Some("grpc://otel:4317"));
+        assert_eq!(
+            get("DIOM_OPENTELEMETRY_METRICS_ADDRESS"),
+            Some("http://otel:4318")
+        );
+        assert_eq!(get("DIOM_OPENTELEMETRY_METRICS_PROTOCOL"), Some("http"));
+    }
 
     fn make_pvc(name: &str, storage: &str) -> PersistentVolumeClaim {
         let mut requests = BTreeMap::new();

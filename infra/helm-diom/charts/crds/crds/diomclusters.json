@@ -1011,20 +1011,31 @@
                     "nullable": true,
                     "type": "object"
                   },
-                  "opentelemetryAddress": {
-                    "description": "The OpenTelemetry address to send events to if given.\n\nCurrently only GRPC exports are supported.",
+                  "opentelemetry": {
                     "nullable": true,
-                    "type": "string"
-                  },
-                  "opentelemetryMetricsAddress": {
-                    "description": "The OpenTelemetry address to send metrics to if given.\n\nIf not specified, the server will attempt to fall back\nto `opentelemetry_address`.",
-                    "nullable": true,
-                    "type": "string"
-                  },
-                  "opentelemetryMetricsUseHttp": {
-                    "description": "Send OpenTelemetry metrics via HTTP.\n\nBy default, `opentelemetry_address` and `opentelemetry_metrics_address`\nare expected to be a GRPC servers. When this is set to true,\nHTTP is used instead for metrics exports.",
-                    "nullable": true,
-                    "type": "boolean"
+                    "properties": {
+                      "address": {
+                        "description": "The OpenTelemetry address to send events to if given.\n\nCurrently only GRPC exports are supported.",
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "metrics_address": {
+                        "description": "The OpenTelemetry address to send metrics to if given.\n\nIf not specified, the server will attempt to fall back\nto `opentelemetry_address`.",
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "metrics_protocol": {
+                        "description": "OpenTelemetry metrics protocol\n\nBy default, metrics are sent via GRPC. Some metrics destinations, most\nnotably Prometheus, only support receiving metrics via HTTP.",
+                        "enum": [
+                          "grpc",
+                          "http",
+                          null
+                        ],
+                        "nullable": true,
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   },
                   "podAnnotations": {
                     "additionalProperties": {

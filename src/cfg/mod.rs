@@ -447,8 +447,8 @@ impl FromStr for OpenTelemetryProtocol {
 
     fn from_str(s: &str) -> anyhow::Result<Self> {
         match s {
-            "grpc|Grpc|GRPC" => Ok(OpenTelemetryProtocol::Grpc),
-            "http|Http|HTTP" => Ok(OpenTelemetryProtocol::Http),
+            "grpc" | "Grpc" | "GRPC" => Ok(OpenTelemetryProtocol::Grpc),
+            "http" | "Http" | "HTTP" => Ok(OpenTelemetryProtocol::Http),
             _ => anyhow::bail!("Unable to parse OpenTelemetryProtocol"),
         }
     }
@@ -1087,7 +1087,24 @@ pub fn describe_environment() -> Vec<Variable> {
 mod tests {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
-    use super::{PeerAddr, load_toml};
+    use super::{OpenTelemetryProtocol, PeerAddr, load_toml};
+
+    #[test]
+    fn test_opentelemetry_protocol_from_str() {
+        for s in ["grpc", "Grpc", "GRPC"] {
+            assert!(matches!(
+                s.parse::<OpenTelemetryProtocol>().unwrap(),
+                OpenTelemetryProtocol::Grpc
+            ));
+        }
+        for s in ["http", "Http", "HTTP"] {
+            assert!(matches!(
+                s.parse::<OpenTelemetryProtocol>().unwrap(),
+                OpenTelemetryProtocol::Http
+            ));
+        }
+        assert!("invalid".parse::<OpenTelemetryProtocol>().is_err());
+    }
 
     #[test]
     fn test_db() {

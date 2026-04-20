@@ -4,7 +4,7 @@ Diom is the backend survival toolkit. It’s a set of well integrated infrastruc
 This chart installs components required for running Diom as a standalone instance or as a cluster, including a CRD, an operator, and a DiomCluster resource.
 
 ## Usage
-The chart is distributed as an OCI artfact.
+The chart is distributed as an OCI artifact.
 
 ### Installation
 ```console
@@ -62,7 +62,8 @@ cluster:
         key: internode-secret
     logLevel: info
     logFormat: json
-    opentelemetryAddress: grpc://otel-collector.monitoring.svc.cluster.local:4317
+    opentelemetry:
+      address: grpc://otel-collector.monitoring.svc.cluster.local:4317
 ```
 
 | Parameter | Description | Default |
@@ -76,10 +77,10 @@ cluster:
 | `cluster.spec.envVar` | Additional environment variables to inject into pods (list of `{name, value}`). | `[]` |
 | `cluster.spec.bootstrap` | Newline-delimited bootstrap script to run on cluster startup. | `""` |
 | `cluster.spec.logLevel` | The log level to run the service with. Supported: info, debug, trace. | `""` |
-| `cluster.spec.logFormat` | Log level for the Diom server (`info`, `debug`, `trace`). | `""` |
-| `cluster.spec.opentelemetryAddress` | OpenTelemetry tracing endpoint address (GRPC). | `""` |
-| `cluster.spec.opentelemetryMetricsAddress` | OpenTelemetry metrics endpoint address, if different from tracing opentelemetryAddress. | `""` |
-| `cluster.spec.opentelemetryMetricsUseHttp` | Use HTTP instead of GRPC for OpenTelemetry metrics export. | `false` |
+| `cluster.spec.logFormat` | Log format for the Diom server (`default`, `json`). | `""` |
+| `cluster.spec.opentelemetry.address` | OpenTelemetry tracing endpoint address (GRPC). | `""` |
+| `cluster.spec.opentelemetry.metricsAddress` | OpenTelemetry metrics endpoint address, if different from `address`. | `""` |
+| `cluster.spec.opentelemetry.metricsProtocol` | Protocol for OpenTelemetry metrics export (`grpc`, `http`). | `grpc` |
 | `cluster.spec.adminToken.value` | Plaintext token for privileged API access, as a plain string. Only recommended for testing. | `""` |
 | `cluster.spec.adminToken.valueFrom.name` | Name of the Kubernetes Secret containing the admin token. | `""` |
 | `cluster.spec.adminToken.valueFrom.key` | Key within the Secret to use as the admin token. | `""` |

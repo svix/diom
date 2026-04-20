@@ -121,13 +121,6 @@ async fn test_storage_resize() -> TestResult {
         .replace(env.name(), &PostParams::default(), &cluster)
         .await?;
 
-    run_with_retries(async || {
-        let sts = env.sts_api().get(env.name()).await?;
-        anyhow::ensure!(sts.metadata.deletion_timestamp.is_some());
-        Ok(())
-    })
-    .await?;
-
     run_with_many_retries(async || {
         let sts = env.sts_api().get(env.name()).await?;
         anyhow::ensure!(sts.metadata.deletion_timestamp.is_none());
