@@ -258,8 +258,9 @@ async function sendWithRetry(
   url: URL,
   init: SvixRequestInit,
   retryScheduleInMs?: number[],
+  // FIXME: Are the defaults here ever used? It seems like only retryCount is.
   nextInterval = 50,
-  triesLeft = 2,
+  triesLeft = 0,
   fetchImpl: typeof fetch = fetch,
   retryCount = 1
 ): Promise<Response> {
