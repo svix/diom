@@ -28,7 +28,7 @@ jobs:
       - name: Read version from Cargo.toml
         id: version
         run: |
-          VERSION=$(cargo metadata --manifest-path infra/operator/Cargo.toml --no-deps --format-version 1 | jq -r '.packages[0].version')
+          VERSION=$(cargo metadata --manifest-path infra/operator/Cargo.toml --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "diom-operator") | .version')
           echo "version=v${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Dry run summary
