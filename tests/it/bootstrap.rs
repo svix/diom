@@ -95,16 +95,32 @@ async fn test_bootstrap_deprecated_file_path() -> TestResult {
 
 #[tokio::test]
 async fn test_bootstrap_multiple_sources() -> TestResult {
-    let inline = include_str!("static/bootstrap.test").to_string();
+    let inline = r#"kv namespace configure {"name":"kv_inline"}"#.to_string();
     let test_server = TestServerBuilder::with_default_config()
         .tap_cfg(|cfg| {
             cfg.bootstrap_cfg = Some(inline);
-            cfg.bootstrap_cfg_paths = vec!["tests/it/static/bootstrap2.test".to_string()];
+            cfg.bootstrap_cfg_paths = vec![
+                "tests/it/static/bootstrap.test".to_string(),
+                "tests/it/static/bootstrap2.test".to_string(),
+            ];
         })
         .build()
         .await;
+
+    // Verify inline source
+    let kv_inline = test_server
+        .client
+        .post("v1.kv.namespace.get")
+        .json(json!({"name": "kv_inline"}))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(kv_inline["name"], "kv_inline");
+
+    // Verify bootstrap.test (file source 1)
     assert_bootstrap_namespaces(&test_server.client).await?;
 
+    // Verify bootstrap2.test (file source 2)
     let kv3 = test_server
         .client
         .post("v1.kv.namespace.get")
