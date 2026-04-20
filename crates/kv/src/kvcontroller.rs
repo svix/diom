@@ -313,10 +313,10 @@ impl KvController {
                 tracing::warn!(
                     keyspace = self.keyspace_name,
                     elapsed = ?start.elapsed(),
-                    "clear_expired is running significantly behind"
+                    "clear_expired is running significantly behind",
                 );
             }
-            tracing::trace!(timestamp=%now, "scheduling a job to clear items expired before");
+            tracing::trace!(timestamp = %now, "scheduling a job to clear items expired before");
             thunk().await?;
         }
         Ok(())
@@ -347,11 +347,15 @@ impl KvController {
                 return Ok(cleared);
             };
 
-            tracing::trace!(first_key=?first, last_key=?last, "about to prune some expired keys");
+            tracing::trace!(
+                first_key = ?first,
+                last_key = ?last,
+                "about to prune some expired keys",
+            );
 
             let start_batch = Instant::now();
-            let num_this_batch =
-                tracing::debug_span!("clear_expired_in_raft:remove_chunk").in_scope(|| {
+            let num_this_batch = tracing::debug_span!("clear_expired_in_raft:remove_chunk")
+                .in_scope(|| {
                     let mut batch = db.batch();
                     let mut num_this_batch = 0;
 
@@ -359,10 +363,9 @@ impl KvController {
                         cleared += 1;
                         num_this_batch += 1;
                         let k = item.key()?;
-                        let namespace_id = ExpirationKey::extract_namespace_id(&k)
-                            .map_err(Error::internal)?;
-                        let main_key =
-                            ExpirationKey::extract_key(&k).map_err(Error::internal)?;
+                        let namespace_id =
+                            ExpirationKey::extract_namespace_id(&k).map_err(Error::internal)?;
+                        let main_key = ExpirationKey::extract_key(&k).map_err(Error::internal)?;
                         batch.remove_row::<KvPairRow, _>(
                             &keyspace,
                             KvPairKey::build_key(&namespace_id, main_key),
@@ -373,7 +376,11 @@ impl KvController {
                     batch.commit()?;
                     Ok::<_, Error>(num_this_batch)
                 })?;
-            tracing::trace!(num_this_batch, elapsed=?start_batch.elapsed(), "cleared a batch of items");
+            tracing::trace!(
+                num_this_batch,
+                elapsed = ?start_batch.elapsed(),
+                "cleared a batch of items",
+            );
 
             if cleared > 0 {
                 tracing::debug!(cleared, "cleared some keys");
@@ -381,7 +388,8 @@ impl KvController {
                 tracing::trace!("no expired keys");
             }
             Ok(cleared)
-        }).await??;
+        })
+        .await??;
 
         tracing::Span::current().record("cleared", cleared);
 

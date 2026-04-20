@@ -381,7 +381,7 @@ impl RaftState {
         let mut write_type = WriteType::Local;
         let (response, log_id) = match self.raft.client_write(Arc::clone(&request)).await {
             Ok(resp) => {
-                tracing::trace!(log_id=?resp.log_id(), "request applied to log");
+                tracing::trace!(log_id = ?resp.log_id(), "request applied to log");
                 (resp.data, resp.log_id)
             }
             Err(err) => {
@@ -488,7 +488,7 @@ impl RaftState {
             false
         } else {
             let Some(leader) = self.raft.current_leader().await else {
-                tracing::warn!(my_state=?state, "no current leader known");
+                tracing::warn!(my_state = ?state, "no current leader known");
                 return false;
             };
             if !self
@@ -750,7 +750,7 @@ impl diom_operations::OperationWriterBase for RaftState {
         let request = Arc::new(request);
         match self.raft.client_write(request).await {
             Ok(resp) => {
-                tracing::trace!(log_id=?resp.log_id(), "request applied to log");
+                tracing::trace!(log_id = ?resp.log_id(), "request applied to log");
                 Ok(resp.data)
             }
             Err(err) => {
