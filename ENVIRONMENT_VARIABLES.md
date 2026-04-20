@@ -4,8 +4,8 @@ The diom server accepts the following environment variables:
 |----------------------|-------------|
 | `$DIOM_ADMIN_TOKEN` | An auth token for admin access to Diom<br/><br/>It's useful for bootstrapping a new Diom cluster, or using it in CI pipelines or other automated testing environments where you need a stable, well-known token for testing or scripted setup.<br/><br/>If you're using it to bootstrap a new Diom cluster, it’s recommended that you only use it during bootstrapping, and remove this configuration once done. |
 | `$DIOM_BACKGROUND_CLEANUP_INTERVAL_MS` | How often to run background cleanup/garbage collection jobs<br/><br/>Correctness should never be affected by this, just wasted memory/disk. |
-| `$DIOM_BOOTSTRAP_CFG` | YAML bootstrap data. Takes precedence over `bootstrap_cfg_path` |
-| `$DIOM_BOOTSTRAP_CFG_PATH` | The path to a YAML bootstrap file |
+| `$DIOM_BOOTSTRAP_CFG` | Inline bootstrap script, applied before any `bootstrap_cfg_paths`. |
+| `$DIOM_BOOTSTRAP_CFG_PATHS` | Paths to bootstrap scripts, applied in order. |
 | `$DIOM_BOOTSTRAP_MAX_WAIT_TIME_MS` | Maximum time to wait for cluster initialization at startup<br/><br/>If this is unset, we will wait indefinitely. |
 | `$DIOM_CLUSTER_ADVERTISED_ADDRESS` | Address that other nodes should use to communicate with this one.<br/><br/>If not passed, we'll attempt to discover it at boot time. This cannot currently be changed after cluster initialization. |
 | `$DIOM_CLUSTER_AUTO_INITIALIZE` | Automatically initialize the cluster on bootup if we can't discover any peers and we don't have any existing state.<br/><br/>If you initialize all peers at exactly the same time, this can potentially cause errors. |

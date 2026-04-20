@@ -298,16 +298,18 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
 }
 
 fn load_commands(
-    config_path: Option<&str>,
+    config_paths: &[String],
     config_content: Option<&str>,
 ) -> anyhow::Result<Vec<BootstrapCommand>> {
-    let content = match (config_content, config_path) {
-        (Some(content), _) => content.to_owned(),
-        (None, Some(path)) => fs::read_to_string(path)
-            .with_context(|| format!("opening bootstrap config {path:?}"))?,
-        (None, None) => String::new(),
-    };
-    let mut commands = parse_bootstrap(&content).context("parsing bootstrap config")?;
+    let mut commands = Vec::new();
+    if let Some(content) = config_content {
+        commands.extend(parse_bootstrap(content).context("parsing inline bootstrap config")?);
+    }
+    for path in config_paths {
+        let content = fs::read_to_string(path)
+            .with_context(|| format!("opening bootstrap config {path:?}"))?;
+        commands.extend(parse_bootstrap(&content).context("parsing bootstrap config")?);
+    }
     ensure_defaults(&mut commands);
     Ok(commands)
 }
@@ -345,10 +347,12 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
 
     wait_for_up(&app_config, &raft_state).await?;
 
-    let commands = load_commands(
-        app_config.bootstrap_cfg_path.as_deref(),
-        app_config.bootstrap_cfg.as_deref(),
-    )?;
+    let mut paths = app_config.bootstrap_cfg_paths.clone();
+    if let Some(path) = &app_config.bootstrap_cfg_path {
+        tracing::warn!("`bootstrap_cfg_path` is deprecated; use `bootstrap_cfg_paths` instead");
+        paths.push(path.clone());
+    }
+    let commands = load_commands(&paths, app_config.bootstrap_cfg.as_deref())?;
 
     tracing::debug!(
         num_commands = commands.len(),

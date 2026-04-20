@@ -1,0 +1,2 @@
+kv namespace configure {"name":"kv3"}
+cache namespace configure {"name":"cache2"}
