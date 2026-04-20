@@ -263,9 +263,17 @@ fn gen_prefix_method(_prefix: &Expr, fields: &[KeyField]) -> TokenStream {
 
     quote! {
         #[doc = #doc]
-        pub fn #method_name(#(#params),*) -> ::std::vec::Vec<u8> {
+        pub fn #method_name(#(#params),*) -> ::fjall_utils::UserKey {
             let total_len = #len_expr;
-            let mut buf = ::std::vec![0u8; total_len];
+
+            let mut stack_buf = [0u8; 64];
+            let mut heap_buf;
+            let buf: &mut [u8] = if total_len <= stack_buf.len() {
+                &mut stack_buf[..total_len]
+            } else {
+                heap_buf = ::std::vec![0u8; total_len];
+                &mut heap_buf
+            };
             let mut pos = 0;
 
             buf[pos] = <Self as ::fjall_utils::FjallKeyAble>::PREFIX;
@@ -274,7 +282,7 @@ fn gen_prefix_method(_prefix: &Expr, fields: &[KeyField]) -> TokenStream {
             #(#writes)*
 
             ::std::debug_assert_eq!(pos, total_len);
-            buf
+            ::fjall_utils::UserKey::from(&*buf)
         }
     }
 }
