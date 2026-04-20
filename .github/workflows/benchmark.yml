@@ -12,7 +12,9 @@ jobs:
         working-directory: ./benchmarks
     steps:
       - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.95'
       - uses: Swatinem/rust-cache@v2
       - name: Install cargo-criterion
         run: cargo install cargo-criterion
