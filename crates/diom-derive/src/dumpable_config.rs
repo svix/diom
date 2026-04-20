@@ -32,7 +32,7 @@ impl DumpableField {
                     && let syn::Lit::Str(lit) = &lit.lit
                 {
                     let value = lit.value();
-                    docstring.push(value.trim_start().to_string())
+                    docstring.push(value.trim_start().to_owned())
                 }
             } else if attr.path().is_ident("dumpable_config") {
                 attr.parse_nested_meta(|meta| {

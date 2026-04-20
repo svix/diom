@@ -1,3 +1,5 @@
+#![warn(clippy::str_to_string)]
+
 use std::{error, fmt, panic::Location};
 
 use aide::OperationOutput;
