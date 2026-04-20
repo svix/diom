@@ -93,6 +93,14 @@ jobs:
       target: prod
       file: ./Dockerfile
 
+  main-docker-cli-test-build:
+    needs: filter
+    if: needs.filter.outputs.main-docker == 'true'
+    uses: ./.github/workflows/docker-test-build.yml
+    with:
+      target: cli-prod
+      file: ./Dockerfile
+
   operator-docker-test-build:
     needs: filter
     if: needs.filter.outputs.operator-docker == 'true'
@@ -112,6 +120,8 @@ jobs:
       - javascript
       - python
       - main-docker-test-build
+      - main-docker-cli-test-build
+      - operator-docker-test-build
     # Always run so that this job is a stable required status check: if an
     # upstream job is skipped (e.g. due to path filters added in the future)
     # that is fine; we only fail if something actually failed or was cancelled.
