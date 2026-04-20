@@ -2,7 +2,6 @@ use std::{borrow::Cow, fmt};
 
 use schemars::JsonSchema;
 use serde::Serialize;
-use validator::ValidationError;
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct ValidationErrorBody {
@@ -44,15 +43,6 @@ pub struct ValidationErrorItem {
     /// "value_error.number.not_ge".
     #[serde(rename = "type")]
     pub ty: String,
-}
-
-/// Helper function to simplify the somewhat egregious API for creating a ValidationError
-pub fn validation_error(code: Option<&'static str>, msg: Option<&'static str>) -> ValidationError {
-    ValidationError {
-        code: Cow::from(code.unwrap_or("validation")),
-        message: msg.map(Cow::from),
-        params: std::collections::HashMap::new(),
-    }
 }
 
 /// Recursively searches a [`validator::ValidationErrors`] tree into a linear list of errors to be
