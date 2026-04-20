@@ -401,15 +401,22 @@ impl<M: diom_id::IdMarker> KeyComponent for diom_id::Id<M> {
 mod tests {
     use crate::FjallKeyAble;
 
+    #[repr(u8)]
+    enum RowType {
+        One = 1,
+        Two = 2,
+        Three = 3,
+    }
+
     #[derive(FjallKeyAble)]
-    #[table_key(prefix = 1)]
+    #[table_key(prefix = RowType::One)]
     struct ExampleSingleKey {
         #[key(0)]
         id: u32,
     }
 
     #[derive(FjallKeyAble)]
-    #[table_key(prefix = 2)]
+    #[table_key(prefix = RowType::Two)]
     struct ExampleCompositeKey {
         #[key(0)]
         id: u32,
@@ -509,7 +516,7 @@ mod tests {
     }
 
     #[derive(FjallKeyAble)]
-    #[table_key(prefix = 3)]
+    #[table_key(prefix = RowType::Three)]
     struct ExampleTripleKey {
         #[key(0)]
         a: u32,
