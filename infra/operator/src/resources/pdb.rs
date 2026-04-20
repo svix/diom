@@ -2,37 +2,13 @@ use k8s_openapi::{
     api::policy::v1::{PodDisruptionBudget, PodDisruptionBudgetSpec},
     apimachinery::pkg::{apis::meta::v1::LabelSelector, util::intstr::IntOrString},
 };
-use kube::{
-    Resource,
-    api::{DeleteParams, Patch},
-    core::ObjectMeta,
-};
+use kube::{Resource, core::ObjectMeta};
 
 use crate::{
     context::ClusterCtx,
     error::{Error, Result},
     labels,
 };
-
-pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
-    if ctx.cluster.spec.diom.replicas > 1 {
-        let pdb = build(ctx)?;
-        ctx.pdb_api()
-            .patch(&ctx.name, &ctx.pp(), &Patch::Apply(&pdb))
-            .await?;
-    } else {
-        match ctx
-            .pdb_api()
-            .delete(&ctx.name, &DeleteParams::default())
-            .await
-        {
-            Ok(_) => {}
-            Err(kube::Error::Api(e)) if e.code == 404 => {} // already absent
-            Err(e) => return Err(e.into()),
-        }
-    }
-    Ok(())
-}
 
 pub(crate) fn build(ctx: &ClusterCtx) -> Result<PodDisruptionBudget> {
     let cluster = &ctx.cluster;
