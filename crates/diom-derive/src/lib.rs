@@ -1,3 +1,5 @@
+#![warn(clippy::str_to_string)]
+
 use quote::quote;
 use syn::{DeriveInput, ItemFn, parse_macro_input};
 

@@ -1,3 +1,5 @@
+#![warn(clippy::str_to_string)]
+
 use std::sync::LazyLock;
 
 pub mod backoff;

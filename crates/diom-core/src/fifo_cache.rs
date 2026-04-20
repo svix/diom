@@ -59,7 +59,7 @@ mod tests {
     #[test]
     fn get_returns_inserted_value() {
         let mut cache = FifoCache::new(10);
-        cache.put("a".to_string(), 1);
+        cache.put("a".to_owned(), 1);
         assert_eq!(cache.get("a", Duration::from_secs(60)), Some(&1));
     }
 
@@ -72,16 +72,16 @@ mod tests {
     #[test]
     fn get_returns_none_after_ttl_expires() {
         let mut cache = FifoCache::new(10);
-        cache.put("a".to_string(), 1);
+        cache.put("a".to_owned(), 1);
         assert_eq!(cache.get("a", Duration::ZERO), None);
     }
 
     #[test]
     fn evicts_oldest_when_at_capacity() {
         let mut cache = FifoCache::new(2);
-        cache.put("a".to_string(), 1);
-        cache.put("b".to_string(), 2);
-        cache.put("c".to_string(), 3);
+        cache.put("a".to_owned(), 1);
+        cache.put("b".to_owned(), 2);
+        cache.put("c".to_owned(), 3);
         assert_eq!(cache.get("a", Duration::from_secs(60)), None);
         assert_eq!(cache.get("b", Duration::from_secs(60)), Some(&2));
         assert_eq!(cache.get("c", Duration::from_secs(60)), Some(&3));
@@ -90,11 +90,11 @@ mod tests {
     #[test]
     fn update_refreshes_value_and_eviction_order() {
         let mut cache = FifoCache::new(2);
-        cache.put("a".to_string(), 1);
-        cache.put("b".to_string(), 2);
+        cache.put("a".to_owned(), 1);
+        cache.put("b".to_owned(), 2);
         // Re-insert "a" — it should now be evicted last
-        cache.put("a".to_string(), 10);
-        cache.put("c".to_string(), 3);
+        cache.put("a".to_owned(), 10);
+        cache.put("c".to_owned(), 3);
         // "b" is now the oldest live entry and should be evicted
         assert_eq!(cache.get("b", Duration::from_secs(60)), None);
         assert_eq!(cache.get("a", Duration::from_secs(60)), Some(&10));

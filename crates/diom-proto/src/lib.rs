@@ -1,3 +1,5 @@
+#![warn(clippy::str_to_string)]
+
 mod error;
 mod internal_client;
 mod msgpack;

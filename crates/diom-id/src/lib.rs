@@ -1,3 +1,5 @@
+#![warn(clippy::str_to_string)]
+
 use std::{fmt, marker::PhantomData};
 
 use diom_core::{PersistableValue, types::AsMillisecond};
