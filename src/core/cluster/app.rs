@@ -1,4 +1,4 @@
-#![expect(clippy::disallowed_types)] // we can't use MsgPackOrJson because these endpoints are not OpenAPI-based
+#![expect(clippy::disallowed_types)] // some things use Json
 
 use std::sync::Arc;
 
@@ -10,14 +10,14 @@ use axum::{
     routing::{get, post},
 };
 use axum_extra::TypedHeader;
-use diom_proto::{MsgPack, MsgPackOrJson};
+use diom_proto::{MsgPack, MsgPackOrJson, PostCard};
 use headers::{Authorization, authorization::Bearer};
 use http::StatusCode;
 use openraft::{
     ChangeMembers,
     raft::{AppendEntriesRequest, InstallSnapshotRequest, VoteRequest},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tap::{Pipe, TapFallible};
 
 use super::{
@@ -116,6 +116,21 @@ where
     }
 }
 
+fn postcard_rpc_response<Ok, Err>(result: Result<Ok, Err>) -> Response
+where
+    Ok: Serialize,
+    Err: Serialize,
+{
+    match result {
+        Ok(ok) => (StatusCode::OK, PostCard(V0Wrapper::V0(ok))).into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            PostCard(V0Wrapper::V0(e)),
+        )
+            .into_response(),
+    }
+}
+
 fn admin_response<Ok, Err>(result: Result<Ok, Err>) -> Response
 where
     Ok: Serialize,
@@ -130,18 +145,29 @@ where
     }
 }
 
+/// Version envelope for values used in replication. This allows us to theoretically
+/// change these structures in the future without breaking compatibility
+#[derive(Debug, Deserialize, Serialize)]
+pub(crate) enum V0Wrapper<T> {
+    V0(T),
+}
+
 // Standard functions
 
 #[tracing::instrument(skip_all)]
 async fn append_entries(
     Extension(state): Extension<RaftState>,
-    MsgPack(body): MsgPack<AppendEntriesRequest<TypeConfig>>,
+    PostCard(V0Wrapper::V0(body)): PostCard<V0Wrapper<AppendEntriesRequest<TypeConfig>>>,
 ) -> impl IntoResponse {
     tracing::trace!(
         num_entries=body.entries.len(),
         leader_commit=?body.leader_commit,
         "appending some entries to the log");
-    state.raft.append_entries(body).await.pipe(rpc_response)
+    state
+        .raft
+        .append_entries(body)
+        .await
+        .pipe(postcard_rpc_response)
 }
 
 #[tracing::instrument(skip_all)]
@@ -159,7 +185,7 @@ async fn vote(
 #[tracing::instrument(skip_all)]
 async fn stream_snapshot(
     Extension(state): Extension<RaftState>,
-    MsgPack(req): MsgPack<InstallSnapshotRequest<TypeConfig>>,
+    PostCard(V0Wrapper::V0(req)): PostCard<V0Wrapper<InstallSnapshotRequest<TypeConfig>>>,
 ) -> impl IntoResponse {
     tracing::trace!(
         num_bytes = req.data.len(),
@@ -167,14 +193,18 @@ async fn stream_snapshot(
         done = req.done,
         "streaming part of a snapshot"
     );
-    state.raft.install_snapshot(req).await.pipe(rpc_response)
+    state
+        .raft
+        .install_snapshot(req)
+        .await
+        .pipe(postcard_rpc_response)
 }
 
 #[tracing::instrument(skip_all)]
 async fn handle_forwarded_write(
     Extension(state): Extension<RaftState>,
-    MsgPack(mut req): MsgPack<ForwardedWriteRequest>,
-) -> Result<MsgPack<ForwardedWriteResponse>, crate::Error> {
+    PostCard(V0Wrapper::V0(mut req)): PostCard<V0Wrapper<ForwardedWriteRequest>>,
+) -> Result<PostCard<V0Wrapper<ForwardedWriteResponse>>, crate::Error> {
     // reset the timestamp in case the forwarding node was out of sync
     req.request.timestamp = state.state_machine.time.now_utm();
 
@@ -189,7 +219,7 @@ async fn handle_forwarded_write(
         log_id: response.log_id,
         response: response.data,
     };
-    Ok(MsgPack(response))
+    Ok(PostCard(V0Wrapper::V0(response)))
 }
 
 // Administrative functions
