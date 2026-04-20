@@ -55,27 +55,17 @@ pub trait TableRow:
         Ok(())
     }
 
-    fn iter<K: ReadableKeyspace>(keyspace: &K) -> impl Iterator<Item = (TableKey<Self>, Self)> {
+    fn keys<K: ReadableKeyspace>(keyspace: &K) -> impl Iterator<Item = fjall::Slice> {
+        let prefix = &[Self::ROW_TYPE];
+        keyspace.prefix(prefix).map(|g| g.key().expect("key error"))
+    }
+
+    fn values<K: ReadableKeyspace>(keyspace: &K) -> impl Iterator<Item = Self> {
         let prefix = &[Self::ROW_TYPE];
         keyspace.prefix(prefix).map(|g| {
-            let (k, v) = g.into_inner().expect("io error");
-            let k = TableKey::<Self>::init_from_bytes(&k);
-            let v = Self::from_fjall_value(v).expect("deserialize error?");
-            (k, v)
-        })
-    }
-
-    fn keys<K: ReadableKeyspace>(keyspace: &K) -> Result<impl Iterator<Item = fjall::Slice>> {
-        let prefix = &[Self::ROW_TYPE];
-        Ok(keyspace.prefix(prefix).map(|g| g.key().expect("key error")))
-    }
-
-    fn values<K: ReadableKeyspace>(keyspace: &K) -> Result<impl Iterator<Item = Self>> {
-        let prefix = &[Self::ROW_TYPE];
-        Ok(keyspace.prefix(prefix).map(|g| {
             let v = g.value().expect("iter error?");
             Self::from_fjall_value(v).expect("deserialize error?")
-        }))
+        })
     }
 
     /// Scan rows in key order within `prefix`, stopping after `limit` rows.
