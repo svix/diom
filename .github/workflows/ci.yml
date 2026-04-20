@@ -128,7 +128,7 @@ jobs:
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
           components: rustfmt
-      - uses: Swatinem/rust-cache@v2
+      - uses: ubicloud/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Regerate openapi.json and SDKs
