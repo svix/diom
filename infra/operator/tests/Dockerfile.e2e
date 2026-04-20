@@ -1,0 +1,7 @@
+FROM debian:trixie-slim
+RUN apt-get update && apt-get install -y --no-install-recommends libgcc-s1 ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN useradd --uid 1000 appuser
+COPY diom-server /usr/local/bin/diom-server
+ENV DIOM_EPHEMERAL_DB_PATH=/tmp/ephemeral
+USER appuser
+CMD ["/usr/local/bin/diom-server"]
