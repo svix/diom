@@ -11,6 +11,9 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  # Keep this in sync with Dockerfile
+  ci_toolchain_rust: '1.95'
+
 jobs:
   check-fmt:
     name: Formatting
@@ -60,8 +63,9 @@ jobs:
       DIOM_LOG_LEVEL: debug
     steps:
       - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ env.ci_toolchain_rust }}
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: taiki-e/install-action@cargo-nextest
@@ -122,7 +126,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
         with:
-          components: rustfmt, clippy
+          components: rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
@@ -152,7 +156,9 @@ jobs:
     runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
       - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.ci_toolchain_rust }}
       - uses: ubicloud/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
