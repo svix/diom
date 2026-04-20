@@ -23,15 +23,15 @@ pub struct DiomOptions {
     /// Default: 15 seconds.
     pub timeout: Option<Duration>,
 
-    /// Number of retries
+    /// Number of retries.
     ///
     /// The number of times the client will retry if a server-side error
     /// or timeout is received.
     ///
-    /// Default: 2
+    /// Default: no automatic retries
     pub num_retries: Option<u32>,
 
-    /// Retry Schedule in milliseconds
+    /// Retry Schedule in milliseconds.
     ///
     /// List of delays to wait before each retry attempt.
     /// Takes precedence over `num_retries`.
@@ -107,7 +107,7 @@ impl DiomClient {
                 Some(s) => s,
             },
             bearer_access_token: None,
-            num_retries: options.num_retries.unwrap_or(2),
+            num_retries: options.num_retries.unwrap_or(0),
             retry_schedule: options.retry_schedule,
         });
         let client = Self { cfg };

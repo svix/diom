@@ -11,5 +11,5 @@ public final class DiomOptions {
     public static final String DEFAULT_URL = "https://api.svix.com";
 
     private String serverUrl;
-    private final List<Long> retrySchedule = Arrays.asList(50L, 100L, 200L);
+    private final List<Long> retrySchedule = Arrays.asList();
 }

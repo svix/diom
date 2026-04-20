@@ -18,7 +18,7 @@ export type DiomOptions = {
   {
     /** The number of times the client will retry if a server-side error
      *  or timeout is received.
-     *  Default: 2
+     *  Default: 0 (no automatic retries)
      */
     numRetries?: number;
   }

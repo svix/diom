@@ -14,9 +14,9 @@ class DiomOptions:
     Up to five retries are supported, passing a retry schedule with more than
     five entries will raise a `ValueError`.
 
-    Defaults to [0.05, 0.1, 0.2]
+    Defaults to [] (no automatic retries)
     """
-    retry_schedule: List[float] = field(default_factory=lambda: [0.05, 0.1, 0.2])
+    retry_schedule: List[float] = field(default_factory=lambda: [])
 
     """
     The maximum amount of time in seconds a request can take.

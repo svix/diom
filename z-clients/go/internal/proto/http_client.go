@@ -38,7 +38,7 @@ func DefaultHttpClient(defaultBaseUrl string) HttpClient {
 			Timeout:   60 * time.Second,
 			Transport: tr,
 		},
-		RetrySchedule: []time.Duration{50 * time.Microsecond, 100 * time.Microsecond, 200 * time.Microsecond},
+		RetrySchedule: []time.Duration{},
 		BaseURL:       defaultBaseUrl,
 		Debug:         false,
 	}
