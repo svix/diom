@@ -150,12 +150,15 @@ jobs:
       - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
+      # Use a single build step to avoid building crates/* with different feature sets
+      - name: Build codegen and server
+        run: cargo build --package=codegen --package=diom-server --features=generate
       - name: Regerate openapi.json and SDKs
-        run: cargo codegen
+        run: ./target/debug/codegen
       - name: Regerate config.defaults.toml
-        run: cargo run -- write-config config.defaults.toml
+        run: ./target/debug/diom-server write-config config.defaults.toml
       - name: Regerate ENVIRONMENT_VARIABLES.md
-        run: cargo run -- describe-environment-variables ENVIRONMENT_VARIABLES.md
+        run: ./target/debug/diom-server describe-environment-variables ENVIRONMENT_VARIABLES.md
       - name: Check for uncommitted changes
         run: |
           gs=$(git status -s)
