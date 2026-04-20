@@ -528,9 +528,6 @@ mod tests {
         }
     }
 
-    // In the absence of code (for now, anyway) that actually couples backend
-    // configuration with the operator definition, add a test asserting that
-    // the given spec maps to expected configuration values.
     #[test]
     fn test_build_env() {
         let mut spec = make_spec();
@@ -540,35 +537,64 @@ mod tests {
             metrics_protocol: Some(OpenTelemetryProtocol::Http),
         });
 
-        let env = build_env(&spec, "my-cluster", "my-cluster-headless", "my-ns");
-        let get = |name: &str| {
-            env.iter()
-                .find(|e| e.name == name)
-                .and_then(|e| e.value.as_deref())
-        };
-
-        assert_eq!(get("DIOM_LISTEN_ADDRESS"), Some("0.0.0.0:8624"));
-        assert_eq!(get("DIOM_CLUSTER_AUTO_INITIALIZE"), Some("true"));
-        assert_eq!(get("DIOM_PERSISTENT_DB_PATH"), Some("/data/persistent"));
-        assert_eq!(get("DIOM_CLUSTER_LOG_PATH"), Some("/data/persistent/logs"));
+        let env_vars = build_env(&spec, "my-cluster", "my-cluster-headless", "my-ns");
+        // This var has k8s placeholders that can't be parsed by Diom config, so just assert it directly
+        // and exclude from the temp env:
         assert_eq!(
-            get("DIOM_CLUSTER_SNAPSHOT_PATH"),
-            Some("/data/persistent/snapshots")
-        );
-        assert_eq!(
-            get("DIOM_CLUSTER_ADVERTISED_ADDRESS"),
+            env_vars
+                .iter()
+                .find(|e| e.name == "DIOM_CLUSTER_ADVERTISED_ADDRESS")
+                .and_then(|e| e.value.as_deref()),
             Some("$(POD_NAME).my-cluster-headless.$(POD_NAMESPACE).svc.cluster.local:8625"),
         );
+
+        let env_vars: Vec<(String, Option<String>)> = env_vars
+            .into_iter()
+            .filter(|e| e.name.starts_with("DIOM_"))
+            .filter(|e| e.name != "DIOM_CLUSTER_ADVERTISED_ADDRESS")
+            .map(|e| (e.name, e.value))
+            .collect();
+
+        // Backend config should successfully load given our Operator-supplied env vars
+        let cfg = temp_env::with_vars(env_vars, || diom_backend::cfg::load(None).unwrap());
+
         assert_eq!(
-            get("DIOM_CLUSTER_SEED_NODES"),
-            Some("my-cluster-0.my-cluster-headless.my-ns.svc.cluster.local:8625"),
+            cfg.listen_address,
+            "0.0.0.0:8624".parse::<std::net::SocketAddr>().unwrap()
         );
-        assert_eq!(get("DIOM_OPENTELEMETRY_ADDRESS"), Some("grpc://otel:4317"));
         assert_eq!(
-            get("DIOM_OPENTELEMETRY_METRICS_ADDRESS"),
+            cfg.persistent_db.path,
+            std::path::PathBuf::from("/data/persistent")
+        );
+        assert!(cfg.cluster.auto_initialize);
+        assert_eq!(
+            cfg.cluster.seed_nodes,
+            vec![
+                "my-cluster-0.my-cluster-headless.my-ns.svc.cluster.local:8625"
+                    .parse::<diom_backend::cfg::PeerAddr>()
+                    .unwrap()
+            ]
+        );
+        assert_eq!(
+            cfg.cluster.log_path,
+            Some(std::path::PathBuf::from("/data/persistent/logs"))
+        );
+        assert_eq!(
+            cfg.cluster.snapshot_path,
+            Some(std::path::PathBuf::from("/data/persistent/snapshots"))
+        );
+        assert_eq!(
+            cfg.opentelemetry.address.as_deref(),
+            Some("grpc://otel:4317")
+        );
+        assert_eq!(
+            cfg.opentelemetry.metrics_address.as_deref(),
             Some("http://otel:4318")
         );
-        assert_eq!(get("DIOM_OPENTELEMETRY_METRICS_PROTOCOL"), Some("http"));
+        assert!(matches!(
+            cfg.opentelemetry.metrics_protocol,
+            diom_backend::cfg::OpenTelemetryProtocol::Http
+        ));
     }
 
     fn make_pvc(name: &str, storage: &str) -> PersistentVolumeClaim {
