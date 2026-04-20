@@ -11,7 +11,7 @@ use k8s_openapi::{
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fmt};
 
 pub const DEFAULT_API_PORT: u16 = 8624;
 pub const INTRACLUSTER_PORT: u16 = 8625;
@@ -160,27 +160,6 @@ pub struct DiomSpec {
     #[serde(default)]
     pub log_format: Option<String>,
 
-    /// The OpenTelemetry address to send events to if given.
-    ///
-    /// Currently only GRPC exports are supported.
-    #[serde(default)]
-    pub opentelemetry_address: Option<String>,
-
-    /// The OpenTelemetry address to send metrics to if given.
-    ///
-    /// If not specified, the server will attempt to fall back
-    /// to `opentelemetry_address`.
-    #[serde(default)]
-    pub opentelemetry_metrics_address: Option<String>,
-
-    /// Send OpenTelemetry metrics via HTTP.
-    ///
-    /// By default, `opentelemetry_address` and `opentelemetry_metrics_address`
-    /// are expected to be a GRPC servers. When this is set to true,
-    /// HTTP is used instead for metrics exports.
-    #[serde(default)]
-    pub opentelemetry_metrics_use_http: Option<bool>,
-
     /// Newline-delimited bootstrap script to run on cluster startup.
     #[serde(default)]
     pub bootstrap: Option<String>,
@@ -200,6 +179,49 @@ pub struct DiomSpec {
 
     /// Storage configuration.
     pub storage: DiomStorageSpec,
+
+    #[serde(default)]
+    pub opentelemetry: Option<OpenTelemetrySpec>,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum OpenTelemetryProtocol {
+    #[default]
+    Grpc,
+    Http,
+}
+
+impl fmt::Display for OpenTelemetryProtocol {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Grpc => write!(f, "grpc"),
+            Self::Http => write!(f, "http"),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+pub struct OpenTelemetrySpec {
+    /// The OpenTelemetry address to send events to if given.
+    ///
+    /// Currently only GRPC exports are supported.
+    #[serde(default)]
+    pub address: Option<String>,
+
+    /// The OpenTelemetry address to send metrics to if given.
+    ///
+    /// If not specified, the server will attempt to fall back
+    /// to `opentelemetry_address`.
+    #[serde(default)]
+    pub metrics_address: Option<String>,
+
+    /// OpenTelemetry metrics protocol
+    ///
+    /// By default, metrics are sent via GRPC. Some metrics destinations, most
+    /// notably Prometheus, only support receiving metrics via HTTP.
+    #[serde(default)]
+    pub metrics_protocol: Option<OpenTelemetryProtocol>,
 }
 
 /// Configuration for the client-facing Service.

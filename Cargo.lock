@@ -1761,7 +1761,7 @@ dependencies = [
 
 [[package]]
 name = "diom-operator"
-version = "0.2.2"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures-util",
