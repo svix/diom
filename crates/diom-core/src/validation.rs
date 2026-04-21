@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt};
+use std::fmt;
 
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -43,53 +43,4 @@ pub struct ValidationErrorItem {
     /// "value_error.number.not_ge".
     #[serde(rename = "type")]
     pub ty: String,
-}
-
-/// Recursively searches a [`validator::ValidationErrors`] tree into a linear list of errors to be
-/// sent to the user
-pub fn validation_errors(
-    acc_path: Vec<String>,
-    err: validator::ValidationErrors,
-) -> Vec<ValidationErrorItem> {
-    err.into_errors()
-        .into_iter()
-        .flat_map(|(k, v)| {
-            // Add the next field to the location
-            let mut loc = acc_path.clone();
-            loc.push(k.into());
-
-            match v {
-                // If it's a [`validator::ValidationErrorsKind::Field`], then it will be a vector of
-                // errors to map to [`ValidationErrorItem`]s and insert to [`out`] before the next
-                // iteration
-                validator::ValidationErrorsKind::Field(vec) => vec
-                    .into_iter()
-                    .map(|err| ValidationErrorItem {
-                        loc: loc.clone(),
-                        msg: err
-                            .message
-                            .unwrap_or(Cow::Borrowed("Validation error"))
-                            .to_string(),
-                        ty: "value_error".to_owned(),
-                    })
-                    .collect(),
-                // If it is a [`validator::ValidationErrorsKind::Struct`], then it will be another
-                // [`validator::ValidationErrors`] to search
-                validator::ValidationErrorsKind::Struct(errors) => validation_errors(loc, *errors),
-
-                // If it is a [`validator::ValidationErrorsKind::List`], then it will be an
-                // [`std::collections::BTreeMap`] of [`validator::ValidationErrors`] to search
-                validator::ValidationErrorsKind::List(map) => map
-                    .into_iter()
-                    .flat_map(|(k, v)| {
-                        // Add the list index to the location
-                        let mut loc = loc.clone();
-                        loc.push(format!("[{k}]"));
-
-                        validation_errors(loc, *v)
-                    })
-                    .collect(),
-            }
-        })
-        .collect()
 }
