@@ -57,11 +57,12 @@ jobs:
       cache-scope: ${{ inputs.cache-scope }}
       cache-mode: max
       meta-flavor: |
-        latest=true
+        latest=false
+      # write this to GHCR with the sha-012345 and version docker tags;
+      # these are unused because we pull by output-digest and are just for debugging
       meta-tags: |
-        type=semver,pattern={{version}},value=${{inputs.version}}
-        type=semver,pattern={{major}}.{{minor}},value=${{inputs.version}}
-        type=semver,pattern={{major}},value=${{inputs.version}}
+        type=raw,value=${{ inputs.version }}
+        type=sha,format=long
     secrets:
       registry-auths: |
         - registry: ghcr.io
@@ -92,7 +93,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ inputs.staging_image_repo }}
+          images: ${{ inputs.image_repo }}
           sep-tags: " "
           flavor: |
             latest=true
@@ -102,9 +103,8 @@ jobs:
             type=semver,pattern={{major}},value=${{inputs.version}}
       - name: "Copy images"
         run: |
-          for source in ${{ steps.meta.outputs.tags }}; do
-            # shellcheck disable=SC2001
-            dest="$(echo "$source" | sed -e 's,${{ inputs.staging_image_repo }},${{ inputs.image_repo }},')"
+          for dest in ${{ steps.meta.outputs.tags }}; do
+            source="${{ inputs.staging_image_repo }}@${{ needs.build.outputs.digest }}"
             echo "Copying $source to $dest"
             regctl image copy "$source" "$dest"
           done
