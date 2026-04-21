@@ -1,7 +1,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_core::types::{ByteString, Consistency, DurationMs, EntityKey, UnixTimestampMs};
+use diom_core::types::{ByteString, Consistency, EntityKey, NonZeroDurationMs, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::Module;
@@ -53,8 +53,7 @@ pub struct KvSetIn {
 
     /// Time to live in milliseconds
     #[serde(rename = "ttl_ms")]
-    #[validate(range(min = 1))]
-    pub ttl: Option<DurationMs>,
+    pub ttl: Option<NonZeroDurationMs>,
 
     #[serde(default)]
     pub behavior: OperationBehavior,
@@ -142,7 +141,7 @@ async fn kv_set(
         namespace,
         data.key,
         data.value,
-        data.ttl,
+        data.ttl.map(NonZeroDurationMs::get),
         data.behavior,
         data.version,
     );

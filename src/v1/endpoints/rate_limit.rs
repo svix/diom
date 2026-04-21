@@ -1,7 +1,9 @@
+use std::num::NonZeroU64;
+
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_core::types::{DurationMs, EntityKey, UnixTimestampMs};
+use diom_core::types::{DurationMs, EntityKey, NonZeroDurationMs, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::Module;
@@ -47,7 +49,7 @@ impl From<RateLimitConfig> for TokenBucket {
         TokenBucket {
             bucket_size: val.capacity,
             refill_rate: val.refill_amount,
-            refill_interval: val.refill_interval,
+            refill_interval: val.refill_interval.get(),
         }
     }
 }
@@ -64,12 +66,11 @@ pub struct RateLimitConfig {
 
     /// Interval in milliseconds between refills (minimum 1 millisecond)
     #[serde(rename = "refill_interval_ms", default = "default_interval_ms")]
-    #[validate(range(min = 1))]
-    pub refill_interval: DurationMs,
+    pub refill_interval: NonZeroDurationMs,
 }
 
-fn default_interval_ms() -> DurationMs {
-    1000.into()
+fn default_interval_ms() -> NonZeroDurationMs {
+    const { NonZeroU64::new(1000).unwrap() }.into()
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]

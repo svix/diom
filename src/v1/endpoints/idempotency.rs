@@ -1,7 +1,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_core::types::{ByteString, DurationMs, EntityKey, Metadata, UnixTimestampMs};
+use diom_core::types::{ByteString, EntityKey, Metadata, NonZeroDurationMs, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt as _, ResultExt};
 use diom_id::Module;
@@ -59,8 +59,7 @@ pub struct IdempotencyStartIn {
     pub key: EntityKey,
     /// How long to hold the lock on start before releasing it.
     #[serde(rename = "lock_period_ms")]
-    #[validate(range(min = 1))]
-    pub lock_period: DurationMs,
+    pub lock_period: NonZeroDurationMs,
 }
 
 request_input!(IdempotencyStartIn, "start");
@@ -112,8 +111,7 @@ pub struct IdempotencyCompleteIn {
 
     /// How long to keep the idempotency response for.
     #[serde(rename = "ttl_ms")]
-    #[validate(range(min = 1))]
-    pub ttl: DurationMs,
+    pub ttl: NonZeroDurationMs,
 }
 
 request_input!(IdempotencyCompleteIn, "complete");
@@ -150,7 +148,7 @@ async fn idempotency_start(
         .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
-    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.lock_period);
+    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.lock_period.get());
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(response.result.into()))
@@ -173,7 +171,7 @@ async fn idempotency_complete(
         data.key.to_string(),
         data.response,
         data.context,
-        data.ttl,
+        data.ttl.get(),
     );
     repl.client_write(operation).await.or_internal_error()?.0?;
 
