@@ -19,3 +19,8 @@ class AdminAuthTokenOut(BaseModel):
 
     enabled: bool
     """Whether this token is currently enabled."""
+
+    expired: bool
+    """Whether this token has expired.
+
+    Expired tokens may be pruned in the background at any time."""

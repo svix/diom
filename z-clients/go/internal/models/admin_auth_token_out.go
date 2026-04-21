@@ -14,4 +14,8 @@ type AdminAuthTokenOut struct {
 	Expiry  *diom_types.Timestamp `msgpack:"expiry,omitempty"`
 	Role    string                `msgpack:"role"`
 	Enabled bool                  `msgpack:"enabled"` // Whether this token is currently enabled.
+	// Whether this token has expired.
+	//
+	// Expired tokens may be pruned in the background at any time.
+	Expired bool `msgpack:"expired"`
 }

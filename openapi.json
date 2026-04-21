@@ -5159,6 +5159,10 @@
           "enabled": {
             "description": "Whether this token is currently enabled.",
             "type": "boolean"
+          },
+          "expired": {
+            "description": "Whether this token has expired.\n\nExpired tokens may be pruned in the background at any time.",
+            "type": "boolean"
           }
         },
         "required": [
@@ -5167,7 +5171,8 @@
           "created",
           "updated",
           "role",
-          "enabled"
+          "enabled",
+          "expired"
         ]
       },
       "AdminAuthTokenRotateIn": {

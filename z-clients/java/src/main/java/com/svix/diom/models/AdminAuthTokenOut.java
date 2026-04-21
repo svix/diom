@@ -43,6 +43,7 @@ public class AdminAuthTokenOut {
     @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant expiry;
     @JsonProperty private String role;
     @JsonProperty private Boolean enabled;
+    @JsonProperty private Boolean expired;
     public AdminAuthTokenOut() {}
 
     public AdminAuthTokenOut id(String id) {
@@ -176,6 +177,27 @@ public class AdminAuthTokenOut {
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public AdminAuthTokenOut expired(Boolean expired) {
+        this.expired = expired;
+        return this;
+    }
+
+    /**
+    * Whether this token has expired.
+
+Expired tokens may be pruned in the background at any time.
+    *
+     * @return expired
+     */
+    @javax.annotation.Nonnull
+    public Boolean getExpired() {
+        return expired;
+    }
+
+    public void setExpired(Boolean expired) {
+        this.expired = expired;
     }
 
     /**
