@@ -54,7 +54,7 @@ impl From<RateLimitConfig> for TokenBucket {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimitConfig {
     /// Maximum capacity of the bucket
     pub capacity: NonZeroU64,
@@ -83,7 +83,6 @@ pub struct RateLimitCheckIn {
     pub tokens: u64,
 
     /// Rate limiter configuration
-    #[validate(nested)]
     pub config: RateLimitConfig,
 }
 
@@ -114,7 +113,6 @@ pub struct RateLimitGetRemainingIn {
     pub key: EntityKey,
 
     /// Rate limiter configuration
-    #[validate(nested)]
     pub config: RateLimitConfig,
 }
 
@@ -206,7 +204,6 @@ pub struct RateLimitResetIn {
     pub key: EntityKey,
 
     /// Rate limiter configuration
-    #[validate(nested)]
     pub config: RateLimitConfig,
 }
 
