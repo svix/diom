@@ -187,7 +187,7 @@ jobs:
           fi
   operator-e2e:
     name: Operator e2e tests
-    if: inputs.run_operator_e2e
+    if: ${{ inputs.run_operator_e2e }}
     runs-on: ubicloud-standard-4-ubuntu-2404
     continue-on-error: true
     timeout-minutes: 20
