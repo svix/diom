@@ -66,25 +66,6 @@ impl fmt::Display for AccessPolicyId {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
-pub struct Role {
-    pub id: RoleId,
-    pub description: String,
-    #[serde(default)]
-    pub rules: Vec<AccessRule>,
-    #[serde(default)]
-    pub policies: Vec<AccessPolicyId>,
-    #[serde(default)]
-    pub context: HashMap<String, String>,
-}
-
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
-pub struct AccessPolicy {
-    pub id: AccessPolicyId,
-    pub description: String,
-    pub rules: Vec<AccessRule>,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 pub struct AccessRule {
     pub effect: AccessRuleEffect,
