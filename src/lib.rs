@@ -18,7 +18,7 @@ use axum::{
     response::IntoResponse as _,
     serve::{Listener, ListenerExt as _},
 };
-use diom_authorization::{AccessRule, Permissions};
+use diom_authorization::{Permissions, api::AccessRule};
 use diom_core::Monotime;
 use diom_error::Error;
 use diom_msgs::TopicPublishNotifier;

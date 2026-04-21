@@ -3,7 +3,7 @@ pub mod role;
 pub mod token;
 
 use aide::axum::ApiRouter;
-use diom_authorization::AccessRule;
+use diom_authorization::api::AccessRule;
 use validator::ValidationError;
 
 use crate::AppState;

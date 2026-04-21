@@ -1,4 +1,4 @@
-use diom_authorization::{AccessRule, Context, RequestedOperation, verify_operation};
+use diom_authorization::{Context, RequestedOperation, api::AccessRule, verify_operation};
 use diom_id::Module;
 use serde_json::json;
 

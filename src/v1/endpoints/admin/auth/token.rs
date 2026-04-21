@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::{Extension, State};
-use diom_authorization::{Permissions, RequestedOperation, RoleId};
+use diom_authorization::{Permissions, RequestedOperation, api::RoleId};
 use diom_core::types::{DurationMs, Metadata, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{Error, ResultExt};

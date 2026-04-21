@@ -10,7 +10,10 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
-use diom_authorization::{AccessRule, Permissions, RoleId};
+use diom_authorization::{
+    Permissions,
+    api::{AccessRule, RoleId},
+};
 use diom_error::{OptionExt, Result};
 use tracing::Span;
 

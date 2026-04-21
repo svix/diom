@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
+use diom_authorization::api::{AccessPolicyId, AccessRule, RoleId};
 use diom_core::{PersistableValue, types::UnixTimestampMs};
 use fjall_utils::{FjallKeyAble, TableRow};
 use serde::{Deserialize, Serialize};

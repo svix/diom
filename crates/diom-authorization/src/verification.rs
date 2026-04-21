@@ -1,4 +1,7 @@
-use crate::{AccessRule, AccessRuleEffect, Context, RequestedOperation};
+use crate::{
+    Context, RequestedOperation,
+    api::{AccessRule, AccessRuleEffect},
+};
 
 pub struct Forbidden;
 
