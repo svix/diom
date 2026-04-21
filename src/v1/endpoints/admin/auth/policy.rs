@@ -17,7 +17,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use super::validate_access_rule_list;
 use crate::{
     AppState,
     core::cluster::RaftState,
@@ -81,7 +80,6 @@ pub struct AdminAccessPolicyConfigureIn {
     pub id: AccessPolicyId,
     pub description: String,
     #[serde(default)]
-    #[validate(custom(function = "validate_access_rule_list"))]
     pub rules: Vec<AccessRule>,
 }
 
