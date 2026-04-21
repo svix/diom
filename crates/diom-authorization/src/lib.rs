@@ -1,17 +1,16 @@
 use std::{
     collections::HashMap,
-    fmt,
     sync::{Arc, OnceLock},
 };
 
-use diom_core::PersistableValue;
 use diom_id::{AuthTokenId, Module};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
+pub mod api;
 mod context;
 mod pattern;
 mod verification;
+
+use self::api::RoleId;
 
 pub use self::{
     context::Context,
@@ -19,128 +18,97 @@ pub use self::{
     verification::{Forbidden, verify_operation},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
-#[serde(transparent)]
-pub struct RoleId(pub String);
+#[derive(Debug, Default)]
+pub struct AccessRuleList {
+    allow: Vec<AccessRule>,
+    deny: Vec<AccessRule>,
+}
 
-impl RoleId {
-    pub fn admin() -> Self {
-        Self("admin".to_owned())
+impl AccessRuleList {
+    pub fn empty() -> Arc<Self> {
+        Arc::new(Self::default())
     }
 
-    /// Role used by requests to the internal API server.
-    ///
-    /// Might be split into multiple roles down the line.
-    pub fn operator() -> Self {
-        Self("operator".to_owned())
+    fn admin() -> Arc<Self> {
+        static RULES: OnceLock<Arc<AccessRuleList>> = OnceLock::new();
+        RULES
+            .get_or_init(|| {
+                Arc::new(Self {
+                    allow: [
+                        ModulePattern::Any,
+                        ModulePattern::Exactly(Module::AdminAccessPolicy),
+                        ModulePattern::Exactly(Module::AdminAuthToken),
+                        ModulePattern::Exactly(Module::AdminCluster),
+                        ModulePattern::Exactly(Module::AdminNamespace),
+                        ModulePattern::Exactly(Module::AdminRole),
+                    ]
+                    .map(|module| AccessRule {
+                        resource: ResourcePattern {
+                            module,
+                            namespace: NamespacePattern::Any,
+                            key: KeyPattern::any(),
+                        },
+                        actions: vec!["*".to_string()],
+                    })
+                    .into(),
+                    deny: Vec::new(),
+                })
+            })
+            .clone()
     }
 
-    pub fn from_string(s: String) -> Self {
-        Self(s)
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
+    fn operator() -> Arc<Self> {
+        static RULES: OnceLock<Arc<AccessRuleList>> = OnceLock::new();
+        RULES
+            .get_or_init(|| {
+                Arc::new(Self {
+                    allow: [AccessRule {
+                        resource: ResourcePattern {
+                            module: ModulePattern::Any,
+                            namespace: NamespacePattern::Named("_internal".to_owned()),
+                            key: KeyPattern::any(),
+                        },
+                        actions: vec!["*".to_owned()],
+                    }]
+                    .into(),
+                    deny: Vec::new(),
+                })
+            })
+            .clone()
     }
 }
 
-impl fmt::Display for RoleId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.as_str().fmt(f)
+impl From<Vec<api::AccessRule>> for AccessRuleList {
+    fn from(rules: Vec<api::AccessRule>) -> Self {
+        let mut result = AccessRuleList::default();
+        result.extend(rules);
+        result
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
-#[serde(transparent)]
-pub struct AccessPolicyId(pub String);
+impl Extend<api::AccessRule> for AccessRuleList {
+    fn extend<T: IntoIterator<Item = api::AccessRule>>(&mut self, rules: T) {
+        for rule in rules {
+            let list = match rule.effect {
+                api::AccessRuleEffect::Allow => &mut self.allow,
+                api::AccessRuleEffect::Deny => &mut self.deny,
+            };
 
-impl AccessPolicyId {
-    pub fn as_str(&self) -> &str {
-        &self.0
+            list.push(AccessRule {
+                resource: rule.resource,
+                actions: rule.actions,
+            });
+        }
     }
 }
 
-impl fmt::Display for AccessPolicyId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.as_str().fmt(f)
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
-pub struct Role {
-    pub id: RoleId,
-    pub description: String,
-    #[serde(default)]
-    pub rules: Vec<AccessRule>,
-    #[serde(default)]
-    pub policies: Vec<AccessPolicyId>,
-    #[serde(default)]
-    pub context: HashMap<String, String>,
-}
-
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
-pub struct AccessPolicy {
-    pub id: AccessPolicyId,
-    pub description: String,
-    pub rules: Vec<AccessRule>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
+#[derive(Debug)]
 pub struct AccessRule {
-    pub effect: AccessRuleEffect,
     pub resource: ResourcePattern,
     pub actions: Vec<String>,
 }
 
 impl AccessRule {
-    pub fn admin_rules() -> Arc<[Self]> {
-        static RULES: OnceLock<Arc<[AccessRule]>> = OnceLock::new();
-        RULES
-            .get_or_init(|| {
-                [
-                    ModulePattern::Any,
-                    ModulePattern::Exactly(Module::AdminAccessPolicy),
-                    ModulePattern::Exactly(Module::AdminAuthToken),
-                    ModulePattern::Exactly(Module::AdminCluster),
-                    ModulePattern::Exactly(Module::AdminNamespace),
-                    ModulePattern::Exactly(Module::AdminRole),
-                ]
-                .map(|module| AccessRule {
-                    effect: AccessRuleEffect::Allow,
-                    resource: ResourcePattern {
-                        module,
-                        namespace: NamespacePattern::Any,
-                        key: KeyPattern::any(),
-                    },
-                    actions: vec!["*".to_string()],
-                })
-                .into()
-            })
-            .clone()
-    }
-
-    pub fn operator_rules() -> Arc<[Self]> {
-        static RULES: OnceLock<Arc<[AccessRule]>> = OnceLock::new();
-        RULES
-            .get_or_init(|| {
-                [AccessRule {
-                    effect: AccessRuleEffect::Allow,
-                    resource: ResourcePattern {
-                        module: ModulePattern::Any,
-                        namespace: NamespacePattern::Named("_internal".to_owned()),
-                        key: KeyPattern::any(),
-                    },
-                    actions: vec!["*".to_owned()],
-                }]
-                .into()
-            })
-            .clone()
-    }
-
-    pub fn uses_reserved_namespace(&self) -> bool {
-        self.resource.namespace.is_reserved()
-    }
-
     pub fn matches(&self, operation: &RequestedOperation<'_>, context: Context<'_>) -> bool {
         self.resource.matches(operation, context)
             && self
@@ -148,13 +116,6 @@ impl AccessRule {
                 .iter()
                 .any(|a| a == "*" || a == operation.action)
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
-#[serde(rename_all = "snake_case")]
-pub enum AccessRuleEffect {
-    Allow,
-    Deny,
 }
 
 #[derive(Debug)]
@@ -182,7 +143,7 @@ pub struct Permissions {
     /// The auth token id, if we used auth token
     pub auth_token_id: Option<AuthTokenId>,
     /// The access rules of the requester's role
-    pub access_rules: Arc<[AccessRule]>,
+    pub access_rules: Arc<AccessRuleList>,
     /// Arbitrary key-value context forwarded from JWT claims (empty for non-JWT auth)
     pub context: HashMap<String, String>,
 }
@@ -196,7 +157,7 @@ impl Permissions {
         Self {
             role: RoleId::admin(),
             auth_token_id: None,
-            access_rules: AccessRule::admin_rules(),
+            access_rules: AccessRuleList::admin(),
             context: HashMap::new(),
         }
     }
@@ -209,7 +170,7 @@ impl Permissions {
         Self {
             role: RoleId::operator(),
             auth_token_id: None,
-            access_rules: AccessRule::operator_rules(),
+            access_rules: AccessRuleList::operator(),
             context: HashMap::new(),
         }
     }

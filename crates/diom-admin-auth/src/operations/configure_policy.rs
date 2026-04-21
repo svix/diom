@@ -1,4 +1,4 @@
-use diom_authorization::{AccessPolicyId, AccessRule};
+use diom_authorization::api::{AccessPolicyId, AccessRule};
 use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_operations::OpContext;

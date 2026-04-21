@@ -1,4 +1,4 @@
-use diom_authorization::RoleId;
+use diom_authorization::api::RoleId;
 use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_operations::OpContext;

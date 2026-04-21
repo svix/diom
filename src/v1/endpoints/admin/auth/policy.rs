@@ -4,7 +4,10 @@ use diom_admin_auth::{
     controller::AccessPolicyModel,
     operations::{ConfigureAccessPolicyOperation, DeleteAccessPolicyOperation},
 };
-use diom_authorization::{AccessPolicyId, AccessRule, RequestedOperation};
+use diom_authorization::{
+    RequestedOperation,
+    api::{AccessPolicyId, AccessRule},
+};
 use diom_core::types::UnixTimestampMs;
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};

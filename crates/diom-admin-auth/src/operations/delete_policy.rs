@@ -1,4 +1,4 @@
-use diom_authorization::AccessPolicyId;
+use diom_authorization::api::AccessPolicyId;
 use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_operations::OpContext;

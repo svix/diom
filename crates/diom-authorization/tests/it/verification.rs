@@ -1,9 +1,11 @@
-use diom_authorization::{AccessRule, Context, RequestedOperation, verify_operation};
+use diom_authorization::{
+    AccessRuleList, Context, RequestedOperation, api::AccessRule, verify_operation,
+};
 use diom_id::Module;
 use serde_json::json;
 
-fn example_rules() -> Vec<AccessRule> {
-    serde_json::from_value(json!([
+fn example_rules() -> AccessRuleList {
+    let rules: Vec<AccessRule> = serde_json::from_value(json!([
         {
             "effect": "allow",
             "resource": "cache::foo/*",
@@ -40,7 +42,9 @@ fn example_rules() -> Vec<AccessRule> {
             ],
         },
     ]))
-    .unwrap()
+    .unwrap();
+
+    rules.into()
 }
 
 #[test]

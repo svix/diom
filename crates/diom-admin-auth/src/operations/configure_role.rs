@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
+use diom_authorization::api::{AccessPolicyId, AccessRule, RoleId};
 use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_operations::OpContext;

@@ -6,7 +6,10 @@ use diom_admin_auth::{
     controller::RoleModel,
     operations::{ConfigureRoleOperation, DeleteRoleOperation},
 };
-use diom_authorization::{AccessPolicyId, AccessRule, RequestedOperation, RoleId};
+use diom_authorization::{
+    RequestedOperation,
+    api::{AccessPolicyId, AccessRule, RoleId},
+};
 use diom_core::types::UnixTimestampMs;
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};

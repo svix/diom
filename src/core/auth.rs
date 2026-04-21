@@ -10,7 +10,7 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
-use diom_authorization::{AccessRule, Permissions, RoleId};
+use diom_authorization::{AccessRuleList, Permissions, api::RoleId};
 use diom_error::{OptionExt, Result};
 use tracing::Span;
 
@@ -162,7 +162,7 @@ async fn authorization_inner(
     Ok(perms)
 }
 
-async fn resolve_access_rules(state: &AppState, role_id: &RoleId) -> Result<Arc<[AccessRule]>> {
+async fn resolve_access_rules(state: &AppState, role_id: &RoleId) -> Result<Arc<AccessRuleList>> {
     if let Some(cached) = state
         .rules_cache
         .read()
@@ -180,10 +180,10 @@ async fn resolve_access_rules(state: &AppState, role_id: &RoleId) -> Result<Arc<
         .await
         .or_internal_error()?
     else {
-        return Ok([].into());
+        return Ok(AccessRuleList::empty());
     };
 
-    let mut rules = role.rules;
+    let mut rules = AccessRuleList::from(role.rules);
     for policy_id in &role.policies {
         if let Some(policy) = admin_auth
             .controller
@@ -195,7 +195,7 @@ async fn resolve_access_rules(state: &AppState, role_id: &RoleId) -> Result<Arc<
         }
     }
 
-    let rules: Arc<[AccessRule]> = rules.into();
+    let rules = Arc::new(rules);
     state
         .rules_cache
         .write()

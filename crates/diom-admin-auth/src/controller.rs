@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
+use diom_authorization::api::{AccessPolicyId, AccessRule, RoleId};
 use diom_core::{task::spawn_blocking_in_current_span, types::UnixTimestampMs};
 use diom_error::Result;
 use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
