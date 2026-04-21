@@ -16,6 +16,8 @@ on:
       is_release:
         type: boolean
         default: false
+      dry_run:
+        type: boolean
 
 jobs:
   helm-publish:
@@ -49,11 +51,14 @@ jobs:
           yq -i '.operator.image.repository = "ghcr.io/svix/diom-operator"' infra/helm-diom/values.yaml
           yq -i '.cluster.image.repository = "ghcr.io/svix/diom-server"' infra/helm-diom/values.yaml
 
-      - name: Package and push chart
+      - name: Package chart
         run: |
           if [ -n "${{ inputs.version }}" ]; then
             helm package ./infra/helm-diom --version ${{ inputs.version }}
           else
             helm package ./infra/helm-diom
           fi
-          helm push diom*.tgz oci://ghcr.io/svix/charts
+
+      - name: Push chart
+        if: ${{ !inputs.dry_run }}
+        run: helm push diom*.tgz oci://ghcr.io/svix/charts
