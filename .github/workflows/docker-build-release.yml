@@ -104,7 +104,7 @@ jobs:
       - name: "Copy images"
         run: |
           for dest in ${{ steps.meta.outputs.tags }}; do
-            source="${{ inputs.staging_image_repo }}:${{ needs.build.outputs.digest }}"
+            source="${{ inputs.staging_image_repo }}@${{ needs.build.outputs.digest }}"
             echo "Copying $source to $dest"
             regctl image copy "$source" "$dest"
           done
