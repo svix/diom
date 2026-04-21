@@ -17,7 +17,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 # Build environment
 FROM chef AS build-base
 
-ENV __BUST_DOCKER_BUILD_CACHE=2026-01-30
+ENV __BUST_DOCKER_BUILD_CACHE=2026-04-21
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     #!/bin/bash
     set -euxo pipefail
