@@ -51,6 +51,8 @@ jobs:
               - 'infra/operator/Cargo.toml'
             operator:
               - 'infra/operator/**'
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/on-pr.yml'
 
   ci:
     needs: filter
