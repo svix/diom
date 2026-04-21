@@ -173,7 +173,7 @@ impl Discovery {
 
         tracing::debug!("starting new cluster discovery");
 
-        let deadline = Instant::now() + self.cfg.cluster.discovery_timeout;
+        let deadline = Instant::now() + self.cfg.cluster.discovery_timeout.as_duration();
         // delay a little bit to allow simultaneous startups to finish
         let token = shutting_down_token();
         if token

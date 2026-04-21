@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     fmt,
-    num::NonZeroU64,
     ops::{Add, AddAssign, Mul},
     time::Duration,
 };
@@ -198,67 +197,5 @@ impl ValidateRange<u64> for DurationMs {
 
     fn less_than(&self, min: u64) -> Option<bool> {
         Some(*self < Self::from(min))
-    }
-}
-
-/// Non-zero variation of [`DurationMs`].
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct NonZeroDurationMs(NonZeroU64);
-
-impl NonZeroDurationMs {
-    pub fn get(self) -> DurationMs {
-        DurationMs(self.0.get())
-    }
-}
-
-impl From<NonZeroU64> for NonZeroDurationMs {
-    /// Assume the given value represents an integer number of milliseconds
-    /// and treat it as a `NonZeroDurationMs`.
-    #[inline]
-    fn from(millis: NonZeroU64) -> Self {
-        Self(millis)
-    }
-}
-
-impl fmt::Debug for NonZeroDurationMs {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-impl Serialize for NonZeroDurationMs {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.0.serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for NonZeroDurationMs {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let millis = NonZeroU64::deserialize(deserializer)?;
-        Ok(Self::from(millis))
-    }
-}
-
-impl JsonSchema for NonZeroDurationMs {
-    fn schema_name() -> Cow<'static, str> {
-        "NonZeroDurationMs".into()
-    }
-
-    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> Schema {
-        json_schema!({
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "x-subtype": "DurationMs",
-        })
-    }
-
-    fn inline_schema() -> bool {
-        true
     }
 }

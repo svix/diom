@@ -361,7 +361,7 @@ pub(super) async fn run_background_jobs_on_all_nodes(
         };
         let (should_snapshot, purge_by, responder) = if let Some(threshold) =
             cfg.cluster.snapshot_after_time
-            && last_snapshot_time.elapsed() > threshold
+            && last_snapshot_time.elapsed() > threshold.as_duration()
         {
             (true, PurgeBy::Time(threshold.into()), None)
         } else if let Some(threshold) = cfg.cluster.snapshot_after_writes
