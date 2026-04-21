@@ -47,8 +47,8 @@ macro_rules! request_input {
 impl From<RateLimitConfig> for TokenBucket {
     fn from(val: RateLimitConfig) -> Self {
         TokenBucket {
-            bucket_size: val.capacity,
-            refill_rate: val.refill_amount,
+            bucket_size: val.capacity.get(),
+            refill_rate: val.refill_amount.get(),
             refill_interval: val.refill_interval.get(),
         }
     }
@@ -57,12 +57,10 @@ impl From<RateLimitConfig> for TokenBucket {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimitConfig {
     /// Maximum capacity of the bucket
-    #[validate(range(min = 1))]
-    pub capacity: u64,
+    pub capacity: NonZeroU64,
 
     /// Number of tokens to add per refill interval
-    #[validate(range(min = 1))]
-    pub refill_amount: u64,
+    pub refill_amount: NonZeroU64,
 
     /// Interval in milliseconds between refills (minimum 1 millisecond)
     #[serde(rename = "refill_interval_ms", default = "default_interval_ms")]
