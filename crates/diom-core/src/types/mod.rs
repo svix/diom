@@ -8,7 +8,9 @@ mod metadata;
 mod unix_timestamp_ms;
 
 pub use self::{
-    byte_string::ByteString, duration_ms::DurationMs, metadata::Metadata,
+    byte_string::ByteString,
+    duration_ms::{DurationMs, NonZeroDurationMs},
+    metadata::Metadata,
     unix_timestamp_ms::UnixTimestampMs,
 };
 

@@ -1,7 +1,9 @@
+use std::num::NonZeroU64;
+
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_core::types::{DurationMs, EntityKey, UnixTimestampMs};
+use diom_core::types::{DurationMs, EntityKey, NonZeroDurationMs, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::Module;
@@ -45,31 +47,28 @@ macro_rules! request_input {
 impl From<RateLimitConfig> for TokenBucket {
     fn from(val: RateLimitConfig) -> Self {
         TokenBucket {
-            bucket_size: val.capacity,
-            refill_rate: val.refill_amount,
-            refill_interval: val.refill_interval,
+            bucket_size: val.capacity.get(),
+            refill_rate: val.refill_amount.get(),
+            refill_interval: val.refill_interval.get(),
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimitConfig {
     /// Maximum capacity of the bucket
-    #[validate(range(min = 1))]
-    pub capacity: u64,
+    pub capacity: NonZeroU64,
 
     /// Number of tokens to add per refill interval
-    #[validate(range(min = 1))]
-    pub refill_amount: u64,
+    pub refill_amount: NonZeroU64,
 
     /// Interval in milliseconds between refills (minimum 1 millisecond)
     #[serde(rename = "refill_interval_ms", default = "default_interval_ms")]
-    #[validate(range(min = 1))]
-    pub refill_interval: DurationMs,
+    pub refill_interval: NonZeroDurationMs,
 }
 
-fn default_interval_ms() -> DurationMs {
-    1000.into()
+fn default_interval_ms() -> NonZeroDurationMs {
+    const { NonZeroU64::new(1000).unwrap() }.into()
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -84,7 +83,6 @@ pub struct RateLimitCheckIn {
     pub tokens: u64,
 
     /// Rate limiter configuration
-    #[validate(nested)]
     pub config: RateLimitConfig,
 }
 
@@ -115,7 +113,6 @@ pub struct RateLimitGetRemainingIn {
     pub key: EntityKey,
 
     /// Rate limiter configuration
-    #[validate(nested)]
     pub config: RateLimitConfig,
 }
 
@@ -207,7 +204,6 @@ pub struct RateLimitResetIn {
     pub key: EntityKey,
 
     /// Rate limiter configuration
-    #[validate(nested)]
     pub config: RateLimitConfig,
 }
 
