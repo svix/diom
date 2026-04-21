@@ -87,7 +87,7 @@ cluster:
 | `cluster.spec.internodeSecret.value` | Plaintext inter-node authentication secret. Only recommended for testing. | `""` |
 | `cluster.spec.internodeSecret.valueFrom.name` | Name of the Kubernetes Secret containing the inter-node secret. | `""` |
 | `cluster.spec.internodeSecret.valueFrom.key` | Key within the Secret to use as the inter-node secret. | `""` |
-| `cluster.spec.storage.persistent.size` | Size of the persistent database volume **Required**. | `""` |
+| `cluster.spec.storage.persistent.size` | **Required:** Size of the persistent database volume. | `""` |
 | `cluster.spec.storage.persistent.storageClass` | Storage class for the persistent volume. Uses the cluster default if unset. | `""` |
 | `cluster.spec.storage.logs.size` | Size of the separate Raft commit log volume. | `""` |
 | `cluster.spec.storage.logs.storageClass` | Storage class for the logs volume. | `""` |
