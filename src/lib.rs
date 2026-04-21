@@ -18,7 +18,7 @@ use axum::{
     response::IntoResponse as _,
     serve::{Listener, ListenerExt as _},
 };
-use diom_authorization::{Permissions, api::AccessRule};
+use diom_authorization::{AccessRuleList, Permissions};
 use diom_core::Monotime;
 use diom_error::Error;
 use diom_msgs::TopicPublishNotifier;
@@ -98,7 +98,7 @@ pub struct AppState {
     internal_client: InternalClient,
 
     pub(crate) auth_token_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Permissions>>>,
-    pub(crate) rules_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Arc<[AccessRule]>>>>,
+    pub(crate) rules_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Arc<AccessRuleList>>>>,
     pub(crate) jwt_verifier: Option<core::jwt::JwtVerifier>,
 
     pub(crate) time: Monotime,

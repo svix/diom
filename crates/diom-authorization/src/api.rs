@@ -1,16 +1,10 @@
-use std::{
-    fmt,
-    sync::{Arc, OnceLock},
-};
+use std::fmt;
 
 use diom_core::PersistableValue;
-use diom_id::Module;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    Context, KeyPattern, ModulePattern, NamespacePattern, RequestedOperation, ResourcePattern,
-};
+use crate::ResourcePattern;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 #[serde(transparent)]
@@ -67,60 +61,8 @@ pub struct AccessRule {
 }
 
 impl AccessRule {
-    pub fn admin_rules() -> Arc<[Self]> {
-        static RULES: OnceLock<Arc<[AccessRule]>> = OnceLock::new();
-        RULES
-            .get_or_init(|| {
-                [
-                    ModulePattern::Any,
-                    ModulePattern::Exactly(Module::AdminAccessPolicy),
-                    ModulePattern::Exactly(Module::AdminAuthToken),
-                    ModulePattern::Exactly(Module::AdminCluster),
-                    ModulePattern::Exactly(Module::AdminNamespace),
-                    ModulePattern::Exactly(Module::AdminRole),
-                ]
-                .map(|module| AccessRule {
-                    effect: AccessRuleEffect::Allow,
-                    resource: ResourcePattern {
-                        module,
-                        namespace: NamespacePattern::Any,
-                        key: KeyPattern::any(),
-                    },
-                    actions: vec!["*".to_string()],
-                })
-                .into()
-            })
-            .clone()
-    }
-
-    pub fn operator_rules() -> Arc<[Self]> {
-        static RULES: OnceLock<Arc<[AccessRule]>> = OnceLock::new();
-        RULES
-            .get_or_init(|| {
-                [AccessRule {
-                    effect: AccessRuleEffect::Allow,
-                    resource: ResourcePattern {
-                        module: ModulePattern::Any,
-                        namespace: NamespacePattern::Named("_internal".to_owned()),
-                        key: KeyPattern::any(),
-                    },
-                    actions: vec!["*".to_owned()],
-                }]
-                .into()
-            })
-            .clone()
-    }
-
     pub fn uses_reserved_namespace(&self) -> bool {
         self.resource.namespace.is_reserved()
-    }
-
-    pub fn matches(&self, operation: &RequestedOperation<'_>, context: Context<'_>) -> bool {
-        self.resource.matches(operation, context)
-            && self
-                .actions
-                .iter()
-                .any(|a| a == "*" || a == operation.action)
     }
 }
 
