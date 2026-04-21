@@ -5,13 +5,12 @@ use serde::{Deserialize, Serialize};
 mod byte_string;
 mod duration_ms;
 mod metadata;
+mod non_zero_duration_ms;
 mod unix_timestamp_ms;
 
 pub use self::{
-    byte_string::ByteString,
-    duration_ms::{DurationMs, NonZeroDurationMs},
-    metadata::Metadata,
-    unix_timestamp_ms::UnixTimestampMs,
+    byte_string::ByteString, duration_ms::DurationMs, metadata::Metadata,
+    non_zero_duration_ms::NonZeroDurationMs, unix_timestamp_ms::UnixTimestampMs,
 };
 
 pub const ALL_ERROR: &str = "__all__";

@@ -8,7 +8,10 @@ use std::{
 };
 
 use anyhow::{Context, bail};
-use diom_core::{Monotime, types::DurationMs};
+use diom_core::{
+    Monotime,
+    types::{DurationMs, NonZeroDurationMs},
+};
 use diom_derive::{DumpableConfig, EnvOverridable};
 use fs_err as fs;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -235,7 +238,7 @@ pub struct ClusterConfiguration {
         rename = "replication_request_timeout_ms",
         default = "defaults::cluster_replication_request_timeout"
     )]
-    pub replication_request_timeout: DurationMs,
+    pub replication_request_timeout: NonZeroDurationMs,
 
     /// Timeout for discovery requests.
     ///
@@ -244,7 +247,7 @@ pub struct ClusterConfiguration {
         rename = "discovery_request_timeout_ms",
         default = "defaults::cluster_discovery_request_timeout"
     )]
-    pub discovery_request_timeout: DurationMs,
+    pub discovery_request_timeout: NonZeroDurationMs,
 
     /// Timeout for new connections.
     ///
@@ -255,7 +258,7 @@ pub struct ClusterConfiguration {
         rename = "connection_timeout_ms",
         default = "defaults::cluster_connection_timeout"
     )]
-    pub connection_timeout: DurationMs,
+    pub connection_timeout: NonZeroDurationMs,
 
     /// How often to send heartbeats.
     ///
@@ -265,7 +268,7 @@ pub struct ClusterConfiguration {
         rename = "heartbeat_interval_ms",
         default = "defaults::cluster_heartbeat_interval"
     )]
-    pub heartbeat_interval: DurationMs,
+    pub heartbeat_interval: NonZeroDurationMs,
 
     /// The minimum time to let an election run for.
     ///
@@ -275,7 +278,7 @@ pub struct ClusterConfiguration {
         rename = "election_timeout_min_ms",
         default = "defaults::cluster_election_timeout_min"
     )]
-    pub election_timeout_min: DurationMs,
+    pub election_timeout_min: NonZeroDurationMs,
 
     /// The minimum time to let an election run for.
     ///
@@ -285,7 +288,7 @@ pub struct ClusterConfiguration {
         rename = "election_timeout_max_ms",
         default = "defaults::cluster_election_timeout_max"
     )]
-    pub election_timeout_max: DurationMs,
+    pub election_timeout_max: NonZeroDurationMs,
 
     /// The minimum time to let an election run for.
     ///
@@ -295,7 +298,7 @@ pub struct ClusterConfiguration {
         rename = "send_snapshot_ms",
         default = "defaults::cluster_send_snapshot_timeout"
     )]
-    pub send_snapshot_timeout: DurationMs,
+    pub send_snapshot_timeout: NonZeroDurationMs,
 
     /// Address that other nodes should use to communicate with this one.
     ///
@@ -320,7 +323,7 @@ pub struct ClusterConfiguration {
         rename = "discovery_timeout_ms",
         default = "defaults::cluster_discovery_timeout"
     )]
-    pub discovery_timeout: DurationMs,
+    pub discovery_timeout: NonZeroDurationMs,
 
     /// How long to wait on startup before initiating discovery.
     ///
@@ -342,7 +345,7 @@ pub struct ClusterConfiguration {
         default = "defaults::log_index_interval"
     )]
     #[validate(range(min = 1000, max = 3600000))]
-    pub log_index_interval: DurationMs,
+    pub log_index_interval: NonZeroDurationMs,
 
     /// Interval (in transactions) between fsyncing the commit log.
     ///
@@ -362,12 +365,11 @@ pub struct ClusterConfiguration {
     ///
     /// If `log_sync_interval_auto` is set to true, this is just the initial estimate
     /// and will be auto-scaled
-    #[validate(custom(function = "validators::validate_log_sync_interval_duration"))]
     #[serde(
         rename = "log_sync_interval_ms",
         default = "defaults::cluster_log_sync_interval_duration"
     )]
-    pub log_sync_interval_duration: DurationMs,
+    pub log_sync_interval_duration: NonZeroDurationMs,
 
     /// Automatically attempt to determine the log sync interval from observed fsync timings
     #[serde(default = "defaults::default_true")]
@@ -389,7 +391,7 @@ pub struct ClusterConfiguration {
         rename = "snapshot_after_ms",
         default = "defaults::cluster_snapshot_after_time"
     )]
-    pub snapshot_after_time: Option<DurationMs>,
+    pub snapshot_after_time: Option<NonZeroDurationMs>,
 
     /// Shut down the process when the it is evicted from the cluster
     ///
@@ -479,7 +481,7 @@ pub struct OpenTelemetryConfig {
         rename = "metrics_period_ms",
         default = "defaults::opentelemetry_metrics_period"
     )]
-    pub metrics_period: DurationMs,
+    pub metrics_period: NonZeroDurationMs,
 
     /// The ratio at which to sample spans when sending to OpenTelemetry.
     ///
@@ -560,7 +562,7 @@ pub struct ConfigurationInner {
     ///
     /// If this is unset, we will wait indefinitely.
     #[serde(rename = "bootstrap_max_wait_ms", default)]
-    pub bootstrap_max_wait_time: Option<DurationMs>,
+    pub bootstrap_max_wait_time: Option<NonZeroDurationMs>,
 
     /// How often to run background cleanup/garbage collection jobs
     ///
@@ -569,7 +571,7 @@ pub struct ConfigurationInner {
         rename = "background_cleanup_interval_ms",
         default = "defaults::background_cleanup_interval"
     )]
-    pub background_cleanup_interval: DurationMs,
+    pub background_cleanup_interval: NonZeroDurationMs,
 
     /// How to persist data to the actual underlying database
     ///

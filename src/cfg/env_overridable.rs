@@ -1,21 +1,11 @@
 use std::{fmt, str::FromStr};
 
-use diom_core::types::DurationMs;
-use tap::Pipe;
-
 pub(super) fn env_var<T, S>(name: S) -> anyhow::Result<Option<T>>
 where
     S: AsRef<str>,
     T: FromStr<Err: fmt::Display>,
 {
     env_var_parse(name, FromStr::from_str)
-}
-
-pub(super) fn env_var_ms<S>(name: S) -> anyhow::Result<Option<DurationMs>>
-where
-    S: AsRef<str>,
-{
-    env_var::<u64, S>(name)?.map(DurationMs::from).pipe(Ok)
 }
 
 pub(super) fn env_var_comma_separated<T, S>(name: S) -> anyhow::Result<Option<Vec<T>>>

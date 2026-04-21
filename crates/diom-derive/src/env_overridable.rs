@@ -8,7 +8,6 @@ struct EoField {
     field: Ident,
     is_optional: bool,
     is_vec: bool,
-    is_duration: bool,
     flatten: bool,
     docstring: Vec<String>,
     nest: Option<String>,
@@ -32,11 +31,13 @@ impl EoField {
 
         if let Some(option_inner) = as_ty_option(&field.ty) {
             is_optional = true;
-            is_duration = is_ty_name("DurationMs", option_inner);
+            is_duration = is_ty_name("DurationMs", option_inner)
+                || is_ty_name("NonZeroDurationMs", option_inner);
             is_vec = is_ty_name("Vec", option_inner);
         } else {
             is_optional = false;
-            is_duration = is_ty_name("DurationMs", &field.ty);
+            is_duration =
+                is_ty_name("DurationMs", &field.ty) || is_ty_name("NonZeroDurationMs", &field.ty);
             is_vec = is_ty_name("Vec", &field.ty);
         }
 
@@ -114,7 +115,6 @@ impl EoField {
             nest,
             is_optional,
             is_vec,
-            is_duration,
             flatten,
             docstring: docstring_lines,
             ty: field.ty.clone(),
@@ -151,8 +151,6 @@ pub(crate) fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_mac
 
         let loader = if parsed.is_vec {
             quote! { crate::cfg::env_overridable::env_var_comma_separated }
-        } else if parsed.is_duration {
-            quote! { crate::cfg::env_overridable::env_var_ms }
         } else {
             quote! { crate::cfg::env_overridable::env_var }
         };

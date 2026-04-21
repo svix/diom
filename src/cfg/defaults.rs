@@ -1,6 +1,6 @@
 use std::net::{Ipv6Addr, SocketAddr};
 
-use diom_core::types::DurationMs;
+use diom_core::types::{DurationMs, NonZeroDurationMs};
 
 use super::{DatabaseConfig, MemorySize};
 
@@ -36,76 +36,76 @@ pub(super) fn opentelemetry_service_name() -> String {
     "diom".into()
 }
 
-pub(super) fn opentelemetry_metrics_period() -> DurationMs {
-    DurationMs::from_secs(10)
+pub(super) const fn opentelemetry_metrics_period() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(10).unwrap()
 }
 
 pub(super) fn cluster_name() -> String {
     "diom".to_owned()
 }
 
-pub(super) fn cluster_replication_request_timeout() -> DurationMs {
-    DurationMs::from_secs(5)
+pub(super) const fn cluster_replication_request_timeout() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(5).unwrap()
 }
 
-pub(super) fn cluster_discovery_request_timeout() -> DurationMs {
-    DurationMs::from_secs(10)
+pub(super) const fn cluster_discovery_request_timeout() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(10).unwrap()
 }
 
-pub(super) fn cluster_discovery_timeout() -> DurationMs {
-    DurationMs::from_secs(30)
+pub(super) const fn cluster_discovery_timeout() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(30).unwrap()
 }
 
-pub(super) fn cluster_startup_discovery_delay() -> DurationMs {
-    DurationMs::from(10)
+pub(super) const fn cluster_startup_discovery_delay() -> DurationMs {
+    DurationMs::from_millis(10)
 }
 
-pub(super) fn cluster_connection_timeout() -> DurationMs {
-    DurationMs::from(3100)
+pub(super) const fn cluster_connection_timeout() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_millis(3100).unwrap()
 }
 
-pub(super) fn cluster_heartbeat_interval() -> DurationMs {
-    DurationMs::from(500)
+pub(super) const fn cluster_heartbeat_interval() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_millis(500).unwrap()
 }
 
-pub(super) fn cluster_election_timeout_min() -> DurationMs {
-    DurationMs::from(1500)
+pub(super) const fn cluster_election_timeout_min() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_millis(1500).unwrap()
 }
 
-pub(super) fn cluster_election_timeout_max() -> DurationMs {
-    DurationMs::from(3500)
+pub(super) const fn cluster_election_timeout_max() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_millis(3500).unwrap()
 }
 
 pub(super) fn cluster_auto_initialize() -> bool {
     true
 }
 
-pub(super) fn log_index_interval() -> DurationMs {
-    DurationMs::from_mins(10)
+pub(super) const fn log_index_interval() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_mins(10).unwrap()
 }
 
-pub(super) fn cluster_snapshot_after_time() -> Option<DurationMs> {
-    Some(DurationMs::from_mins(15))
+pub(super) const fn cluster_snapshot_after_time() -> Option<NonZeroDurationMs> {
+    NonZeroDurationMs::from_mins(15)
 }
 
 pub(super) fn cluster_log_sync_interval_commits() -> usize {
     0
 }
 
-pub(super) fn cluster_log_sync_interval_duration() -> DurationMs {
-    DurationMs::from(2)
+pub(super) const fn cluster_log_sync_interval_duration() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_millis(2).unwrap()
 }
 
-pub(super) fn cluster_send_snapshot_timeout() -> DurationMs {
-    DurationMs::from_secs(30)
+pub(super) const fn cluster_send_snapshot_timeout() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(30).unwrap()
 }
 
 pub(super) fn cluster_replication_lag_threshold() -> u64 {
     50_000
 }
 
-pub(super) fn background_cleanup_interval() -> DurationMs {
-    DurationMs::from_secs(10)
+pub(super) const fn background_cleanup_interval() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(10).unwrap()
 }
 
 pub(super) fn default_database_size() -> MemorySize {
