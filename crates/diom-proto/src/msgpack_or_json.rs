@@ -13,7 +13,6 @@ use axum::{
 };
 use bytes::{BufMut as _, Bytes, BytesMut};
 use diom_authorization::{Context, Permissions, verify_operation};
-use diom_core::validation::{ValidationErrorBody, ValidationErrorItem};
 use http::{HeaderMap, HeaderValue, StatusCode, header};
 use serde::{Serialize, de::DeserializeOwned};
 
@@ -83,28 +82,57 @@ where
             }
         }
 
-        fn make_serde_error(
-            e: serde_path_to_error::Error<impl std::error::Error>,
+        fn make_serde_json_error(
+            e: serde_path_to_error::Error<serde_json::Error>,
         ) -> MsgPackOrJsonRejection {
-            let mut path = e
-                .path()
-                .to_string()
-                .split('.')
-                .map(ToOwned::to_owned)
-                .collect::<Vec<String>>();
+            let location = e.path().to_string();
+            let inner = e.into_inner();
+
+            match inner.classify() {
+                serde_json::error::Category::Io => {
+                    tracing::error!(
+                        err = &inner as &dyn std::error::Error,
+                        "unexpected I/O error, should never happen with buffered request body"
+                    );
+                    MsgPackOrJsonRejection::InternalServerError {
+                        msg: "Internal Server Error".to_owned(),
+                    }
+                }
+                serde_json::error::Category::Data => MsgPackOrJsonRejection::InvalidData {
+                    location,
+                    msg: inner.to_string(),
+                },
+                serde_json::error::Category::Syntax | serde_json::error::Category::Eof => {
+                    MsgPackOrJsonRejection::InvalidEncoding {
+                        msg: inner.to_string(),
+                    }
+                }
+            }
+        }
+
+        fn make_rmp_serde_error(
+            e: serde_path_to_error::Error<rmp_serde::decode::Error>,
+        ) -> MsgPackOrJsonRejection {
+            let location = e.path().to_string();
             let inner = e.inner();
 
-            let mut loc = vec!["body".to_owned()];
-            loc.append(&mut path);
-            MsgPackOrJsonRejection::Validation {
-                errors: vec![ValidationErrorItem {
-                    loc,
-                    msg: inner
-                        .source()
-                        .map(ToString::to_string)
-                        .unwrap_or_else(|| e.to_string()),
-                    ty: "value_error.jsondecode".to_owned(),
-                }],
+            match inner {
+                rmp_serde::decode::Error::InvalidMarkerRead(_)
+                | rmp_serde::decode::Error::InvalidDataRead(_)
+                | rmp_serde::decode::Error::Utf8Error(_)
+                | rmp_serde::decode::Error::OutOfRange
+                | rmp_serde::decode::Error::LengthMismatch(_)
+                | rmp_serde::decode::Error::Uncategorized(_)
+                | rmp_serde::decode::Error::Syntax(_)
+                | rmp_serde::decode::Error::DepthLimitExceeded => {
+                    MsgPackOrJsonRejection::InvalidEncoding {
+                        msg: inner.to_string(),
+                    }
+                }
+                rmp_serde::decode::Error::TypeMismatch(_) => MsgPackOrJsonRejection::InvalidData {
+                    location,
+                    msg: inner.to_string(),
+                },
             }
         }
 
@@ -115,11 +143,11 @@ where
         let value: T = match content_type {
             SupportedContentType::MsgPack => {
                 let mut de = rmp_serde::Deserializer::from_read_ref(&b);
-                serde_path_to_error::deserialize(&mut de).map_err(make_serde_error)?
+                serde_path_to_error::deserialize(&mut de).map_err(make_rmp_serde_error)?
             }
             SupportedContentType::Json => {
                 let mut de = serde_json::Deserializer::from_slice(&b);
-                serde_path_to_error::deserialize(&mut de).map_err(make_serde_error)?
+                serde_path_to_error::deserialize(&mut de).map_err(make_serde_json_error)?
             }
         };
 
@@ -279,8 +307,12 @@ pub enum MsgPackOrJsonRejection {
     ContentType {
         code: &'static str,
     },
-    Validation {
-        errors: Vec<ValidationErrorItem>,
+    InvalidData {
+        location: String,
+        msg: String,
+    },
+    InvalidEncoding {
+        msg: String,
     },
     Forbidden {
         resource: String,
@@ -310,9 +342,12 @@ impl IntoResponse for MsgPackOrJsonRejection {
                  or `content-type: application/json`"
                     .to_owned(),
             ),
-            Self::Validation { errors } => error_response(
+            Self::InvalidEncoding { msg } => {
+                standard_error_response(StatusCode::BAD_REQUEST, "invalid_encoding", msg)
+            }
+            Self::InvalidData { location, msg } => error_response(
                 StatusCode::UNPROCESSABLE_ENTITY,
-                ValidationErrorBody::new(errors),
+                StandardErrorBody::new("invalid_data", msg).with_location(location),
             ),
             Self::Forbidden { resource, action } => standard_error_response(
                 StatusCode::FORBIDDEN,

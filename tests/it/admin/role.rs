@@ -320,11 +320,9 @@ async fn test_admin_role_configure_internal_ns() -> TestResult {
     assert_eq!(
         resp,
         json!({
-            "detail": [{
-                "type": "value_error",
-                "loc": ["body", "rules"],
-                "msg": "access rule 1 refers to a reserved namespace",
-            }],
+            "code": "invalid_data",
+            "detail": "namespace _internal is reserved at line 1 column 189",
+            "location": "rules[0]",
         })
     );
 

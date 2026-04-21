@@ -7,6 +7,8 @@ use serde::Serialize;
 pub struct StandardErrorBody {
     code: &'static str,
     detail: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    location: Option<String>,
 }
 
 impl StandardErrorBody {
@@ -14,7 +16,13 @@ impl StandardErrorBody {
         Self {
             code,
             detail: detail.to_string(),
+            location: None,
         }
+    }
+
+    pub fn with_location(mut self, location: String) -> Self {
+        self.location = Some(location);
+        self
     }
 }
 
@@ -30,7 +38,11 @@ impl StandardErrorBody {
 
 impl fmt::Display for StandardErrorBody {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let Self { code, detail } = self;
-        write!(f, "code={code:?} detail={detail:?}")
+        let Self {
+            code,
+            detail,
+            location,
+        } = self;
+        write!(f, "code={code:?} detail={detail:?} location={location:?}")
     }
 }

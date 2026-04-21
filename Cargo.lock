@@ -1642,7 +1642,6 @@ version = "0.2.2"
 dependencies = [
  "aide 0.16.0-alpha.4",
  "axum",
- "diom-core",
  "diom-proto",
  "fjall",
  "hyper",
@@ -1787,7 +1786,6 @@ dependencies = [
  "axum",
  "bytes",
  "diom-authorization",
- "diom-core",
  "http",
  "http-body-util",
  "mime",
