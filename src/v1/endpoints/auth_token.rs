@@ -22,7 +22,6 @@ use diom_namespace::entities::NamespaceName;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 use crate::{
     AppState,
@@ -89,7 +88,7 @@ impl From<AuthTokenModel> for AuthTokenOut {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AuthTokenCreateIn {
     pub namespace: Option<NamespaceName>,
     pub name: String,
@@ -161,7 +160,7 @@ async fn auth_token_create(
     Ok(MsgPackOrJson(ret))
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AuthTokenExpireIn {
     pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
@@ -193,7 +192,7 @@ async fn auth_token_expire(
     Ok(MsgPackOrJson(AuthTokenExpireOut {}))
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AuthTokenDeleteIn {
     pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
@@ -231,7 +230,7 @@ async fn auth_token_delete(
     Ok(MsgPackOrJson(resp.into()))
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AuthTokenVerifyIn {
     pub namespace: Option<NamespaceName>,
     pub token: String,
@@ -272,7 +271,7 @@ async fn auth_token_verify(
     }))
 }
 
-#[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Deserialize, Serialize, JsonSchema)]
 pub struct AuthTokenListIn {
     pub namespace: Option<NamespaceName>,
     pub owner_id: String,
@@ -316,7 +315,7 @@ async fn auth_token_list(
     )))
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AuthTokenUpdateIn {
     pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
@@ -358,7 +357,7 @@ async fn auth_token_update(
     Ok(MsgPackOrJson(AuthTokenUpdateOut {}))
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AuthTokenRotateIn {
     pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
@@ -407,7 +406,7 @@ async fn auth_token_rotate(
     }))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct AuthTokenGetNamespaceIn {
     pub name: NamespaceName,
 }
@@ -421,7 +420,7 @@ struct AuthTokenGetNamespaceOut {
     pub updated: UnixTimestampMs,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct AuthTokenConfigureNamespaceIn {
     pub name: NamespaceName,
 }

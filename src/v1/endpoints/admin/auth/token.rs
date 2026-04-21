@@ -10,7 +10,6 @@ use diom_id::{AuthTokenId, Module, Public};
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 use crate::{
     AppState,
@@ -61,7 +60,7 @@ pub struct AdminAuthTokenOut {
 
 // Create
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAuthTokenCreateIn {
     pub name: String,
     pub role: String,
@@ -124,7 +123,7 @@ async fn auth_token_create(
 
 // Expire
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAuthTokenExpireIn {
     pub id: Public<AuthTokenId>,
     /// Milliseconds from now until the token expires. `None` means expire immediately.
@@ -160,7 +159,7 @@ async fn auth_token_expire(
 
 // Rotate
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAuthTokenRotateIn {
     pub id: Public<AuthTokenId>,
 }
@@ -205,7 +204,7 @@ async fn auth_token_rotate(
 
 // Delete
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAuthTokenDeleteIn {
     pub id: Public<AuthTokenId>,
 }
@@ -241,7 +240,7 @@ async fn auth_token_delete(
 
 // List
 
-#[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAuthTokenListIn {
     #[serde(flatten)]
     pub pagination: Pagination<Public<AuthTokenId>>,
@@ -300,7 +299,7 @@ async fn auth_token_list(
 
 // Update
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAuthTokenUpdateIn {
     pub id: Public<AuthTokenId>,
     pub name: Option<String>,
@@ -341,7 +340,7 @@ async fn auth_token_update(
 
 // Whoami
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAuthTokenWhoamiIn {}
 
 impl RequestInput for AdminAuthTokenWhoamiIn {

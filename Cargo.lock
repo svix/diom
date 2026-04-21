@@ -1725,7 +1725,6 @@ dependencies = [
  "test-utils",
  "tokio",
  "tracing",
- "validator",
 ]
 
 [[package]]

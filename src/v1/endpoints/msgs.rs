@@ -30,7 +30,6 @@ use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use fjall_utils::{ReadableDatabase, ReadonlyConnection, StorageType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 fn msgs_metadata<'a>(
     ns: Option<&'a NamespaceName>,
@@ -55,7 +54,7 @@ macro_rules! request_input {
     };
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
 pub(crate) struct MsgNamespaceConfigureIn {
     pub name: NamespaceName,
@@ -96,7 +95,7 @@ async fn configure_namespace(
     }))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
 struct MsgNamespaceGetIn {
     pub name: NamespaceName,
@@ -138,7 +137,7 @@ async fn get_namespace(
     }))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic"]))]
 struct MsgPublishIn {
     #[serde(default)]
@@ -210,7 +209,7 @@ const fn default_lease_duration_ms() -> DurationMs {
     DurationMs::from_mins(5)
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamReceiveIn {
     #[serde(default)]
@@ -323,7 +322,7 @@ async fn stream_receive(
 // stream/commit
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamCommitIn {
     #[serde(default)]
@@ -364,7 +363,7 @@ async fn stream_commit(
 // stream/seek
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamSeekIn {
     #[serde(default)]
@@ -425,7 +424,7 @@ const fn default_queue_lease_duration() -> DurationMs {
     DurationMs::from_secs(30)
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueReceiveIn {
     #[serde(default)]
@@ -533,7 +532,7 @@ async fn queue_receive(
 // queue/ack
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueAckIn {
     #[serde(default)]
@@ -577,7 +576,7 @@ async fn queue_ack(
 // queue/extend-lease
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueExtendLeaseIn {
     #[serde(default)]
@@ -625,7 +624,7 @@ async fn queue_extend_lease(
 // queue/configure
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueConfigureIn {
     #[serde(default)]
@@ -679,7 +678,7 @@ async fn queue_configure(
 // queue/nack
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueNackIn {
     #[serde(default)]
@@ -729,7 +728,7 @@ async fn queue_nack(
 // queue/redrive-dlq
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueRedriveDlqIn {
     #[serde(default)]
@@ -765,7 +764,7 @@ async fn queue_redrive_dlq(
 // topic/configure
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic"]))]
 struct MsgTopicConfigureIn {
     #[serde(default)]

@@ -14,7 +14,6 @@ use diom_namespace::entities::NamespaceName;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
@@ -41,7 +40,7 @@ macro_rules! request_input {
     };
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct KvSetIn {
     #[serde(default)]
@@ -70,7 +69,7 @@ pub struct KvSetOut {
     pub version: u64,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvGetIn {
     #[serde(default)]
@@ -104,7 +103,7 @@ impl KvGetOut {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvDeleteIn {
     #[serde(default)]
@@ -206,7 +205,7 @@ async fn kv_del(
     Ok(MsgPackOrJson(ret))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct KvGetNamespaceIn {
     pub name: NamespaceName,
 }
@@ -220,7 +219,7 @@ struct KvGetNamespaceOut {
     pub updated: UnixTimestampMs,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct KvConfigureNamespaceIn {
     pub name: NamespaceName,
 }

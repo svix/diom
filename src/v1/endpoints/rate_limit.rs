@@ -12,7 +12,6 @@ use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use diom_rate_limit::operations::{ConfigureRateLimitOperation, LimitOperation, ResetOperation};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
@@ -71,7 +70,7 @@ fn default_interval_ms() -> NonZeroDurationMs {
     const { NonZeroU64::new(1000).unwrap() }.into()
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimitCheckIn {
     #[serde(default)]
     pub namespace: Option<NamespaceName>,
@@ -105,7 +104,7 @@ pub struct RateLimitCheckOut {
     pub retry_after: Option<DurationMs>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimitGetRemainingIn {
     #[serde(default)]
     pub namespace: Option<NamespaceName>,
@@ -196,7 +195,7 @@ async fn rate_limit_get_remaining(
     }))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimitResetIn {
     #[serde(default)]
     pub namespace: Option<NamespaceName>,
@@ -233,7 +232,7 @@ async fn rate_limit_reset(
     Ok(MsgPackOrJson(RateLimitResetOut {}))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct RateLimitConfigureNamespaceIn {
     pub name: NamespaceName,
 }
@@ -253,7 +252,7 @@ struct RateLimitConfigureNamespaceOut {
     pub updated: UnixTimestampMs,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct RateLimitGetNamespaceIn {
     pub name: NamespaceName,
 }

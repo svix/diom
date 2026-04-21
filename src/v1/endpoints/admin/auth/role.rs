@@ -17,7 +17,6 @@ use diom_id::Module;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 use crate::{
     AppState,
@@ -81,7 +80,7 @@ impl From<RoleModel> for AdminRoleOut {
 
 // Configure
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminRoleConfigureIn {
     pub id: RoleId,
     pub description: String,
@@ -125,7 +124,7 @@ async fn role_configure(
 
 // Delete
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminRoleDeleteIn {
     pub id: RoleId,
 }
@@ -152,7 +151,7 @@ async fn role_delete(
 
 // Get
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminRoleGetIn {
     pub id: RoleId,
 }
@@ -177,7 +176,7 @@ async fn role_get(
 
 // List
 
-#[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Deserialize, Serialize, JsonSchema)]
 pub struct AdminRoleListIn {
     #[serde(flatten)]
     pub pagination: Pagination<RoleId>,
