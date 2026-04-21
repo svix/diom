@@ -13,10 +13,9 @@ use axum::{
 };
 use bytes::{BufMut as _, Bytes, BytesMut};
 use diom_authorization::{Context, Permissions, verify_operation};
-use diom_core::validation::{ValidationErrorBody, ValidationErrorItem, validation_errors};
+use diom_core::validation::{ValidationErrorBody, ValidationErrorItem};
 use http::{HeaderMap, HeaderValue, StatusCode, header};
 use serde::{Serialize, de::DeserializeOwned};
-use validator::Validate;
 
 use crate::{RequestInput, StandardErrorBody};
 
@@ -57,14 +56,12 @@ pub fn capture_accept_hdr(request: Request, next: Next) -> impl Future<Output = 
 }
 
 /// MsgPack-or-JSON extractor.
-///
-/// Validates incoming bodies using the [`Validate`] trait.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct MsgPackOrJson<T>(pub T);
 
 impl<T, S> FromRequest<S> for MsgPackOrJson<T>
 where
-    T: DeserializeOwned + Validate + RequestInput,
+    T: DeserializeOwned + RequestInput,
     S: Send + Sync,
 {
     type Rejection = MsgPackOrJsonRejection;
@@ -111,12 +108,6 @@ where
             }
         }
 
-        fn make_validation_error(e: validator::ValidationErrors) -> MsgPackOrJsonRejection {
-            MsgPackOrJsonRejection::Validation {
-                errors: validation_errors(vec!["body".to_owned()], e),
-            }
-        }
-
         let permissions = req.extensions().get::<Permissions>().cloned();
 
         let content_type = classify_content_type(req.headers())?;
@@ -131,7 +122,6 @@ where
                 serde_path_to_error::deserialize(&mut de).map_err(make_serde_error)?
             }
         };
-        value.validate().map_err(make_validation_error)?;
 
         if let Some(op) = value.operation()
             && let Some(perms) = permissions
