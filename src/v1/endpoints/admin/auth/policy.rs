@@ -15,9 +15,7 @@ use diom_id::Module;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
-use super::validate_access_rule_list;
 use crate::{
     AppState,
     core::cluster::RaftState,
@@ -76,12 +74,11 @@ impl From<AccessPolicyModel> for AdminAccessPolicyOut {
 
 // Configure
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAccessPolicyConfigureIn {
     pub id: AccessPolicyId,
     pub description: String,
     #[serde(default)]
-    #[validate(custom(function = "validate_access_rule_list"))]
     pub rules: Vec<AccessRule>,
 }
 
@@ -111,7 +108,7 @@ async fn access_policy_configure(
 
 // Delete
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAccessPolicyDeleteIn {
     pub id: AccessPolicyId,
 }
@@ -138,7 +135,7 @@ async fn access_policy_delete(
 
 // Get
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAccessPolicyGetIn {
     pub id: AccessPolicyId,
 }
@@ -163,7 +160,7 @@ async fn access_policy_get(
 
 // List
 
-#[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAccessPolicyListIn {
     #[serde(flatten)]
     pub pagination: Pagination<AccessPolicyId>,

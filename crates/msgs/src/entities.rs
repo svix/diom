@@ -9,7 +9,6 @@ use fjall_utils::KeyComponent;
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use sha2::{Digest, Sha256};
-use validator::Validate;
 
 pub type Offset = u64;
 
@@ -367,9 +366,7 @@ impl JsonSchema for MsgId {
     }
 }
 
-#[derive(
-    Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema, PersistableValue,
-)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue)]
 pub struct MsgIn {
     pub value: ByteString,
     #[serde(default)]
@@ -386,7 +383,7 @@ pub struct MsgIn {
     pub delay: Option<DurationMs>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct StreamMsgOut {
     pub offset: Offset,
     pub topic: TopicPartition,
@@ -396,7 +393,7 @@ pub struct StreamMsgOut {
     pub scheduled_at: Option<UnixTimestampMs>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct QueueMsgOut {
     pub msg_id: MsgId,
     pub value: ByteString,

@@ -60,7 +60,7 @@ pub fn derive_key_component(input: proc_macro::TokenStream) -> proc_macro::Token
 /// Does nothing.
 ///
 /// Replaces the real JsonSchema derive macro if the openapi Cargo feature is not enabled.
-#[proc_macro_derive(JsonSchemaDummyDerive, attributes(schemars, validate))]
+#[proc_macro_derive(JsonSchemaDummyDerive, attributes(schemars))]
 pub fn dummy_derive_json_schema(_: proc_macro::TokenStream) -> proc_macro::TokenStream {
     proc_macro::TokenStream::new()
 }

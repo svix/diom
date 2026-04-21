@@ -1642,7 +1642,6 @@ version = "0.2.2"
 dependencies = [
  "aide 0.16.0-alpha.4",
  "axum",
- "diom-core",
  "diom-proto",
  "fjall",
  "hyper",
@@ -1725,7 +1724,6 @@ dependencies = [
  "test-utils",
  "tokio",
  "tracing",
- "validator",
 ]
 
 [[package]]
@@ -1788,7 +1786,6 @@ dependencies = [
  "axum",
  "bytes",
  "diom-authorization",
- "diom-core",
  "http",
  "http-body-util",
  "mime",
@@ -1802,7 +1799,6 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tracing",
- "validator",
 ]
 
 [[package]]

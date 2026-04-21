@@ -14,7 +14,6 @@ use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use futures_util::StreamExt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 use crate::{
     AppState, RaftState,
@@ -196,7 +195,7 @@ async fn cluster_status(
     }))
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterInitializeIn {}
 
 request_input!(ClusterInitializeIn, "initialize");
@@ -232,7 +231,7 @@ async fn cluster_initialize(
     Ok(MsgPackOrJson(ClusterInitializeOut { cluster_id }))
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterRemoveNodeIn {
     node_id: NodeId,
 }
@@ -260,7 +259,7 @@ async fn cluster_remove_node(
     Ok(MsgPackOrJson(ClusterRemoveNodeOut { node_id }))
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterForceSnapshotIn {}
 
 request_input!(ClusterForceSnapshotIn, "force-snapshot");

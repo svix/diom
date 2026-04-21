@@ -18,7 +18,6 @@ use diom_namespace::{
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
@@ -51,7 +50,7 @@ pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 // API Types
 // ============================================================================
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyStartIn {
     #[serde(default)]
@@ -94,7 +93,7 @@ impl From<IdempotencyStartResult> for IdempotencyStartOut {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyCompleteIn {
     #[serde(default)]
@@ -119,7 +118,7 @@ request_input!(IdempotencyCompleteIn, "complete");
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyCompleteOut {}
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyAbortIn {
     #[serde(default)]
@@ -196,7 +195,7 @@ async fn idempotency_abort(
     Ok(MsgPackOrJson(IdempotencyAbortOut {}))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct IdempotencyGetNamespaceIn {
     pub name: NamespaceName,
 }
@@ -210,7 +209,7 @@ struct IdempotencyGetNamespaceOut {
     pub updated: UnixTimestampMs,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct IdempotencyConfigureNamespaceIn {
     pub name: NamespaceName,
 }

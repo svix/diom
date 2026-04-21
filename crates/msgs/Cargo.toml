@@ -21,7 +21,6 @@ serde.workspace = true
 sha2.workspace = true
 tokio.workspace = true
 tracing.workspace = true
-validator.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

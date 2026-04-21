@@ -14,7 +14,6 @@ use diom_namespace::{
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
@@ -43,7 +42,7 @@ macro_rules! request_input {
 
 pub type CacheNamespace = Namespace<CacheConfig>;
 
-#[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct CacheSetIn {
     #[serde(default)]
@@ -63,7 +62,7 @@ request_input!(CacheSetIn, "set");
 #[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct CacheSetOut {}
 
-#[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheGetIn {
     #[serde(default)]
@@ -92,7 +91,7 @@ impl CacheGetOut {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheDeleteIn {
     #[serde(default)]
@@ -115,7 +114,7 @@ struct CacheGetNamespaceOut {
     pub updated: UnixTimestampMs,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct CacheConfigureNamespaceIn {
     pub name: NamespaceName,
     #[serde(default)]
@@ -207,7 +206,7 @@ async fn cache_del(
     }))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct CacheGetNamespaceIn {
     pub name: NamespaceName,
 }
