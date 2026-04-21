@@ -1,7 +1,15 @@
 name: Diom CI
 on:
   workflow_dispatch:
+    inputs:
+      run_operator_e2e:
+        type: boolean
+        default: true
   workflow_call:
+    inputs:
+      run_operator_e2e:
+        type: boolean
+        default: true
 # When pushing to a PR, cancel any jobs still running for the previous head commit of the PR
 concurrency:
   # head_ref is only defined for pull requests, run_id is always unique and defined so if this
@@ -179,6 +187,7 @@ jobs:
           fi
   operator-e2e:
     name: Operator e2e tests
+    if: inputs.run_operator_e2e
     runs-on: ubicloud-standard-4-ubuntu-2404
     continue-on-error: true
     timeout-minutes: 20

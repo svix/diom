@@ -18,6 +18,7 @@ jobs:
       python: ${{ steps.filter.outputs.python }}
       main-docker: ${{ steps.filter.outputs.main-docker }}
       operator-docker: ${{ steps.filter.outputs.operator-docker }}
+      operator: ${{ steps.filter.outputs.operator }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
@@ -48,13 +49,18 @@ jobs:
               - '.github/workflows/docker-test-build.yml'
               - 'infra/operator/Dockerfile'
               - 'infra/operator/Cargo.toml'
+            operator:
+              - 'infra/operator/**'
 
   ci:
+    needs: filter
     permissions:
       contents: read
       pull-requests: write
     uses: ./.github/workflows/ci.yml
     secrets: inherit
+    with:
+      run_operator_e2e: ${{ needs.filter.outputs.operator == 'true' }}
 
   lint-openapi:
     needs: filter
