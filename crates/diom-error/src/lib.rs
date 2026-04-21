@@ -95,6 +95,10 @@ impl Error {
         })
     }
 
+    pub fn request_timeout() -> Self {
+        Self::new(ErrorType::RequestTimeout)
+    }
+
     pub fn shutting_down() -> Self {
         Self::new(ErrorType::ShuttingDown)
     }
@@ -126,6 +130,11 @@ impl Error {
             ErrorType::NotReady { .. } => (
                 StatusCode::SERVICE_UNAVAILABLE,
                 Some("NOT_READY".to_owned()),
+                None,
+            ),
+            ErrorType::RequestTimeout => (
+                StatusCode::GATEWAY_TIMEOUT,
+                Some("REQUEST_TIMEOUT".to_owned()),
                 None,
             ),
             ErrorType::ShuttingDown => (
@@ -204,6 +213,11 @@ impl IntoResponse for Error {
                 MsgPackOrJson(json!({"code": "NOT_READY", "detail": message})),
             )
                 .into_response(),
+            ErrorType::RequestTimeout => (
+                StatusCode::GATEWAY_TIMEOUT,
+                MsgPackOrJson(json!({"code": "REQUEST_TIMEOUT", "detail": ""})),
+            )
+                .into_response(),
             ErrorType::ShuttingDown => (
                 StatusCode::SERVICE_UNAVAILABLE,
                 MsgPackOrJson(json!({"code": "SHUTTING_DOWN", "detail": "server shutting down"})),
@@ -277,8 +291,12 @@ pub enum ErrorType {
         detail: Option<String>,
     },
 
+    RequestTimeout,
+
     /// The operation cannot proceed because the server is not yet ready
-    NotReady { message: String },
+    NotReady {
+        message: String,
+    },
 
     /// The operation cannot proceed because the server is shutting down
     ShuttingDown,
@@ -294,6 +312,7 @@ impl fmt::Display for ErrorType {
             Self::Authentication(s) => write!(f, "authn {s}"),
             Self::Authorization(s) => write!(f, "authz {s}"),
             Self::ShuttingDown => write!(f, "shutting_down"),
+            Self::RequestTimeout => write!(f, "request timed out "),
             Self::Operation { detail, status, .. } => {
                 if let Some(detail) = detail {
                     detail.fmt(f)

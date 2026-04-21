@@ -36,6 +36,7 @@ The diom server accepts the following environment variables:
 | `$DIOM_EPHEMERAL_DB_FILENAME` | Filename under the directory specified in `path`. |
 | `$DIOM_EPHEMERAL_DB_PATH` | Directory in which this database is stored |
 | `$DIOM_FSYNC_MODE` | When fsyncing, should we use fsync(2) or fdatasync(2) |
+| `$DIOM_GLOBAL_TIMEOUT_MS` | Hard timeout for all client requests |
 | `$DIOM_JWT_ALGORITHM` | JWT signature algorithm |
 | `$DIOM_JWT_AUDIENCE` | Expected `aud` values. When set, the token must contain one of these values in its `aud` claim. When absent, `aud` is not validated. |
 | `$DIOM_JWT_ISSUER` | Expected `iss` values. When set, the token's `iss` claim must match one of these values. When absent, `iss` is not validated. |

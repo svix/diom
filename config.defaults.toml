@@ -31,6 +31,9 @@ environment = "dev"
 # When fsyncing, should we use fsync(2) or fdatasync(2)
 fsync_mode = "sync-data"
 
+# Hard timeout for all client requests
+global_timeout_ms = 1000
+
 # The address to listen on
 listen_address = "[::]:8624"
 

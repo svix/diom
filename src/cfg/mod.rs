@@ -612,6 +612,10 @@ pub struct ConfigurationInner {
     #[env_overridable(nest_with_prefix("OPENTELEMETRY"))]
     #[dumpable_config(nest)]
     pub opentelemetry: OpenTelemetryConfig,
+
+    #[serde(default = "defaults::global_timeout", rename = "global_timeout_ms")]
+    /// Hard timeout for all client requests
+    pub global_timeout: NonZeroDurationMs,
 }
 
 impl ConfigurationInner {

@@ -333,6 +333,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         fsync_mode: FsyncMode::SyncData,
         admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
         jwt: Default::default(),
+        global_timeout: NonZeroDurationMs::from_millis(5000).unwrap(),
     }
 }
 
