@@ -4,11 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       operator_image_tag:
-        required: true
+        description: "(Optional) Override operator image tag"
         type: string
+        default: ''
       server_image_tag:
-        required: true
+        description: "(Optional) Override server image tag"
         type: string
+        default: ''
+      dry_run:
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       operator_image_tag:
@@ -19,14 +24,50 @@ on:
         required: false
         type: string
         default: ''
+      dry_run:
+        type: boolean
+        default: false
 
 jobs:
+  read-versions:
+    runs-on: ubuntu-24.04
+    outputs:
+      operator_image_tag: ${{ steps.versions.outputs.operator_image_tag }}
+      server_image_tag: ${{ steps.versions.outputs.server_image_tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Read versions from Cargo.toml
+        id: versions
+        run: |
+          if [ -n "${{ inputs.operator_image_tag }}" ]; then
+            OPERATOR_TAG="${{ inputs.operator_image_tag }}"
+          else
+            OPERATOR_TAG=$(cargo metadata --manifest-path infra/operator/Cargo.toml --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "diom-operator") | .version')
+          fi
+          if [ -n "${{ inputs.server_image_tag }}" ]; then
+            SERVER_TAG="${{ inputs.server_image_tag }}"
+          else
+            SERVER_TAG=$(cargo metadata --manifest-path server/Cargo.toml --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "diom-server") | .version')
+          fi
+          echo "operator_image_tag=${OPERATOR_TAG}" >> "$GITHUB_OUTPUT"
+          echo "server_image_tag=${SERVER_TAG}" >> "$GITHUB_OUTPUT"
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "=== DRY RUN ==="
+          echo "Would release helm chart with:"
+          echo "  operator image tag: ${{ steps.versions.outputs.operator_image_tag }}"
+          echo "  server image tag:   ${{ steps.versions.outputs.server_image_tag }}"
+
   publish:
+    needs: read-versions
     uses: ./.github/workflows/helm-publish.yml
     with:
-      operator_image_tag: ${{ inputs.operator_image_tag }}
-      server_image_tag: ${{ inputs.server_image_tag }}
+      operator_image_tag: ${{ needs.read-versions.outputs.operator_image_tag }}
+      server_image_tag: ${{ needs.read-versions.outputs.server_image_tag }}
       is_release: true
+      dry_run: ${{ inputs.dry_run }}
     secrets: inherit
     permissions:
       contents: read
