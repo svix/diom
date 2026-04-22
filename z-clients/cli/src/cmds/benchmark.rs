@@ -24,7 +24,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use rand::{
     RngExt, SeedableRng,
     distr::{Alphanumeric, SampleString},
-    rngs::StdRng,
+    rngs::SmallRng,
 };
 use serde::Serialize;
 use tokio::sync::Barrier;
@@ -484,7 +484,7 @@ trait BenchShard {
     async fn run(
         &mut self,
         client: &DiomClient,
-        rng: &mut StdRng,
+        rng: &mut SmallRng,
         shard_id: u64,
         iteration: u64,
     ) -> Result<()>;
@@ -507,7 +507,7 @@ trait BenchShard {
     where
         Self: Sized,
     {
-        let mut rng = StdRng::seed_from_u64(0);
+        let mut rng = SmallRng::seed_from_u64(shard_id);
 
         barrier.wait().await;
 
@@ -566,7 +566,7 @@ trait BenchShard {
 
 fn bench_generate_key(shard_id: u64, iteration: u64) -> String {
     let seed = iteration ^ (u64::MAX - shard_id);
-    let mut rng = StdRng::seed_from_u64(seed);
+    let mut rng = SmallRng::seed_from_u64(seed);
     Alphanumeric.sample_string(&mut rng, 16)
 }
 
@@ -593,7 +593,7 @@ impl BenchShard for BenchKvSet {
     async fn run(
         &mut self,
         client: &DiomClient,
-        rng: &mut StdRng,
+        rng: &mut SmallRng,
         shard_id: u64,
         iteration: u64,
     ) -> Result<()> {
@@ -652,7 +652,7 @@ impl BenchShard for BenchKvGet {
     async fn run(
         &mut self,
         client: &DiomClient,
-        _rng: &mut StdRng,
+        _rng: &mut SmallRng,
         shard_id: u64,
         iteration: u64,
     ) -> Result<()> {
@@ -718,7 +718,7 @@ impl BenchShard for BenchCacheSet {
     async fn run(
         &mut self,
         client: &DiomClient,
-        rng: &mut StdRng,
+        rng: &mut SmallRng,
         shard_id: u64,
         iteration: u64,
     ) -> Result<()> {
@@ -774,7 +774,7 @@ impl BenchShard for BenchCacheGet {
     async fn run(
         &mut self,
         client: &DiomClient,
-        _rng: &mut StdRng,
+        _rng: &mut SmallRng,
         shard_id: u64,
         iteration: u64,
     ) -> Result<()> {
@@ -853,7 +853,7 @@ impl<'a> BenchShard for BenchMsgsPublish<'a> {
     async fn run(
         &mut self,
         client: &DiomClient,
-        rng: &mut StdRng,
+        rng: &mut SmallRng,
         shard_id: u64,
         _iteration: u64,
     ) -> Result<()> {
@@ -921,7 +921,7 @@ impl<'a> BenchShard for BenchMsgsStreamReceive<'a> {
     async fn run(
         &mut self,
         client: &DiomClient,
-        rng: &mut StdRng,
+        rng: &mut SmallRng,
         shard_id: u64,
         _iteration: u64,
     ) -> Result<()> {
@@ -1027,7 +1027,7 @@ impl<'a> BenchShard for BenchMsgsQueueReceive<'a> {
     async fn run(
         &mut self,
         client: &DiomClient,
-        _rng: &mut StdRng,
+        _rng: &mut SmallRng,
         shard_id: u64,
         _iteration: u64,
     ) -> Result<()> {
