@@ -13,7 +13,7 @@ use crate::{TableKey, TableRow};
 /// # Usage
 ///
 /// ```ignore
-/// #[derive(FjallKeyAble)]
+/// #[derive(FjallKey)]
 /// #[table_key(prefix = 10)]
 /// struct MessageKey {
 ///     #[key(0)]
@@ -40,7 +40,7 @@ use crate::{TableKey, TableRow};
 ///
 /// The macro generates:
 ///
-/// - **`FjallKeyAble` trait impl** — `fjall_key()`, `from_fjall_key()`,
+/// - **`FjallKey` trait impl** — `fjall_key()`, `from_fjall_key()`,
 ///   `range()` (provided default).
 /// - **`extract_<field>()` methods** on the struct — read a single field
 ///   from a raw `fjall::UserKey` without constructing the full struct.
@@ -60,7 +60,7 @@ use crate::{TableKey, TableRow};
 /// Fixed-size fields occupy a constant number of bytes (numeric types use
 /// big-endian encoding to preserve sort order). The trailing variable-size
 /// field, if any, consumes the remaining bytes.
-pub trait FjallKeyAble: Sized {
+pub trait FjallKey: Sized {
     /// The prefix byte that identifies this key type in the binary layout.
     const PREFIX: u8;
 
@@ -86,12 +86,12 @@ pub trait FjallKeyAble: Sized {
 /// FIXME(@svix-gabriel)
 ///
 /// This backdoor is just to accommodate the transition (and eventual removal)
-/// of TableKey, replacing it with structs that implement FjallKeyAble.
+/// of TableKey, replacing it with structs that implement FjallKey.
 /// That's gonna involve reworking the TableRow trait, enable a gradual
 /// transition, we need this backdoor.
 impl<K, T> From<K> for TableKey<T>
 where
-    K: FjallKeyAble,
+    K: FjallKey,
     T: TableRow,
 {
     fn from(value: K) -> Self {
@@ -399,7 +399,7 @@ impl<M: diom_id::IdMarker> KeyComponent for diom_id::Id<M> {
 
 #[cfg(test)]
 mod tests {
-    use crate::FjallKeyAble;
+    use crate::FjallKey;
 
     #[repr(u8)]
     enum RowType {
@@ -408,14 +408,14 @@ mod tests {
         Three = 3,
     }
 
-    #[derive(FjallKeyAble)]
+    #[derive(FjallKey)]
     #[table_key(prefix = RowType::One)]
     struct ExampleSingleKey {
         #[key(0)]
         id: u32,
     }
 
-    #[derive(FjallKeyAble)]
+    #[derive(FjallKey)]
     #[table_key(prefix = RowType::Two)]
     struct ExampleCompositeKey {
         #[key(0)]
@@ -515,7 +515,7 @@ mod tests {
         assert_eq!(ExampleCompositeKey::extract_group(&bytes).unwrap(), "hello");
     }
 
-    #[derive(FjallKeyAble)]
+    #[derive(FjallKey)]
     #[table_key(prefix = RowType::Three)]
     struct ExampleTripleKey {
         #[key(0)]

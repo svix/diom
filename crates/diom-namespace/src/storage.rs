@@ -2,7 +2,7 @@ use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use fjall::Keyspace;
-use fjall_utils::{FjallKeyAble, TableRow};
+use fjall_utils::{FjallKey, TableRow};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{ModuleConfig, NamespaceName};
@@ -13,7 +13,7 @@ enum RowType {
     Namespace = 0,
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::Namespace)]
 pub(crate) struct NamespaceKey {
     #[key(0)]

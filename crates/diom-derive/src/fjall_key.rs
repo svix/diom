@@ -46,14 +46,14 @@ fn collect_fields(input: &DeriveInput) -> Result<Vec<KeyField>, syn::Error> {
     let syn::Data::Struct(data) = &input.data else {
         return Err(syn::Error::new(
             input.ident.span(),
-            "FjallKeyAble can only be derived for structs",
+            "FjallKey can only be derived for structs",
         ));
     };
 
     let syn::Fields::Named(fields) = &data.fields else {
         return Err(syn::Error::new(
             input.ident.span(),
-            "FjallKeyAble requires named fields",
+            "FjallKey requires named fields",
         ));
     };
 
@@ -276,7 +276,7 @@ fn gen_prefix_method(_prefix: &Expr, fields: &[KeyField]) -> TokenStream {
             };
             let mut pos = 0;
 
-            buf[pos] = <Self as ::fjall_utils::FjallKeyAble>::PREFIX;
+            buf[pos] = <Self as ::fjall_utils::FjallKey>::PREFIX;
             pos += 1;
 
             #(#writes)*
@@ -385,7 +385,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
         #(#fixed_size_assertions)*
 
         #[automatically_derived]
-        impl #impl_generics ::fjall_utils::FjallKeyAble for #name #ty_generics #where_clause {
+        impl #impl_generics ::fjall_utils::FjallKey for #name #ty_generics #where_clause {
             const PREFIX: u8 = #prefix as u8;
 
             fn fjall_key(&self) -> ::fjall_utils::UserKey {

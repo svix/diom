@@ -4,7 +4,7 @@ use diom_core::{
 };
 use diom_error::Result;
 use diom_id::NamespaceId;
-use fjall_utils::{FjallKeyAble, TableRow};
+use fjall_utils::{FjallKey, TableRow};
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -25,7 +25,7 @@ impl TableRow for KvPairRow {
     const ROW_TYPE: u8 = RowType::Pair as u8;
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::Pair)]
 pub(crate) struct KvPairKey {
     #[key(0)]
@@ -43,7 +43,7 @@ impl ExpirationRow {
     }
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::Expiration)]
 pub(crate) struct ExpirationKey {
     #[key(0)]
