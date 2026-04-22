@@ -157,6 +157,11 @@ pub struct ResourcePattern {
 }
 
 impl ResourcePattern {
+    /// Check this `ResourcePattern` against the given operation.
+    ///
+    /// NOTE: This function is **not** used in the request authorization logic,
+    ///       and only exists to allow for lower-level tests.
+    ///       See `list.rs` for the actual request authorization logic.
     pub fn matches(&self, op: &RequestedOperation<'_>, context: Context<'_>) -> bool {
         self.module.matches(op.module)
             && self.namespace.matches(op.namespace)
@@ -234,6 +239,11 @@ pub enum ModulePattern {
 }
 
 impl ModulePattern {
+    /// Check this `ModulePattern` against the given module.
+    ///
+    /// NOTE: This function is **not** used in the request authorization logic,
+    ///       and only exists to allow for lower-level tests.
+    ///       See `list.rs` for the actual request authorization logic.
     fn matches(&self, module: Module) -> bool {
         match self {
             Self::Any => !module.is_admin_module(),
