@@ -226,6 +226,7 @@ impl AccessRuleListInner {
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 struct AccessRule {
     namespace: NamespacePattern,
     key: KeyPattern,
@@ -260,5 +261,151 @@ impl AccessRule {
                 .actions
                 .iter()
                 .any(|a| a == "*" || a == operation.action)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{AccessRule, AccessRuleList, AccessRuleListInner};
+    use crate::{
+        api,
+        pattern::{KeyPattern, NamespacePattern},
+    };
+
+    #[test]
+    fn test_construction_from_api_access_rules() {
+        let access_rules = vec![
+            api::AccessRule {
+                effect: api::AccessRuleEffect::Deny,
+                resource: "kv:*:foo/bar".parse().unwrap(),
+                actions: vec!["*".to_owned()],
+            },
+            api::AccessRule {
+                effect: api::AccessRuleEffect::Allow,
+                resource: "cache:ns:*".parse().unwrap(),
+                actions: vec!["get".to_owned(), "set".to_owned()],
+            },
+            api::AccessRule {
+                effect: api::AccessRuleEffect::Allow,
+                resource: "*:ns2:xyz".parse().unwrap(),
+                actions: vec!["*".to_owned()],
+            },
+            api::AccessRule {
+                effect: api::AccessRuleEffect::Deny,
+                resource: "admin/cluster::*".parse().unwrap(),
+                actions: vec!["force-snapshot".to_owned()],
+            },
+            api::AccessRule {
+                effect: api::AccessRuleEffect::Allow,
+                resource: "*:ns3:abc".parse().unwrap(),
+                actions: vec!["set".to_owned()],
+            },
+        ];
+
+        let AccessRuleList { allow, deny } = AccessRuleList::from(access_rules);
+
+        {
+            let AccessRuleListInner {
+                any_module_rules,
+                cache_rules,
+                idempotency_rules,
+                kv_rules,
+                rate_limit_rules,
+                msgs_rules,
+                auth_token_rules,
+                admin_cluster_rules,
+                admin_namespace_rules,
+                admin_auth_token_rules,
+                admin_role_rules,
+                admin_access_policy_rules,
+            } = allow;
+
+            let [any_module_rule_1, any_module_rule_2]: [_; 2] =
+                any_module_rules.try_into().unwrap();
+            let [cache_module_rule]: [_; 1] = cache_rules.try_into().unwrap();
+            assert_eq!(idempotency_rules.len(), 0);
+            assert_eq!(kv_rules.len(), 0);
+            assert_eq!(rate_limit_rules.len(), 0);
+            assert_eq!(msgs_rules.len(), 0);
+            assert_eq!(auth_token_rules.len(), 0);
+            assert_eq!(admin_cluster_rules.len(), 0);
+            assert_eq!(admin_namespace_rules.len(), 0);
+            assert_eq!(admin_auth_token_rules.len(), 0);
+            assert_eq!(admin_role_rules.len(), 0);
+            assert_eq!(admin_access_policy_rules.len(), 0);
+
+            assert_eq!(
+                any_module_rule_1,
+                AccessRule {
+                    namespace: NamespacePattern::Named("ns2".to_owned()),
+                    key: "xyz".parse().unwrap(),
+                    actions: vec!["*".to_owned()]
+                }
+            );
+            assert_eq!(
+                any_module_rule_2,
+                AccessRule {
+                    namespace: NamespacePattern::Named("ns3".to_owned()),
+                    key: "abc".parse().unwrap(),
+                    actions: vec!["set".to_owned()]
+                }
+            );
+
+            assert_eq!(
+                cache_module_rule,
+                AccessRule {
+                    namespace: NamespacePattern::Named("ns".to_owned()),
+                    key: KeyPattern::any(),
+                    actions: vec!["get".to_owned(), "set".to_owned()]
+                }
+            );
+        }
+
+        {
+            let AccessRuleListInner {
+                any_module_rules,
+                cache_rules,
+                idempotency_rules,
+                kv_rules,
+                rate_limit_rules,
+                msgs_rules,
+                auth_token_rules,
+                admin_cluster_rules,
+                admin_namespace_rules,
+                admin_auth_token_rules,
+                admin_role_rules,
+                admin_access_policy_rules,
+            } = deny;
+
+            let [kv_rule]: [_; 1] = kv_rules.try_into().unwrap();
+            let [admin_cluster_rule]: [_; 1] = admin_cluster_rules.try_into().unwrap();
+            assert_eq!(any_module_rules.len(), 0);
+            assert_eq!(cache_rules.len(), 0);
+            assert_eq!(idempotency_rules.len(), 0);
+            assert_eq!(rate_limit_rules.len(), 0);
+            assert_eq!(msgs_rules.len(), 0);
+            assert_eq!(auth_token_rules.len(), 0);
+            assert_eq!(admin_namespace_rules.len(), 0);
+            assert_eq!(admin_auth_token_rules.len(), 0);
+            assert_eq!(admin_role_rules.len(), 0);
+            assert_eq!(admin_access_policy_rules.len(), 0);
+
+            assert_eq!(
+                kv_rule,
+                AccessRule {
+                    namespace: NamespacePattern::Any,
+                    key: "foo/bar".parse().unwrap(),
+                    actions: vec!["*".to_owned()],
+                }
+            );
+            assert_eq!(
+                admin_cluster_rule,
+                AccessRule {
+                    namespace: NamespacePattern::Default,
+                    key: KeyPattern::any(),
+                    actions: vec!["force-snapshot".to_owned()],
+                }
+            );
+        }
     }
 }
