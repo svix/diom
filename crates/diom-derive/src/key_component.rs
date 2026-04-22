@@ -31,6 +31,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_generics ::fjall_utils::KeyComponent for #name #ty_generics #where_clause {
             const FIXED_SIZE: bool = <#inner_ty as ::fjall_utils::KeyComponent>::FIXED_SIZE;
             const BYTE_SIZE: usize = <#inner_ty as ::fjall_utils::KeyComponent>::BYTE_SIZE;

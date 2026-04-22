@@ -384,6 +384,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     Ok(quote! {
         #(#fixed_size_assertions)*
 
+        #[automatically_derived]
         impl #impl_generics ::fjall_utils::FjallKeyAble for #name #ty_generics #where_clause {
             const PREFIX: u8 = #prefix as u8;
 
@@ -398,7 +399,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
             }
         }
 
-        #[allow(dead_code)]
+        #[automatically_derived]
         impl #impl_generics #name #ty_generics #where_clause {
             #(#extract_methods)*
             #(#prefix_methods)*

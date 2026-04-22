@@ -32,6 +32,7 @@ pub fn derive_model_out(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     let expanded = quote! {
+        #[automatically_derived]
         impl #impl_generics crate::v1::utils::ModelOut for #name #ty_generics #where_clause {
             fn id_copy(&self) -> String {
                 self.id.0.clone()

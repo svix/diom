@@ -213,6 +213,7 @@ pub(crate) fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_mac
     let name = input.ident;
 
     let expanded = quote! {
+        #[automatically_derived]
         impl #impl_generics crate::cfg::env_overridable::EnvOverridable for #name #ty_generics #where_clause {
             fn load_environment_with_prefix(&mut self, prefix: String) -> anyhow::Result<()> {
                 #(#fields)*;

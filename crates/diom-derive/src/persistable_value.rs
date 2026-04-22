@@ -70,6 +70,7 @@ fn parse_struct(
 
     Ok(quote! {
         #[allow(unsafe_code)]
+        #[automatically_derived]
         impl #impl_generics diom_core::persistable_value::PersistableStruct for #ident #ty_generics #where_clause {
             type INNER = ( #(#inner,)* );
         }
@@ -97,6 +98,7 @@ fn parse_enum(obj: &DataEnum, input: &DeriveInput) -> Result<proc_macro2::TokenS
 
     Ok(quote! {
         #[allow(unsafe_code)]
+        #[automatically_derived]
         impl #impl_generics diom_core::persistable_value::PersistableStruct for #ident #ty_generics #where_clause {
             type INNER = ( #(#inner,)* );
         }
