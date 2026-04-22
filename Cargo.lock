@@ -511,6 +511,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "base2histogram"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d74d05707c315a6c0601b1089186476cf11ee5fe8d6e035ea43c44ae1a0215cd"
+
+[[package]]
 name = "base64"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -772,8 +778,32 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-link",
+]
+
+[[package]]
+name = "chrono-tz"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d59ae0466b83e838b81a54256c39d5d7c20b9d7daa10510a242d9b75abd5936e"
+dependencies = [
+ "chrono",
+ "chrono-tz-build",
+ "phf",
+ "serde",
+]
+
+[[package]]
+name = "chrono-tz-build"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "433e39f13c9a060046954e0592a8d0a4bcb1040125cbf91cb8ee58964cfb350f"
+dependencies = [
+ "parse-zoneinfo",
+ "phf",
+ "phf_codegen",
 ]
 
 [[package]]
@@ -1861,6 +1891,16 @@ dependencies = [
  "option-ext",
  "redox_users",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "display-more"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf8aaad655bf39f0691f6f4025a8b58f1ff46fb12cb70f6d69e4f0dd2eb717a8"
+dependencies = [
+ "chrono",
+ "chrono-tz",
 ]
 
 [[package]]
@@ -3601,24 +3641,28 @@ dependencies = [
 
 [[package]]
 name = "openraft"
-version = "0.10.0-alpha.17"
+version = "0.10.0-alpha.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0b9d8db10f834d517e4c2c45ab5c645bc5cafee9d07f7b150b8029a0b1ebdca"
+checksum = "f600d7c69fcd2fead0596885234df36bd8b93f15c852b2b7c3b2fae4d6c1d3c3"
 dependencies = [
  "anyerror",
  "anyhow",
+ "base2histogram",
  "byte-unit",
  "chrono",
  "clap",
  "derive_more",
+ "display-more",
  "futures-util",
+ "itertools 0.14.0",
  "maplit",
  "openraft-macros",
  "openraft-rt",
  "openraft-rt-tokio",
  "peel-off",
- "rand 0.9.4",
+ "rand 0.10.1",
  "serde",
+ "smallvec",
  "tabled",
  "thiserror 2.0.18",
  "tracing",
@@ -3627,9 +3671,9 @@ dependencies = [
 
 [[package]]
 name = "openraft-macros"
-version = "0.10.0-alpha.17"
+version = "0.10.0-alpha.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e22b0bd215948ed47997a1d0447ea592e49220096360a833b118f329a08aa286"
+checksum = "7cda46a3fbcc59b3b7ff8266e3277bcb6932e70877324aa71cbd8fc098539d4e"
 dependencies = [
  "chrono",
  "proc-macro2",
@@ -3640,25 +3684,26 @@ dependencies = [
 
 [[package]]
 name = "openraft-rt"
-version = "0.10.0-alpha.17"
+version = "0.10.0-alpha.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55b651e6e2f25d022e34549e605eb8875c78ebc26862b16b06143a551e53ec00"
+checksum = "9fe112eddd9a3ac82afa54aa6787602e1759c3f84acf7d4c897e8bd717498033"
 dependencies = [
  "futures-channel",
  "futures-util",
  "openraft-macros",
- "rand 0.9.4",
+ "pin-project-lite",
+ "rand 0.10.1",
 ]
 
 [[package]]
 name = "openraft-rt-tokio"
-version = "0.10.0-alpha.17"
+version = "0.10.0-alpha.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "478d5625fdeb13293e68549ba1d42b7a25085f3be04204412147637ad22e2827"
+checksum = "f769f44ec27ff08a63b464f6aecb6988a0146c5b73bc3fe89bae4df0383afe06"
 dependencies = [
  "futures-util",
  "openraft-rt",
- "rand 0.9.4",
+ "rand 0.10.1",
  "tokio",
 ]
 
@@ -3854,6 +3899,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "parse-zoneinfo"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f2a05b18d44e2957b88f96ba460715e295bc1d7510468a2f3d3b44535d26c24"
+dependencies = [
+ "regex",
+]
+
+[[package]]
 name = "pastey"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3938,6 +3992,44 @@ checksum = "89815c69d36021a140146f26659a81d6c2afa33d216d736dd4be5381a7362220"
 dependencies = [
  "pest",
  "sha2 0.10.9",
+]
+
+[[package]]
+name = "phf"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fd6780a80ae0c52cc120a26a1a42c1ae51b247a253e4e06113d23d2c2edd078"
+dependencies = [
+ "phf_shared",
+]
+
+[[package]]
+name = "phf_codegen"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aef8048c789fa5e851558d709946d6d79a8ff88c0440c587967f8e94bfb1216a"
+dependencies = [
+ "phf_generator",
+ "phf_shared",
+]
+
+[[package]]
+name = "phf_generator"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c80231409c20246a13fddb31776fb942c38553c51e871f8cbd687a4cfb5843d"
+dependencies = [
+ "phf_shared",
+ "rand 0.8.6",
+]
+
+[[package]]
+name = "phf_shared"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67eabc2ef2a60eb7faa00097bd1ffdb5bd28e62bf39990626a582201b7a754e5"
+dependencies = [
+ "siphasher",
 ]
 
 [[package]]
@@ -5200,6 +5292,12 @@ dependencies = [
  "thiserror 2.0.18",
  "time",
 ]
+
+[[package]]
+name = "siphasher"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2aa850e253778c88a04c3d7323b043aeda9d3e30d5971937c1855769763678e"
 
 [[package]]
 name = "slab"

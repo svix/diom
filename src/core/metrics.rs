@@ -440,6 +440,7 @@ pub struct OpenraftMetrics {
     term: Gauge<u64>,
     last_log_index: Gauge<u64>,
     last_applied_log_index: Gauge<u64>,
+    last_committed_log_index: Gauge<u64>,
     snapshot_index: Gauge<u64>,
     purged_log_index: Gauge<u64>,
     server_state: Gauge<u64>,
@@ -493,6 +494,10 @@ impl OpenraftMetrics {
             last_applied_log_index: meter
                 .u64_gauge("diom.raft.last_applied_log_index")
                 .with_description("Most-recently-applied log index")
+                .build(),
+            last_committed_log_index: meter
+                .u64_gauge("diom.raft.last_committed_log_index")
+                .with_description("Most-recently-committed log index")
                 .build(),
             snapshot_index: meter
                 .u64_gauge("diom.raft.snapshot_index")
@@ -553,6 +558,10 @@ impl openraft::metrics::MetricsRecorder for OpenraftMetrics {
 
     fn set_applied_index(&self, index: u64) {
         self.last_applied_log_index.record(index, &self.context);
+    }
+
+    fn set_committed_index(&self, index: u64) {
+        self.last_committed_log_index.record(index, &self.context);
     }
 
     fn set_snapshot_index(&self, index: u64) {
