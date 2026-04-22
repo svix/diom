@@ -1,5 +1,6 @@
+use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, Ident, LitStr, Token, parenthesized, parse_macro_input};
+use syn::{DeriveInput, Ident, LitStr, Token, parenthesized};
 
 use crate::utils::{as_ty_option, is_ty_name};
 
@@ -122,12 +123,9 @@ impl EoField {
     }
 }
 
-pub(crate) fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    // Parse the input tokens into a syntax tree.
-    let input = parse_macro_input!(input as DeriveInput);
-
+pub(crate) fn derive_env_overridable(input: DeriveInput) -> TokenStream {
     let syn::Data::Struct(obj) = input.data else {
-        return quote! { compile_error!("This macro may only be applied to structs") }.into();
+        return quote! { compile_error!("This macro may only be applied to structs") };
     };
 
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
@@ -138,7 +136,7 @@ pub(crate) fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_mac
         let parsed = match EoField::parse(field) {
             Ok(Some(field)) => field,
             Ok(None) => continue,
-            Err(e) => return e.to_compile_error().into(),
+            Err(e) => return e.to_compile_error(),
         };
         let variable = parsed.variable;
         let field = parsed.field;
@@ -229,5 +227,5 @@ pub(crate) fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_mac
     };
 
     // Hand the output tokens back to the compiler.
-    proc_macro::TokenStream::from(expanded)
+    expanded
 }

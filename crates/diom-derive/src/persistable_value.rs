@@ -1,3 +1,4 @@
+use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Attribute, DataEnum, DataStruct, DeriveInput, Field, LitStr, Token};
 
@@ -49,10 +50,7 @@ fn check_serde_field_attrs(field: &Field) -> Result<(), syn::Error> {
     Ok(())
 }
 
-fn parse_struct(
-    obj: &DataStruct,
-    input: &DeriveInput,
-) -> Result<proc_macro2::TokenStream, syn::Error> {
+fn parse_struct(obj: &DataStruct, input: &DeriveInput) -> Result<TokenStream, syn::Error> {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     let mut inner = Vec::with_capacity(obj.fields.len());
@@ -77,7 +75,7 @@ fn parse_struct(
     })
 }
 
-fn parse_enum(obj: &DataEnum, input: &DeriveInput) -> Result<proc_macro2::TokenStream, syn::Error> {
+fn parse_enum(obj: &DataEnum, input: &DeriveInput) -> Result<TokenStream, syn::Error> {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     let mut inner = Vec::with_capacity(obj.variants.len());
@@ -105,7 +103,7 @@ fn parse_enum(obj: &DataEnum, input: &DeriveInput) -> Result<proc_macro2::TokenS
     })
 }
 
-pub(crate) fn derive_persistable_value(input: DeriveInput) -> proc_macro2::TokenStream {
+pub(crate) fn derive_persistable_value(input: DeriveInput) -> TokenStream {
     let expanded = match &input.data {
         syn::Data::Enum(obj) => parse_enum(obj, &input),
         syn::Data::Struct(obj) => parse_struct(obj, &input),
