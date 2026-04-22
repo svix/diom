@@ -8,6 +8,8 @@ use crate::{
     pattern::{KeyPattern, NamespacePattern},
 };
 
+pub struct Forbidden;
+
 #[derive(Debug, Default)]
 pub struct AccessRuleList {
     pub(crate) allow: Vec<AccessRule>,
@@ -65,6 +67,31 @@ impl AccessRuleList {
                 })
             })
             .clone()
+    }
+
+    pub fn verify_operation(
+        &self,
+        operation: &RequestedOperation<'_>,
+        context: Context<'_>,
+    ) -> Result<(), Forbidden> {
+        for rule in &self.deny {
+            // deny rules take precedence, if we found a matching one
+            // we can stop going through the rest and reject.
+            if rule.matches(operation, context) {
+                return Err(Forbidden);
+            }
+        }
+
+        for rule in &self.allow {
+            // found an allow rule and allow deny rules have been checked.
+            // request is okay.
+            if rule.matches(operation, context) {
+                return Ok(());
+            }
+        }
+
+        // no deny or allow rules found => implicit deny
+        Err(Forbidden)
     }
 }
 

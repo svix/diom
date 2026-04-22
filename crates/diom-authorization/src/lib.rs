@@ -6,15 +6,13 @@ pub mod api;
 mod context;
 mod list;
 mod pattern;
-mod verification;
 
 use self::api::RoleId;
 
 pub use self::{
     context::Context,
-    list::AccessRuleList,
+    list::{AccessRuleList, Forbidden},
     pattern::KeyPatternSegment,
-    verification::{Forbidden, verify_operation},
 };
 
 #[derive(Debug)]
