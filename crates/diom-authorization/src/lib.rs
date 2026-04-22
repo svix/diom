@@ -1,122 +1,21 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, OnceLock},
-};
+use std::{collections::HashMap, sync::Arc};
 
 use diom_id::{AuthTokenId, Module};
 
 pub mod api;
 mod context;
+mod list;
 mod pattern;
 mod verification;
 
-use self::api::{ModulePattern, ResourcePattern, RoleId};
+use self::api::RoleId;
 
 pub use self::{
     context::Context,
-    pattern::{KeyPattern, KeyPatternSegment, NamespacePattern},
+    list::AccessRuleList,
+    pattern::KeyPatternSegment,
     verification::{Forbidden, verify_operation},
 };
-
-#[derive(Debug, Default)]
-pub struct AccessRuleList {
-    allow: Vec<AccessRule>,
-    deny: Vec<AccessRule>,
-}
-
-impl AccessRuleList {
-    pub fn empty() -> Arc<Self> {
-        Arc::new(Self::default())
-    }
-
-    fn admin() -> Arc<Self> {
-        static RULES: OnceLock<Arc<AccessRuleList>> = OnceLock::new();
-        RULES
-            .get_or_init(|| {
-                Arc::new(Self {
-                    allow: [
-                        ModulePattern::Any,
-                        ModulePattern::Exactly(Module::AdminAccessPolicy),
-                        ModulePattern::Exactly(Module::AdminAuthToken),
-                        ModulePattern::Exactly(Module::AdminCluster),
-                        ModulePattern::Exactly(Module::AdminNamespace),
-                        ModulePattern::Exactly(Module::AdminRole),
-                    ]
-                    .map(|module| AccessRule {
-                        resource: ResourcePattern {
-                            module,
-                            namespace: NamespacePattern::Any,
-                            key: KeyPattern::any(),
-                        },
-                        actions: vec!["*".to_string()],
-                    })
-                    .into(),
-                    deny: Vec::new(),
-                })
-            })
-            .clone()
-    }
-
-    fn operator() -> Arc<Self> {
-        static RULES: OnceLock<Arc<AccessRuleList>> = OnceLock::new();
-        RULES
-            .get_or_init(|| {
-                Arc::new(Self {
-                    allow: [AccessRule {
-                        resource: ResourcePattern {
-                            module: ModulePattern::Any,
-                            namespace: NamespacePattern::Named("_internal".to_owned()),
-                            key: KeyPattern::any(),
-                        },
-                        actions: vec!["*".to_owned()],
-                    }]
-                    .into(),
-                    deny: Vec::new(),
-                })
-            })
-            .clone()
-    }
-}
-
-impl From<Vec<api::AccessRule>> for AccessRuleList {
-    fn from(rules: Vec<api::AccessRule>) -> Self {
-        let mut result = AccessRuleList::default();
-        result.extend(rules);
-        result
-    }
-}
-
-impl Extend<api::AccessRule> for AccessRuleList {
-    fn extend<T: IntoIterator<Item = api::AccessRule>>(&mut self, rules: T) {
-        for rule in rules {
-            let list = match rule.effect {
-                api::AccessRuleEffect::Allow => &mut self.allow,
-                api::AccessRuleEffect::Deny => &mut self.deny,
-            };
-
-            list.push(AccessRule {
-                resource: rule.resource,
-                actions: rule.actions,
-            });
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct AccessRule {
-    pub resource: ResourcePattern,
-    pub actions: Vec<String>,
-}
-
-impl AccessRule {
-    pub fn matches(&self, operation: &RequestedOperation<'_>, context: Context<'_>) -> bool {
-        self.resource.matches(operation, context)
-            && self
-                .actions
-                .iter()
-                .any(|a| a == "*" || a == operation.action)
-    }
-}
 
 #[derive(Debug)]
 pub struct RequestedOperation<'a> {

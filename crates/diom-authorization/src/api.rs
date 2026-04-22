@@ -6,7 +6,10 @@ use itertools::Itertools as _;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Context, KeyPattern, NamespacePattern, RequestedOperation};
+use crate::{
+    Context, RequestedOperation,
+    pattern::{KeyPattern, NamespacePattern},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 #[serde(transparent)]
