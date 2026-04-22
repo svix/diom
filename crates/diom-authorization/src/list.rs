@@ -88,6 +88,12 @@ impl AccessRuleList {
         // no deny or allow rules found => implicit deny
         Err(Forbidden)
     }
+
+    /// Discard any excess allocated capacity for more rules, to the extent possible.
+    pub fn shrink_to_fit(&mut self) {
+        self.allow.shrink_to_fit();
+        self.deny.shrink_to_fit();
+    }
 }
 
 impl From<Vec<api::AccessRule>> for AccessRuleList {
@@ -158,6 +164,36 @@ impl AccessRuleListInner {
             key,
             actions,
         });
+    }
+
+    fn shrink_to_fit(&mut self) {
+        let Self {
+            any_module_rules,
+            cache_rules,
+            idempotency_rules,
+            kv_rules,
+            rate_limit_rules,
+            msgs_rules,
+            auth_token_rules,
+            admin_cluster_rules,
+            admin_namespace_rules,
+            admin_auth_token_rules,
+            admin_role_rules,
+            admin_access_policy_rules,
+        } = self;
+
+        any_module_rules.shrink_to_fit();
+        cache_rules.shrink_to_fit();
+        idempotency_rules.shrink_to_fit();
+        kv_rules.shrink_to_fit();
+        rate_limit_rules.shrink_to_fit();
+        msgs_rules.shrink_to_fit();
+        auth_token_rules.shrink_to_fit();
+        admin_cluster_rules.shrink_to_fit();
+        admin_namespace_rules.shrink_to_fit();
+        admin_auth_token_rules.shrink_to_fit();
+        admin_role_rules.shrink_to_fit();
+        admin_access_policy_rules.shrink_to_fit();
     }
 
     fn matches(&self, operation: &RequestedOperation<'_>, context: Context<'_>) -> bool {
