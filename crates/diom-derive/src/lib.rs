@@ -15,7 +15,7 @@ use crate::{
 };
 use utils::add_trait_bounds;
 mod fjall_key;
-mod key_component;
+mod fjall_key_component;
 
 use self::aide::{AideAnnotateArgumentList, expand_aide_annotate};
 
@@ -51,9 +51,9 @@ pub fn derive_fjall_key_able(input: proc_macro::TokenStream) -> proc_macro::Toke
         .into()
 }
 
-#[proc_macro_derive(KeyComponent)]
+#[proc_macro_derive(FjallKeyComponent)]
 pub fn derive_key_component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    key_component::derive(input.into())
+    fjall_key_component::derive(input.into())
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }

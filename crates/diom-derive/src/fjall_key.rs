@@ -94,7 +94,7 @@ fn gen_key_build(
     let field_refs: Vec<TokenStream> = fields.iter().map(&field_expr).collect();
 
     quote! {
-        let total_len = 1 #(+ ::fjall_utils::KeyComponent::key_len(&#field_refs))*;
+        let total_len = 1 #(+ ::fjall_utils::FjallKeyComponent::key_len(&#field_refs))*;
 
         // Use a stack buffer for small keys to avoid heap allocation.
         // Most keys are well under 64 bytes (prefix + a few fixed-size fields).
@@ -112,7 +112,7 @@ fn gen_key_build(
         pos += 1;
 
         #({
-            let written = ::fjall_utils::KeyComponent::write_to_key(&#field_refs, &mut buf[pos..]);
+            let written = ::fjall_utils::FjallKeyComponent::write_to_key(&#field_refs, &mut buf[pos..]);
             pos += written;
         })*
 
@@ -134,7 +134,7 @@ fn gen_key_parse(struct_name: &Ident, prefix: &Expr, fields: &[KeyField]) -> Tok
             let field_name = ident.to_string();
             quote! {
                 let (#local, consumed) =
-                    ::fjall_utils::KeyComponent::read_from_key(&bytes[pos..])
+                    ::fjall_utils::FjallKeyComponent::read_from_key(&bytes[pos..])
                         .map_err(|e| ::std::borrow::Cow::Owned(::std::format!(
                             "failed to parse field `{}`: {}",
                             #field_name, e
@@ -176,7 +176,7 @@ fn gen_key_parse(struct_name: &Ident, prefix: &Expr, fields: &[KeyField]) -> Tok
     }
 }
 
-/// Generates `build_key()`: takes all fields as `&(impl KeyComponent + ?Sized)`,
+/// Generates `build_key()`: takes all fields as `&(impl FjallKeyComponent + ?Sized)`,
 /// returns `UserKey`. This allows callers to pass `&str` for `String` fields
 /// without allocating.
 fn gen_build_key_method(prefix: &Expr, fields: &[KeyField]) -> TokenStream {
@@ -184,7 +184,7 @@ fn gen_build_key_method(prefix: &Expr, fields: &[KeyField]) -> TokenStream {
         .iter()
         .map(|f| {
             let ident = &f.ident;
-            quote! { #ident: &(impl ::fjall_utils::KeyComponent + ?Sized) }
+            quote! { #ident: &(impl ::fjall_utils::FjallKeyComponent + ?Sized) }
         })
         .collect();
 
@@ -199,7 +199,7 @@ fn gen_build_key_method(prefix: &Expr, fields: &[KeyField]) -> TokenStream {
     quote! {
         /// Serialize a key from borrowed fields without constructing the struct.
         pub fn build_key(#(#params),*) -> ::fjall_utils::UserKey {
-            let total_len = 1 #(+ ::fjall_utils::KeyComponent::key_len(#field_refs))*;
+            let total_len = 1 #(+ ::fjall_utils::FjallKeyComponent::key_len(#field_refs))*;
 
             let mut stack_buf = [0u8; 64];
             let mut heap_buf;
@@ -215,7 +215,7 @@ fn gen_build_key_method(prefix: &Expr, fields: &[KeyField]) -> TokenStream {
             pos += 1;
 
             #({
-                let written = ::fjall_utils::KeyComponent::write_to_key(#field_refs, &mut buf[pos..]);
+                let written = ::fjall_utils::FjallKeyComponent::write_to_key(#field_refs, &mut buf[pos..]);
                 pos += written;
             })*
 
@@ -242,7 +242,7 @@ fn gen_prefix_method(_prefix: &Expr, fields: &[KeyField]) -> TokenStream {
 
     let types: Vec<&syn::Type> = fields.iter().map(|f| &f.ty).collect();
     let len_expr = quote! {
-        1usize #(+ <#types as ::fjall_utils::KeyComponent>::BYTE_SIZE)*
+        1usize #(+ <#types as ::fjall_utils::FjallKeyComponent>::BYTE_SIZE)*
     };
 
     let writes: Vec<TokenStream> = fields
@@ -250,7 +250,7 @@ fn gen_prefix_method(_prefix: &Expr, fields: &[KeyField]) -> TokenStream {
         .map(|f| {
             let ident = &f.ident;
             quote! {
-                pos += ::fjall_utils::KeyComponent::write_to_key(#ident, &mut buf[pos..]);
+                pos += ::fjall_utils::FjallKeyComponent::write_to_key(#ident, &mut buf[pos..]);
             }
         })
         .collect();
@@ -304,7 +304,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
             );
             quote! {
                 const _: () = ::std::assert!(
-                    <#ty as ::fjall_utils::KeyComponent>::FIXED_SIZE,
+                    <#ty as ::fjall_utils::FjallKeyComponent>::FIXED_SIZE,
                     #msg
                 );
             }
@@ -340,13 +340,13 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
             let skip = if preceding_types.is_empty() {
                 quote! { 1usize }
             } else {
-                quote! { 1usize #(+ <#preceding_types as ::fjall_utils::KeyComponent>::BYTE_SIZE)* }
+                quote! { 1usize #(+ <#preceding_types as ::fjall_utils::FjallKeyComponent>::BYTE_SIZE)* }
             };
 
             quote! {
                 #[doc = #doc]
                 pub fn #method_name(key: &::fjall_utils::UserKey) -> ::std::result::Result<
-                    <#ty as ::fjall_utils::KeyComponent>::Ref<'_>,
+                    <#ty as ::fjall_utils::FjallKeyComponent>::Ref<'_>,
                     ::std::borrow::Cow<'static, str>,
                 > {
                     let bytes: &[u8] = key;
@@ -359,7 +359,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
                         ));
                     }
                     let pos = #skip;
-                    let (val, _) = <#ty as ::fjall_utils::KeyComponent>::read_ref_from_key(
+                    let (val, _) = <#ty as ::fjall_utils::FjallKeyComponent>::read_ref_from_key(
                         &bytes[pos..],
                     )?;
                     ::std::result::Result::Ok(val)

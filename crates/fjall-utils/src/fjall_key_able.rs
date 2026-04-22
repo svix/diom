@@ -32,7 +32,7 @@ use crate::{TableKey, TableRow};
 ///   a keyspace.
 /// - Every field needs a `#[key(N)]` attribute specifying its position. Changing a key's position
 ///   is a breaking disk change and should be avoided.
-/// - All field types must implement [`KeyComponent`]. This is already implemented for most native types.
+/// - All field types must implement [`FjallKeyComponent`]. This is already implemented for most native types.
 /// - Only the **last** field (by key index) may be variable-size
 ///   (`String` or `Vec<u8>`). All others must be fixed-size.
 ///
@@ -112,7 +112,7 @@ impl<T: TableRow> From<crate::UserKey> for TableKey<T> {
 ///
 /// Variable-size types (`FIXED_SIZE = false`) must be the last field in a key
 /// struct. They consume all remaining bytes on read.
-pub trait KeyComponent {
+pub trait FjallKeyComponent {
     /// Whether this type always occupies a fixed number of bytes in a key.
     /// Variable-size components (e.g. `String`, `Vec<u8>`) must be the last
     /// field in a key struct.
@@ -150,7 +150,7 @@ pub trait KeyComponent {
     fn read_ref_from_key(buf: &[u8]) -> Result<(Self::Ref<'_>, usize), Cow<'static, str>>;
 }
 
-impl KeyComponent for u8 {
+impl FjallKeyComponent for u8 {
     const FIXED_SIZE: bool = true;
     const BYTE_SIZE: usize = size_of::<Self>();
     type Ref<'a> = u8;
@@ -179,7 +179,7 @@ impl KeyComponent for u8 {
 macro_rules! impl_key_component_int {
     ($($ty:ty),*) => {
         $(
-            impl KeyComponent for $ty {
+            impl FjallKeyComponent for $ty {
                 const FIXED_SIZE: bool = true;
                 const BYTE_SIZE: usize = std::mem::size_of::<$ty>();
                 type Ref<'a> = $ty;
@@ -215,12 +215,12 @@ macro_rules! impl_key_component_int {
     };
 }
 
-// IMPORTANT - we can't implement KeyComponent for i8-i128,
+// IMPORTANT - we can't implement FjallKeyComponent for i8-i128,
 // as the order of those types when converted to big endian bytes
 // doesn't match the intrinsic order of the types
 impl_key_component_int!(u16, u32, u64, u128);
 
-impl KeyComponent for UnixTimestampMs {
+impl FjallKeyComponent for UnixTimestampMs {
     const FIXED_SIZE: bool = true;
     const BYTE_SIZE: usize = u64::BYTE_SIZE;
     type Ref<'a> = UnixTimestampMs;
@@ -245,7 +245,7 @@ impl KeyComponent for UnixTimestampMs {
     }
 }
 
-impl KeyComponent for String {
+impl FjallKeyComponent for String {
     const FIXED_SIZE: bool = false;
     const BYTE_SIZE: usize = 0;
     type Ref<'a> = &'a str;
@@ -272,7 +272,7 @@ impl KeyComponent for String {
     }
 }
 
-impl KeyComponent for str {
+impl FjallKeyComponent for str {
     const FIXED_SIZE: bool = false;
     const BYTE_SIZE: usize = 0;
     type Ref<'a> = &'a str;
@@ -293,7 +293,7 @@ impl KeyComponent for str {
     }
 }
 
-impl<const N: usize> KeyComponent for [u8; N] {
+impl<const N: usize> FjallKeyComponent for [u8; N] {
     const FIXED_SIZE: bool = true;
     const BYTE_SIZE: usize = N;
     type Ref<'a> = [u8; N];
@@ -324,7 +324,7 @@ impl<const N: usize> KeyComponent for [u8; N] {
     }
 }
 
-impl KeyComponent for Vec<u8> {
+impl FjallKeyComponent for Vec<u8> {
     const FIXED_SIZE: bool = false;
     const BYTE_SIZE: usize = 0;
     type Ref<'a> = &'a [u8];
@@ -347,7 +347,7 @@ impl KeyComponent for Vec<u8> {
     }
 }
 
-impl KeyComponent for [u8] {
+impl FjallKeyComponent for [u8] {
     const FIXED_SIZE: bool = false;
     const BYTE_SIZE: usize = 0;
     type Ref<'a> = &'a [u8];
@@ -366,7 +366,7 @@ impl KeyComponent for [u8] {
     }
 }
 
-impl<M: diom_id::IdMarker> KeyComponent for diom_id::Id<M> {
+impl<M: diom_id::IdMarker> FjallKeyComponent for diom_id::Id<M> {
     const FIXED_SIZE: bool = true;
     const BYTE_SIZE: usize = size_of::<Self>();
     type Ref<'a> = diom_id::Id<M>;

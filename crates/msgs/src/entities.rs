@@ -5,7 +5,7 @@ use diom_core::{
     types::{ByteString, DurationMs, UnixTimestampMs},
 };
 use diom_error::Error;
-use fjall_utils::KeyComponent;
+use fjall_utils::FjallKeyComponent;
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use sha2::{Digest, Sha256};
@@ -30,7 +30,7 @@ pub const TOPIC_PARTITION_DELIMITER: &str = "~";
     Hash,
     Serialize,
     Deserialize,
-    KeyComponent,
+    FjallKeyComponent,
     PersistableValue,
 )]
 #[serde(transparent)]
@@ -67,7 +67,9 @@ impl FromStr for Partition {
 ///
 /// Carries the `namespace` that owns this topic. Serializes as `"namespace:topic"`, or just
 /// `"topic"` when the namespace is the default.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, KeyComponent, PersistableValue)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, FjallKeyComponent, PersistableValue,
+)]
 pub struct TopicName(String);
 
 impl TopicName {
@@ -262,7 +264,7 @@ impl JsonSchema for TopicIn {
 }
 
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, KeyComponent, PersistableValue,
+    Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, FjallKeyComponent, PersistableValue,
 )]
 #[serde(transparent)]
 pub struct MsgsIdempotencyKey([u8; 32]);
@@ -416,7 +418,16 @@ pub enum SeekPosition {
 ///
 /// Must be at most 64 bytes and only contain ASCII alphanumeric characters, `_`, `-`, or `.`.
 #[derive(
-    Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, KeyComponent, PersistableValue,
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    Serialize,
+    FjallKeyComponent,
+    PersistableValue,
 )]
 #[serde(transparent)]
 pub struct ConsumerGroup(pub(crate) String);
