@@ -565,8 +565,8 @@ trait BenchShard {
 }
 
 fn bench_generate_key(shard_id: u64, iteration: u64) -> String {
-    // Assumes shard_id is no larger than u16::MAX
-    let mut rng = StdRng::seed_from_u64(iteration << (16 + shard_id));
+    let seed = iteration ^ (u64::MAX - shard_id);
+    let mut rng = StdRng::seed_from_u64(seed);
     Alphanumeric.sample_string(&mut rng, 16)
 }
 
