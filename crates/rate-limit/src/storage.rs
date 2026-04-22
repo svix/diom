@@ -1,6 +1,6 @@
 use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_id::NamespaceId;
-use fjall_utils::{FjallKeyAble, TableRow};
+use fjall_utils::{FjallKey, TableRow};
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -19,7 +19,7 @@ impl TableRow for TokenBucketRow {
     const ROW_TYPE: u8 = RowType::TokenBucket as u8;
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::TokenBucket)]
 pub(crate) struct TokenBucketKey {
     #[key(0)]

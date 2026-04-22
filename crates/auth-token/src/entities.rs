@@ -3,7 +3,7 @@ use std::fmt;
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use diom_core::PersistableValue;
 use diom_error::Result;
-use fjall_utils::KeyComponent;
+use fjall_utils::FjallKeyComponent;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -39,7 +39,7 @@ impl TokenPlaintext {
 }
 
 /// A hashed auth token. The inner bytes are never printed to prevent accidental exposure.
-#[derive(Clone, Serialize, Deserialize, PersistableValue, KeyComponent)]
+#[derive(Clone, Serialize, Deserialize, PersistableValue, FjallKeyComponent)]
 pub struct TokenHashed([u8; 32]);
 
 impl TokenHashed {

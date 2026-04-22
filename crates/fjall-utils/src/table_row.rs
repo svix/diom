@@ -165,7 +165,7 @@ impl KeyspaceExt for fjall::Keyspace {
 /// Can't change the size, will break everything.
 pub type TableKeyType = u8;
 
-/// FIXME(@svix-gabriel) - delete this struct in place of FjallKeyAble trait.
+/// FIXME(@svix-gabriel) - delete this struct in place of FjallKey trait.
 pub struct TableKey<Tag: TableRow> {
     key: fjall::UserKey,
     _table: PhantomData<Tag>,

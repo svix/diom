@@ -1,3 +1,4 @@
+use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Ident, LitStr, Token};
 
@@ -85,7 +86,7 @@ impl DumpableField {
     }
 }
 
-pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenStream {
+pub(crate) fn derive_dumpable_config(input: DeriveInput) -> TokenStream {
     let syn::Data::Struct(obj) = input.data else {
         return quote! { compile_error!("This macro may only be applied to structs") };
     };
@@ -157,6 +158,7 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
     let name = input.ident;
 
     quote! {
+        #[automatically_derived]
         impl #impl_generics crate::cfg::dumpable_config::DumpableConfig for #name #ty_generics #where_clause {
             fn dump_fields<W: std::io::Write>(&self, writer: &mut W, prefix: String) -> ::anyhow::Result<()> {
                 #(#lists)*

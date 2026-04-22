@@ -6,7 +6,7 @@ use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
 use diom_error::Result;
-use fjall_utils::{FjallKeyAble, TableRow, WriteBatchExt};
+use fjall_utils::{FjallKey, TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, TopicName};
@@ -32,7 +32,7 @@ impl TableRow for TopicRow {
     const ROW_TYPE: u8 = RowType::Topic as u8;
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::Topic)]
 pub(crate) struct TopicKey {
     #[key(0)]
@@ -104,7 +104,7 @@ impl TableRow for StreamLeaseRow {
     const ROW_TYPE: u8 = RowType::StreamLease as u8;
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::StreamLease)]
 pub(crate) struct StreamLeaseKey {
     #[key(0)]
@@ -209,7 +209,7 @@ impl TableRow for QueueLeaseRow {
     const ROW_TYPE: u8 = RowType::QueueLease as u8;
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::QueueLease)]
 pub(crate) struct QueueLeaseKey {
     #[key(0)]
@@ -233,7 +233,7 @@ impl TableRow for QueueConfigRow {
     const ROW_TYPE: u8 = RowType::QueueConfig as u8;
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::QueueConfig)]
 pub(crate) struct QueueConfigKey {
     #[key(0)]
@@ -242,7 +242,7 @@ pub(crate) struct QueueConfigKey {
     pub(crate) consumer_group: ConsumerGroup,
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::Msg)]
 pub(crate) struct MsgKey {
     #[key(0)]
@@ -455,7 +455,7 @@ impl TableRow for IdempotencyRow {
     const ROW_TYPE: u8 = RowType::Idempotency as u8;
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::Idempotency)]
 pub(crate) struct IdempotencyKey {
     #[key(0)]

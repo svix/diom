@@ -5,7 +5,7 @@ use diom_core::{
 };
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
-use fjall_utils::{FjallKeyAble, TableKey, TableRow, WriteBatchExt};
+use fjall_utils::{FjallKey, TableKey, TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -35,7 +35,7 @@ impl TableRow for AuthTokenRow {
     const ROW_TYPE: u8 = RowType::Token as u8;
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::Token)]
 pub(crate) struct AuthTokenKey {
     #[key(0)]
@@ -54,7 +54,7 @@ impl TableRow for IdIndexRow {
     const ROW_TYPE: u8 = RowType::IdIndex as u8;
 }
 
-#[derive(FjallKeyAble)]
+#[derive(FjallKey)]
 #[table_key(prefix = RowType::IdIndex)]
 pub(crate) struct IdIndexKey {
     #[key(0)]
