@@ -1,14 +1,4 @@
-use syn::{GenericParam, Generics, Type, parse_quote};
-
-// Add a bound `T: HeapSize` to every type parameter T.
-pub(crate) fn add_trait_bounds(mut generics: Generics) -> Generics {
-    for param in &mut generics.params {
-        if let GenericParam::Type(ref mut type_param) = *param {
-            type_param.bounds.push(parse_quote!(heapsize::HeapSize));
-        }
-    }
-    generics
-}
+use syn::Type;
 
 pub(crate) fn ungroup(mut ty: &Type) -> &Type {
     while let Type::Group(group) = ty {

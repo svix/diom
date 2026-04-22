@@ -1,6 +1,5 @@
 #![warn(clippy::str_to_string)]
 
-use quote::quote;
 use syn::{DeriveInput, ItemFn, parse_macro_input};
 
 mod aide;
@@ -13,36 +12,10 @@ use crate::{
     dumpable_config::derive_dumpable_config, env_overridable::derive_env_overridable,
     persistable_value::derive_persistable_value,
 };
-use utils::add_trait_bounds;
 mod fjall_key;
 mod fjall_key_component;
 
 use self::aide::{AideAnnotateArgumentList, expand_aide_annotate};
-
-#[proc_macro_derive(ModelOut)]
-pub fn derive_model_out(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    // Parse the input tokens into a syntax tree.
-    let input = parse_macro_input!(input as DeriveInput);
-
-    // Used in the quasi-quotation below as `#name`.
-    let name = input.ident;
-
-    // Add a bound `T: BaseId` to every type parameter T.
-    let generics = add_trait_bounds(input.generics);
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-
-    let expanded = quote! {
-        #[automatically_derived]
-        impl #impl_generics crate::v1::utils::ModelOut for #name #ty_generics #where_clause {
-            fn id_copy(&self) -> String {
-                self.id.0.clone()
-            }
-        }
-    };
-
-    // Hand the output tokens back to the compiler.
-    proc_macro::TokenStream::from(expanded)
-}
 
 #[proc_macro_derive(FjallKey, attributes(table_key, key))]
 pub fn derive_fjall_key_able(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
