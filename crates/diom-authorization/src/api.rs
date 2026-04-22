@@ -1,10 +1,12 @@
-use std::fmt;
+use std::{borrow::Cow, fmt, str::FromStr};
 
 use diom_core::PersistableValue;
+use diom_id::Module;
+use itertools::Itertools as _;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::ResourcePattern;
+use crate::{Context, KeyPattern, NamespacePattern, RequestedOperation};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 #[serde(transparent)]
@@ -142,4 +144,117 @@ impl<'de> Deserialize<'de> for AccessRule {
 pub enum AccessRuleEffect {
     Allow,
     Deny,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
+pub struct ResourcePattern {
+    pub module: ModulePattern,
+    pub namespace: NamespacePattern,
+    pub key: KeyPattern,
+}
+
+impl ResourcePattern {
+    pub fn matches(&self, op: &RequestedOperation<'_>, context: Context<'_>) -> bool {
+        self.module.matches(op.module)
+            && self.namespace.matches(op.namespace)
+            && self.key.matches(op.key, context)
+    }
+}
+
+impl fmt::Display for ResourcePattern {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self {
+            module,
+            namespace,
+            key,
+        } = self;
+        write!(f, "{module}:{namespace}:{key}")
+    }
+}
+
+impl FromStr for ResourcePattern {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let [module, namespace, key] = s
+            .split(':')
+            .collect_array()
+            .ok_or("invalid resource pattern, must contain exactly two colons")?;
+        Ok(Self {
+            module: module.parse()?,
+            namespace: namespace.parse()?,
+            key: key.parse()?,
+        })
+    }
+}
+
+impl Serialize for ResourcePattern {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for ResourcePattern {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        s.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+impl JsonSchema for ResourcePattern {
+    fn schema_name() -> Cow<'static, str> {
+        String::schema_name()
+    }
+
+    fn inline_schema() -> bool {
+        true
+    }
+
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        String::json_schema(generator)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
+pub enum ModulePattern {
+    /// Wildcard (`*`).
+    ///
+    /// Does not match admin modules.
+    Any,
+    Exactly(Module),
+}
+
+impl ModulePattern {
+    fn matches(&self, module: Module) -> bool {
+        match self {
+            Self::Any => !module.is_admin_module(),
+            Self::Exactly(m) => module == *m,
+        }
+    }
+}
+
+impl fmt::Display for ModulePattern {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Any => f.write_str("*"),
+            Self::Exactly(m) => m.fmt(f),
+        }
+    }
+}
+
+impl FromStr for ModulePattern {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "*" => Ok(Self::Any),
+            _ => s.parse().map(Self::Exactly),
+        }
+    }
 }

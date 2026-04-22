@@ -10,11 +10,11 @@ mod context;
 mod pattern;
 mod verification;
 
-use self::api::RoleId;
+use self::api::{ModulePattern, ResourcePattern, RoleId};
 
 pub use self::{
     context::Context,
-    pattern::{KeyPattern, KeyPatternSegment, ModulePattern, NamespacePattern, ResourcePattern},
+    pattern::{KeyPattern, KeyPatternSegment, NamespacePattern},
     verification::{Forbidden, verify_operation},
 };
 

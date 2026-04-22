@@ -1,46 +1,11 @@
 use std::{
-    borrow::Cow,
     fmt::{self, Write},
     str::FromStr,
 };
 
 use diom_core::PersistableValue;
-use diom_id::Module;
-use itertools::Itertools;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize, de};
 
-use crate::{Context, RequestedOperation};
-
-#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
-pub struct ResourcePattern {
-    pub module: ModulePattern,
-    pub namespace: NamespacePattern,
-    pub key: KeyPattern,
-}
-
-impl JsonSchema for ResourcePattern {
-    fn schema_name() -> Cow<'static, str> {
-        String::schema_name()
-    }
-
-    fn inline_schema() -> bool {
-        true
-    }
-
-    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        String::json_schema(generator)
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
-pub enum ModulePattern {
-    /// Wildcard (`*`).
-    ///
-    /// Does not match admin modules.
-    Any,
-    Exactly(Module),
-}
+use crate::Context;
 
 #[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
 pub enum NamespacePattern {
@@ -65,95 +30,12 @@ pub enum KeyPatternSegment {
     Placeholder(String),
 }
 
-impl ResourcePattern {
-    pub fn matches(&self, op: &RequestedOperation<'_>, context: Context<'_>) -> bool {
-        self.module.matches(op.module)
-            && self.namespace.matches(op.namespace)
-            && self.key.matches(op.key, context)
-    }
-}
-
-impl fmt::Display for ResourcePattern {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let Self {
-            module,
-            namespace,
-            key,
-        } = self;
-        write!(f, "{module}:{namespace}:{key}")
-    }
-}
-
-impl FromStr for ResourcePattern {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let [module, namespace, key] = s
-            .split(':')
-            .collect_array()
-            .ok_or("invalid resource pattern, must contain exactly two colons")?;
-        Ok(Self {
-            module: module.parse()?,
-            namespace: namespace.parse()?,
-            key: key.parse()?,
-        })
-    }
-}
-
-impl Serialize for ResourcePattern {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> Deserialize<'de> for ResourcePattern {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        s.parse().map_err(de::Error::custom)
-    }
-}
-
-impl ModulePattern {
-    fn matches(&self, module: Module) -> bool {
-        match self {
-            Self::Any => !module.is_admin_module(),
-            Self::Exactly(m) => module == *m,
-        }
-    }
-}
-
-impl fmt::Display for ModulePattern {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Any => f.write_str("*"),
-            Self::Exactly(m) => m.fmt(f),
-        }
-    }
-}
-
-impl FromStr for ModulePattern {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "*" => Ok(Self::Any),
-            _ => s.parse().map(Self::Exactly),
-        }
-    }
-}
-
 impl NamespacePattern {
     pub(crate) fn is_reserved(&self) -> bool {
         matches!(self, Self::Named(ns) if ns.starts_with('_'))
     }
 
-    fn matches(&self, namespace: Option<&str>) -> bool {
+    pub(crate) fn matches(&self, namespace: Option<&str>) -> bool {
         match self {
             Self::Default => namespace.is_none(),
             Self::Named(ns) => namespace == Some(ns),
@@ -202,7 +84,7 @@ impl KeyPattern {
         }
     }
 
-    fn matches(&self, key: Option<&str>, context: Context<'_>) -> bool {
+    pub(crate) fn matches(&self, key: Option<&str>, context: Context<'_>) -> bool {
         let Some(key) = key else {
             return self.segments.is_empty() && self.trailing_any;
         };
