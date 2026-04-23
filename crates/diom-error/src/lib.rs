@@ -102,6 +102,12 @@ impl Error {
     /// Decompose into HTTP status, optional error code, and optional detail message.
     pub fn into_parts(self) -> (StatusCode, Option<String>, Option<String>) {
         match *self.0 {
+            ErrorType::InvalidInput { http_status, body }
+            | ErrorType::OperationError { http_status, body } => (
+                http_status,
+                Some(body.code().to_owned()),
+                Some(body.detail().to_owned()),
+            ),
             ErrorType::BadRequest(body) | ErrorType::EntityNotFound(body) => (
                 StatusCode::BAD_REQUEST,
                 Some(body.code().to_owned()),
@@ -160,6 +166,14 @@ impl error::Error for Error {}
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match *self.0 {
+            ErrorType::InvalidInput { http_status, body } => {
+                tracing::trace!(error = %body, "invalid input");
+                (http_status, MsgPackOrJson(body)).into_response()
+            }
+            ErrorType::OperationError { http_status, body } => {
+                tracing::debug!(error = %body, "operation error");
+                (http_status, MsgPackOrJson(body)).into_response()
+            }
             ErrorType::BadRequest(body) => {
                 tracing::debug!(error = %body, "bad request");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
@@ -252,7 +266,32 @@ impl<T> Traceable<T> for Result<T> {
 
 #[derive(Debug)]
 pub enum ErrorType {
-    /// An unexpected internal error
+    /// The request was invalid.
+    ///
+    /// This error type is to be used for 'stateless' errors that will fail no
+    /// matter under which circumstances the same request is retried. Examples:
+    ///
+    /// - missing `content-type` header
+    /// - msgpack decode error
+    /// - value outside of supported range
+    InvalidInput {
+        http_status: StatusCode,
+        body: StandardErrorBody,
+    },
+
+    /// The requested operation failed.
+    ///
+    /// This error type is to be used for 'stateful' errors. Examples:
+    ///
+    /// - invalid access token
+    /// - namespace not found
+    /// - any sort of conflict
+    OperationError {
+        http_status: StatusCode,
+        body: StandardErrorBody,
+    },
+
+    /// An unexpected internal error.
     Internal {
         body: StandardErrorBody,
         trace: Vec<&'static Location<'static>>,
@@ -287,6 +326,12 @@ pub enum ErrorType {
 impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::InvalidInput { http_status, body } => {
+                write!(f, "invalid_input http_status={http_status:?} {body}")
+            }
+            Self::OperationError { http_status, body } => {
+                write!(f, "operation_error http_status={http_status:?} {body}")
+            }
             Self::Internal { body, .. } => write!(f, "internal {body}"),
             Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
