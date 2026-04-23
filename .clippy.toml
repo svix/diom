@@ -7,3 +7,8 @@ disallowed-methods = [
     { path = "jiff::Timestamp::now", reason = "generally, should be reading cluster Monotime" },
     { path = "tokio::task::spawn_blocking", replacement = "diom_core::task::spawn_blocking_in_current_span", reason = "tokio::task::spawn_blocking loses tracing span information" }
 ]
+
+disallowed-macros = [
+    # https://github.com/tokio-rs/tracing/issues/2448
+    "tracing::enabled"
+]
