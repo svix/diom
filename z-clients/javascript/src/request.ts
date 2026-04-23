@@ -3,7 +3,7 @@ import { ApiException, type XOR } from "./util";
 import type { HttpErrorOut, HTTPValidationError } from "./HttpErrors";
 import type { DiomOptions } from "./options";
 
-export const LIB_VERSION = "0.2.2";
+export const LIB_VERSION = "0.2.3";
 const USER_AGENT = `svix-libs/${LIB_VERSION}/javascript`;
 
 /**
