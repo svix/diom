@@ -80,19 +80,15 @@ impl Error {
         Self::operation_error(StatusCode::FORBIDDEN, code, detail)
     }
 
-    pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
-        Self::new(ErrorType::Operation {
-            status: code,
-            error_code: None,
-            detail,
-        })
-    }
-
-    pub fn operation_with_code(status: StatusCode, error_code: String, detail: String) -> Self {
+    pub fn from_raft(
+        status: StatusCode,
+        error_code: Option<String>,
+        detail: Option<String>,
+    ) -> Self {
         Self::new(ErrorType::Operation {
             status,
-            error_code: Some(error_code),
-            detail: Some(detail),
+            error_code,
+            detail,
         })
     }
 
