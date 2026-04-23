@@ -54,6 +54,10 @@ impl TopicRow {
         }
     }
 
+    pub(crate) fn partitions(&self) -> impl Iterator<Item = Result<Partition>> {
+        (0..self.partitions).map(Partition::new)
+    }
+
     pub(crate) fn partitions_shuffled(&self, seed: u64) -> Result<Vec<Partition>> {
         use rand::{SeedableRng, seq::SliceRandom};
         let mut list = (0..self.partitions)

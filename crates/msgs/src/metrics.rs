@@ -270,8 +270,8 @@ fn compute_topic_lag(
         }
 
         for cg in consumer_groups {
-            for partition_idx in 0..topic_row.partitions {
-                let Ok(partition) = Partition::new(partition_idx) else {
+            for partition in topic_row.partitions() {
+                let Ok(partition) = partition else {
                     continue;
                 };
                 let cursor_offset = StreamLeaseRow::fetch(
@@ -299,8 +299,8 @@ pub(crate) fn record_end_offsets(state: &State) -> Result<()> {
     for guard in state.metadata_tables.prefix([TopicRow::ROW_TYPE]) {
         let (_, val) = guard.into_inner()?;
         let topic_row: TopicRow = TopicRow::from_fjall_value(val)?;
-        for partition_idx in 0..topic_row.partitions {
-            let Ok(partition) = Partition::new(partition_idx) else {
+        for partition in topic_row.partitions() {
+            let Ok(partition) = partition else {
                 continue;
             };
             let end_offset = MsgRow::next_offset(&state.msg_table, topic_row.id, partition)?;

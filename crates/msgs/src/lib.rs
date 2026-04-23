@@ -84,8 +84,8 @@ pub fn estimate_available_queue_messages(
     };
 
     let mut total = 0u64;
-    for partition_idx in 0..topic_row.partitions {
-        let partition = Partition::new(partition_idx)?;
+    for partition in topic_row.partitions() {
+        let partition = partition?;
 
         // SMH should probably rename StreamLeaseRow to CursorRow or something,
         // the name is misleading here.
@@ -143,8 +143,8 @@ pub fn estimate_available_stream_messages(
 
     let mut total = 0u64;
     let mut available_partitions = Vec::new();
-    for partition_idx in 0..topic_row.partitions {
-        let partition = Partition::new(partition_idx)?;
+    for partition in topic_row.partitions() {
+        let partition = partition?;
 
         let cursor = StreamLeaseRow::fetch(
             metadata_tables,
@@ -232,13 +232,12 @@ fn delete_expired_messages(
             let val = entry.value()?;
             let topic_row = TopicRow::from_fjall_value(val)?;
 
-            for partition_idx in 0..topic_row.partitions {
-                let partition = Partition::new(partition_idx)?;
+            for partition in topic_row.partitions() {
                 let deleted = delete_expired_partition(
                     &state.db,
                     &state.msg_table,
                     topic_row.id,
-                    partition,
+                    partition?,
                     cutoff,
                 )?;
                 total_deleted += deleted;
