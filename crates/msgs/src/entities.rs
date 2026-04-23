@@ -60,17 +60,12 @@ impl Partition {
 }
 
 impl FromStr for Partition {
-    type Err = Error;
+    type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let index = s
-            .parse::<u16>()
-            .map_err(|e| Error::invalid_user_input(e.to_string()))?;
-        Self::new(index).ok_or_else(|| {
-            Error::invalid_user_input(format!(
-                "partition cannot be higher than {MAX_PARTITION_COUNT}"
-            ))
-        })
+        let index = s.parse::<u16>().map_err(|e| e.to_string())?;
+        Self::new(index)
+            .ok_or_else(|| format!("partition cannot be higher than {MAX_PARTITION_COUNT}"))
     }
 }
 
