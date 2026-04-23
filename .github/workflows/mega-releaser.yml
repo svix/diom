@@ -8,17 +8,27 @@ permissions:
   packages: write # to stage stuff in GHCR
 
 jobs:
+  # Gate job: requests environment approval upfront so you don't wait until the end
+  gate:
+    environment: "release"
+    runs-on: "ubuntu-latest"
+    steps:
+      - run: echo "Release approved!"
+
   docker:
+    needs: [gate]
     uses: ./.github/workflows/docker-release.yml
     with:
       dry_run: false
     secrets: inherit
 
   java:
+    needs: [gate]
     uses: ./.github/workflows/java-release.yml
     secrets: inherit
 
   javascript:
+    needs: [gate]
     uses: ./.github/workflows/javascript-release.yml
     secrets: inherit
 
@@ -27,5 +37,6 @@ jobs:
   #  uses: ./.github/workflows/python-release.yml
 
   rust:
+    needs: [gate]
     uses: ./.github/workflows/rust-release.yml
     secrets: inherit
