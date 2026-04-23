@@ -1,6 +1,6 @@
 #![warn(clippy::str_to_string)]
 
-use std::{error, fmt, panic::Location};
+use std::{borrow::Cow, error, fmt, panic::Location};
 
 use aide::OperationOutput;
 use axum::response::{IntoResponse, Response};
@@ -81,14 +81,20 @@ impl Error {
     }
 
     pub fn from_raft(
-        status: StatusCode,
-        error_code: Option<String>,
+        http_status: StatusCode,
+        code: Option<String>,
         detail: Option<String>,
     ) -> Self {
         Self::new(ErrorType::Operation {
-            status,
-            error_code,
-            detail,
+            http_status,
+            code: match code {
+                Some(c) => c.into(),
+                None => "generic".into(),
+            },
+            detail: detail.unwrap_or_else(|| {
+                tracing::warn!("no error message in OperationError from raft");
+                "unknown error".to_owned()
+            }),
         })
     }
 
@@ -117,10 +123,10 @@ impl Error {
                 Some(body.detail().to_owned()),
             ),
             ErrorType::Operation {
-                status,
-                error_code,
+                http_status,
+                code,
                 detail,
-            } => (status, error_code, detail),
+            } => (http_status, Some(code.into_owned()), Some(detail)),
             ErrorType::Internal { body, .. } => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Some(body.code().to_owned()),
@@ -176,20 +182,14 @@ impl IntoResponse for Error {
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Operation {
-                status,
-                error_code: Some(error_code),
-                detail: Some(detail),
+                http_status,
+                code,
+                detail,
             } => (
-                status,
-                MsgPackOrJson(json!({ "code": error_code, "detail": detail })),
+                http_status,
+                MsgPackOrJson(json!({ "code": code, "detail": detail })),
             )
                 .into_response(),
-            ErrorType::Operation {
-                status,
-                detail: Some(detail),
-                ..
-            } => (status, detail).into_response(),
-            ErrorType::Operation { status, .. } => status.into_response(),
             ErrorType::Internal { trace, body } => {
                 tracing::error!(
                     location = ?trace.into_iter().map(ToString::to_string).collect::<Vec<_>>(),
@@ -290,9 +290,9 @@ pub enum ErrorType {
 
     /// An error from an Operation application
     Operation {
-        status: StatusCode,
-        error_code: Option<String>,
-        detail: Option<String>,
+        http_status: StatusCode,
+        code: Cow<'static, str>,
+        detail: String,
     },
 
     /// The operation cannot proceed because the server is not yet ready
@@ -316,12 +316,15 @@ impl fmt::Display for ErrorType {
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::EntityNotFound(s) => write!(f, "not_found {s}"),
             Self::ShuttingDown => write!(f, "shutting_down"),
-            Self::Operation { detail, status, .. } => {
-                if let Some(detail) = detail {
-                    detail.fmt(f)
-                } else {
-                    write!(f, "code {status}")
-                }
+            Self::Operation {
+                http_status,
+                code,
+                detail,
+            } => {
+                write!(
+                    f,
+                    "http_status={http_status:?} code={code:?} detail={detail:?}"
+                )
             }
         }
     }
