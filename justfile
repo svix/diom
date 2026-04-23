@@ -1,4 +1,4 @@
-set quiet := true
+set quiet
 
 HERE := justfile_directory()
 
