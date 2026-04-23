@@ -9,6 +9,12 @@ export interface AdminAuthTokenOut {
     role: string;
     /** Whether this token is currently enabled. */
     enabled: boolean;
+    /**
+     * Whether this token has expired.
+     * 
+     * Expired tokens may be pruned in the background at any time.
+     */
+    expired: boolean;
 }
 
 export const AdminAuthTokenOutSerializer = {
@@ -22,6 +28,7 @@ export const AdminAuthTokenOutSerializer = {
             expiry: object['expiry'] ? new Date(Number(object['expiry'])) : null,
             role: object['role'],
             enabled: object['enabled'],
+            expired: object['expired'],
         };
     },
 
@@ -35,6 +42,7 @@ export const AdminAuthTokenOutSerializer = {
             'expiry': self.expiry != null ? self.expiry.getTime() : undefined,
             'role': self.role,
             'enabled': self.enabled,
+            'expired': self.expired,
         };
     }
 }

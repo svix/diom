@@ -56,6 +56,10 @@ pub struct AdminAuthTokenOut {
     pub role: String,
     /// Whether this token is currently enabled.
     pub enabled: bool,
+    /// Whether this token has expired.
+    ///
+    /// Expired tokens may be pruned in the background at any time.
+    pub expired: bool,
 }
 
 // Create
@@ -268,6 +272,8 @@ async fn auth_token_list(
         .await
         .or_internal_error()?;
 
+    let now = app_state.time.now_utm();
+
     // FIXME: pass limits on the response.
     let data = out
         .data
@@ -279,6 +285,7 @@ async fn auth_token_list(
                 created: t.created,
                 updated: t.updated,
                 expiry: t.expiry,
+                expired: t.expiry.is_some_and(|e| e < now),
                 role: t
                     .metadata
                     .get("role")
