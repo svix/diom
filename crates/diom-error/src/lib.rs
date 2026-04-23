@@ -109,38 +109,38 @@ impl Error {
     }
 
     /// Decompose into HTTP status, optional error code, and optional detail message.
-    pub fn into_parts(self) -> (StatusCode, Option<String>, Option<String>) {
+    pub fn into_parts(self) -> (StatusCode, String, String) {
         match *self.0 {
             ErrorType::InvalidInput { http_status, body }
             | ErrorType::OperationError { http_status, body } => (
                 http_status,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
+                body.code().to_owned(),
+                body.detail().to_owned(),
             ),
             ErrorType::BadRequest(body) | ErrorType::EntityNotFound(body) => (
                 StatusCode::BAD_REQUEST,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
+                body.code().to_owned(),
+                body.detail().to_owned(),
             ),
             ErrorType::Operation {
                 http_status,
                 code,
                 detail,
-            } => (http_status, Some(code.into_owned()), Some(detail)),
+            } => (http_status, code.into_owned(), detail),
             ErrorType::Internal { body, .. } => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
+                body.code().to_owned(),
+                body.detail().to_owned(),
             ),
-            ErrorType::NotReady { .. } => (
+            ErrorType::NotReady { message } => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                Some("not_ready".to_owned()),
-                None,
+                "not_ready".to_owned(),
+                message,
             ),
             ErrorType::ShuttingDown => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                Some("shutting_down".to_owned()),
-                None,
+                "shutting_down".to_owned(),
+                "server shutting down".to_owned(),
             ),
         }
     }

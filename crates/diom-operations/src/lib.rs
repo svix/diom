@@ -157,11 +157,11 @@ pub struct OperationError {
 
 impl From<diom_error::Error> for OperationError {
     fn from(value: diom_error::Error) -> Self {
-        let (status, error_code, detail) = value.into_parts();
+        let (status, code, detail) = value.into_parts();
         Self {
             status,
-            error_code,
-            detail,
+            error_code: Some(code),
+            detail: Some(detail),
         }
     }
 }
