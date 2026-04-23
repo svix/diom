@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, Partition, TopicName},
+    entities::{ConsumerGroup, MsgId, TopicName},
     storage::{
         MsgKey, MsgRow, QueueConfigKey, QueueConfigRow, QueueLeaseKey, QueueLeaseRow, TopicKey,
         TopicRow,
@@ -191,7 +191,7 @@ fn forward_to_dlq(
     )?;
 
     // Route deterministically: use source partition clamped to DLQ partition count
-    let dlq_partition = Partition::new(msg_id.partition.get() % dlq_topic_row.partitions)?;
+    let dlq_partition = msg_id.partition % dlq_topic_row.partitions;
     let dlq_offset = MsgRow::next_offset(&state.msg_table, dlq_topic_row.id, dlq_partition)?;
 
     batch.insert_row(

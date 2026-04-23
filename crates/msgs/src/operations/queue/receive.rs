@@ -88,14 +88,12 @@ impl QueueReceiveOperation {
 
             Span::current().record("partition_count", topic_row.partitions);
 
-            let partitions = self
-                .partition
-                .map(|p| vec![p.get()])
-                .unwrap_or_else(|| topic_row.partitions_shuffled(now.as_millisecond()));
+            let partitions = match self.partition {
+                Some(p) => vec![p],
+                None => topic_row.partitions_shuffled(now.as_millisecond())?,
+            };
 
-            for partition_idx in partitions {
-                let partition = Partition::new(partition_idx)?;
-
+            for partition in partitions {
                 // Fetch or create cursor for this partition.
                 // Queue starts from offset 0 (earliest), unlike stream which starts from latest.
                 let mut cursor = match StreamLeaseRow::fetch(

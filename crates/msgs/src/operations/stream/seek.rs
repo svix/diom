@@ -68,14 +68,12 @@ impl StreamSeekOperation {
             )?
             .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
-            let partitions = self
-                .partition
-                .map(|p| vec![p.get()])
-                .unwrap_or_else(|| (0..topic_row.partitions).collect());
+            let partitions = match self.partition {
+                Some(p) => vec![p],
+                None => topic_row.partitions().collect::<Result<Vec<_>>>()?,
+            };
 
-            for partition_idx in partitions {
-                let partition = Partition::new(partition_idx)?;
-
+            for partition in partitions {
                 let offset = match &self.target {
                     SeekTarget::Position(SeekPosition::Earliest) => 0,
                     SeekTarget::Position(SeekPosition::Latest) => {

@@ -92,15 +92,15 @@ impl StreamReceiveOperation {
 
             Span::current().record("partition_count", topic_row.partitions);
 
-            let partitions = self
-                .partition
-                .map(|p| vec![p.get()])
-                .unwrap_or_else(|| topic_row.partitions_shuffled(now.as_millisecond()));
+            let partitions = match self.partition {
+                Some(p) => vec![p],
+                None => topic_row.partitions_shuffled(now.as_millisecond())?,
+            };
 
             let mut no_lease_available = true;
 
             for partition in partitions {
-                let topic = TopicPartition::new(self.topic.clone(), Partition::new(partition)?);
+                let topic = TopicPartition::new(self.topic.clone(), partition);
                 let (mut lease, is_new) = match StreamLeaseRow::fetch(
                     &state.metadata_tables,
                     StreamLeaseKey::build_key(

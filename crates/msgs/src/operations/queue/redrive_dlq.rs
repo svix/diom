@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ConsumerGroup, Partition, TopicName},
+    entities::{ConsumerGroup, TopicName},
     storage::{QueueLeaseKey, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow},
 };
 
@@ -42,8 +42,8 @@ impl QueueRedriveDlqOperation {
             let mut batch = state.db.batch();
             let mut total_redriven: u64 = 0;
 
-            for partition_idx in 0..topic_row.partitions {
-                let partition = Partition::new(partition_idx)?;
+            for partition in topic_row.partitions() {
+                let partition = partition?;
 
                 let Some(mut cursor) = StreamLeaseRow::fetch(
                     &state.metadata_tables,

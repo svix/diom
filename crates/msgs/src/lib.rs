@@ -84,8 +84,8 @@ pub fn estimate_available_queue_messages(
     };
 
     let mut total = 0u64;
-    for partition_idx in 0..topic_row.partitions {
-        let partition = Partition::new(partition_idx)?;
+    for partition in topic_row.partitions() {
+        let partition = partition?;
 
         // SMH should probably rename StreamLeaseRow to CursorRow or something,
         // the name is misleading here.
@@ -143,8 +143,8 @@ pub fn estimate_available_stream_messages(
 
     let mut total = 0u64;
     let mut available_partitions = Vec::new();
-    for partition_idx in 0..topic_row.partitions {
-        let partition = Partition::new(partition_idx)?;
+    for partition in topic_row.partitions() {
+        let partition = partition?;
 
         let cursor = StreamLeaseRow::fetch(
             metadata_tables,
@@ -232,13 +232,12 @@ fn delete_expired_messages(
             let val = entry.value()?;
             let topic_row = TopicRow::from_fjall_value(val)?;
 
-            for partition_idx in 0..topic_row.partitions {
-                let partition = Partition::new(partition_idx)?;
+            for partition in topic_row.partitions() {
                 let deleted = delete_expired_partition(
                     &state.db,
                     &state.msg_table,
                     topic_row.id,
-                    partition,
+                    partition?,
                     cutoff,
                 )?;
                 total_deleted += deleted;
@@ -414,8 +413,8 @@ mod delete_expired_tests {
             .await;
         let topic_id = fixture.create_topic(ns_id, "topic-a", 2, now);
 
-        let p0 = Partition::new(0).unwrap();
-        let p1 = Partition::new(1).unwrap();
+        let p0 = Partition::ZERO;
+        let p1 = Partition::ONE;
 
         // p0: two expired, one fresh (exactly at the cutoff).
         fixture.insert_msg(topic_id, p0, 0, ts(50_000));
@@ -449,7 +448,7 @@ mod delete_expired_tests {
         let now = ts(1_000_000);
         let ns_id = fixture.create_namespace("no-retention", None, now).await;
         let topic_id = fixture.create_topic(ns_id, "topic", 1, now);
-        let partition = Partition::new(0).unwrap();
+        let partition = Partition::ZERO;
 
         // Very old message — would be expired if retention were set.
         fixture.insert_msg(topic_id, partition, 0, ts(1));
@@ -471,7 +470,7 @@ mod delete_expired_tests {
 
         let topic_expiring = fixture.create_topic(ns_expiring, "t", 1, now);
         let topic_permanent = fixture.create_topic(ns_permanent, "t", 1, now);
-        let p = Partition::new(0).unwrap();
+        let p = Partition::ZERO;
 
         // Same old timestamp in both namespaces.
         fixture.insert_msg(topic_expiring, p, 0, ts(1_000));

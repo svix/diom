@@ -5,7 +5,7 @@ use diom_core::{
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
-use diom_error::Result;
+use diom_error::{OptionExt, Result};
 use fjall_utils::{FjallKey, TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
 
@@ -54,12 +54,18 @@ impl TopicRow {
         }
     }
 
-    pub(crate) fn partitions_shuffled(&self, seed: u64) -> Vec<u16> {
+    pub(crate) fn partitions(&self) -> impl Iterator<Item = Result<Partition>> {
+        (0..self.partitions).map(|i| Partition::new(i).ok_or_internal_error("partition overflow"))
+    }
+
+    pub(crate) fn partitions_shuffled(&self, seed: u64) -> Result<Vec<Partition>> {
         use rand::{SeedableRng, seq::SliceRandom};
-        let mut list: Vec<u16> = (0..self.partitions).collect();
+        let mut list = (0..self.partitions)
+            .map(|i| Partition::new(i).ok_or_internal_error("partition overflow"))
+            .collect::<Result<Vec<_>>>()?;
         let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
         list.shuffle(&mut rng);
-        list
+        Ok(list)
     }
 
     /// Returns the existing row, or creates a new one and inserts it into the batch.
@@ -518,7 +524,7 @@ mod tests {
             .keyspace("msgs", fjall::KeyspaceCreateOptions::default)
             .unwrap();
         let topic_id = TopicId::new(ts(0), UuidV7RandomBytes::new_random());
-        let p = Partition::new(0).unwrap();
+        let p = Partition::ZERO;
 
         // Empty partition returns 0
         assert_eq!(
@@ -583,7 +589,7 @@ mod tests {
     fn test_consumer_group_from_key() {
         use TopicId;
         let topic_id = TopicId::new(UnixTimestampMs::UNIX_EPOCH, UuidV7RandomBytes::new_random());
-        let partition = Partition::new(0).unwrap();
+        let partition = Partition::ZERO;
         let cg = ConsumerGroup::try_from("my-group").unwrap();
         let key = StreamLeaseKey::build_key(&topic_id, &partition, &cg);
         assert_eq!(
@@ -608,7 +614,7 @@ mod tests {
             .keyspace("msgs", fjall::KeyspaceCreateOptions::default)
             .unwrap();
         let topic_id = TopicId::new(UnixTimestampMs::UNIX_EPOCH, UuidV7RandomBytes::new_random());
-        let partition = Partition::new(0).unwrap();
+        let partition = Partition::ZERO;
 
         let t1 = UnixTimestampMs::try_from_millisecond(1000).unwrap();
         let t2 = UnixTimestampMs::try_from_millisecond(2000).unwrap();

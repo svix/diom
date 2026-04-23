@@ -1,4 +1,10 @@
-use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
+use std::{
+    collections::HashMap,
+    fmt,
+    num::NonZeroU64,
+    ops::{self, Deref},
+    str::FromStr,
+};
 
 use diom_core::{
     PersistableValue,
@@ -37,13 +43,14 @@ pub const TOPIC_PARTITION_DELIMITER: &str = "~";
 pub struct Partition(u16);
 
 impl Partition {
-    pub fn new(index: u16) -> Result<Self, Error> {
+    pub const ZERO: Self = Self(0);
+    pub const ONE: Self = Self(1);
+
+    pub(crate) fn new(index: u16) -> Option<Self> {
         if index < MAX_PARTITION_COUNT {
-            Ok(Self(index))
+            Some(Self(index))
         } else {
-            Err(Error::invalid_user_input(format!(
-                "partition cannot be higher than {MAX_PARTITION_COUNT}"
-            )))
+            None
         }
     }
 
@@ -53,13 +60,20 @@ impl Partition {
 }
 
 impl FromStr for Partition {
-    type Err = Error;
+    type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let index = s
-            .parse::<u16>()
-            .map_err(|e| Error::invalid_user_input(e.to_string()))?;
+        let index = s.parse::<u16>().map_err(|e| e.to_string())?;
         Self::new(index)
+            .ok_or_else(|| format!("partition cannot be higher than {MAX_PARTITION_COUNT}"))
+    }
+}
+
+impl ops::Rem<u16> for Partition {
+    type Output = Self;
+
+    fn rem(self, rhs: u16) -> Self::Output {
+        Self(self.0 % rhs)
     }
 }
 
@@ -154,17 +168,16 @@ impl TopicPartition {
     }
 }
 
-impl TryFrom<String> for TopicPartition {
-    type Error = Error;
+impl FromStr for TopicPartition {
+    type Err = Error;
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         let (topic, idx_str) = value
             .rsplit_once(TOPIC_PARTITION_DELIMITER)
             .ok_or_else(|| Error::internal("missing '~' separator in topic"))?;
-        let idx: u16 = idx_str
+        let partition: Partition = idx_str
             .parse()
             .map_err(|_| Error::internal("invalid partition index in topic"))?;
-        let partition = Partition::new(idx)?;
         let topic = TopicName::new(topic.to_owned())?;
         Ok(Self { topic, partition })
     }
@@ -195,7 +208,7 @@ impl<'de> Deserialize<'de> for TopicPartition {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        TopicPartition::try_from(s).map_err(de::Error::custom)
+        s.parse().map_err(de::Error::custom)
     }
 }
 
@@ -238,7 +251,7 @@ impl<'de> Deserialize<'de> for TopicIn {
         let s = String::deserialize(deserializer)?;
         if s.contains(TOPIC_PARTITION_DELIMITER) {
             // Re-parse the full string via TopicPartition::try_from
-            TopicPartition::try_from(s)
+            s.parse()
                 .map(TopicIn::TopicPartition)
                 .map_err(de::Error::custom)
         } else {
@@ -347,9 +360,8 @@ impl<'de> Deserialize<'de> for MsgId {
         let (part_str, off_str) = s
             .split_once(':')
             .ok_or_else(|| de::Error::custom("Invalid MsgId"))?;
-        let partition: u16 = part_str.parse().map_err(de::Error::custom)?;
+        let partition: Partition = part_str.parse().map_err(de::Error::custom)?;
         let offset: Offset = off_str.parse().map_err(de::Error::custom)?;
-        let partition = Partition::new(partition).map_err(de::Error::custom)?;
         Ok(MsgId { partition, offset })
     }
 }
