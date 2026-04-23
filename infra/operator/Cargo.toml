@@ -37,7 +37,9 @@ tracing.workspace = true
 tracing-subscriber = { workspace = true, features = ["env-filter", "fmt"] }
 
 [dev-dependencies]
+diom-backend.workspace = true
 rustls = { workspace = true, features = ["ring"] }
+temp-env = "0.3"
 test-utils = { path = "../../crates/test-utils" }
 
 [lints]
