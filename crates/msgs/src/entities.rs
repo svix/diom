@@ -37,6 +37,9 @@ pub const TOPIC_PARTITION_DELIMITER: &str = "~";
 pub struct Partition(u16);
 
 impl Partition {
+    pub const ZERO: Self = Self(0);
+    pub const ONE: Self = Self(1);
+
     pub fn new(index: u16) -> Result<Self, Error> {
         if index < MAX_PARTITION_COUNT {
             Ok(Self(index))

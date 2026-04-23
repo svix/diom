@@ -518,7 +518,7 @@ mod tests {
             .keyspace("msgs", fjall::KeyspaceCreateOptions::default)
             .unwrap();
         let topic_id = TopicId::new(ts(0), UuidV7RandomBytes::new_random());
-        let p = Partition::new(0).unwrap();
+        let p = Partition::ZERO;
 
         // Empty partition returns 0
         assert_eq!(
@@ -583,7 +583,7 @@ mod tests {
     fn test_consumer_group_from_key() {
         use TopicId;
         let topic_id = TopicId::new(UnixTimestampMs::UNIX_EPOCH, UuidV7RandomBytes::new_random());
-        let partition = Partition::new(0).unwrap();
+        let partition = Partition::ZERO;
         let cg = ConsumerGroup::try_from("my-group").unwrap();
         let key = StreamLeaseKey::build_key(&topic_id, &partition, &cg);
         assert_eq!(
@@ -608,7 +608,7 @@ mod tests {
             .keyspace("msgs", fjall::KeyspaceCreateOptions::default)
             .unwrap();
         let topic_id = TopicId::new(UnixTimestampMs::UNIX_EPOCH, UuidV7RandomBytes::new_random());
-        let partition = Partition::new(0).unwrap();
+        let partition = Partition::ZERO;
 
         let t1 = UnixTimestampMs::try_from_millisecond(1000).unwrap();
         let t2 = UnixTimestampMs::try_from_millisecond(2000).unwrap();

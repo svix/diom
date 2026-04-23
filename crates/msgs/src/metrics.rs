@@ -436,7 +436,7 @@ mod tests {
             UuidV7RandomBytes::new_random(),
         );
         let cg = ConsumerGroup::try_from("my-group").unwrap();
-        let partition = Partition::new(0).unwrap();
+        let partition = Partition::ZERO;
 
         insert_topic(&db, &meta, &topic_row);
 
