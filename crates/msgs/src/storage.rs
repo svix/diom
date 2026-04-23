@@ -5,7 +5,7 @@ use diom_core::{
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
-use diom_error::Result;
+use diom_error::{OptionExt, Result};
 use fjall_utils::{FjallKey, TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
 
@@ -55,13 +55,13 @@ impl TopicRow {
     }
 
     pub(crate) fn partitions(&self) -> impl Iterator<Item = Result<Partition>> {
-        (0..self.partitions).map(Partition::new)
+        (0..self.partitions).map(|i| Partition::new(i).ok_or_internal_error("partition overflow"))
     }
 
     pub(crate) fn partitions_shuffled(&self, seed: u64) -> Result<Vec<Partition>> {
         use rand::{SeedableRng, seq::SliceRandom};
         let mut list = (0..self.partitions)
-            .map(Partition::new)
+            .map(|i| Partition::new(i).ok_or_internal_error("partition overflow"))
             .collect::<Result<Vec<_>>>()?;
         let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
         list.shuffle(&mut rng);

@@ -46,13 +46,11 @@ impl Partition {
     pub const ZERO: Self = Self(0);
     pub const ONE: Self = Self(1);
 
-    pub(crate) fn new(index: u16) -> Result<Self, Error> {
+    pub(crate) fn new(index: u16) -> Option<Self> {
         if index < MAX_PARTITION_COUNT {
-            Ok(Self(index))
+            Some(Self(index))
         } else {
-            Err(Error::invalid_user_input(format!(
-                "partition cannot be higher than {MAX_PARTITION_COUNT}"
-            )))
+            None
         }
     }
 
@@ -68,7 +66,11 @@ impl FromStr for Partition {
         let index = s
             .parse::<u16>()
             .map_err(|e| Error::invalid_user_input(e.to_string()))?;
-        Self::new(index)
+        Self::new(index).ok_or_else(|| {
+            Error::invalid_user_input(format!(
+                "partition cannot be higher than {MAX_PARTITION_COUNT}"
+            ))
+        })
     }
 }
 
