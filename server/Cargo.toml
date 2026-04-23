@@ -24,7 +24,7 @@ opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk.workspace = true
 reqwest.workspace = true
 tokio.workspace = true
-tracing.workspace = true
+tracing = { workspace = true, features = ["release_max_level_debug"] }
 tracing-log.workspace = true
 tracing-opentelemetry.workspace = true
 tracing-subscriber.workspace = true
