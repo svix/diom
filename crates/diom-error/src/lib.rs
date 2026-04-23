@@ -30,7 +30,7 @@ impl Error {
     #[track_caller]
     pub fn internal(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Internal {
-            message: s.to_string(),
+            body: StandardErrorBody::new("internal_error", s),
             trace: vec![Location::caller()],
         })
     }
@@ -122,7 +122,11 @@ impl Error {
                 error_code,
                 detail,
             } => (status, error_code, detail),
-            ErrorType::Internal { .. } => (StatusCode::INTERNAL_SERVER_ERROR, None, None),
+            ErrorType::Internal { body, .. } => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Some(body.code().to_owned()),
+                Some(body.detail().to_owned()),
+            ),
             ErrorType::NotReady { .. } => (
                 StatusCode::SERVICE_UNAVAILABLE,
                 Some("NOT_READY".to_owned()),
@@ -187,17 +191,13 @@ impl IntoResponse for Error {
                 ..
             } => (status, detail).into_response(),
             ErrorType::Operation { status, .. } => status.into_response(),
-            ErrorType::Internal { trace, message } => {
+            ErrorType::Internal { trace, body } => {
                 tracing::error!(
                     location = ?trace.into_iter().map(ToString::to_string).collect::<Vec<_>>(),
-                    message,
-                    "generic error",
+                    message = body.detail(),
+                    "internal error",
                 );
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    MsgPackOrJson(json!({"code": "INTERNAL_ERROR", "detail": ""})),
-                )
-                    .into_response()
+                (StatusCode::INTERNAL_SERVER_ERROR, MsgPackOrJson(body)).into_response()
             }
             ErrorType::NotReady { message } => (
                 StatusCode::SERVICE_UNAVAILABLE,
@@ -254,7 +254,7 @@ impl<T> Traceable<T> for Result<T> {
 pub enum ErrorType {
     /// An unexpected internal error
     Internal {
-        message: String,
+        body: StandardErrorBody,
         trace: Vec<&'static Location<'static>>,
     },
 
@@ -287,7 +287,7 @@ pub enum ErrorType {
 impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Internal { message, .. } => message.fmt(f),
+            Self::Internal { body, .. } => write!(f, "internal {body}"),
             Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::EntityNotFound(s) => write!(f, "not_found {s}"),
