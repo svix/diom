@@ -129,12 +129,12 @@ impl Error {
             ),
             ErrorType::NotReady { .. } => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                Some("NOT_READY".to_owned()),
+                Some("not_ready".to_owned()),
                 None,
             ),
             ErrorType::ShuttingDown => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                Some("SHUTTING_DOWN".to_owned()),
+                Some("shutting_down".to_owned()),
                 None,
             ),
         }
@@ -201,12 +201,12 @@ impl IntoResponse for Error {
             }
             ErrorType::NotReady { message } => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                MsgPackOrJson(json!({"code": "NOT_READY", "detail": message})),
+                MsgPackOrJson(json!({"code": "not_ready", "detail": message})),
             )
                 .into_response(),
             ErrorType::ShuttingDown => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                MsgPackOrJson(json!({"code": "SHUTTING_DOWN", "detail": "server shutting down"})),
+                MsgPackOrJson(json!({"code": "shutting_down", "detail": "server shutting down"})),
             )
                 .into_response(),
         }
