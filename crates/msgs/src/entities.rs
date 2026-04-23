@@ -1,4 +1,10 @@
-use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
+use std::{
+    collections::HashMap,
+    fmt,
+    num::NonZeroU64,
+    ops::{self, Deref},
+    str::FromStr,
+};
 
 use diom_core::{
     PersistableValue,
@@ -63,6 +69,14 @@ impl FromStr for Partition {
             .parse::<u16>()
             .map_err(|e| Error::invalid_user_input(e.to_string()))?;
         Self::new(index)
+    }
+}
+
+impl ops::Rem<u16> for Partition {
+    type Output = Self;
+
+    fn rem(self, rhs: u16) -> Self::Output {
+        Self(self.0 % rhs)
     }
 }
 
