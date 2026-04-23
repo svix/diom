@@ -58,7 +58,7 @@ rustls.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio = { workspace = true, features = ["macros", "time", "rt-multi-thread"] }
-tracing.workspace = true
+tracing = { workspace = true, features = ["release_max_level_debug"] }
 tracing-subscriber.workspace = true
 v_jsonescape = { version = "0.7.8", features = ["buf-min", "bytes-buf"] }
 yansi.workspace = true
