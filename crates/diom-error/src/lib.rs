@@ -27,6 +27,17 @@ impl Error {
         Self(Box::new(error_type))
     }
 
+    fn operation_error(
+        http_status: StatusCode,
+        code: &'static str,
+        detail: impl fmt::Display,
+    ) -> Self {
+        Self::new(ErrorType::OperationError {
+            http_status,
+            body: StandardErrorBody::new(code, detail),
+        })
+    }
+
     #[track_caller]
     pub fn internal(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Internal {
@@ -62,15 +73,11 @@ impl Error {
     }
 
     pub fn authentication(code: &'static str, detail: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Authentication(StandardErrorBody::new(
-            code, detail,
-        )))
+        Self::operation_error(StatusCode::UNAUTHORIZED, code, detail)
     }
 
     pub fn authorization(code: &'static str, detail: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Authorization(StandardErrorBody::new(
-            code, detail,
-        )))
+        Self::operation_error(StatusCode::FORBIDDEN, code, detail)
     }
 
     pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
@@ -110,16 +117,6 @@ impl Error {
             ),
             ErrorType::BadRequest(body) | ErrorType::EntityNotFound(body) => (
                 StatusCode::BAD_REQUEST,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
-            ),
-            ErrorType::Authentication(body) => (
-                StatusCode::UNAUTHORIZED,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
-            ),
-            ErrorType::Authorization(body) => (
-                StatusCode::FORBIDDEN,
                 Some(body.code().to_owned()),
                 Some(body.detail().to_owned()),
             ),
@@ -181,14 +178,6 @@ impl IntoResponse for Error {
             ErrorType::EntityNotFound(body) => {
                 tracing::debug!(error = %body, "entity not found");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::Authentication(body) => {
-                tracing::debug!(error = %body, "authentication");
-                (StatusCode::UNAUTHORIZED, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::Authorization(body) => {
-                tracing::debug!(error = %body, "authorization");
-                (StatusCode::FORBIDDEN, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Operation {
                 status,
@@ -303,12 +292,6 @@ pub enum ErrorType {
     /// Entity not found
     EntityNotFound(StandardErrorBody),
 
-    /// Authentication error
-    Authentication(StandardErrorBody),
-
-    /// Authorization error
-    Authorization(StandardErrorBody),
-
     /// An error from an Operation application
     Operation {
         status: StatusCode,
@@ -336,8 +319,6 @@ impl fmt::Display for ErrorType {
             Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::EntityNotFound(s) => write!(f, "not_found {s}"),
-            Self::Authentication(s) => write!(f, "authn {s}"),
-            Self::Authorization(s) => write!(f, "authz {s}"),
             Self::ShuttingDown => write!(f, "shutting_down"),
             Self::Operation { detail, status, .. } => {
                 if let Some(detail) = detail {
