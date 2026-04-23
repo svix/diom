@@ -171,17 +171,16 @@ impl TopicPartition {
     }
 }
 
-impl TryFrom<String> for TopicPartition {
-    type Error = Error;
+impl FromStr for TopicPartition {
+    type Err = Error;
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         let (topic, idx_str) = value
             .rsplit_once(TOPIC_PARTITION_DELIMITER)
             .ok_or_else(|| Error::internal("missing '~' separator in topic"))?;
-        let idx: u16 = idx_str
+        let partition: Partition = idx_str
             .parse()
             .map_err(|_| Error::internal("invalid partition index in topic"))?;
-        let partition = Partition::new(idx)?;
         let topic = TopicName::new(topic.to_owned())?;
         Ok(Self { topic, partition })
     }
@@ -212,7 +211,7 @@ impl<'de> Deserialize<'de> for TopicPartition {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        TopicPartition::try_from(s).map_err(de::Error::custom)
+        s.parse().map_err(de::Error::custom)
     }
 }
 
@@ -255,7 +254,7 @@ impl<'de> Deserialize<'de> for TopicIn {
         let s = String::deserialize(deserializer)?;
         if s.contains(TOPIC_PARTITION_DELIMITER) {
             // Re-parse the full string via TopicPartition::try_from
-            TopicPartition::try_from(s)
+            s.parse()
                 .map(TopicIn::TopicPartition)
                 .map_err(de::Error::custom)
         } else {
@@ -364,9 +363,8 @@ impl<'de> Deserialize<'de> for MsgId {
         let (part_str, off_str) = s
             .split_once(':')
             .ok_or_else(|| de::Error::custom("Invalid MsgId"))?;
-        let partition: u16 = part_str.parse().map_err(de::Error::custom)?;
+        let partition: Partition = part_str.parse().map_err(de::Error::custom)?;
         let offset: Offset = off_str.parse().map_err(de::Error::custom)?;
-        let partition = Partition::new(partition).map_err(de::Error::custom)?;
         Ok(MsgId { partition, offset })
     }
 }
