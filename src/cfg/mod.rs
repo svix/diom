@@ -1140,6 +1140,30 @@ persistent_db = { path = "/2", filename = "fjall_persistent" }
     }
 
     #[test]
+    fn test_env_file_nonexistent_errors() {
+        let err = dotenvy::from_path("/nonexistent/path/to/.env").unwrap_err();
+        assert!(
+            matches!(err, dotenvy::Error::Io(_)),
+            "expected an IO error, got {err:?}"
+        );
+    }
+
+    #[test]
+    fn test_env_file_config_override() {
+        let dir = tempfile::tempdir().unwrap();
+        let env_path = dir.path().join("secrets.env");
+        std::fs::write(&env_path, "DIOM_LISTEN_ADDRESS=127.0.0.1:19999\n").unwrap();
+
+        dotenvy::from_path(&env_path).unwrap();
+
+        let config = load_toml(None).unwrap();
+        assert_eq!(
+            config.listen_address,
+            "127.0.0.1:19999".parse::<SocketAddr>().unwrap()
+        );
+    }
+
+    #[test]
     fn test_peer_addr_parsing() {
         let Ok(PeerAddr::SocketAddr(SocketAddr::V4(sa))) = "127.0.0.2:8624".parse() else {
             panic!("failed to parse v4 addr")

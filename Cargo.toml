@@ -90,6 +90,7 @@ zip.workspace = true
 [dev-dependencies]
 assert_matches.workspace = true
 ctor.workspace = true
+dotenvy.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
 rmpv.workspace = true
