@@ -48,8 +48,8 @@ jobs:
         if: ${{ !inputs.is_release }}
         run: |
           yq -i '.name = "diom-private"' infra/helm-diom/Chart.yaml
-          yq -i '.operator.image.repository = "ghcr.io/svix/diom-operator"' infra/helm-diom/values.yaml
-          yq -i '.cluster.image.repository = "ghcr.io/svix/diom-server"' infra/helm-diom/values.yaml
+          yq -i '.operator.image.repository = "ghcr.io/svix/diom-operator-private"' infra/helm-diom/values.yaml
+          yq -i '.cluster.image.repository = "ghcr.io/svix/diom-server-private"' infra/helm-diom/values.yaml
 
       - name: Package chart
         run: |

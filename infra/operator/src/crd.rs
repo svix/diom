@@ -96,6 +96,10 @@ pub struct DiomClusterSpec {
     /// ```
     #[serde(default)]
     pub affinity: Option<Affinity>,
+
+    /// Optional image pull secret to use when pulling the Diom image.
+    #[serde(default)]
+    pub image_pull_secrets: Option<Vec<ImagePullSecret>>,
 }
 
 /// Storage configuration for a Diom cluster.
@@ -287,6 +291,11 @@ impl ValueOrSecretRef {
             },
         }
     }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+pub struct ImagePullSecret {
+    pub name: String,
 }
 
 fn replicas_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {

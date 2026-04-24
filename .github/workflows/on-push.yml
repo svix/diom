@@ -76,3 +76,16 @@ jobs:
       server_image_tag: sha-${{ github.sha }}
       operator_image_tag: sha-${{ github.sha }}
       is_release: false
+
+  staging-deploy:
+    needs: [docker_publish_operator, docker_publish_server, helm-publish]
+    runs-on: ubuntu-24.04
+    environment: diom-staging-deploy
+    steps:
+      - name: Dispatch deploy to diom-staging
+        run: |
+          gh api repos/svix/diom-staging/dispatches --method POST --input - <<EOF
+          {"event_type":"deploy-staging","client_payload":{"image_tag":"sha-${GITHUB_SHA}"}}
+          EOF
+        env:
+          GH_TOKEN: ${{ secrets.STAGING_DISPATCH_PAT }}

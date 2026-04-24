@@ -949,6 +949,22 @@
                     "nullable": true,
                     "type": "string"
                   },
+                  "imagePullSecrets": {
+                    "description": "Optional image pull secret to use when pulling the Diom image.",
+                    "items": {
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "nullable": true,
+                    "type": "array"
+                  },
                   "internodeSecret": {
                     "anyOf": [
                       {

@@ -4,9 +4,10 @@ use k8s_openapi::{
     api::{
         apps::v1::{StatefulSet, StatefulSetPersistentVolumeClaimRetentionPolicy, StatefulSetSpec},
         core::v1::{
-            Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction, ObjectFieldSelector,
-            PersistentVolumeClaim, PersistentVolumeClaimSpec, PodSecurityContext, PodSpec,
-            PodTemplateSpec, Probe, VolumeMount, VolumeResourceRequirements,
+            Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction, LocalObjectReference,
+            ObjectFieldSelector, PersistentVolumeClaim, PersistentVolumeClaimSpec,
+            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, VolumeMount,
+            VolumeResourceRequirements,
         },
     },
     apimachinery::pkg::{
@@ -96,6 +97,14 @@ fn build(ctx: &ClusterCtx) -> Result<StatefulSet> {
         node_selector: spec.node_selector.clone(),
         tolerations: spec.tolerations.clone(),
         affinity: spec.affinity.clone(),
+        image_pull_secrets: spec.image_pull_secrets.as_ref().map(|secrets| {
+            secrets
+                .iter()
+                .map(|s| LocalObjectReference {
+                    name: s.name.clone(),
+                })
+                .collect()
+        }),
         ..Default::default()
     };
 
@@ -525,6 +534,7 @@ mod tests {
             node_selector: None,
             tolerations: None,
             affinity: None,
+            image_pull_secrets: None,
         }
     }
 

@@ -10,5 +10,9 @@ metadata:
     {{- include "diom-operator.labels" . | nindent 4 }}
 spec:
   image: {{ printf "%s:%s" .Values.cluster.image.repository .Values.cluster.image.tag }}
+  {{- with .Values.cluster.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   {{- toYaml (omit .Values.cluster.spec "image") | nindent 2 }}
 {{- end }}
