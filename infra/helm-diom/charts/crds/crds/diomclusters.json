@@ -1035,12 +1035,12 @@
                         "nullable": true,
                         "type": "string"
                       },
-                      "metrics_address": {
+                      "metricsAddress": {
                         "description": "The OpenTelemetry address to send metrics to if given.\n\nIf not specified, the server will attempt to fall back\nto `opentelemetry_address`.",
                         "nullable": true,
                         "type": "string"
                       },
-                      "metrics_protocol": {
+                      "metricsProtocol": {
                         "description": "OpenTelemetry metrics protocol\n\nBy default, metrics are sent via GRPC. Some metrics destinations, most\nnotably Prometheus, only support receiving metrics via HTTP.",
                         "enum": [
                           "grpc",

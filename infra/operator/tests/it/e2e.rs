@@ -108,6 +108,56 @@ async fn test_degraded_on_bad_image() -> TestResult {
     Ok(())
 }
 
+#[tokio::test]
+async fn test_spec_env_var_mapping() -> TestResult {
+    let env = TestContextBuilder::new()
+        .spec_fields(serde_json::json!({
+            "logLevel": "debug",
+            "logFormat": "json",
+            "bootstrap": "some-bootstrap-cfg",
+            "opentelemetry": {
+                "address": "grpc://otel:4317",
+                "metricsAddress": "http://otel:4318/v1/metrics",
+                "metricsProtocol": "http"
+            }
+        }))
+        .build()
+        .await;
+
+    let sts_json = serde_json::to_value(&env.sts).unwrap();
+    let container_env = sts_json["spec"]["template"]["spec"]["containers"][0]["env"]
+        .as_array()
+        .unwrap();
+    let get_env = |name: &str| {
+        container_env
+            .iter()
+            .find(|e| e["name"] == name)
+            .and_then(|e| e["value"].as_str())
+            .map(str::to_owned)
+    };
+
+    assert_eq!(get_env("DIOM_LOG_LEVEL").as_deref(), Some("debug"));
+    assert_eq!(get_env("DIOM_LOG_FORMAT").as_deref(), Some("json"));
+    assert_eq!(
+        get_env("DIOM_BOOTSTRAP_CFG").as_deref(),
+        Some("some-bootstrap-cfg")
+    );
+    assert_eq!(
+        get_env("DIOM_OPENTELEMETRY_ADDRESS").as_deref(),
+        Some("grpc://otel:4317")
+    );
+    assert_eq!(
+        get_env("DIOM_OPENTELEMETRY_METRICS_ADDRESS").as_deref(),
+        Some("http://otel:4318/v1/metrics")
+    );
+    assert_eq!(
+        get_env("DIOM_OPENTELEMETRY_METRICS_PROTOCOL").as_deref(),
+        Some("http")
+    );
+
+    Ok(())
+}
+
 // TODO: The default storage driver in kind doesn't support
 // storage resizing, so we can't currently validate that the PVCs
 // themselves have actually been resized.
