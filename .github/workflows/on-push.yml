@@ -85,7 +85,7 @@ jobs:
       - name: Dispatch deploy to diom-staging
         run: |
           gh api repos/svix/diom-staging/dispatches --method POST --input - <<EOF
-          {"event_type":"deploy-staging","client_payload":{"image_tag":"sha-${GITHUB_SHA}"}}
+          {"event_type":"deploy-staging","client_payload":{"chart_version":"0.0.0-${GITHUB_SHA}"}}
           EOF
         env:
           GH_TOKEN: ${{ secrets.STAGING_DISPATCH_PAT }}
