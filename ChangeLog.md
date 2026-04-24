@@ -3,10 +3,10 @@
 ## Unreleased Changes
 
 ## Version 0.2.3
-* Rust SDK: expose `.is_retriable()` and `.kind()` on `diom::Error`
-* Rust SDK: do not leak feature `release_max_level_debug` into the tracing library
-* All SDKs: remove automatic retries
-* Several configuration values that were specified as millisecond durations are now explicitly checked for being non-zero at startup
+* Server: Several configuration values that were specified as millisecond durations are now explicitly checked for being non-zero at startup
+* Libs/Rust: expose `.is_retriable()` and `.kind()` on `diom::Error`
+* Libs/Rust: do not leak feature `release_max_level_debug` into the tracing library
+* Libs/All: remove automatic retries
 * Miscellaneous dependency bumps
 * Various improvements to release infrastructure
 
