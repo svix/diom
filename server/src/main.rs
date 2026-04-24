@@ -1,6 +1,7 @@
 #![warn(clippy::all)]
 #![forbid(unsafe_code)]
 
+use anyhow::Context as _;
 use clap::{Parser, Subcommand};
 use comfy_table::{Cell, Table};
 use diom_backend::{
@@ -28,6 +29,10 @@ struct Args {
     /// Path to a TOML configuration file
     #[clap(short = 'C', long)]
     config_path: Option<PathBuf>,
+
+    /// Path to a file of environment variable overrides to load in addition to .env
+    #[clap(long)]
+    env_file: Option<PathBuf>,
 
     #[clap(subcommand)]
     command: Option<Commands>,
@@ -127,9 +132,13 @@ fn dump_variables(path: Option<PathBuf>) -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    _ = dotenv();
-
     let args = Args::parse();
+
+    if let Some(env_file) = &args.env_file {
+        dotenvy::from_path(env_file).context("loading env file")?;
+    }
+
+    _ = dotenv();
 
     if let Some(Commands::Healthcheck { server_url }) = args.command {
         let server_url = if let Some(url) = server_url {

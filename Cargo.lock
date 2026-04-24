@@ -1527,6 +1527,7 @@ dependencies = [
  "diom-operations",
  "diom-proto",
  "diom-rate-limit",
+ "dotenvy",
  "fjall",
  "fjall-utils",
  "fs-err",
