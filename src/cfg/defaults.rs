@@ -111,3 +111,7 @@ pub(super) const fn background_cleanup_interval() -> NonZeroDurationMs {
 pub(super) fn default_database_size() -> MemorySize {
     MemorySize::Percent(20)
 }
+
+pub(super) const fn global_timeout() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(10).unwrap()
+}

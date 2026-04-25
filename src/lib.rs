@@ -13,9 +13,9 @@ use std::{
 use aide::axum::ApiRouter;
 use axum::{
     Extension,
-    extract::DefaultBodyLimit,
+    extract::{DefaultBodyLimit, State},
     middleware,
-    response::IntoResponse as _,
+    response::{IntoResponse as _, Response},
     serve::{Listener, ListenerExt as _},
 };
 use diom_authorization::{AccessRuleList, Permissions};
@@ -24,6 +24,7 @@ use diom_error::Error;
 use diom_msgs::TopicPublishNotifier;
 use diom_proto::{InternalClient, InternalRequest, InternalRequestError};
 use fjall_utils::{Databases, ReadonlyDatabases};
+use futures_util::FutureExt;
 use opentelemetry::metrics::Meter;
 use serde::{Serialize, de::DeserializeOwned};
 use tokio::{
@@ -106,7 +107,7 @@ pub struct AppState {
     pub(crate) topic_publish_notifier: TopicPublishNotifier,
 }
 
-fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
+fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> Response {
     if let Some(err) = err.downcast_ref::<String>() {
         tracing::error!(?err, "Unhandled panic");
     } else if let Some(err) = err.downcast_ref::<&'static str>() {
@@ -115,6 +116,15 @@ fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response:
         tracing::error!("Unhandled non-string panic");
     }
     Error::internal("unhandled internal panic").into_response()
+}
+
+fn timeout_layer(
+    State(timeout): State<Duration>,
+    request: axum::extract::Request,
+    next: middleware::Next,
+) -> impl Future<Output = Response> {
+    tokio::time::timeout(timeout, next.run(request))
+        .map(|r| r.unwrap_or_else(|_| Error::request_timeout().into_response()))
 }
 
 async fn axum_tcp_listener(
@@ -187,9 +197,11 @@ async fn run_internal(
     api_router: axum::Router,
     mut internal_req_rx: mpsc::Receiver<InternalRequest>,
     request_metrics: RequestMetrics,
+    cfg: Configuration,
 ) {
     let svc = api_router.layer((
         trace_layer(),
+        middleware::from_fn_with_state(cfg.global_timeout.into(), timeout_layer),
         CatchPanicLayer::custom(handle_panic),
         middleware::from_fn_with_state(
             request_metrics,
@@ -290,7 +302,7 @@ async fn fail_until_bootstrapped(
     path: axum::extract::MatchedPath,
     request: axum::extract::Request,
     next: middleware::Next,
-) -> axum::response::Response {
+) -> Response {
     let is_admin_route = path.as_str().starts_with("/api/v1.admin.cluster.");
     if !(is_admin_route || BOOTSTRAPPED.load(Ordering::Relaxed)) {
         return Error::not_ready("this node has not yet finished bootstrapping").into_response();
@@ -407,6 +419,7 @@ pub async fn run_with_listeners(
         api_router.clone(),
         internal_req_rx,
         request_metrics.with_connection_type(ConnectionType::Internal),
+        cfg.clone(),
     ));
 
     openapi::postprocess_spec(&mut openapi);
@@ -415,6 +428,7 @@ pub async fn run_with_listeners(
     let svc = router
         .layer((
             trace_layer(),
+            middleware::from_fn_with_state(cfg.global_timeout.into(), timeout_layer),
             CatchPanicLayer::custom(handle_panic),
             middleware::from_fn(core::cluster::middleware::capture_log_id),
             middleware::from_fn(diom_proto::capture_accept_hdr),
