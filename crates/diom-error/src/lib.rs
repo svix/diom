@@ -1,6 +1,6 @@
 #![warn(clippy::str_to_string)]
 
-use std::{error, fmt, panic::Location};
+use std::{borrow::Cow, error, fmt, panic::Location};
 
 use aide::OperationOutput;
 use axum::response::{IntoResponse, Response};
@@ -27,10 +27,21 @@ impl Error {
         Self(Box::new(error_type))
     }
 
+    fn operation_error(
+        http_status: StatusCode,
+        code: &'static str,
+        detail: impl fmt::Display,
+    ) -> Self {
+        Self::new(ErrorType::OperationError {
+            http_status,
+            body: StandardErrorBody::new(code, detail),
+        })
+    }
+
     #[track_caller]
     pub fn internal(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Internal {
-            message: s.to_string(),
+            body: StandardErrorBody::new("internal_error", s),
             trace: vec![Location::caller()],
         })
     }
@@ -62,30 +73,28 @@ impl Error {
     }
 
     pub fn authentication(code: &'static str, detail: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Authentication(StandardErrorBody::new(
-            code, detail,
-        )))
+        Self::operation_error(StatusCode::UNAUTHORIZED, code, detail)
     }
 
     pub fn authorization(code: &'static str, detail: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Authorization(StandardErrorBody::new(
-            code, detail,
-        )))
+        Self::operation_error(StatusCode::FORBIDDEN, code, detail)
     }
 
-    pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
+    pub fn from_raft(
+        http_status: StatusCode,
+        code: Option<String>,
+        detail: Option<String>,
+    ) -> Self {
         Self::new(ErrorType::Operation {
-            status: code,
-            error_code: None,
-            detail,
-        })
-    }
-
-    pub fn operation_with_code(status: StatusCode, error_code: String, detail: String) -> Self {
-        Self::new(ErrorType::Operation {
-            status,
-            error_code: Some(error_code),
-            detail: Some(detail),
+            http_status,
+            code: match code {
+                Some(c) => c.into(),
+                None => "generic".into(),
+            },
+            detail: detail.unwrap_or_else(|| {
+                tracing::warn!("no error message in OperationError from raft");
+                "unknown error".to_owned()
+            }),
         })
     }
 
@@ -100,38 +109,38 @@ impl Error {
     }
 
     /// Decompose into HTTP status, optional error code, and optional detail message.
-    pub fn into_parts(self) -> (StatusCode, Option<String>, Option<String>) {
+    pub fn into_parts(self) -> (StatusCode, String, String) {
         match *self.0 {
+            ErrorType::InvalidInput { http_status, body }
+            | ErrorType::OperationError { http_status, body } => (
+                http_status,
+                body.code().to_owned(),
+                body.detail().to_owned(),
+            ),
             ErrorType::BadRequest(body) | ErrorType::EntityNotFound(body) => (
                 StatusCode::BAD_REQUEST,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
-            ),
-            ErrorType::Authentication(body) => (
-                StatusCode::UNAUTHORIZED,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
-            ),
-            ErrorType::Authorization(body) => (
-                StatusCode::FORBIDDEN,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
+                body.code().to_owned(),
+                body.detail().to_owned(),
             ),
             ErrorType::Operation {
-                status,
-                error_code,
+                http_status,
+                code,
                 detail,
-            } => (status, error_code, detail),
-            ErrorType::Internal { .. } => (StatusCode::INTERNAL_SERVER_ERROR, None, None),
-            ErrorType::NotReady { .. } => (
+            } => (http_status, code.into_owned(), detail),
+            ErrorType::Internal { body, .. } => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                body.code().to_owned(),
+                body.detail().to_owned(),
+            ),
+            ErrorType::NotReady { message } => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                Some("NOT_READY".to_owned()),
-                None,
+                "not_ready".to_owned(),
+                message,
             ),
             ErrorType::ShuttingDown => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                Some("SHUTTING_DOWN".to_owned()),
-                None,
+                "shutting_down".to_owned(),
+                "server shutting down".to_owned(),
             ),
         }
     }
@@ -156,6 +165,14 @@ impl error::Error for Error {}
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match *self.0 {
+            ErrorType::InvalidInput { http_status, body } => {
+                tracing::trace!(error = %body, "invalid input");
+                (http_status, MsgPackOrJson(body)).into_response()
+            }
+            ErrorType::OperationError { http_status, body } => {
+                tracing::debug!(error = %body, "operation error");
+                (http_status, MsgPackOrJson(body)).into_response()
+            }
             ErrorType::BadRequest(body) => {
                 tracing::debug!(error = %body, "bad request");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
@@ -164,49 +181,31 @@ impl IntoResponse for Error {
                 tracing::debug!(error = %body, "entity not found");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
-            ErrorType::Authentication(body) => {
-                tracing::debug!(error = %body, "authentication");
-                (StatusCode::UNAUTHORIZED, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::Authorization(body) => {
-                tracing::debug!(error = %body, "authorization");
-                (StatusCode::FORBIDDEN, MsgPackOrJson(body)).into_response()
-            }
             ErrorType::Operation {
-                status,
-                error_code: Some(error_code),
-                detail: Some(detail),
+                http_status,
+                code,
+                detail,
             } => (
-                status,
-                MsgPackOrJson(json!({ "code": error_code, "detail": detail })),
+                http_status,
+                MsgPackOrJson(json!({ "code": code, "detail": detail })),
             )
                 .into_response(),
-            ErrorType::Operation {
-                status,
-                detail: Some(detail),
-                ..
-            } => (status, detail).into_response(),
-            ErrorType::Operation { status, .. } => status.into_response(),
-            ErrorType::Internal { trace, message } => {
+            ErrorType::Internal { trace, body } => {
                 tracing::error!(
                     location = ?trace.into_iter().map(ToString::to_string).collect::<Vec<_>>(),
-                    message,
-                    "generic error",
+                    message = body.detail(),
+                    "internal error",
                 );
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    MsgPackOrJson(json!({"code": "INTERNAL_ERROR", "detail": ""})),
-                )
-                    .into_response()
+                (StatusCode::INTERNAL_SERVER_ERROR, MsgPackOrJson(body)).into_response()
             }
             ErrorType::NotReady { message } => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                MsgPackOrJson(json!({"code": "NOT_READY", "detail": message})),
+                MsgPackOrJson(json!({"code": "not_ready", "detail": message})),
             )
                 .into_response(),
             ErrorType::ShuttingDown => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                MsgPackOrJson(json!({"code": "SHUTTING_DOWN", "detail": "server shutting down"})),
+                MsgPackOrJson(json!({"code": "shutting_down", "detail": "server shutting down"})),
             )
                 .into_response(),
         }
@@ -252,9 +251,34 @@ impl<T> Traceable<T> for Result<T> {
 
 #[derive(Debug)]
 pub enum ErrorType {
-    /// An unexpected internal error
+    /// The request was invalid.
+    ///
+    /// This error type is to be used for 'stateless' errors that will fail no
+    /// matter under which circumstances the same request is retried. Examples:
+    ///
+    /// - missing `content-type` header
+    /// - msgpack decode error
+    /// - value outside of supported range
+    InvalidInput {
+        http_status: StatusCode,
+        body: StandardErrorBody,
+    },
+
+    /// The requested operation failed.
+    ///
+    /// This error type is to be used for 'stateful' errors. Examples:
+    ///
+    /// - invalid access token
+    /// - namespace not found
+    /// - any sort of conflict
+    OperationError {
+        http_status: StatusCode,
+        body: StandardErrorBody,
+    },
+
+    /// An unexpected internal error.
     Internal {
-        message: String,
+        body: StandardErrorBody,
         trace: Vec<&'static Location<'static>>,
     },
 
@@ -264,17 +288,11 @@ pub enum ErrorType {
     /// Entity not found
     EntityNotFound(StandardErrorBody),
 
-    /// Authentication error
-    Authentication(StandardErrorBody),
-
-    /// Authorization error
-    Authorization(StandardErrorBody),
-
     /// An error from an Operation application
     Operation {
-        status: StatusCode,
-        error_code: Option<String>,
-        detail: Option<String>,
+        http_status: StatusCode,
+        code: Cow<'static, str>,
+        detail: String,
     },
 
     /// The operation cannot proceed because the server is not yet ready
@@ -287,19 +305,26 @@ pub enum ErrorType {
 impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Internal { message, .. } => message.fmt(f),
+            Self::InvalidInput { http_status, body } => {
+                write!(f, "invalid_input http_status={http_status:?} {body}")
+            }
+            Self::OperationError { http_status, body } => {
+                write!(f, "operation_error http_status={http_status:?} {body}")
+            }
+            Self::Internal { body, .. } => write!(f, "internal {body}"),
             Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::EntityNotFound(s) => write!(f, "not_found {s}"),
-            Self::Authentication(s) => write!(f, "authn {s}"),
-            Self::Authorization(s) => write!(f, "authz {s}"),
             Self::ShuttingDown => write!(f, "shutting_down"),
-            Self::Operation { detail, status, .. } => {
-                if let Some(detail) = detail {
-                    detail.fmt(f)
-                } else {
-                    write!(f, "code {status}")
-                }
+            Self::Operation {
+                http_status,
+                code,
+                detail,
+            } => {
+                write!(
+                    f,
+                    "http_status={http_status:?} code={code:?} detail={detail:?}"
+                )
             }
         }
     }
