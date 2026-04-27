@@ -18,14 +18,10 @@ use axum::{
     response::IntoResponse as _,
     serve::{Listener, ListenerExt as _},
 };
-use diom_authorization::{AccessRuleList, Permissions};
+use diom_authorization::Permissions;
 use diom_core::Monotime;
 use diom_error::Error;
-use diom_msgs::TopicPublishNotifier;
-use diom_proto::{InternalClient, InternalRequest, InternalRequestError};
-use fjall_utils::{Databases, ReadonlyDatabases};
-use opentelemetry::metrics::Meter;
-use serde::{Serialize, de::DeserializeOwned};
+use diom_proto::{InternalClient, InternalRequest};
 use tokio::{
     net::TcpListener,
     sync::{Barrier, mpsc},
@@ -52,9 +48,12 @@ pub mod bootstrap;
 pub mod cfg;
 pub mod core;
 pub use diom_error as error;
+mod app_state;
 pub mod openapi;
 pub mod v1;
 mod workers;
+
+pub(crate) use self::app_state::AppState;
 
 async fn graceful_shutdown_handler() {
     let ctrl_c = async {
@@ -81,29 +80,6 @@ async fn graceful_shutdown_handler() {
 
     tracing::info!("Received shutdown signal. Shutting down gracefully...");
     start_shut_down();
-}
-
-#[derive(Clone)]
-pub struct AppState {
-    cfg: Configuration,
-
-    namespace_state: diom_namespace::State,
-
-    pub(crate) ro_dbs: ReadonlyDatabases,
-
-    // FIXME: temporarily here until we make ro_dbs usable.
-    pub(crate) do_not_use_dbs: Databases,
-
-    pub meter: Meter,
-    internal_client: InternalClient,
-
-    pub(crate) auth_token_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Permissions>>>,
-    pub(crate) rules_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Arc<AccessRuleList>>>>,
-    pub(crate) jwt_verifier: Option<core::jwt::JwtVerifier>,
-
-    pub(crate) time: Monotime,
-
-    pub(crate) topic_publish_notifier: TopicPublishNotifier,
 }
 
 fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
@@ -219,63 +195,6 @@ async fn run_internal(
                 .unwrap_or_else(|never| match never {});
             _ = req.response_tx.send(response);
         });
-    }
-}
-
-impl AppState {
-    fn new(cfg: Configuration, time: Monotime, internal_client: InternalClient) -> Self {
-        let persistent_db = cfg
-            .persistent_db
-            .database(time.clone(), "persistent")
-            .expect("should be able to initialize persistent database");
-        let ephemeral_db = cfg
-            .ephemeral_db
-            .database(time.clone(), "ephemeral")
-            .expect("should be able to initialize ephemeral database");
-
-        let dbs = Databases::new(persistent_db, ephemeral_db);
-        let ro_dbs = dbs.readonly();
-
-        let namespace_state =
-            diom_namespace::State::init(dbs.clone()).expect("initializing namespace state");
-
-        let meter = opentelemetry::global::meter("diom.svix.com");
-
-        let mut listen_addr = cfg.listen_address;
-        if listen_addr.ip().is_unspecified() {
-            listen_addr.set_ip(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST));
-        }
-
-        let auth_token_cache =
-            Arc::new(parking_lot::RwLock::new(core::auth::FifoCache::new(10_000)));
-        let rules_cache = Arc::new(parking_lot::RwLock::new(core::auth::FifoCache::new(1_000)));
-
-        let jwt_verifier =
-            core::jwt::JwtVerifier::try_new(&cfg.jwt).expect("invalid JWT configuration");
-
-        AppState {
-            cfg,
-            namespace_state,
-            ro_dbs,
-            do_not_use_dbs: dbs,
-            meter,
-            internal_client,
-            auth_token_cache,
-            rules_cache,
-            jwt_verifier,
-            time,
-            topic_publish_notifier: TopicPublishNotifier::new(),
-        }
-    }
-
-    /// Make an internal call to a specific op id
-    pub async fn internal_call<T: Serialize, U: DeserializeOwned>(
-        &self,
-        op_id: &'static str,
-        body: &T,
-    ) -> Result<U, InternalRequestError> {
-        let path = format!("/api/{op_id}");
-        self.internal_client.post(&path, body).await
     }
 }
 
