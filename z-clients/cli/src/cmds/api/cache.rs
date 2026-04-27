@@ -18,20 +18,36 @@ pub struct CacheArgs {
 pub enum CacheCommands {
     Namespace(CacheNamespaceArgs),
     /// Cache Set
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cache set KEY VALUE {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"ttl_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     Set {
         key: String,
         value: ByteString,
         cache_set_in: crate::json::JsonOf<diom::models::CacheSetIn>,
     },
     /// Cache Get
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cache get KEY {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"consistency\": \"strong\"
@@ -39,19 +55,27 @@ pub enum CacheCommands {
 {
   \"expiry\": 1234567890123,
   \"value\": \"...\"
-}")]
+}\n")]
     Get {
         key: String,
         cache_get_in: Option<crate::json::JsonOf<diom::models::CacheGetIn>>,
     },
     /// Cache Delete
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cache delete KEY {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"success\": true
-}")]
+}\n")]
     Delete {
         key: String,
         cache_delete_in: Option<crate::json::JsonOf<diom::models::CacheDeleteIn>>,

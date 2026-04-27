@@ -19,7 +19,15 @@ pub enum MsgsStreamCommands {
     ///
     /// Each consumer in the group reads from all partitions. Messages are locked by leases for the
     /// specified duration to prevent duplicate delivery within the same consumer group.
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs stream receive TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"batch_size\": 123,
@@ -29,7 +37,7 @@ pub enum MsgsStreamCommands {
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"msgs\": [{\"offset\": 123, \"topic\": \"...\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
-}")]
+}\n")]
     Receive {
         topic: String,
         consumer_group: String,
@@ -39,13 +47,21 @@ pub enum MsgsStreamCommands {
     ///
     /// The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
     /// successfully processed offset; future receives will start after it.
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs stream commit TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"offset\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     Commit {
         topic: String,
         consumer_group: String,
@@ -58,7 +74,15 @@ pub enum MsgsStreamCommands {
     /// `"earliest"` or `"latest"` and may be used with or without a partition suffix. The `timestamp`
     /// field accepts a Unix timestamp in milliseconds and seeks to the first message at or after that
     /// time.
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs stream seek TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"offset\": 123,
@@ -66,7 +90,7 @@ pub enum MsgsStreamCommands {
   \"timestamp\": 1234567890123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     Seek {
         topic: String,
         consumer_group: String,
