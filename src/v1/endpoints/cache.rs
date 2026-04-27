@@ -147,7 +147,7 @@ async fn cache_set(
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = SetOperation::new(namespace, data.key.to_string(), Some(data.ttl), data.value);
     repl.client_write(operation).await.or_internal_error()?.0?;
@@ -164,7 +164,7 @@ async fn cache_get(
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     if data.consistency.linearizable() {
         repl.wait_linearizable().await.or_internal_error()?;
@@ -197,7 +197,7 @@ async fn cache_del(
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = DeleteOperation::new(namespace, data.key.to_string());
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
@@ -242,7 +242,7 @@ async fn cache_get_namespace(
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     Ok(MsgPackOrJson(CacheGetNamespaceOut {
         name: namespace.name,

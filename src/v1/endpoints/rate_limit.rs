@@ -137,7 +137,7 @@ async fn rate_limit_limit(
     let namespace: RateLimitNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let key = data.key.0;
     let tokens = data.tokens;
@@ -178,7 +178,7 @@ async fn rate_limit_get_remaining(
     let namespace: RateLimitNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     repl.wait_linearizable().await.or_internal_error()?;
 
@@ -221,7 +221,7 @@ async fn rate_limit_reset(
     let namespace: RateLimitNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let key = data.key.0.clone();
     let method = data.config.into();
@@ -293,7 +293,7 @@ async fn rate_limit_get_namespace(
     let namespace: RateLimitNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     Ok(MsgPackOrJson(RateLimitGetNamespaceOut {
         name: namespace.name,

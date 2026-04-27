@@ -53,12 +53,10 @@ impl Error {
         )))
     }
 
-    pub fn entity_not_found(detail: impl Into<Option<String>>) -> Self {
+    pub fn entity_not_found(entity: &'static str) -> Self {
         Self::new(ErrorType::EntityNotFound(StandardErrorBody::new(
             "not_found",
-            detail
-                .into()
-                .unwrap_or_else(|| "Entity not found".to_owned()),
+            format!("{entity} not found"),
         )))
     }
 
