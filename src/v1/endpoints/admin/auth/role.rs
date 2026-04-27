@@ -170,7 +170,7 @@ async fn role_get(
         .controller
         .get_role(&data.id)
         .await?
-        .ok_or_not_found()?;
+        .ok_or_not_found("role")?;
     Ok(MsgPackOrJson(model.into()))
 }
 

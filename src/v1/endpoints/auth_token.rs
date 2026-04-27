@@ -136,7 +136,7 @@ async fn auth_token_create(
     let namespace: AuthTokenNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let token = TokenPlaintext::generate(&data.prefix, data.suffix.as_deref())?;
     let operation = CreateAuthTokenOperation::new(
@@ -184,7 +184,7 @@ async fn auth_token_expire(
     let namespace: AuthTokenNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let expiry = data.expiry.map(|ms| repl.time.now() + ms);
     let operation = ExpireAuthTokenOperation::new(namespace, data.id.into_inner(), expiry);
@@ -223,7 +223,7 @@ async fn auth_token_delete(
     let namespace: AuthTokenNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = DeleteAuthTokenOperation::new(namespace, data.id.into_inner());
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
@@ -255,7 +255,7 @@ async fn auth_token_verify(
     let namespace: AuthTokenNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let token_hashed = TokenHashed::from(data.token.as_str());
     let auth_token_state = repl.state_machine.auth_token_store().await;
@@ -295,7 +295,7 @@ async fn auth_token_list(
     let namespace: AuthTokenNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let limit = data.pagination.limit.0 as usize;
     let iterator = data.pagination.iterator.map(|id| id.into_inner());
@@ -342,7 +342,7 @@ async fn auth_token_update(
     let namespace: AuthTokenNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = UpdateAuthTokenOperation::new(
         namespace,
@@ -389,14 +389,14 @@ async fn auth_token_rotate(
     let namespace: AuthTokenNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let token = TokenPlaintext::generate(&data.prefix, data.suffix.as_deref())?;
     let old_expiry = data.expiry.map(|ms| repl.time.now_utm() + ms);
     let operation =
         RotateAuthTokenOperation::new(namespace, data.id.into_inner(), token.hash(), old_expiry);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
-    let model = resp.model.ok_or_not_found()?;
+    let model = resp.model.ok_or_not_found("auth token")?;
 
     Ok(MsgPackOrJson(AuthTokenRotateOut {
         id: model.id.public(),
@@ -467,7 +467,7 @@ async fn auth_token_get_namespace(
     let namespace: AuthTokenNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     Ok(MsgPackOrJson(AuthTokenGetNamespaceOut {
         name: namespace.name,

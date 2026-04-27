@@ -154,7 +154,7 @@ async fn access_policy_get(
         .controller
         .get_policy(&data.id)
         .await?
-        .ok_or_not_found()?;
+        .ok_or_not_found("access policy")?;
     Ok(MsgPackOrJson(model.into()))
 }
 
