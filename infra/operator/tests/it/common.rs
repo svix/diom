@@ -135,6 +135,8 @@ pub(crate) struct TestContextBuilder {
     replicas: i32,
     image: String,
     storage_size: String,
+    #[allow(clippy::disallowed_types)]
+    extra_spec: serde_json::Map<String, serde_json::Value>,
 }
 
 impl Default for TestContextBuilder {
@@ -143,6 +145,7 @@ impl Default for TestContextBuilder {
             replicas: 1,
             image: E2E_IMAGE.to_string(),
             storage_size: "10M".to_string(),
+            extra_spec: serde_json::Map::new(),
         }
     }
 }
@@ -165,6 +168,14 @@ impl TestContextBuilder {
 
     pub(crate) fn storage_size(mut self, size: impl Into<String>) -> Self {
         self.storage_size = size.into();
+        self
+    }
+
+    #[allow(clippy::disallowed_types)]
+    pub(crate) fn spec_fields(mut self, fields: serde_json::Value) -> Self {
+        if let serde_json::Value::Object(map) = fields {
+            self.extra_spec.extend(map);
+        }
         self
     }
 
@@ -249,6 +260,13 @@ impl TestContextBuilder {
         });
 
         let cluster_api: Api<DiomCluster> = Api::namespaced(client.clone(), "default");
+        let mut spec = serde_json::json!({
+            "image": self.image,
+            "imagePullPolicy": "Never",
+            "replicas": self.replicas,
+            "storage": { "persistent": { "size": self.storage_size } }
+        });
+        spec.as_object_mut().unwrap().extend(self.extra_spec);
         let cluster = cluster_api
             .create(
                 &PostParams::default(),
@@ -256,12 +274,7 @@ impl TestContextBuilder {
                     "apiVersion": "diom.svix.com/v1alpha1",
                     "kind": "DiomCluster",
                     "metadata": { "name": "test-cluster" },
-                    "spec": {
-                        "image": self.image,
-                        "imagePullPolicy": "Never",
-                        "replicas": self.replicas,
-                        "storage": { "persistent": { "size": self.storage_size } }
-                    }
+                    "spec": spec
                 }))
                 .unwrap(),
             )

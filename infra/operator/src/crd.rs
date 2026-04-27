@@ -206,6 +206,7 @@ impl fmt::Display for OpenTelemetryProtocol {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct OpenTelemetrySpec {
     /// The OpenTelemetry address to send events to if given.
     ///
