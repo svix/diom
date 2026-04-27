@@ -18,7 +18,14 @@ pub struct RateLimitArgs {
 pub enum RateLimitCommands {
     Namespace(RateLimitNamespaceArgs),
     /// Rate Limiter Check and Consume
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
@@ -29,12 +36,19 @@ pub enum RateLimitCommands {
   \"allowed\": true,
   \"remaining\": 123,
   \"retry_after_ms\": 60000
-}")]
+}\n")]
     Limit {
         rate_limit_check_in: crate::json::JsonOf<diom::models::RateLimitCheckIn>,
     },
     /// Rate Limiter Get Remaining
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
@@ -43,19 +57,26 @@ pub enum RateLimitCommands {
 {
   \"remaining\": 123,
   \"retry_after_ms\": 60000
-}")]
+}\n")]
     GetRemaining {
         rate_limit_get_remaining_in: crate::json::JsonOf<diom::models::RateLimitGetRemainingIn>,
     },
     /// Rate Limiter Reset
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
   \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     Reset {
         rate_limit_reset_in: crate::json::JsonOf<diom::models::RateLimitResetIn>,
     },

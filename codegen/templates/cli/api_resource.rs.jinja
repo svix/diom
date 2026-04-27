@@ -96,7 +96,14 @@ pub enum {{ resource_type_name }}Commands {
             {{ op.description | to_doc_comment(style="rust") }}
         {% endif -%}
         {% if op.request_body_schema_name is defined or op.response_body_schema_name is defined -%}
-            #[command(after_long_help = "
+            #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+            #[command(after_help = "
             {%- if op.request_body_schema_name is defined -%}
                 {{- render_schema_example("Example body", api.types[op.request_body_schema_name], api) -}}
             {%- endif -%}
@@ -106,7 +113,7 @@ pub enum {{ resource_type_name }}Commands {
             {%- if op.response_body_schema_name is defined -%}
                 {{- render_schema_example("Example response", api.types[op.response_body_schema_name], api) -}}
             {%- endif -%}
-")]
+\n")]
         {% endif -%}
         {{ op.name | to_upper_camel_case }} {
             {% if op.request_body_schema_name is defined -%}

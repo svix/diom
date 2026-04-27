@@ -16,7 +16,14 @@ pub struct AdminAuthRoleArgs {
 #[derive(Subcommand)]
 pub enum AdminAuthRoleCommands {
     /// Create or update a role
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\",
   \"description\": \"...\",
@@ -28,23 +35,37 @@ pub enum AdminAuthRoleCommands {
   \"id\": \"...\",
   \"created\": 1234567890123,
   \"updated\": 1234567890123
-}")]
+}\n")]
     Configure {
         admin_role_configure_in: crate::json::JsonOf<diom::models::AdminRoleConfigureIn>,
     },
     /// Delete a role
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"success\": true
-}")]
+}\n")]
     Delete {
         admin_role_delete_in: crate::json::JsonOf<diom::models::AdminRoleDeleteIn>,
     },
     /// Get a role by ID
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
@@ -56,12 +77,19 @@ pub enum AdminAuthRoleCommands {
   \"context\": {\"key\": \"...\"},
   \"created\": 1234567890123,
   \"updated\": 1234567890123
-}")]
+}\n")]
     Get {
         admin_role_get_in: crate::json::JsonOf<diom::models::AdminRoleGetIn>,
     },
     /// List all roles
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"limit\": 123,
   \"iterator\": \"...\"
@@ -71,7 +99,7 @@ pub enum AdminAuthRoleCommands {
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": true
-}")]
+}\n")]
     List {
         admin_role_list_in: Option<crate::json::JsonOf<diom::models::AdminRoleListIn>>,
     },

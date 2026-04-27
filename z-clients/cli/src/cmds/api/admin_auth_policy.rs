@@ -16,7 +16,14 @@ pub struct AdminAuthPolicyArgs {
 #[derive(Subcommand)]
 pub enum AdminAuthPolicyCommands {
     /// Create or update an access policy
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\",
   \"description\": \"...\",
@@ -26,24 +33,38 @@ pub enum AdminAuthPolicyCommands {
   \"id\": \"...\",
   \"created\": 1234567890123,
   \"updated\": 1234567890123
-}")]
+}\n")]
     Configure {
         admin_access_policy_configure_in:
             crate::json::JsonOf<diom::models::AdminAccessPolicyConfigureIn>,
     },
     /// Delete an access policy
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"success\": true
-}")]
+}\n")]
     Delete {
         admin_access_policy_delete_in: crate::json::JsonOf<diom::models::AdminAccessPolicyDeleteIn>,
     },
     /// Get an access policy by ID
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
@@ -53,12 +74,19 @@ pub enum AdminAuthPolicyCommands {
   \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"created\": 1234567890123,
   \"updated\": 1234567890123
-}")]
+}\n")]
     Get {
         admin_access_policy_get_in: crate::json::JsonOf<diom::models::AdminAccessPolicyGetIn>,
     },
     /// List all access policies
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"limit\": 123,
   \"iterator\": \"...\"
@@ -68,7 +96,7 @@ pub enum AdminAuthPolicyCommands {
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": true
-}")]
+}\n")]
     List {
         admin_access_policy_list_in:
             Option<crate::json::JsonOf<diom::models::AdminAccessPolicyListIn>>,

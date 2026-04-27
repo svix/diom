@@ -21,7 +21,14 @@ pub enum MsgsCommands {
     Stream(MsgsStreamArgs),
     Topic(MsgsTopicArgs),
     /// Publishes messages to a topic within a namespace.
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+                "{about-with-newline}\n",
+                "{usage-heading} {usage}\n",
+                "{after-help}",
+                "\n",
+                "{all-args}",
+            ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"msgs\": [{\"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"key\": \"...\", \"delay_ms\": 60000}],
@@ -29,7 +36,7 @@ pub enum MsgsCommands {
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"topics\": [{\"topic\": \"...\", \"start_offset\": 123, \"offset\": 123}]
-}")]
+}\n")]
     Publish {
         topic: String,
         msg_publish_in: crate::json::JsonOf<diom::models::MsgPublishIn>,
