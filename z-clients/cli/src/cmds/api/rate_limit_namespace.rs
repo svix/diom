@@ -16,7 +16,15 @@ pub struct RateLimitNamespaceArgs {
 #[derive(Subcommand)]
 pub enum RateLimitNamespaceCommands {
     /// Configure rate limiter namespace
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom rate-limit namespace configure {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"name\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
@@ -24,13 +32,21 @@ pub enum RateLimitNamespaceCommands {
   \"name\": \"some_namespace\",
   \"created\": 1234567890123,
   \"updated\": 1234567890123
-}")]
+}\n")]
     Configure {
         rate_limit_configure_namespace_in:
             crate::json::JsonOf<diom::models::RateLimitConfigureNamespaceIn>,
     },
     /// Get rate limiter namespace
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom rate-limit namespace get {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"name\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
@@ -38,7 +54,7 @@ pub enum RateLimitNamespaceCommands {
   \"name\": \"some_namespace\",
   \"created\": 1234567890123,
   \"updated\": 1234567890123
-}")]
+}\n")]
     Get {
         rate_limit_get_namespace_in: crate::json::JsonOf<diom::models::RateLimitGetNamespaceIn>,
     },

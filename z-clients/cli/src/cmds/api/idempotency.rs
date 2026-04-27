@@ -18,19 +18,35 @@ pub struct IdempotencyArgs {
 pub enum IdempotencyCommands {
     Namespace(IdempotencyNamespaceArgs),
     /// Start an idempotent request
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom idempotency start KEY {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"lock_period_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     Start {
         key: String,
         idempotency_start_in: crate::json::JsonOf<diom::models::IdempotencyStartIn>,
     },
     /// Complete an idempotent request with a response
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom idempotency complete KEY {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"response\": \"...\",
@@ -38,18 +54,26 @@ pub enum IdempotencyCommands {
   \"ttl_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     Complete {
         key: String,
         idempotency_complete_in: crate::json::JsonOf<diom::models::IdempotencyCompleteIn>,
     },
     /// Abandon an idempotent request (remove lock without saving response)
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom idempotency abort KEY {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     Abort {
         key: String,
         idempotency_abort_in: Option<crate::json::JsonOf<diom::models::IdempotencyAbortIn>>,

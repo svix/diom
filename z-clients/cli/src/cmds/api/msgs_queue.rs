@@ -20,7 +20,15 @@ pub enum MsgsQueueCommands {
     /// Messages are individually leased for the specified duration. Multiple consumers can receive
     /// different messages from the same topic concurrently. Leased messages are skipped until they
     /// are acked or their lease expires.
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue receive TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"batch_size\": 123,
@@ -29,7 +37,7 @@ pub enum MsgsQueueCommands {
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"msgs\": [{\"msg_id\": \"...\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
-}")]
+}\n")]
     Receive {
         topic: String,
         consumer_group: String,
@@ -38,13 +46,21 @@ pub enum MsgsQueueCommands {
     /// Acknowledges messages by their opaque msg_ids.
     ///
     /// Acked messages are permanently removed from the queue and will never be re-delivered.
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue ack TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"msg_ids\": [\"...\"]
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     Ack {
         topic: String,
         consumer_group: String,
@@ -54,14 +70,22 @@ pub enum MsgsQueueCommands {
     ///
     /// Consumers that need more processing time can call this before the lease expires to prevent the
     /// message from being re-delivered to another consumer.
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue extend-lease TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"msg_ids\": [\"...\"],
   \"lease_duration_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     ExtendLease {
         topic: String,
         consumer_group: String,
@@ -71,7 +95,15 @@ pub enum MsgsQueueCommands {
     ///
     /// `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
     /// the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue configure TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"retry_schedule\": [123],
@@ -80,7 +112,7 @@ pub enum MsgsQueueCommands {
 {
   \"retry_schedule\": [123],
   \"dlq_topic\": \"...\"
-}")]
+}\n")]
     Configure {
         topic: String,
         consumer_group: String,
@@ -90,25 +122,41 @@ pub enum MsgsQueueCommands {
     ///
     /// Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
     /// move them back to the queue for reprocessing.
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue nack TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
   \"msg_ids\": [\"...\"]
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     Nack {
         topic: String,
         consumer_group: String,
         msg_queue_nack_in: crate::json::JsonOf<diom::models::MsgQueueNackIn>,
     },
     /// Moves all dead-letter queue messages back to the main queue for reprocessing.
-    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue redrive-dlq TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-}")]
+}\n")]
     RedriveDlq {
         topic: String,
         consumer_group: String,
