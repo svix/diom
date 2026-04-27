@@ -53,13 +53,12 @@ impl Error {
         )))
     }
 
-    pub fn entity_not_found(detail: impl Into<Option<String>>) -> Self {
-        Self::new(ErrorType::EntityNotFound(StandardErrorBody::new(
+    pub fn entity_not_found(entity: &'static str) -> Self {
+        Self::operation_error(
+            StatusCode::BAD_REQUEST,
             "not_found",
-            detail
-                .into()
-                .unwrap_or_else(|| "Entity not found".to_owned()),
-        )))
+            format!("{entity} not found"),
+        )
     }
 
     pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
@@ -117,7 +116,7 @@ impl Error {
                 body.code().to_owned(),
                 body.detail().to_owned(),
             ),
-            ErrorType::BadRequest(body) | ErrorType::EntityNotFound(body) => (
+            ErrorType::BadRequest(body) => (
                 StatusCode::BAD_REQUEST,
                 body.code().to_owned(),
                 body.detail().to_owned(),
@@ -175,10 +174,6 @@ impl IntoResponse for Error {
             }
             ErrorType::BadRequest(body) => {
                 tracing::debug!(error = %body, "bad request");
-                (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::EntityNotFound(body) => {
-                tracing::debug!(error = %body, "entity not found");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Operation {
@@ -285,9 +280,6 @@ pub enum ErrorType {
     /// Bad user input (to be further refined)
     BadRequest(StandardErrorBody),
 
-    /// Entity not found
-    EntityNotFound(StandardErrorBody),
-
     /// An error from an Operation application
     Operation {
         http_status: StatusCode,
@@ -314,7 +306,6 @@ impl fmt::Display for ErrorType {
             Self::Internal { body, .. } => write!(f, "internal {body}"),
             Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
-            Self::EntityNotFound(s) => write!(f, "not_found {s}"),
             Self::ShuttingDown => write!(f, "shutting_down"),
             Self::Operation {
                 http_status,

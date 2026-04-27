@@ -145,7 +145,7 @@ async fn idempotency_start(
     let namespace: IdempotencyNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = TryStartOperation::new(namespace, data.key.to_string(), data.lock_period.get());
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
@@ -163,7 +163,7 @@ async fn idempotency_complete(
     let namespace: IdempotencyNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = CompleteOperation::new(
         namespace,
@@ -187,7 +187,7 @@ async fn idempotency_abort(
     let namespace: IdempotencyNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = AbortOperation::new(namespace, data.key.to_string());
     repl.client_write(operation).await.or_internal_error()?.0?;
@@ -257,7 +257,7 @@ async fn idempotency_get_namespace(
     let namespace: IdempotencyNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     Ok(MsgPackOrJson(IdempotencyGetNamespaceOut {
         name: namespace.name,

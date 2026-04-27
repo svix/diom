@@ -134,7 +134,7 @@ async fn kv_set(
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = SetOperation::new(
         namespace,
@@ -159,7 +159,7 @@ async fn kv_get(
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     if data.consistency.linearizable() {
         repl.wait_linearizable().await.or_internal_error()?;
@@ -193,7 +193,7 @@ async fn kv_del(
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let key = data.key;
     let operation = DeleteOperation::new(namespace, key, data.version);
@@ -267,7 +267,7 @@ async fn kv_get_namespace(
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     Ok(MsgPackOrJson(KvGetNamespaceOut {
         name: namespace.name,

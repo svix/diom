@@ -124,7 +124,7 @@ async fn get_namespace(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     Ok(MsgPackOrJson(MsgNamespaceGetOut {
         name: namespace.name,
@@ -173,7 +173,7 @@ async fn publish(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let topic_name = data.topic.name();
     let authorization_header = headers.get(AUTHORIZATION).map(|c| c.as_bytes());
@@ -247,7 +247,7 @@ async fn stream_receive(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     if let Some(max_wait) = data.batch_wait {
         let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
@@ -350,7 +350,7 @@ async fn stream_commit(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation =
         StreamCommitOperation::new(namespace.id, data.topic, data.consumer_group, data.offset);
@@ -396,7 +396,7 @@ async fn stream_seek(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let target = match (data.offset, data.position, data.timestamp) {
         (Some(offset), None, None) => SeekTarget::Offset(offset),
@@ -461,7 +461,7 @@ async fn queue_receive(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     if let Some(max_wait) = data.batch_wait {
         let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
@@ -563,7 +563,7 @@ async fn queue_ack(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation =
         QueueAckOperation::new(namespace.id, data.topic, data.consumer_group, data.msg_ids);
@@ -606,7 +606,7 @@ async fn queue_extend_lease(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = QueueExtendLeaseOperation::new(
         namespace.id,
@@ -657,7 +657,7 @@ async fn queue_configure(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = QueueConfigureOperation::new(
         namespace.id,
@@ -710,7 +710,7 @@ async fn queue_nack(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = QueueNackOperation::new(
         namespace.id,
@@ -752,7 +752,7 @@ async fn queue_redrive_dlq(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = QueueRedriveDlqOperation::new(namespace.id, data.topic, data.consumer_group);
     repl.client_write(operation).await.or_internal_error()?.0?;
@@ -792,7 +792,7 @@ async fn topic_configure(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
-        .ok_or_not_found()?;
+        .ok_or_not_found("namespace")?;
 
     let operation = TopicConfigureOperation::new(namespace.id, data.topic, data.partitions)?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
