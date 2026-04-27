@@ -38,6 +38,17 @@ impl Error {
         })
     }
 
+    fn server_error(
+        http_status: StatusCode,
+        code: &'static str,
+        detail: impl fmt::Display,
+    ) -> Self {
+        Self::new(ErrorType::ServerError {
+            http_status,
+            body: StandardErrorBody::new(code, detail),
+        })
+    }
+
     #[track_caller]
     pub fn internal(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Internal {
@@ -99,20 +110,23 @@ impl Error {
     }
 
     pub fn not_ready(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::NotReady {
-            message: s.to_string(),
-        })
+        Self::server_error(StatusCode::SERVICE_UNAVAILABLE, "not_ready", s)
     }
 
     pub fn shutting_down() -> Self {
-        Self::new(ErrorType::ShuttingDown)
+        Self::server_error(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "shutting_down",
+            "server shutting down",
+        )
     }
 
     /// Decompose into HTTP status, optional error code, and optional detail message.
     pub fn into_parts(self) -> (StatusCode, String, String) {
         match *self.0 {
             ErrorType::InvalidInput { http_status, body }
-            | ErrorType::OperationError { http_status, body } => (
+            | ErrorType::OperationError { http_status, body }
+            | ErrorType::ServerError { http_status, body } => (
                 http_status,
                 body.code().to_owned(),
                 body.detail().to_owned(),
@@ -131,16 +145,6 @@ impl Error {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 body.code().to_owned(),
                 body.detail().to_owned(),
-            ),
-            ErrorType::NotReady { message } => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                "not_ready".to_owned(),
-                message,
-            ),
-            ErrorType::ShuttingDown => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                "shutting_down".to_owned(),
-                "server shutting down".to_owned(),
             ),
         }
     }
@@ -173,6 +177,10 @@ impl IntoResponse for Error {
                 tracing::debug!(error = %body, "operation error");
                 (http_status, MsgPackOrJson(body)).into_response()
             }
+            ErrorType::ServerError { http_status, body } => {
+                tracing::debug!(error = %body, "server error");
+                (http_status, MsgPackOrJson(body)).into_response()
+            }
             ErrorType::BadRequest(body) => {
                 tracing::debug!(error = %body, "bad request");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
@@ -198,16 +206,6 @@ impl IntoResponse for Error {
                 );
                 (StatusCode::INTERNAL_SERVER_ERROR, MsgPackOrJson(body)).into_response()
             }
-            ErrorType::NotReady { message } => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                MsgPackOrJson(json!({"code": "not_ready", "detail": message})),
-            )
-                .into_response(),
-            ErrorType::ShuttingDown => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                MsgPackOrJson(json!({"code": "shutting_down", "detail": "server shutting down"})),
-            )
-                .into_response(),
         }
     }
 }
@@ -276,6 +274,12 @@ pub enum ErrorType {
         body: StandardErrorBody,
     },
 
+    /// An 'expected' server error.
+    ServerError {
+        http_status: StatusCode,
+        body: StandardErrorBody,
+    },
+
     /// An unexpected internal error.
     Internal {
         body: StandardErrorBody,
@@ -294,12 +298,6 @@ pub enum ErrorType {
         code: Cow<'static, str>,
         detail: String,
     },
-
-    /// The operation cannot proceed because the server is not yet ready
-    NotReady { message: String },
-
-    /// The operation cannot proceed because the server is shutting down
-    ShuttingDown,
 }
 
 impl fmt::Display for ErrorType {
@@ -311,11 +309,12 @@ impl fmt::Display for ErrorType {
             Self::OperationError { http_status, body } => {
                 write!(f, "operation_error http_status={http_status:?} {body}")
             }
+            Self::ServerError { http_status, body } => {
+                write!(f, "server_error http_status={http_status:?} {body}")
+            }
             Self::Internal { body, .. } => write!(f, "internal {body}"),
-            Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::EntityNotFound(s) => write!(f, "not_found {s}"),
-            Self::ShuttingDown => write!(f, "shutting_down"),
             Self::Operation {
                 http_status,
                 code,
