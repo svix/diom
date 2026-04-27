@@ -17,12 +17,13 @@ pub struct AdminAuthRoleArgs {
 pub enum AdminAuthRoleCommands {
     /// Create or update a role
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom admin auth-role configure {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\",
@@ -41,12 +42,13 @@ pub enum AdminAuthRoleCommands {
     },
     /// Delete a role
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom admin auth-role delete {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\"
@@ -59,12 +61,13 @@ pub enum AdminAuthRoleCommands {
     },
     /// Get a role by ID
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom admin auth-role get {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\"
@@ -83,12 +86,13 @@ pub enum AdminAuthRoleCommands {
     },
     /// List all roles
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom admin auth-role list {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"limit\": 123,

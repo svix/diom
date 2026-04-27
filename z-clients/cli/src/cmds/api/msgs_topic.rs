@@ -19,12 +19,13 @@ pub enum MsgsTopicCommands {
     ///
     /// Partition count can only be increased, never decreased. The default for a new topic is 1.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs topic configure TOPIC {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",

@@ -17,12 +17,13 @@ pub struct CacheNamespaceArgs {
 pub enum CacheNamespaceCommands {
     /// Configure cache namespace
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cache namespace configure {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"name\": \"some_namespace\",
@@ -39,12 +40,13 @@ pub enum CacheNamespaceCommands {
     },
     /// Get cache namespace
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cache namespace get {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"name\": \"some_namespace\"

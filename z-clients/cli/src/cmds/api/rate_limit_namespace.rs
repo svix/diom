@@ -17,12 +17,13 @@ pub struct RateLimitNamespaceArgs {
 pub enum RateLimitNamespaceCommands {
     /// Configure rate limiter namespace
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom rate-limit namespace configure {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"name\": \"some_namespace\"
@@ -38,12 +39,13 @@ pub enum RateLimitNamespaceCommands {
     },
     /// Get rate limiter namespace
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom rate-limit namespace get {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"name\": \"some_namespace\"

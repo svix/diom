@@ -19,12 +19,13 @@ pub enum KvCommands {
     Namespace(KvNamespaceArgs),
     /// KV Set
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom kv set KEY VALUE {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
@@ -42,12 +43,13 @@ pub enum KvCommands {
     },
     /// KV Get
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom kv get KEY {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
@@ -64,12 +66,13 @@ pub enum KvCommands {
     },
     /// KV Delete
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom kv delete KEY {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",

@@ -17,12 +17,13 @@ pub struct MsgsNamespaceArgs {
 pub enum MsgsNamespaceCommands {
     /// Configures a msgs namespace with the given name.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs namespace configure NAME {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"retention\": {\"period_ms\": 60000}
@@ -40,12 +41,13 @@ pub enum MsgsNamespaceCommands {
     },
     /// Gets a msgs namespace by name.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs namespace get NAME {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
 }\n\n\x1b[1;4mExample response:\x1b[0m

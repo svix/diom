@@ -17,12 +17,13 @@ pub struct ClusterAdminArgs {
 pub enum ClusterAdminCommands {
     /// Get information about the current cluster
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cluster-admin status\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample response:\x1b[0m
 {
   \"cluster_id\": \"...\",
@@ -39,12 +40,13 @@ pub enum ClusterAdminCommands {
     /// This operation may only be performed against a node which has not been
     /// initialized and is not currently a member of a cluster.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cluster-admin initialize {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
 }\n\n\x1b[1;4mExample response:\x1b[0m
@@ -59,12 +61,13 @@ pub enum ClusterAdminCommands {
     /// This operation executes immediately and the node must be wiped and reset
     /// before it can safely be added to the cluster.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cluster-admin remove-node {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"node_id\": \"...\"
@@ -77,12 +80,13 @@ pub enum ClusterAdminCommands {
     },
     /// Force the cluster to take a snapshot immediately
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cluster-admin force-snapshot {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
 }\n\n\x1b[1;4mExample response:\x1b[0m

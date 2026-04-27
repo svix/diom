@@ -17,18 +17,27 @@ pub struct HealthArgs {
 pub enum HealthCommands {
     /// Verify the server is up and running.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom health ping\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample response:\x1b[0m
 {
   \"ok\": true
 }\n")]
     Ping {},
     /// Intentionally return an error
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom health error\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     Error {},
 }
 

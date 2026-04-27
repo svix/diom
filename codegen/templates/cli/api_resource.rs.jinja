@@ -95,14 +95,15 @@ pub enum {{ resource_type_name }}Commands {
         {% if op.description is defined -%}
             {{ op.description | to_doc_comment(style="rust") }}
         {% endif -%}
+        #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom {{ resource.name | replace(".", " ") }} {{ op.name }}{% if op.request_body_schema_name is defined %}{% for field in api.types[op.request_body_schema_name].fields | selectattr("positional") %} {{ field.name | upper }}{% endfor %} {...}{% endif %}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
         {% if op.request_body_schema_name is defined or op.response_body_schema_name is defined -%}
-            #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
             #[command(after_help = "
             {%- if op.request_body_schema_name is defined -%}
                 {{- render_schema_example("Example body", api.types[op.request_body_schema_name], api) -}}

@@ -21,12 +21,13 @@ pub enum MsgsQueueCommands {
     /// different messages from the same topic concurrently. Leased messages are skipped until they
     /// are acked or their lease expires.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue receive TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
@@ -46,12 +47,13 @@ pub enum MsgsQueueCommands {
     ///
     /// Acked messages are permanently removed from the queue and will never be re-delivered.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue ack TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
@@ -69,12 +71,13 @@ pub enum MsgsQueueCommands {
     /// Consumers that need more processing time can call this before the lease expires to prevent the
     /// message from being re-delivered to another consumer.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue extend-lease TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
@@ -93,12 +96,13 @@ pub enum MsgsQueueCommands {
     /// `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
     /// the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue configure TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
@@ -119,12 +123,13 @@ pub enum MsgsQueueCommands {
     /// Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
     /// move them back to the queue for reprocessing.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue nack TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
@@ -139,12 +144,13 @@ pub enum MsgsQueueCommands {
     },
     /// Moves all dead-letter queue messages back to the main queue for reprocessing.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs queue redrive-dlq TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\"

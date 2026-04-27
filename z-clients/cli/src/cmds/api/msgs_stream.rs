@@ -20,12 +20,13 @@ pub enum MsgsStreamCommands {
     /// Each consumer in the group reads from all partitions. Messages are locked by leases for the
     /// specified duration to prevent duplicate delivery within the same consumer group.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs stream receive TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
@@ -47,12 +48,13 @@ pub enum MsgsStreamCommands {
     /// The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
     /// successfully processed offset; future receives will start after it.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs stream commit TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
@@ -73,12 +75,13 @@ pub enum MsgsStreamCommands {
     /// field accepts a Unix timestamp in milliseconds and seeks to the first message at or after that
     /// time.
     #[command(help_template = concat!(
-                "{about-with-newline}\n",
-                "{usage-heading} {usage}\n",
-                "{after-help}",
-                "\n",
-                "{all-args}",
-            ))]
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs stream seek TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
     #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
