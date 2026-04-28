@@ -330,7 +330,7 @@ async fn seek_offset_requires_partition_topic() -> TestResult {
         .expect(StatusCode::OK);
 
     // Offset-based seek on a bare topic (no ~partition) should fail
-    client
+    let response = client
         .post("v1.msgs.stream.seek")
         .json(json!({
             "namespace": "ns-seek-pt",
@@ -339,7 +339,11 @@ async fn seek_offset_requires_partition_topic() -> TestResult {
             "offset": 0,
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::UNPROCESSABLE_ENTITY)
+        .json();
+
+    assert_eq!(response["type"], "invalid_input");
+    assert_eq!(response["code"], "invalid_data");
 
     Ok(())
 }
