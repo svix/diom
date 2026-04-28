@@ -91,19 +91,20 @@ impl Error {
         Self::operation_error(StatusCode::FORBIDDEN, code, detail)
     }
 
+    /// Create an `Error` from a raft-serialized response failure.
     pub fn from_raft(
         http_status: StatusCode,
         code: Option<String>,
         detail: Option<String>,
     ) -> Self {
-        Self::new(ErrorType::Operation {
+        Self::new(ErrorType::Remote {
             http_status,
             code: match code {
                 Some(c) => c.into(),
                 None => "generic".into(),
             },
             detail: detail.unwrap_or_else(|| {
-                tracing::warn!("no error message in OperationError from raft");
+                tracing::warn!("no error message in error response from raft");
                 "unknown error".to_owned()
             }),
         })
@@ -131,7 +132,7 @@ impl Error {
                 body.code().to_owned(),
                 body.detail().to_owned(),
             ),
-            ErrorType::Operation {
+            ErrorType::Remote {
                 http_status,
                 code,
                 detail,
@@ -176,7 +177,7 @@ impl IntoResponse for Error {
                 tracing::debug!(error = %body, "server error");
                 (http_status, MsgPackOrJson(body)).into_response()
             }
-            ErrorType::Operation {
+            ErrorType::Remote {
                 http_status,
                 code,
                 detail,
@@ -273,8 +274,8 @@ pub enum ErrorType {
         trace: Vec<&'static Location<'static>>,
     },
 
-    /// An error from an Operation application
-    Operation {
+    /// An error that was forwarded from another node.
+    Remote {
         http_status: StatusCode,
         code: Cow<'static, str>,
         detail: String,
@@ -294,7 +295,7 @@ impl fmt::Display for ErrorType {
                 write!(f, "server_error http_status={http_status:?} {body}")
             }
             Self::Internal { body, .. } => write!(f, "internal {body}"),
-            Self::Operation {
+            Self::Remote {
                 http_status,
                 code,
                 detail,
