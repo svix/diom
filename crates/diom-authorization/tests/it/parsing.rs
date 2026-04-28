@@ -1,4 +1,4 @@
-use diom_authorization::ResourcePattern;
+use diom_authorization::api::ResourcePattern;
 
 #[test]
 fn test_parse_invalid_ns_wildcard() {

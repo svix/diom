@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use diom_authorization::{Context, RequestedOperation, ResourcePattern};
+use diom_authorization::{Context, RequestedOperation, api::ResourcePattern};
 use diom_id::Module;
 
 static EXAMPLE_OP_KV: RequestedOperation<'static> = RequestedOperation {

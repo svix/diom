@@ -194,6 +194,7 @@ async fn resolve_access_rules(state: &AppState, role_id: &RoleId) -> Result<Arc<
             rules.extend(policy.rules);
         }
     }
+    rules.shrink_to_fit();
 
     let rules = Arc::new(rules);
     state

@@ -68,6 +68,7 @@ impl FromStr for Module {
             "msgs" => Ok(Self::Msgs),
             "rate_limit" => Ok(Self::RateLimit),
 
+            "admin/cluster" => Ok(Self::AdminCluster),
             "admin/namespace" => Ok(Self::AdminNamespace),
             "admin/auth_token" => Ok(Self::AdminAuthToken),
             "admin/role" => Ok(Self::AdminRole),
