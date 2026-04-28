@@ -2,7 +2,10 @@ use std::{
     io::{Seek, SeekFrom},
     path::{Path, PathBuf},
     pin::Pin,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     time::Duration,
 };
 
@@ -35,6 +38,34 @@ type SnapshotMeta = openraft::type_config::alias::SnapshotMetaOf<TypeConfig>;
 type Snapshot = openraft::type_config::alias::SnapshotOf<TypeConfig>;
 type SnapshotData = openraft::type_config::alias::SnapshotDataOf<TypeConfig>;
 type EntryResponder = openraft::storage::EntryResponder<TypeConfig>;
+
+#[derive(Debug, Clone, Default)]
+struct TaskWatcher {
+    inner: Arc<AtomicBool>,
+}
+
+impl TaskWatcher {
+    fn start(&self) -> TaskGuard {
+        self.inner.store(true, Ordering::Relaxed);
+        TaskGuard {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+
+    fn busy(&self) -> bool {
+        self.inner.load(Ordering::Relaxed)
+    }
+}
+
+struct TaskGuard {
+    inner: Arc<AtomicBool>,
+}
+
+impl Drop for TaskGuard {
+    fn drop(&mut self) {
+        self.inner.store(false, Ordering::Relaxed);
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct LastSnapshot {
@@ -101,6 +132,7 @@ impl JsonSchema for ClusterId {
 #[derive(Clone)]
 pub struct StoreHandle {
     inner: Arc<TokioRwLock<Store>>,
+    snapshot_loading: TaskWatcher,
     pub time: Monotime,
 }
 
@@ -121,6 +153,7 @@ impl From<Store> for StoreHandle {
     fn from(value: Store) -> Self {
         let time = value.time.clone();
         Self {
+            snapshot_loading: value.snapshot_loading.clone(),
             inner: Arc::new(TokioRwLock::new(value)),
             time,
         }
@@ -151,6 +184,7 @@ pub struct Store {
     pub(super) logs: DiomLogs,
     metrics: DbMetrics,
     persist_mode: PersistMode,
+    snapshot_loading: TaskWatcher,
 }
 
 trait SnapshotIdx {
@@ -243,6 +277,7 @@ impl Store {
             logs,
             metrics,
             persist_mode,
+            snapshot_loading: TaskWatcher::default(),
         };
         this.load_information().await?;
         this.start_metrics();
@@ -452,7 +487,12 @@ impl Store {
         meta: &SnapshotMeta,
         mut snapshot: StoredSnapshot,
     ) -> anyhow::Result<()> {
-        tracing::debug!("starting snapshot installation");
+        let _guard = self.snapshot_loading.start();
+        tracing::info!(
+            snapshot_id = meta.snapshot_id,
+            last_log_id = ?meta.last_log_id(),
+            "starting snapshot installation"
+        );
         if !snapshot.is_final {
             snapshot.persist(meta, &self.snapshot_directory)?;
         }
@@ -560,6 +600,11 @@ impl Store {
         let tempfile = tempfile().tempfile_in(&self.snapshot_directory)?;
         let (f, path) = tempfile.keep()?;
         self.snapshot_idx += 1;
+        tracing::info!(
+            index = self.snapshot_idx,
+            ?path,
+            "starting receive of a new snapshot"
+        );
         let f = tokio::fs::File::from_std(f);
         Ok(StoredSnapshot {
             path,
@@ -969,5 +1014,9 @@ impl StoreHandle {
         let handle = self.inner.read().await;
         let snap = handle.last_snapshot.read();
         snap.as_ref().map(|s| s.meta.snapshot_id.clone())
+    }
+
+    pub(crate) fn is_loading_snapshot(&self) -> bool {
+        self.snapshot_loading.busy()
     }
 }

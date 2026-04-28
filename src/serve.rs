@@ -163,7 +163,7 @@ pub async fn run_with_listeners(
     )
     .await;
 
-    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
+    tracing::info!("API: Listening on {}", listener.local_addr().unwrap());
 
     let worker_handle = tokio::task::spawn({
         let raft_state = raft_state.clone();
