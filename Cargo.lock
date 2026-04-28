@@ -1777,6 +1777,7 @@ version = "0.2.3"
 dependencies = [
  "diom-core",
  "diom-error",
+ "diom-proto",
  "futures-util",
  "http",
  "http-serde",

@@ -332,13 +332,13 @@ impl MsgPackOrJsonRejection {
 impl IntoResponse for MsgPackOrJsonRejection {
     fn into_response(self) -> Response {
         match self {
-            Self::PayloadTooLarge => simple_error_response(
+            Self::PayloadTooLarge => invalid_input(
                 StatusCode::PAYLOAD_TOO_LARGE,
                 "payload_too_large",
                 "Request payload is too large.",
             ),
             Self::InternalServerError { msg } => internal_server_error(msg),
-            Self::ContentType { code } => simple_error_response(
+            Self::ContentType { code } => invalid_input(
                 StatusCode::BAD_REQUEST,
                 code,
                 "Expected request with `content-type: application/msgpack` \
@@ -346,31 +346,36 @@ impl IntoResponse for MsgPackOrJsonRejection {
                     .to_owned(),
             ),
             Self::InvalidEncoding { msg } => {
-                simple_error_response(StatusCode::BAD_REQUEST, "invalid_encoding", msg)
+                invalid_input(StatusCode::BAD_REQUEST, "invalid_encoding", msg)
             }
             Self::InvalidData { location, msg } => error_response(
                 StatusCode::UNPROCESSABLE_ENTITY,
-                ErrorBody::new("invalid_data", msg).with_location(location),
+                ErrorBody::invalid_input("invalid_data", msg).with_location(location),
             ),
-            Self::Forbidden { resource, action } => simple_error_response(
+            Self::Forbidden { resource, action } => error_response(
                 StatusCode::FORBIDDEN,
-                "forbidden",
-                format!("You do not have permission to perform `{action}` on `{resource}`"),
+                ErrorBody::operation_error(
+                    "forbidden",
+                    format!("You do not have permission to perform `{action}` on `{resource}`"),
+                ),
             ),
         }
     }
 }
 
 fn internal_server_error(msg: String) -> Response {
-    simple_error_response(StatusCode::INTERNAL_SERVER_ERROR, "server_error", msg)
+    error_response(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        ErrorBody::server_error("server_error", msg),
+    )
 }
 
-fn simple_error_response(
+fn invalid_input(
     status_code: StatusCode,
     code: &'static str,
     detail: impl fmt::Display,
 ) -> Response {
-    error_response(status_code, ErrorBody::new(code, detail))
+    error_response(status_code, ErrorBody::invalid_input(code, detail))
 }
 
 fn error_response<T: Serialize>(status_code: StatusCode, body: T) -> Response {

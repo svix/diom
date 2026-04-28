@@ -33,7 +33,7 @@ impl Error {
     ) -> Self {
         Self::new(ErrorType::OperationError {
             http_status,
-            body: ErrorBody::new(code, detail),
+            body: ErrorBody::operation_error(code, detail),
         })
     }
 
@@ -44,14 +44,14 @@ impl Error {
     ) -> Self {
         Self::new(ErrorType::ServerError {
             http_status,
-            body: ErrorBody::new(code, detail),
+            body: ErrorBody::server_error(code, detail),
         })
     }
 
     #[track_caller]
     pub fn internal(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Internal {
-            body: ErrorBody::new("internal_error", s),
+            body: ErrorBody::server_error("internal_error", s),
             trace: vec![Location::caller()],
         })
     }
@@ -65,7 +65,7 @@ impl Error {
     pub fn invalid_data(detail: impl fmt::Display, location: impl Into<Option<String>>) -> Self {
         Self::new(ErrorType::OperationError {
             http_status: StatusCode::UNPROCESSABLE_ENTITY,
-            body: ErrorBody::new("invalid_data", detail).with_location(location),
+            body: ErrorBody::invalid_input("invalid_data", detail).with_location(location),
         })
     }
 
@@ -93,9 +93,12 @@ impl Error {
     /// Create an `Error` from a raft-serialized response failure.
     pub fn from_raft(
         http_status: StatusCode,
+        type_: Option<diom_proto::ErrorType>,
         code: Option<String>,
         detail: Option<String>,
     ) -> Self {
+        let type_ = type_.unwrap_or(diom_proto::ErrorType::ServerError);
+
         let code = match code {
             Some(c) => c.into(),
             None => "generic".into(),
@@ -108,7 +111,7 @@ impl Error {
 
         Self::new(ErrorType::Remote {
             http_status,
-            body: ErrorBody::from_raft(code, detail),
+            body: ErrorBody::from_raft(type_, code, detail),
         })
     }
 

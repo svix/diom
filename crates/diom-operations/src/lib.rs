@@ -151,6 +151,8 @@ impl From<Context> for OperationRequestMetadata {
 pub struct OperationError {
     #[serde(with = "http_serde::status_code")]
     status: http::StatusCode,
+    #[serde(rename = "type")]
+    type_: Option<diom_proto::ErrorType>,
     error_code: Option<String>,
     detail: Option<String>,
 }
@@ -160,6 +162,7 @@ impl From<diom_error::Error> for OperationError {
         let (status, body) = value.into_parts();
         Self {
             status,
+            type_: Some(body.type_),
             error_code: Some(body.code.into_owned()),
             detail: Some(body.detail),
         }
@@ -168,7 +171,7 @@ impl From<diom_error::Error> for OperationError {
 
 impl From<OperationError> for diom_error::Error {
     fn from(value: OperationError) -> Self {
-        Self::from_raft(value.status, value.error_code, value.detail)
+        Self::from_raft(value.status, value.type_, value.error_code, value.detail)
     }
 }
 
@@ -176,7 +179,8 @@ impl From<JoinError> for OperationError {
     fn from(value: JoinError) -> Self {
         Self {
             status: http::StatusCode::INTERNAL_SERVER_ERROR,
-            error_code: None,
+            type_: Some(diom_proto::ErrorType::ServerError),
+            error_code: Some("internal".to_owned()),
             detail: Some(format!("Error joining thread: {value}")),
         }
     }
