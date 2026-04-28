@@ -53,7 +53,7 @@ impl TopicConfigureOperation {
 
             if self.partitions < topic_row.partitions {
                 return Err(Error::bad_request(
-                    "behavior_error",
+                    "behavior-error",
                     "Cannot decrease partition count. Only increases are allowed.",
                 ));
             }

@@ -51,7 +51,7 @@ impl Error {
     #[track_caller]
     pub fn internal(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Internal {
-            body: ErrorBody::server_error("internal_error", s),
+            body: ErrorBody::server_error("internal", s),
             trace: vec![Location::caller()],
         })
     }
@@ -65,7 +65,7 @@ impl Error {
     pub fn invalid_data(detail: impl fmt::Display, location: impl Into<Option<String>>) -> Self {
         Self::new(ErrorType::OperationError {
             http_status: StatusCode::UNPROCESSABLE_ENTITY,
-            body: ErrorBody::invalid_input("invalid_data", detail).with_location(location),
+            body: ErrorBody::invalid_input("invalid-data", detail).with_location(location),
         })
     }
 
@@ -79,7 +79,7 @@ impl Error {
     }
 
     pub fn entity_not_found(entity: &'static str) -> Self {
-        Self::bad_request("not_found", format!("{entity} not found"))
+        Self::bad_request("not-found", format!("{entity} not found"))
     }
 
     pub fn authentication(code: &'static str, detail: impl fmt::Display) -> Self {
@@ -116,13 +116,13 @@ impl Error {
     }
 
     pub fn not_ready(s: impl fmt::Display) -> Self {
-        Self::server_error(StatusCode::SERVICE_UNAVAILABLE, "not_ready", s)
+        Self::server_error(StatusCode::SERVICE_UNAVAILABLE, "not-ready", s)
     }
 
     pub fn shutting_down() -> Self {
         Self::server_error(
             StatusCode::SERVICE_UNAVAILABLE,
-            "shutting_down",
+            "shutting-down",
             "server shutting down",
         )
     }

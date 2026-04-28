@@ -104,6 +104,6 @@ impl JwtVerifier {
         use diom_error::Error;
         jsonwebtoken::decode::<JwtClaims>(token, &self.key, &self.validation)
             .map(|t| t.claims)
-            .map_err(|_| Error::authentication("invalid_token", "Invalid JWT token."))
+            .map_err(|_| Error::authentication("invalid-token", "Invalid JWT token."))
     }
 }

@@ -53,7 +53,7 @@ impl StreamCommitOperation {
                 &state.metadata_tables,
                 StreamLeaseKey::build_key(&topic_row.id, &topic.partition, &self.consumer_group),
             )?
-            .ok_or_else(|| Error::bad_request("behavior_error", "message has no active lease"))?;
+            .ok_or_else(|| Error::bad_request("behavior-error", "message has no active lease"))?;
 
             lease.offset = self.offset + 1;
             if self.offset >= lease.end_offset {

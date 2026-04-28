@@ -283,22 +283,22 @@ fn classify_content_type(
 ) -> Result<SupportedContentType, MsgPackOrJsonRejection> {
     let content_type = headers
         .get(header::CONTENT_TYPE)
-        .ok_or_else(|| MsgPackOrJsonRejection::content_type("missing_content_type"))?;
+        .ok_or_else(|| MsgPackOrJsonRejection::content_type("missing-content-type"))?;
 
     let content_type: mime::Mime = content_type
         .to_str()
         .ok()
         .and_then(|s| s.parse().ok())
-        .ok_or_else(|| MsgPackOrJsonRejection::content_type("invalid_content_type"))?;
+        .ok_or_else(|| MsgPackOrJsonRejection::content_type("invalid-content-type"))?;
 
     if content_type.type_() != "application" {
-        return Err(MsgPackOrJsonRejection::content_type("invalid_content_type"));
+        return Err(MsgPackOrJsonRejection::content_type("invalid-content-type"));
     }
 
     match content_type.subtype().as_str() {
         "msgpack" => Ok(SupportedContentType::MsgPack),
         "json" => Ok(SupportedContentType::Json),
-        _ => Err(MsgPackOrJsonRejection::content_type("invalid_content_type")),
+        _ => Err(MsgPackOrJsonRejection::content_type("invalid-content-type")),
     }
 }
 
@@ -334,7 +334,7 @@ impl IntoResponse for MsgPackOrJsonRejection {
         match self {
             Self::PayloadTooLarge => invalid_input(
                 StatusCode::PAYLOAD_TOO_LARGE,
-                "payload_too_large",
+                "payload-too-large",
                 "Request payload is too large.",
             ),
             Self::InternalServerError { msg } => internal_server_error(msg),
@@ -346,11 +346,11 @@ impl IntoResponse for MsgPackOrJsonRejection {
                     .to_owned(),
             ),
             Self::InvalidEncoding { msg } => {
-                invalid_input(StatusCode::BAD_REQUEST, "invalid_encoding", msg)
+                invalid_input(StatusCode::BAD_REQUEST, "invalid-encoding", msg)
             }
             Self::InvalidData { location, msg } => error_response(
                 StatusCode::UNPROCESSABLE_ENTITY,
-                ErrorBody::invalid_input("invalid_data", msg).with_location(location),
+                ErrorBody::invalid_input("invalid-data", msg).with_location(location),
             ),
             Self::Forbidden { resource, action } => error_response(
                 StatusCode::FORBIDDEN,
@@ -366,7 +366,7 @@ impl IntoResponse for MsgPackOrJsonRejection {
 fn internal_server_error(msg: String) -> Response {
     error_response(
         StatusCode::INTERNAL_SERVER_ERROR,
-        ErrorBody::server_error("server_error", msg),
+        ErrorBody::server_error("internal", msg),
     )
 }
 

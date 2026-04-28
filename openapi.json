@@ -6273,9 +6273,9 @@
       "ErrorType": {
         "type": "string",
         "enum": [
-          "invalid_input",
-          "operation_error",
-          "server_error"
+          "invalid-input",
+          "operation-error",
+          "server-error"
         ]
       },
       "EvictionPolicy": {

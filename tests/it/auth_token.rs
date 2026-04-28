@@ -503,7 +503,7 @@ async fn test_global_admin_token_cannot_access_reserved_ns() -> TestResult {
     assert_eq!(
         resp,
         json!({
-            "type": "operation_error",
+            "type": "operation-error",
             "code": "forbidden",
             "detail": "You do not have permission to perform `list` on `auth_token:_internal:*`",
         })

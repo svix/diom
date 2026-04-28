@@ -342,8 +342,8 @@ async fn seek_offset_requires_partition_topic() -> TestResult {
         .expect(StatusCode::UNPROCESSABLE_ENTITY)
         .json();
 
-    assert_eq!(response["type"], "invalid_input");
-    assert_eq!(response["code"], "invalid_data");
+    assert_eq!(response["type"], "invalid-input");
+    assert_eq!(response["code"], "invalid-data");
 
     Ok(())
 }

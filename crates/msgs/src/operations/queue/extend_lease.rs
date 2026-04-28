@@ -79,7 +79,7 @@ impl QueueExtendLeaseOperation {
                 let lease = match lease {
                     Some(l) if l.is_acked() => {
                         return Err(Error::bad_request(
-                            "behavior_error",
+                            "behavior-error",
                             "message is already acked",
                         ));
                     }
@@ -95,7 +95,7 @@ impl QueueExtendLeaseOperation {
                     Some(l) => l,
                     None => {
                         return Err(Error::bad_request(
-                            "behavior_error",
+                            "behavior-error",
                             "message has no active lease",
                         ));
                     }
