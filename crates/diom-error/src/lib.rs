@@ -130,11 +130,27 @@ impl Error {
     /// Decompose into HTTP status, optional error code, and optional detail message.
     pub fn into_parts(self) -> (StatusCode, ErrorBody) {
         match *self.0 {
-            ErrorType::InvalidInput { http_status, body }
-            | ErrorType::OperationError { http_status, body }
-            | ErrorType::ServerError { http_status, body }
-            | ErrorType::Remote { http_status, body } => (http_status, body),
-            ErrorType::Internal { body, .. } => (StatusCode::INTERNAL_SERVER_ERROR, body),
+            ErrorType::InvalidInput { http_status, body } => {
+                tracing::trace!(error = %body, "invalid input");
+                (http_status, body)
+            }
+            ErrorType::OperationError { http_status, body } => {
+                tracing::debug!(error = %body, "operation error");
+                (http_status, body)
+            }
+            ErrorType::ServerError { http_status, body } => {
+                tracing::debug!(error = %body, "server error");
+                (http_status, body)
+            }
+            ErrorType::Internal { body, trace } => {
+                tracing::error!(
+                    location = ?trace.iter().map(ToString::to_string).collect::<Vec<_>>(),
+                    message = body.detail,
+                    "internal error",
+                );
+                (StatusCode::INTERNAL_SERVER_ERROR, body)
+            }
+            ErrorType::Remote { http_status, body } => (http_status, body),
         }
     }
 
@@ -157,26 +173,6 @@ impl error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        match &*self.0 {
-            ErrorType::InvalidInput { body, .. } => {
-                tracing::trace!(error = %body, "invalid input");
-            }
-            ErrorType::OperationError { body, .. } => {
-                tracing::debug!(error = %body, "operation error");
-            }
-            ErrorType::ServerError { body, .. } => {
-                tracing::debug!(error = %body, "server error");
-            }
-            ErrorType::Remote { .. } => {}
-            ErrorType::Internal { trace, body } => {
-                tracing::error!(
-                    location = ?trace.iter().map(ToString::to_string).collect::<Vec<_>>(),
-                    message = body.detail,
-                    "internal error",
-                );
-            }
-        }
-
         let (http_status, body) = self.into_parts();
         (http_status, MsgPackOrJson(body)).into_response()
     }
