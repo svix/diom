@@ -4,7 +4,7 @@ use std::{error, fmt, panic::Location};
 
 use aide::OperationOutput;
 use axum::response::{IntoResponse, Response};
-use diom_proto::{MsgPackOrJson, StandardErrorBody};
+use diom_proto::{ErrorBody, MsgPackOrJson};
 use hyper::StatusCode;
 use tokio::task::JoinError;
 
@@ -33,7 +33,7 @@ impl Error {
     ) -> Self {
         Self::new(ErrorType::OperationError {
             http_status,
-            body: StandardErrorBody::new(code, detail),
+            body: ErrorBody::new(code, detail),
         })
     }
 
@@ -44,14 +44,14 @@ impl Error {
     ) -> Self {
         Self::new(ErrorType::ServerError {
             http_status,
-            body: StandardErrorBody::new(code, detail),
+            body: ErrorBody::new(code, detail),
         })
     }
 
     #[track_caller]
     pub fn internal(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Internal {
-            body: StandardErrorBody::new("internal_error", s),
+            body: ErrorBody::new("internal_error", s),
             trace: vec![Location::caller()],
         })
     }
@@ -65,7 +65,7 @@ impl Error {
     pub fn invalid_data(detail: impl fmt::Display, location: impl Into<Option<String>>) -> Self {
         Self::new(ErrorType::OperationError {
             http_status: StatusCode::UNPROCESSABLE_ENTITY,
-            body: StandardErrorBody::new("invalid_data", detail).with_location(location),
+            body: ErrorBody::new("invalid_data", detail).with_location(location),
         })
     }
 
@@ -108,7 +108,7 @@ impl Error {
 
         Self::new(ErrorType::Remote {
             http_status,
-            body: StandardErrorBody::from_raft(code, detail),
+            body: ErrorBody::from_raft(code, detail),
         })
     }
 
@@ -125,7 +125,7 @@ impl Error {
     }
 
     /// Decompose into HTTP status, optional error code, and optional detail message.
-    pub fn into_parts(self) -> (StatusCode, StandardErrorBody) {
+    pub fn into_parts(self) -> (StatusCode, ErrorBody) {
         match *self.0 {
             ErrorType::InvalidInput { http_status, body }
             | ErrorType::OperationError { http_status, body }
@@ -189,7 +189,7 @@ impl OperationOutput for Error {
         use aide::openapi::StatusCode::Code;
 
         let standard_error_body_response =
-            MsgPackOrJson::<StandardErrorBody>::operation_response(ctx, operation).unwrap();
+            MsgPackOrJson::<ErrorBody>::operation_response(ctx, operation).unwrap();
 
         vec![
             (Some(Code(400)), standard_error_body_response.clone()),
@@ -228,7 +228,7 @@ pub enum ErrorType {
     /// - value outside of supported range
     InvalidInput {
         http_status: StatusCode,
-        body: StandardErrorBody,
+        body: ErrorBody,
     },
 
     /// The requested operation failed.
@@ -240,25 +240,25 @@ pub enum ErrorType {
     /// - any sort of conflict
     OperationError {
         http_status: StatusCode,
-        body: StandardErrorBody,
+        body: ErrorBody,
     },
 
     /// An 'expected' server error.
     ServerError {
         http_status: StatusCode,
-        body: StandardErrorBody,
+        body: ErrorBody,
     },
 
     /// An unexpected internal error.
     Internal {
-        body: StandardErrorBody,
+        body: ErrorBody,
         trace: Vec<&'static Location<'static>>,
     },
 
     /// An error that was forwarded from another node.
     Remote {
         http_status: StatusCode,
-        body: StandardErrorBody,
+        body: ErrorBody,
     },
 }
 

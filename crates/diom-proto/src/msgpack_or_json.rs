@@ -16,7 +16,7 @@ use diom_authorization::{Context, Permissions};
 use http::{HeaderMap, HeaderValue, StatusCode, header};
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::{RequestInput, StandardErrorBody};
+use crate::{ErrorBody, RequestInput};
 
 tokio::task_local! {
     static RESPONSE_CONTENT_TYPE: SupportedContentType;
@@ -332,13 +332,13 @@ impl MsgPackOrJsonRejection {
 impl IntoResponse for MsgPackOrJsonRejection {
     fn into_response(self) -> Response {
         match self {
-            Self::PayloadTooLarge => standard_error_response(
+            Self::PayloadTooLarge => simple_error_response(
                 StatusCode::PAYLOAD_TOO_LARGE,
                 "payload_too_large",
                 "Request payload is too large.",
             ),
             Self::InternalServerError { msg } => internal_server_error(msg),
-            Self::ContentType { code } => standard_error_response(
+            Self::ContentType { code } => simple_error_response(
                 StatusCode::BAD_REQUEST,
                 code,
                 "Expected request with `content-type: application/msgpack` \
@@ -346,13 +346,13 @@ impl IntoResponse for MsgPackOrJsonRejection {
                     .to_owned(),
             ),
             Self::InvalidEncoding { msg } => {
-                standard_error_response(StatusCode::BAD_REQUEST, "invalid_encoding", msg)
+                simple_error_response(StatusCode::BAD_REQUEST, "invalid_encoding", msg)
             }
             Self::InvalidData { location, msg } => error_response(
                 StatusCode::UNPROCESSABLE_ENTITY,
-                StandardErrorBody::new("invalid_data", msg).with_location(location),
+                ErrorBody::new("invalid_data", msg).with_location(location),
             ),
-            Self::Forbidden { resource, action } => standard_error_response(
+            Self::Forbidden { resource, action } => simple_error_response(
                 StatusCode::FORBIDDEN,
                 "forbidden",
                 format!("You do not have permission to perform `{action}` on `{resource}`"),
@@ -362,15 +362,15 @@ impl IntoResponse for MsgPackOrJsonRejection {
 }
 
 fn internal_server_error(msg: String) -> Response {
-    standard_error_response(StatusCode::INTERNAL_SERVER_ERROR, "server_error", msg)
+    simple_error_response(StatusCode::INTERNAL_SERVER_ERROR, "server_error", msg)
 }
 
-fn standard_error_response(
+fn simple_error_response(
     status_code: StatusCode,
     code: &'static str,
     detail: impl fmt::Display,
 ) -> Response {
-    error_response(status_code, StandardErrorBody::new(code, detail))
+    error_response(status_code, ErrorBody::new(code, detail))
 }
 
 fn error_response<T: Serialize>(status_code: StatusCode, body: T) -> Response {
