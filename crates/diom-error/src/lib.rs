@@ -57,29 +57,30 @@ impl Error {
         })
     }
 
+    /// Create an error value for semantically invalid user input.
+    ///
+    /// Deserialization should take care of most input parsing.
+    /// This constructor should only be used for invariant violations that
+    /// could theoretically be put in the `Deserialize` implementation
+    /// of the input, but aren't for practical reasons.
+    pub fn invalid_data(detail: impl fmt::Display, location: impl Into<Option<String>>) -> Self {
+        Self::new(ErrorType::OperationError {
+            http_status: StatusCode::UNPROCESSABLE_ENTITY,
+            body: StandardErrorBody::new("invalid_data", detail).with_location(location),
+        })
+    }
+
+    /// Create an `operation_error` with the default status code of HTTP 400.
+    pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
+        Self::operation_error(StatusCode::BAD_REQUEST, code, detail)
+    }
+
     pub fn conflict(detail: impl fmt::Display) -> Self {
-        Self::new(ErrorType::BadRequest(StandardErrorBody::new(
-            "conflict",
-            detail.to_string(),
-        )))
+        Self::bad_request("conflict", detail)
     }
 
     pub fn entity_not_found(entity: &'static str) -> Self {
-        Self::operation_error(
-            StatusCode::BAD_REQUEST,
-            "not_found",
-            format!("{entity} not found"),
-        )
-    }
-
-    pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
-        Self::new(ErrorType::BadRequest(StandardErrorBody::new(code, detail)))
-    }
-
-    pub fn invalid_user_input(detail: impl fmt::Display) -> Self {
-        // We'll probably change _how_ invalid user input is displayed later on,
-        // but having a universal error function to capture user errors is ideal
-        Self::bad_request("invalid_input", detail)
+        Self::bad_request("not_found", format!("{entity} not found"))
     }
 
     pub fn authentication(code: &'static str, detail: impl fmt::Display) -> Self {
@@ -130,11 +131,6 @@ impl Error {
                 body.code().to_owned(),
                 body.detail().to_owned(),
             ),
-            ErrorType::BadRequest(body) => (
-                StatusCode::BAD_REQUEST,
-                body.code().to_owned(),
-                body.detail().to_owned(),
-            ),
             ErrorType::Operation {
                 http_status,
                 code,
@@ -179,10 +175,6 @@ impl IntoResponse for Error {
             ErrorType::ServerError { http_status, body } => {
                 tracing::debug!(error = %body, "server error");
                 (http_status, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::BadRequest(body) => {
-                tracing::debug!(error = %body, "bad request");
-                (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Operation {
                 http_status,
@@ -281,9 +273,6 @@ pub enum ErrorType {
         trace: Vec<&'static Location<'static>>,
     },
 
-    /// Bad user input (to be further refined)
-    BadRequest(StandardErrorBody),
-
     /// An error from an Operation application
     Operation {
         http_status: StatusCode,
@@ -305,7 +294,6 @@ impl fmt::Display for ErrorType {
                 write!(f, "server_error http_status={http_status:?} {body}")
             }
             Self::Internal { body, .. } => write!(f, "internal {body}"),
-            Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::Operation {
                 http_status,
                 code,

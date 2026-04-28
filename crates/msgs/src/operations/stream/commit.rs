@@ -1,5 +1,5 @@
 use diom_core::{PersistableValue, task::spawn_blocking_in_current_span, types::UnixTimestampMs};
-use diom_error::{Error, Result};
+use diom_error::{Error, OptionExt as _, Result};
 use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
@@ -47,13 +47,13 @@ impl StreamCommitOperation {
                 &state.metadata_tables,
                 TopicKey::build_key(&self.namespace_id, &topic.topic),
             )?
-            .ok_or_else(|| Error::invalid_user_input("partition must exist"))?;
+            .ok_or_not_found("partition")?;
 
             let mut lease = StreamLeaseRow::fetch(
                 &state.metadata_tables,
                 StreamLeaseKey::build_key(&topic_row.id, &topic.partition, &self.consumer_group),
             )?
-            .ok_or_else(|| Error::invalid_user_input("lease not found"))?;
+            .ok_or_else(|| Error::bad_request("behavior_error", "message has no active lease"))?;
 
             lease.offset = self.offset + 1;
             if self.offset >= lease.end_offset {

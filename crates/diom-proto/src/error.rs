@@ -20,8 +20,8 @@ impl StandardErrorBody {
         }
     }
 
-    pub fn with_location(mut self, location: String) -> Self {
-        self.location = Some(location);
+    pub fn with_location(mut self, location: impl Into<Option<String>>) -> Self {
+        self.location = location.into();
         self
     }
 }

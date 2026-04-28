@@ -1,5 +1,5 @@
 use diom_core::{PersistableValue, task::spawn_blocking_in_current_span, types::UnixTimestampMs};
-use diom_error::{Error, Result};
+use diom_error::{Error, OptionExt, Result};
 use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
@@ -41,8 +41,9 @@ impl StreamSeekOperation {
         };
 
         if matches!(target, SeekTarget::Offset(_)) && partition.is_none() {
-            return Err(Error::invalid_user_input(
+            return Err(Error::invalid_data(
                 "offset-based seek requires a partition-level topic (e.g. topic~0)",
+                None,
             ));
         }
 
@@ -66,7 +67,7 @@ impl StreamSeekOperation {
                 &state.metadata_tables,
                 TopicKey::build_key(&self.namespace_id, &self.topic),
             )?
-            .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
+            .ok_or_not_found("topic")?;
 
             let partitions = match self.partition {
                 Some(p) => vec![p],

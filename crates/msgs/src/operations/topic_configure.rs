@@ -23,9 +23,10 @@ pub struct TopicConfigureOperation {
 impl TopicConfigureOperation {
     pub fn new(namespace_id: NamespaceId, topic: TopicName, partitions: u16) -> Result<Self> {
         if partitions == 0 || partitions > MAX_PARTITION_COUNT {
-            return Err(Error::invalid_user_input(format!(
-                "Partition count must be between 1 and {MAX_PARTITION_COUNT}."
-            )));
+            return Err(Error::invalid_data(
+                format!("Partition count must be between 1 and {MAX_PARTITION_COUNT}.",),
+                "partitions".to_owned(),
+            ));
         }
         Ok(Self {
             namespace_id,
@@ -51,7 +52,8 @@ impl TopicConfigureOperation {
             };
 
             if self.partitions < topic_row.partitions {
-                return Err(Error::invalid_user_input(
+                return Err(Error::bad_request(
+                    "behavior_error",
                     "Cannot decrease partition count. Only increases are allowed.",
                 ));
             }

@@ -682,7 +682,8 @@ impl RaftState {
             .await
             .or_internal_error()?;
         if !(is_voter || is_learner) {
-            return Err(diom_error::Error::invalid_user_input(
+            return Err(diom_error::Error::bad_request(
+                "behavior_error",
                 "node is neither a voter nor a learner",
             )
             .into());

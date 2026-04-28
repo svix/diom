@@ -403,8 +403,9 @@ async fn stream_seek(
         (None, Some(position), None) => SeekTarget::Position(position),
         (None, None, Some(timestamp)) => SeekTarget::Timestamp(timestamp),
         _ => {
-            return Err(Error::invalid_user_input(
+            return Err(Error::invalid_data(
                 "exactly one of 'offset', 'position', or 'timestamp' must be provided",
+                None,
             ));
         }
     };
