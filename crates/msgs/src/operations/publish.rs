@@ -101,11 +101,11 @@ impl PublishOperation {
                     row
                 }
                 (Some(_), Some(_)) => {
-                    return Err(Error::invalid_user_input("partition out of range"));
+                    return Err(Error::entity_not_found("partition"));
                 }
                 (Some(row), None) => row,
                 (None, Some(_)) => {
-                    return Err(Error::invalid_user_input("topic does not exist"));
+                    return Err(Error::entity_not_found("topic"));
                 }
                 (None, None) => {
                     let row = TopicRow::new(self.topic.clone(), now, self.topic_id_random_bytes);
