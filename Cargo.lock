@@ -1676,7 +1676,6 @@ dependencies = [
  "diom-proto",
  "fjall",
  "hyper",
- "serde_json",
  "tokio",
  "tracing",
 ]

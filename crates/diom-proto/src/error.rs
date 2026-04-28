@@ -1,21 +1,29 @@
-use std::fmt;
+use std::{borrow::Cow, fmt};
 
 use schemars::JsonSchema;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct StandardErrorBody {
-    code: &'static str,
-    detail: String,
+    pub code: Cow<'static, str>,
+    pub detail: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    location: Option<String>,
+    pub location: Option<String>,
 }
 
 impl StandardErrorBody {
     pub fn new(code: &'static str, detail: impl fmt::Display) -> Self {
         Self {
-            code,
+            code: code.into(),
             detail: detail.to_string(),
+            location: None,
+        }
+    }
+
+    pub fn from_raft(code: Cow<'static, str>, detail: String) -> Self {
+        Self {
+            code,
+            detail,
             location: None,
         }
     }
@@ -23,16 +31,6 @@ impl StandardErrorBody {
     pub fn with_location(mut self, location: impl Into<Option<String>>) -> Self {
         self.location = location.into();
         self
-    }
-}
-
-impl StandardErrorBody {
-    pub fn code(&self) -> &str {
-        self.code
-    }
-
-    pub fn detail(&self) -> &str {
-        &self.detail
     }
 }
 
