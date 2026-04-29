@@ -474,6 +474,9 @@ impl RaftState {
     }
 
     pub async fn is_up(&self) -> bool {
+        if self.state_machine.is_loading_snapshot() {
+            return false;
+        }
         let Ok(state) = self
             .raft
             .with_raft_state(|s| s.server_state)
@@ -511,6 +514,11 @@ impl RaftState {
     }
 
     pub async fn state(&self) -> anyhow::Result<ServerState> {
+        if self.state_machine.is_loading_snapshot() {
+            anyhow::bail!(
+                "state machine is loading a snapshot and is not part of the consensus right now"
+            );
+        }
         self.raft
             .with_raft_state(|s| s.server_state)
             .await
