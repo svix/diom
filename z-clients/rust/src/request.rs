@@ -103,7 +103,7 @@ impl Request {
                 .client
                 .request(request)
                 .await
-                .map_err(|e| Error::network(op_id, e))?;
+                .map_err(|e| Error::connection(op_id, e))?;
 
             let status = response.status();
             if !status.is_success() {
@@ -118,7 +118,7 @@ impl Request {
                     .into_body()
                     .collect()
                     .await
-                    .map_err(|e| Error::network(op_id, e))?
+                    .map_err(|e| Error::connection(op_id, e))?
                     .to_bytes();
                 Ok(Some(bytes))
             }
