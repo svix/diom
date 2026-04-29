@@ -8,6 +8,7 @@ rust-version.workspace = true
 [dependencies]
 diom-core.workspace = true
 diom-error.workspace = true
+diom-proto.workspace = true
 futures-util.workspace = true
 http.workspace = true
 http-serde.workspace = true

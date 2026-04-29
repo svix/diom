@@ -43,9 +43,10 @@ impl PublishOperation {
     ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => {
-                if msgs.iter().any(|m| m.key.is_some()) {
-                    return Err(Error::invalid_user_input(
+                if let Some(pos) = msgs.iter().position(|m| m.key.is_some()) {
+                    return Err(Error::invalid_data(
                         "msg key cannot be specified alongside a specific partition",
+                        format!("msgs[{pos}].key"),
                     ));
                 }
                 (tp.topic, Some(tp.partition))

@@ -9,7 +9,7 @@ pub mod prelude;
 mod request_input;
 
 pub use self::{
-    error::StandardErrorBody,
+    error::{ErrorBody, ErrorType},
     internal_client::{InternalClient, InternalRequest, InternalRequestError},
     msgpack::MsgPack,
     msgpack_or_json::{MsgPackOrJson, capture_accept_hdr},

@@ -313,7 +313,7 @@ async fn cluster_force_snapshot(
 
     let Some((snapshot_time, log_id)) = repl.trigger_snapshot().await.or_internal_error()? else {
         return Err(Error::bad_request(
-            "snapshot_unavailable",
+            "snapshot-unavailable",
             "a snapshot cannot be taken at this time",
         ));
     };

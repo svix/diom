@@ -3,7 +3,7 @@ use diom_core::{
     task::spawn_blocking_in_current_span,
     types::{DurationMs, UnixTimestampMs},
 };
-use diom_error::{Error, Result};
+use diom_error::{Error, OptionExt as _, Result};
 use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
@@ -57,7 +57,7 @@ impl QueueExtendLeaseOperation {
                 &state.metadata_tables,
                 TopicKey::build_key(&self.namespace_id, &self.topic),
             )?
-            .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
+            .ok_or_not_found("topic")?;
 
             let new_expiry = now
                 .checked_add(self.lease_duration_ms)
@@ -78,19 +78,26 @@ impl QueueExtendLeaseOperation {
 
                 let lease = match lease {
                     Some(l) if l.is_acked() => {
-                        return Err(Error::invalid_user_input("message is already acked"));
+                        return Err(Error::bad_request(
+                            "behavior-error",
+                            "message is already acked",
+                        ));
                     }
                     Some(l) if l.is_dlq() => {
-                        return Err(Error::invalid_user_input(
+                        return Err(Error::bad_request(
+                            "dlq",
                             "message is in the dead-letter queue",
                         ));
                     }
                     Some(l) if l.is_available(now) => {
-                        return Err(Error::invalid_user_input("lease has expired"));
+                        return Err(Error::bad_request("expired", "lease has expired"));
                     }
                     Some(l) => l,
                     None => {
-                        return Err(Error::invalid_user_input("message has no active lease"));
+                        return Err(Error::bad_request(
+                            "behavior-error",
+                            "message has no active lease",
+                        ));
                     }
                 };
 

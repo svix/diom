@@ -1,12 +1,11 @@
 #![warn(clippy::str_to_string)]
 
-use std::{borrow::Cow, error, fmt, panic::Location};
+use std::{error, fmt, panic::Location};
 
 use aide::OperationOutput;
 use axum::response::{IntoResponse, Response};
-use diom_proto::{MsgPackOrJson, StandardErrorBody};
+use diom_proto::{ErrorBody, MsgPackOrJson};
 use hyper::StatusCode;
-use serde_json::json;
 use tokio::task::JoinError;
 
 mod can_fail_ext;
@@ -34,7 +33,7 @@ impl Error {
     ) -> Self {
         Self::new(ErrorType::OperationError {
             http_status,
-            body: StandardErrorBody::new(code, detail),
+            body: ErrorBody::operation_error(code, detail),
         })
     }
 
@@ -45,41 +44,42 @@ impl Error {
     ) -> Self {
         Self::new(ErrorType::ServerError {
             http_status,
-            body: StandardErrorBody::new(code, detail),
+            body: ErrorBody::server_error(code, detail),
         })
     }
 
     #[track_caller]
     pub fn internal(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Internal {
-            body: StandardErrorBody::new("internal_error", s),
+            body: ErrorBody::server_error("internal", s),
             trace: vec![Location::caller()],
         })
     }
 
+    /// Create an error value for semantically invalid user input.
+    ///
+    /// Deserialization should take care of most input parsing.
+    /// This constructor should only be used for invariant violations that
+    /// could theoretically be put in the `Deserialize` implementation
+    /// of the input, but aren't for practical reasons.
+    pub fn invalid_data(detail: impl fmt::Display, location: impl Into<Option<String>>) -> Self {
+        Self::new(ErrorType::OperationError {
+            http_status: StatusCode::UNPROCESSABLE_ENTITY,
+            body: ErrorBody::invalid_input("invalid-data", detail).with_location(location),
+        })
+    }
+
+    /// Create an `operation_error` with the default status code of HTTP 400.
+    pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
+        Self::operation_error(StatusCode::BAD_REQUEST, code, detail)
+    }
+
     pub fn conflict(detail: impl fmt::Display) -> Self {
-        Self::new(ErrorType::BadRequest(StandardErrorBody::new(
-            "conflict",
-            detail.to_string(),
-        )))
+        Self::bad_request("conflict", detail)
     }
 
     pub fn entity_not_found(entity: &'static str) -> Self {
-        Self::operation_error(
-            StatusCode::BAD_REQUEST,
-            "not_found",
-            format!("{entity} not found"),
-        )
-    }
-
-    pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
-        Self::new(ErrorType::BadRequest(StandardErrorBody::new(code, detail)))
-    }
-
-    pub fn invalid_user_input(detail: impl fmt::Display) -> Self {
-        // We'll probably change _how_ invalid user input is displayed later on,
-        // but having a universal error function to capture user errors is ideal
-        Self::bad_request("invalid_input", detail)
+        Self::bad_request("not-found", format!("{entity} not found"))
     }
 
     pub fn authentication(code: &'static str, detail: impl fmt::Display) -> Self {
@@ -90,61 +90,67 @@ impl Error {
         Self::operation_error(StatusCode::FORBIDDEN, code, detail)
     }
 
+    /// Create an `Error` from a raft-serialized response failure.
     pub fn from_raft(
         http_status: StatusCode,
+        type_: Option<diom_proto::ErrorType>,
         code: Option<String>,
         detail: Option<String>,
     ) -> Self {
-        Self::new(ErrorType::Operation {
+        let type_ = type_.unwrap_or(diom_proto::ErrorType::ServerError);
+
+        let code = match code {
+            Some(c) => c.into(),
+            None => "generic".into(),
+        };
+
+        let detail = detail.unwrap_or_else(|| {
+            tracing::warn!("no error message in error response from raft");
+            "unknown error".to_owned()
+        });
+
+        Self::new(ErrorType::Remote {
             http_status,
-            code: match code {
-                Some(c) => c.into(),
-                None => "generic".into(),
-            },
-            detail: detail.unwrap_or_else(|| {
-                tracing::warn!("no error message in OperationError from raft");
-                "unknown error".to_owned()
-            }),
+            body: ErrorBody::from_raft(type_, code, detail),
         })
     }
 
     pub fn not_ready(s: impl fmt::Display) -> Self {
-        Self::server_error(StatusCode::SERVICE_UNAVAILABLE, "not_ready", s)
+        Self::server_error(StatusCode::SERVICE_UNAVAILABLE, "not-ready", s)
     }
 
     pub fn shutting_down() -> Self {
         Self::server_error(
             StatusCode::SERVICE_UNAVAILABLE,
-            "shutting_down",
+            "shutting-down",
             "server shutting down",
         )
     }
 
     /// Decompose into HTTP status, optional error code, and optional detail message.
-    pub fn into_parts(self) -> (StatusCode, String, String) {
+    pub fn into_parts(self) -> (StatusCode, ErrorBody) {
         match *self.0 {
-            ErrorType::InvalidInput { http_status, body }
-            | ErrorType::OperationError { http_status, body }
-            | ErrorType::ServerError { http_status, body } => (
-                http_status,
-                body.code().to_owned(),
-                body.detail().to_owned(),
-            ),
-            ErrorType::BadRequest(body) => (
-                StatusCode::BAD_REQUEST,
-                body.code().to_owned(),
-                body.detail().to_owned(),
-            ),
-            ErrorType::Operation {
-                http_status,
-                code,
-                detail,
-            } => (http_status, code.into_owned(), detail),
-            ErrorType::Internal { body, .. } => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                body.code().to_owned(),
-                body.detail().to_owned(),
-            ),
+            ErrorType::InvalidInput { http_status, body } => {
+                tracing::trace!(error = %body, "invalid input");
+                (http_status, body)
+            }
+            ErrorType::OperationError { http_status, body } => {
+                tracing::debug!(error = %body, "operation error");
+                (http_status, body)
+            }
+            ErrorType::ServerError { http_status, body } => {
+                tracing::debug!(error = %body, "server error");
+                (http_status, body)
+            }
+            ErrorType::Internal { body, trace } => {
+                tracing::error!(
+                    location = ?trace.iter().map(ToString::to_string).collect::<Vec<_>>(),
+                    message = body.detail,
+                    "internal error",
+                );
+                (StatusCode::INTERNAL_SERVER_ERROR, body)
+            }
+            ErrorType::Remote { http_status, body } => (http_status, body),
         }
     }
 
@@ -167,41 +173,8 @@ impl error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        match *self.0 {
-            ErrorType::InvalidInput { http_status, body } => {
-                tracing::trace!(error = %body, "invalid input");
-                (http_status, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::OperationError { http_status, body } => {
-                tracing::debug!(error = %body, "operation error");
-                (http_status, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::ServerError { http_status, body } => {
-                tracing::debug!(error = %body, "server error");
-                (http_status, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::BadRequest(body) => {
-                tracing::debug!(error = %body, "bad request");
-                (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::Operation {
-                http_status,
-                code,
-                detail,
-            } => (
-                http_status,
-                MsgPackOrJson(json!({ "code": code, "detail": detail })),
-            )
-                .into_response(),
-            ErrorType::Internal { trace, body } => {
-                tracing::error!(
-                    location = ?trace.into_iter().map(ToString::to_string).collect::<Vec<_>>(),
-                    message = body.detail(),
-                    "internal error",
-                );
-                (StatusCode::INTERNAL_SERVER_ERROR, MsgPackOrJson(body)).into_response()
-            }
-        }
+        let (http_status, body) = self.into_parts();
+        (http_status, MsgPackOrJson(body)).into_response()
     }
 }
 
@@ -215,7 +188,7 @@ impl OperationOutput for Error {
         use aide::openapi::StatusCode::Code;
 
         let standard_error_body_response =
-            MsgPackOrJson::<StandardErrorBody>::operation_response(ctx, operation).unwrap();
+            MsgPackOrJson::<ErrorBody>::operation_response(ctx, operation).unwrap();
 
         vec![
             (Some(Code(400)), standard_error_body_response.clone()),
@@ -254,7 +227,7 @@ pub enum ErrorType {
     /// - value outside of supported range
     InvalidInput {
         http_status: StatusCode,
-        body: StandardErrorBody,
+        body: ErrorBody,
     },
 
     /// The requested operation failed.
@@ -266,29 +239,25 @@ pub enum ErrorType {
     /// - any sort of conflict
     OperationError {
         http_status: StatusCode,
-        body: StandardErrorBody,
+        body: ErrorBody,
     },
 
     /// An 'expected' server error.
     ServerError {
         http_status: StatusCode,
-        body: StandardErrorBody,
+        body: ErrorBody,
     },
 
     /// An unexpected internal error.
     Internal {
-        body: StandardErrorBody,
+        body: ErrorBody,
         trace: Vec<&'static Location<'static>>,
     },
 
-    /// Bad user input (to be further refined)
-    BadRequest(StandardErrorBody),
-
-    /// An error from an Operation application
-    Operation {
+    /// An error that was forwarded from another node.
+    Remote {
         http_status: StatusCode,
-        code: Cow<'static, str>,
-        detail: String,
+        body: ErrorBody,
     },
 }
 
@@ -305,16 +274,8 @@ impl fmt::Display for ErrorType {
                 write!(f, "server_error http_status={http_status:?} {body}")
             }
             Self::Internal { body, .. } => write!(f, "internal {body}"),
-            Self::BadRequest(s) => write!(f, "bad_request {s}"),
-            Self::Operation {
-                http_status,
-                code,
-                detail,
-            } => {
-                write!(
-                    f,
-                    "http_status={http_status:?} code={code:?} detail={detail:?}"
-                )
+            Self::Remote { http_status, body } => {
+                write!(f, "remote http_status={http_status:?} {body:}")
             }
         }
     }

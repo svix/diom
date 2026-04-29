@@ -71,7 +71,7 @@ impl State {
             && *ns == *DEFAULT_NAMESPACE_NAME
         {
             return Err(diom_error::Error::bad_request(
-                "no_explicit_default_namespace",
+                "no-explicit-default-namespace",
                 "Explicitly setting the \"default\" namespace is not allowed.",
             ));
         }

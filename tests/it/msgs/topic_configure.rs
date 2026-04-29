@@ -201,7 +201,7 @@ async fn configure_rejects_zero() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
-    client
+    let response = client
         .post("v1.msgs.topic.configure")
         .json(json!({
             "namespace": "ns-zero",
@@ -209,7 +209,11 @@ async fn configure_rejects_zero() -> TestResult {
             "partitions": 0,
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::UNPROCESSABLE_ENTITY)
+        .json();
+
+    assert_eq!(response["type"], "invalid-input");
+    assert_eq!(response["code"], "invalid-data");
 
     Ok(())
 }
@@ -228,7 +232,7 @@ async fn configure_rejects_over_max() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
-    client
+    let response = client
         .post("v1.msgs.topic.configure")
         .json(json!({
             "namespace": "ns-max",
@@ -236,7 +240,11 @@ async fn configure_rejects_over_max() -> TestResult {
             "partitions": 65,
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::UNPROCESSABLE_ENTITY)
+        .json();
+
+    assert_eq!(response["type"], "invalid-input");
+    assert_eq!(response["code"], "invalid-data");
 
     Ok(())
 }

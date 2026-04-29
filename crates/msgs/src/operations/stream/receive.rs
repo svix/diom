@@ -187,7 +187,7 @@ impl StreamReceiveOperation {
                     .metrics
                     .record_stream_no_lease(&self.topic, &self.consumer_group);
                 return Err(Error::bad_request(
-                    "no_available_leases",
+                    "no-available-leases",
                     "no available leases",
                 ));
             }

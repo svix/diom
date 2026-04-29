@@ -200,7 +200,7 @@ impl TestResponse {
 
     pub fn ensure_not_found(self) -> anyhow::Result<()> {
         let response = self.ensure(StatusCode::BAD_REQUEST)?.json();
-        anyhow::ensure!(response["code"] == "not_found");
+        anyhow::ensure!(response["code"] == "not-found");
         Ok(())
     }
 

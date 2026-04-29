@@ -320,7 +320,8 @@ async fn test_admin_role_configure_internal_ns() -> TestResult {
     assert_eq!(
         resp,
         json!({
-            "code": "invalid_data",
+            "type": "invalid-input",
+            "code": "invalid-data",
             "detail": "namespace _internal is reserved at line 1 column 189",
             "location": "rules[0]",
         })

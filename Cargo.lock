@@ -1676,7 +1676,6 @@ dependencies = [
  "diom-proto",
  "fjall",
  "hyper",
- "serde_json",
  "tokio",
  "tracing",
 ]
@@ -1778,6 +1777,7 @@ version = "0.2.3"
 dependencies = [
  "diom-core",
  "diom-error",
+ "diom-proto",
  "futures-util",
  "http",
  "http-serde",

@@ -82,7 +82,7 @@ async fn authorization_inner(
     let TypedHeader(Authorization(bearer)) = request
         .extract_parts::<TypedHeader<Authorization<Bearer>>>()
         .await
-        .map_err(|_| Error::authentication("auth_required", "`Authorization` header required"))?;
+        .map_err(|_| Error::authentication("auth-required", "`Authorization` header required"))?;
 
     let token = bearer.token();
 
@@ -136,7 +136,7 @@ async fn authorization_inner(
         .or_internal_error()?;
 
     let Some(mut auth_token) = verify_out.token else {
-        return Err(Error::authentication("invalid_token", "Invalid token.").into());
+        return Err(Error::authentication("invalid-token", "Invalid token.").into());
     };
 
     let role = RoleId(

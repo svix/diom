@@ -599,14 +599,14 @@ impl RaftState {
     ) -> Result<(), crate::Error> {
         if node_id != self.node_id {
             return Err(crate::Error::bad_request(
-                "invalid node_id",
+                "invalid-node-id",
                 "Received a GO-AWAY request for the wrong node",
             ));
         }
         let Some(our_cluster_id) = self.state_machine.cluster_id().await else {
             tracing::warn!("received go-away at non-clustered node");
             return Err(crate::Error::bad_request(
-                "invalid cluster_id",
+                "invalid-cluster-id",
                 "Received a GO-AWAY request but we are not in a cluster",
             ));
         };
@@ -617,7 +617,7 @@ impl RaftState {
                 "received go-away for the wrong cluster"
             );
             return Err(crate::Error::bad_request(
-                "invalid node_id",
+                "invalid-node-id",
                 "Received a GO-AWAY request for the wrong cluster",
             ));
         }
@@ -682,7 +682,8 @@ impl RaftState {
             .await
             .or_internal_error()?;
         if !(is_voter || is_learner) {
-            return Err(diom_error::Error::invalid_user_input(
+            return Err(diom_error::Error::bad_request(
+                "behavior-error",
                 "node is neither a voter nor a learner",
             )
             .into());

@@ -1,5 +1,5 @@
 use diom_core::{PersistableValue, task::spawn_blocking_in_current_span};
-use diom_error::{Error, Result};
+use diom_error::{Error, OptionExt, Result};
 use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
@@ -37,7 +37,7 @@ impl QueueRedriveDlqOperation {
                 &state.metadata_tables,
                 TopicKey::build_key(&self.namespace_id, &self.topic),
             )?
-            .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
+            .ok_or_not_found("topic")?;
 
             let mut batch = state.db.batch();
             let mut total_redriven: u64 = 0;

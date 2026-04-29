@@ -3,7 +3,7 @@ use diom_core::{
     task::spawn_blocking_in_current_span,
     types::{DurationMs, UnixTimestampMs},
 };
-use diom_error::{Error, Result};
+use diom_error::{Error, OptionExt, Result};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
@@ -66,7 +66,7 @@ impl QueueNackOperation {
                 &state.metadata_tables,
                 TopicKey::build_key(&self.namespace_id, &self.topic),
             )?
-            .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
+            .ok_or_not_found("topic")?;
 
             let config = QueueConfigRow::fetch(
                 &state.metadata_tables,
