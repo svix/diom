@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -56,17 +55,17 @@ func ExecuteRequest[ReqBody any, ResBody any](
 	if reqBody != nil {
 		encodedBody, err := msgpack.Marshal(reqBody)
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 		req, err = http.NewRequestWithContext(ctx, method, urlStr, bytes.NewBuffer(encodedBody))
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 		req.Header.Set("content-type", "application/msgpack")
 	} else {
 		req, err = http.NewRequestWithContext(ctx, method, urlStr, &bytes.Buffer{})
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 	}
 
@@ -88,24 +87,20 @@ func ExecuteRequest[ReqBody any, ResBody any](
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, newConnectionError(err)
 	}
 
 	if res.StatusCode >= 200 && res.StatusCode <= 299 {
 		var ret ResBody
 		err = msgpack.Unmarshal(body, &ret)
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 
 		return &ret, nil
 	}
 
-	return nil, &Error{
-		status: res.StatusCode,
-		body:   body,
-		error:  fmt.Sprintf("status code %s", res.Status),
-	}
+	return nil, newResponseError(body)
 }
 
 func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http.Response, error) {
@@ -114,11 +109,11 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		var err error
 		bodyBytes, err = io.ReadAll(request.Body)
 		if err != nil {
-			return nil, err
+			return nil, newConnectionError(err)
 		}
 		err = request.Body.Close()
 		if err != nil {
-			return nil, err
+			return nil, newConnectionError(err)
 		}
 	}
 
@@ -130,7 +125,7 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		log.Printf("URL: %s", request.URL)
 		dump, err := httputil.DumpRequestOut(request, true)
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 		log.Printf("\n%s\n", string(dump))
 	}
@@ -153,10 +148,15 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		if resp != nil {
 			dump, err := httputil.DumpResponse(resp, true)
 			if err != nil {
-				return resp, err
+				return resp, newOtherError(err)
 			}
 			log.Printf("\n%s\n", string(dump))
 		}
 	}
-	return resp, err
+
+	if err != nil {
+		return nil, newConnectionError(err)
+	} else {
+		return resp, nil
+	}
 }

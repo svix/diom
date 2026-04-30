@@ -1,23 +1,132 @@
 package diom_proto
 
-// Error provides access to the body, status, and error on returned errors.
-type Error struct {
-	status int
-	body   []byte
-	error  string
+import (
+	"fmt"
+
+	"github.com/vmihailenco/msgpack/v5"
+)
+
+type ConnectionError struct {
+	inner error
 }
 
-// Error returns non-empty string if there was an error.
-func (e Error) Error() string {
-	return e.error
+func (e *ConnectionError) Error() string {
+	return "connection error: " + e.inner.Error()
 }
 
-// Body returns the raw bytes of the response.
-func (e Error) Body() []byte {
-	return e.body
+func (e *ConnectionError) Unwrap() error {
+	return e.inner
 }
 
-// Status returns the HTTP status of the error.
-func (e Error) Status() int {
-	return e.status
+type InvalidInput struct {
+	code     string
+	detail   string
+	location *string
+}
+
+func (e *InvalidInput) Error() string {
+	return errorResponse(e.code, e.detail, e.location)
+}
+
+func (e *InvalidInput) Code() string {
+	return e.code
+}
+
+func (e *InvalidInput) Detail() string {
+	return e.detail
+}
+
+func (e *InvalidInput) Location() *string {
+	return e.location
+}
+
+type OperationError struct {
+	code     string
+	detail   string
+	location *string
+}
+
+func (e *OperationError) Error() string {
+	return errorResponse(e.code, e.detail, e.location)
+}
+
+func (e *OperationError) Code() string {
+	return e.code
+}
+
+func (e *OperationError) Detail() string {
+	return e.detail
+}
+
+type ServerError struct {
+	code     string
+	detail   string
+	location *string
+}
+
+func (e *ServerError) Error() string {
+	return errorResponse(e.code, e.detail, e.location)
+}
+
+func (e *ServerError) Code() string {
+	return e.code
+}
+
+func (e *ServerError) Detail() string {
+	return e.detail
+}
+
+type OtherError struct {
+	inner error
+}
+
+func (e *OtherError) Error() string {
+	return "internal error: " + e.inner.Error()
+}
+
+func (e *OtherError) Unwrap() error {
+	return e.inner
+}
+
+func errorResponse(code string, detail string, location *string) string {
+	result := fmt.Sprintf("code=\"%s\"", code)
+	if location != nil {
+		result += fmt.Sprintf(" location=\"%s\"", *location)
+	}
+	result += fmt.Sprintf(" detail=\"%s\"", detail)
+
+	return result
+}
+
+func newConnectionError(e error) error {
+	return &ConnectionError{inner: e}
+}
+
+func newOtherError(e error) error {
+	return &OtherError{inner: e}
+}
+
+func newResponseError(http_body []byte) error {
+	var b errorBody
+	if err := msgpack.Unmarshal(http_body, &b); err != nil {
+		return newOtherError(err)
+	}
+
+	switch b.Type_ {
+	case "invalid-input":
+		return &InvalidInput{code: b.Code, detail: b.Detail, location: b.Location}
+	case "operation-error":
+		return &OperationError{code: b.Code, detail: b.Detail, location: b.Location}
+	case "server-error":
+		return &ServerError{code: b.Code, detail: b.Detail, location: b.Location}
+	default:
+		return newOtherError(fmt.Errorf("invalid error type `%s`", b.Type_))
+	}
+}
+
+type errorBody struct {
+	Type_    string  `msgpack:"type"`
+	Code     string  `msgpack:"code"`
+	Detail   string  `msgpack:"detail"`
+	Location *string `msgpack:"location"`
 }
