@@ -87,6 +87,8 @@ pub struct HealthResponse {
 pub struct ForwardedWriteRequest {
     pub source_node_id: NodeId,
     pub request: RequestWithContext,
+    #[serde(default = "default_hop_ttl")]
+    pub hop_ttl: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -101,4 +103,8 @@ pub struct LastIdRequest {}
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LastIdResponse {
     pub last_committed_log_id: Option<LogId>,
+}
+
+const fn default_hop_ttl() -> usize {
+    1
 }

@@ -28,6 +28,7 @@ use tokio::sync::mpsc::Sender;
 
 tokio::task_local! {
     pub(super) static APPLIED_LOG_ID: Mutex<Option<LogId>>;
+    pub(super) static FORWARD_HOP_COUNT: Mutex<Option<usize>>;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -344,6 +345,8 @@ impl From<RaftError<ClientWriteError>> for DiomErrorOrForwardToLeader {
     }
 }
 
+const DEFAULT_HOP_TTL: usize = 2;
+
 #[derive(Clone)]
 pub struct RaftState {
     pub cfg: Configuration,
@@ -358,7 +361,6 @@ pub struct RaftState {
 
 impl RaftState {
     /// Write a single operation into the Raft log and return its response.
-    #[tracing::instrument(name = "raft_client_write", skip_all, fields(forwarded = false))]
     pub async fn client_write<O>(&self, op: O) -> anyhow::Result<O::Response>
     where
         O: OperationRequest<
@@ -369,7 +371,6 @@ impl RaftState {
                 >,
             > + Into<O::RequestParent>,
     {
-        let start = std::time::Instant::now();
         let inner: Request = op.into().into();
         let now = self.time.update_now();
         let request = RequestWithContext::new(
@@ -377,6 +378,36 @@ impl RaftState {
             now.into(),
             Some(opentelemetry::Context::current().into()),
         );
+        let (response, _) = self.client_write_inner(request, DEFAULT_HOP_TTL).await?;
+        let module_response = <O::Response as OperationResponse>::ResponseParent::try_from(
+            response,
+        )
+        .map_err(|e| {
+            anyhow::anyhow!("raft response should be convertible into module response type: {e:?}")
+        })?;
+        let resp = module_response.try_into().map_err(|e| {
+            anyhow::anyhow!("module response should be convertible into target type: {e:?}")
+        })?;
+        Ok(resp)
+    }
+
+    pub(crate) fn client_write_forward(
+        &self,
+        op: RequestWithContext,
+        hop_ttl: usize,
+    ) -> impl Future<Output = anyhow::Result<(Response, LogId)>> {
+        self.client_write_inner(op, hop_ttl)
+    }
+
+    /// Write a request to the current node. If we get a ForwardToLeader error, and
+    /// `hop_ttl` is > 0, then attempt to forward it to the leader
+    #[tracing::instrument(name = "raft_client_write", skip_all, fields(forwarded = false))]
+    async fn client_write_inner(
+        &self,
+        request: RequestWithContext,
+        hop_ttl: usize,
+    ) -> anyhow::Result<(Response, LogId)> {
+        let start = std::time::Instant::now();
         let request = Arc::new(request);
         let mut write_type = WriteType::Local;
         let (response, log_id) = match self.raft.client_write(Arc::clone(&request)).await {
@@ -389,6 +420,10 @@ impl RaftState {
                     if let Some(leader_id) = forward_to_leader.leader_id
                         && let Some(leader_node) = &forward_to_leader.leader_node
                     {
+                        if hop_ttl == 0 {
+                            tracing::error!("received request with no remaining ttl");
+                            anyhow::bail!("too many forwards; possible routing loop");
+                        }
                         tracing::Span::current().record("forwarded", true);
                         tracing::trace!("received write to non-leader, forwarding");
                         let mut network_handle = self.network.clone();
@@ -398,6 +433,7 @@ impl RaftState {
                             .forward_request(super::proto::ForwardedWriteRequest {
                                 source_node_id: self.node_id,
                                 request: Arc::unwrap_or_clone(request),
+                                hop_ttl: hop_ttl.saturating_sub(1),
                             })
                             .await
                             .map(|r| (r.response, r.log_id))
@@ -422,16 +458,7 @@ impl RaftState {
             });
         });
         self.metrics.record_write(write_type, start.elapsed());
-        let module_response = <O::Response as OperationResponse>::ResponseParent::try_from(
-            response,
-        )
-        .map_err(|e| {
-            anyhow::anyhow!("raft response should be convertible into module response type: {e:?}")
-        })?;
-        let resp = module_response.try_into().map_err(|e| {
-            anyhow::anyhow!("module response should be convertible into target type: {e:?}")
-        })?;
-        Ok(resp)
+        Ok((response, log_id))
     }
 
     pub async fn run_discovery_if_necessary(&self) -> anyhow::Result<()> {
