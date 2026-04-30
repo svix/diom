@@ -179,17 +179,11 @@ async fn handle_forwarded_write(
     // reset the timestamp in case the forwarding node was out of sync
     req.request.timestamp = state.state_machine.time.now_utm();
 
-    // intentionally do not use state.client_write because we don't want an infinite recursion
-    // of forwardings
-    let wrapped = Arc::new(req.request);
-    let response =
-        state.raft.client_write(wrapped).await.map_err(|e| {
-            crate::Error::internal(format!("Unable to execute forwarded write: {e:?}"))
-        })?;
-    let response = ForwardedWriteResponse {
-        log_id: response.log_id,
-        response: response.data,
-    };
+    let (response, log_id) = state
+        .client_write_forward(req.request, req.hop_ttl)
+        .await
+        .map_err(|e| crate::Error::internal(format!("Unable to execute forwarded write: {e:?}")))?;
+    let response = ForwardedWriteResponse { log_id, response };
     Ok(MsgPack(response))
 }
 
