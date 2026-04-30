@@ -7,7 +7,7 @@
 
 ## Version 0.2.3
 * Server: Several configuration values that were specified as millisecond durations are now explicitly checked for being non-zero at startup
-* Libs/Rust: expose `.is_retriable()` and `.kind()` on `diom::Error`
+* Libs/Rust: expose `.is_retryable()` and `.kind()` on `diom::Error`
 * Libs/Rust: do not leak feature `release_max_level_debug` into the tracing library
 * Libs/All: remove automatic retries
 * Miscellaneous dependency bumps

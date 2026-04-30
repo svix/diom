@@ -14,6 +14,6 @@ A ChangeLog shouldn't just be a list of git commit messages; it should summarize
 
 Some miscellaneous rules:
 
- - Each entry should be a &lt;h2&gt; (`##` in Markdown) beginning with the word "Version"
+ - Each entry should be a `<h2>` (`##` in Markdown) beginning with the word "Version"
  - Put server updates first, then libraries/clients, then miscellany
  - Don't forget to thank new external contributors!
