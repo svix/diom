@@ -5,10 +5,11 @@ use super::{
     network::NetworkFactory, operations::InternalOperation, raft::Raft,
 };
 use crate::{
+    AppState,
     cfg::Configuration,
     core::{
         cluster::{ClusterId, state_machine::StoreHandle},
-        metrics::{ClusterMetrics, WriteType},
+        metrics::{ClusterMetrics, ClusterNetworkMetrics, WriteType},
     },
 };
 
@@ -434,9 +435,10 @@ impl RaftState {
         Ok(resp)
     }
 
-    pub async fn run_discovery_if_necessary(&self) -> anyhow::Result<()> {
+    pub async fn run_discovery_if_necessary(&self, app_state: AppState) -> anyhow::Result<()> {
         let node_id = self.node_id;
-        let network = NetworkFactory::new(&self.cfg)?;
+        let network_metrics = ClusterNetworkMetrics::new(&app_state.meter, node_id);
+        let network = NetworkFactory::new(&self.cfg, network_metrics)?;
         let (has_cluster, server_state) = self
             .raft
             .with_raft_state(move |s| {

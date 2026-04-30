@@ -8,7 +8,8 @@ use opentelemetry::{
 
 use super::cluster::NodeId;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, strum::IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
 pub enum DbType {
     Persistent,
     Ephemeral,
@@ -16,10 +17,8 @@ pub enum DbType {
 
 impl From<DbType> for Value {
     fn from(db_type: DbType) -> Self {
-        match db_type {
-            DbType::Persistent => "persistent".into(),
-            DbType::Ephemeral => "ephemeral".into(),
-        }
+        let s: &'static str = db_type.into();
+        s.into()
     }
 }
 
@@ -233,7 +232,8 @@ impl LogMetrics {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, strum::IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
 pub enum WriteType {
     Local,
     Forwarded,
@@ -241,10 +241,8 @@ pub enum WriteType {
 
 impl From<WriteType> for Value {
     fn from(value: WriteType) -> Self {
-        match value {
-            WriteType::Local => "local".into(),
-            WriteType::Forwarded => "forwarded".into(),
-        }
+        let s: &'static str = value.into();
+        s.into()
     }
 }
 
@@ -301,7 +299,8 @@ impl ClusterMetrics {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, strum::IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
 pub enum ConnectionType {
     Internal,
     Interserver,
@@ -311,13 +310,8 @@ pub enum ConnectionType {
 
 impl From<ConnectionType> for Value {
     fn from(value: ConnectionType) -> Self {
-        match value {
-            ConnectionType::Internal => "internal",
-            ConnectionType::Interserver => "interserver",
-            ConnectionType::External => "external",
-            ConnectionType::Unknown => "unknown",
-        }
-        .into()
+        let s: &'static str = value.into();
+        s.into()
     }
 }
 
@@ -586,5 +580,79 @@ impl openraft::metrics::MetricsRecorder for OpenraftMetrics {
 
     fn increment_append(&self) {
         self.appends.add(1, &self.context);
+    }
+}
+
+#[derive(Clone)]
+pub struct ClusterNetworkMetrics {
+    requests: Counter<u64>,
+    unaddressed_requests: Counter<u64>,
+    request_latency: Histogram<u64>,
+
+    source_node_id: KeyValue,
+}
+
+#[derive(Clone, strum::IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
+pub enum ClusterRequestStatus {
+    Success,
+    SerializationError,
+    DeserializationError,
+    TimeoutError,
+    ConnectError,
+    OtherError,
+}
+
+impl From<ClusterRequestStatus> for Value {
+    fn from(r: ClusterRequestStatus) -> Self {
+        let s: &'static str = r.into();
+        s.into()
+    }
+}
+
+impl From<ClusterRequestStatus> for KeyValue {
+    fn from(request_status: ClusterRequestStatus) -> Self {
+        KeyValue::new("request_status", request_status)
+    }
+}
+
+impl ClusterNetworkMetrics {
+    pub fn new(meter: &Meter, node_id: NodeId) -> Self {
+        Self {
+            requests: meter
+                .u64_counter("diom.raft_network.requests")
+                .with_description("Interserver replication requests")
+                .build(),
+            unaddressed_requests: meter
+                .u64_counter("diom.raft_network.unaddressed_requests")
+                .with_description("Interserver replication requests with no known node address")
+                .build(),
+            request_latency: meter
+                .u64_histogram("diom.raft_network.request_latency")
+                .with_description("Interserver replication request latency")
+                .with_unit("us")
+                .build(),
+            source_node_id: node_id.into(),
+        }
+    }
+
+    pub fn record_unaddressed_request(&self, dest_node_id: NodeId) {
+        let dims = &[self.source_node_id.clone(), dest_node_id.into()];
+        self.unaddressed_requests.add(1, dims);
+    }
+
+    pub fn record_request(
+        &self,
+        dest_node_id: NodeId,
+        status: ClusterRequestStatus,
+        duration: Duration,
+    ) {
+        let dims = &[
+            self.source_node_id.clone(),
+            dest_node_id.into(),
+            status.into(),
+        ];
+        self.requests.add(1, dims);
+        self.request_latency.record(duration.as_micros() as _, dims);
     }
 }

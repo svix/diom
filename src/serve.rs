@@ -101,10 +101,11 @@ pub async fn run_with_listeners(
 
     tokio::spawn({
         let raft_state = raft_state.clone();
+        let app_state = app_state.clone();
         async move {
             interserver_started_barrier.wait().await;
             raft_state
-                .run_discovery_if_necessary()
+                .run_discovery_if_necessary(app_state)
                 .await
                 .expect("should be able to initialize discovery");
         }

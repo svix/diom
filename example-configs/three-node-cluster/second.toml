@@ -2,9 +2,11 @@ listen_address = "127.0.0.1:8626"
 jwt_secret = "insecure_cluster"
 jwt_algorithm = "HS256"
 environment = "dev"
-opentelemetry_address = "http://localhost:4317"
-opentelemetry_metrics_address = "http://localhost:9090/api/v1/otlp/v1/metrics"
-opentelemetry_metrics_protocol = "http"
+
+[opentelemetry]
+address = "http://localhost:4317"
+metrics_address = "http://localhost:9090/api/v1/otlp/v1/metrics"
+metrics_protocol = "http"
 
 [persistent_db]
 path = "db-second"

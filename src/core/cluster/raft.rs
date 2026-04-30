@@ -18,7 +18,7 @@ use crate::{
             operations::SetClusterUuidOperation,
             state_machine::{ClusterId, StoreHandle},
         },
-        metrics::{ClusterMetrics, LogMetrics, OpenraftMetrics},
+        metrics::{ClusterMetrics, ClusterNetworkMetrics, LogMetrics, OpenraftMetrics},
     },
 };
 
@@ -103,7 +103,8 @@ pub async fn initialize_raft(
         ..Default::default()
     };
     let config = Arc::new(config.validate().context("configuring openraft")?);
-    let network = super::network::NetworkFactory::new(cfg)?;
+    let network_metrics = ClusterNetworkMetrics::new(&app_state.meter, id);
+    let network = super::network::NetworkFactory::new(cfg, network_metrics)?;
 
     let db = app_state.namespace_state.both_dbs.persistent.clone();
     let edb = app_state.namespace_state.both_dbs.ephemeral.clone();
