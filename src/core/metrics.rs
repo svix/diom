@@ -9,7 +9,7 @@ use opentelemetry::{
 use super::cluster::NodeId;
 
 #[derive(Debug, Clone, Copy, strum::IntoStaticStr)]
-#[strum(serialize_all = "snake_case")]
+#[strum(serialize_all = "kebab-case")]
 pub enum DbType {
     Persistent,
     Ephemeral,
@@ -233,7 +233,7 @@ impl LogMetrics {
 }
 
 #[derive(Debug, Clone, Copy, strum::IntoStaticStr)]
-#[strum(serialize_all = "snake_case")]
+#[strum(serialize_all = "kebab-case")]
 pub enum WriteType {
     Local,
     Forwarded,
@@ -300,7 +300,7 @@ impl ClusterMetrics {
 }
 
 #[derive(Debug, Clone, Copy, strum::IntoStaticStr)]
-#[strum(serialize_all = "snake_case")]
+#[strum(serialize_all = "kebab-case")]
 pub enum ConnectionType {
     Internal,
     Interserver,
@@ -593,7 +593,7 @@ pub struct ClusterNetworkMetrics {
 }
 
 #[derive(Clone, strum::IntoStaticStr)]
-#[strum(serialize_all = "snake_case")]
+#[strum(serialize_all = "kebab-case")]
 pub enum ClusterRequestStatus {
     Success,
     SerializationError,
