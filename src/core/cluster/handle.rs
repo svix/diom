@@ -755,9 +755,12 @@ impl diom_operations::OperationWriterBase for RaftState {
         &self,
         request: Self::Request,
     ) -> diom_operations::BackgroundResult<Self::Response> {
-        let now = self.state_machine.time.now_utm();
-        let request =
-            RequestWithContext::new(request, now, Some(opentelemetry::Context::current().into()));
+        let now = self.time.update_now();
+        let request = RequestWithContext::new(
+            request,
+            now.into(),
+            Some(opentelemetry::Context::current().into()),
+        );
         let request = Arc::new(request);
         match self.raft.client_write(request).await {
             Ok(resp) => {
