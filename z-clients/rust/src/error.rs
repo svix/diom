@@ -135,7 +135,7 @@ impl fmt::Display for Error {
             ErrorKind::ServerError(e) => write!(f, "server error {e}"),
             // don't print inner errors that are returned from Error::source
             ErrorKind::Connection(_) => write!(f, "connection error"),
-            ErrorKind::Other(_) => write!(f, "other"),
+            ErrorKind::Other(_) => write!(f, "internal error"),
         }
     }
 }
