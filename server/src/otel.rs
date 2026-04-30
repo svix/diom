@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bytes::Bytes;
-use diom_backend::cfg::{self, ConfigurationInner, OpenTelemetryProtocol};
+use diom_backend::cfg::{ConfigurationInner, OpenTelemetryProtocol, build_fmt_layer};
 use diom_core::INSTANCE_ID;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::{WithExportConfig, WithHttpConfig};
@@ -103,18 +103,7 @@ pub(crate) fn setup_tracing(
     let stdout_layer = if for_test {
         tracing_subscriber::fmt::layer().with_test_writer().boxed()
     } else {
-        match cfg.log_format {
-            cfg::LogFormat::Default => tracing_subscriber::fmt::layer().boxed(),
-            cfg::LogFormat::Json => {
-                let fmt = tracing_subscriber::fmt::format().json().flatten_event(true);
-                let json_fields = tracing_subscriber::fmt::format::JsonFields::new();
-
-                tracing_subscriber::fmt::layer()
-                    .event_format(fmt)
-                    .fmt_fields(json_fields)
-                    .boxed()
-            }
-        }
+        build_fmt_layer(cfg.log_format)
     };
 
     let dispatch = tracing_subscriber::Registry::default()

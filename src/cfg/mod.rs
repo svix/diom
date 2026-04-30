@@ -16,6 +16,7 @@ use diom_derive::{DumpableConfig, EnvOverridable};
 use fs_err as fs;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tracing::Level;
+use tracing_subscriber::Layer;
 use validator::Validate;
 
 use crate::error::{Error, Result};
@@ -973,16 +974,6 @@ impl From<LogLevel> for Level {
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum LogFormat {
-    #[default]
-    Default,
-    Json,
-}
-
-from_str_via_serde!(LogFormat);
-
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
 pub enum Environment {
     #[default]
     Dev,
@@ -1062,6 +1053,38 @@ impl From<FsyncMode> for fjall::PersistMode {
         match value {
             FsyncMode::SyncData => fjall::PersistMode::SyncData,
             FsyncMode::SyncAll => fjall::PersistMode::SyncAll,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum LogFormat {
+    #[default]
+    Default,
+    Json,
+}
+
+impl FromStr for LogFormat {
+    type Err = serde::de::value::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        <Self as Deserialize>::deserialize(serde::de::value::StrDeserializer::new(s))
+    }
+}
+
+pub fn build_fmt_layer<S>(log_format: LogFormat) -> Box<dyn Layer<S> + Send + Sync + 'static>
+where
+    S: tracing::Subscriber + for<'span> tracing_subscriber::registry::LookupSpan<'span>,
+{
+    match log_format {
+        LogFormat::Default => tracing_subscriber::fmt::layer().boxed(),
+        LogFormat::Json => {
+            let fmt = tracing_subscriber::fmt::format().json().flatten_event(true);
+            let json_fields = tracing_subscriber::fmt::format::JsonFields::new();
+            tracing_subscriber::fmt::layer()
+                .event_format(fmt)
+                .fmt_fields(json_fields)
+                .boxed()
         }
     }
 }

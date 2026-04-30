@@ -23,6 +23,7 @@ operator-e2e = []
 
 [dependencies]
 anyhow.workspace = true
+diom-backend.workspace = true
 futures-util.workspace = true
 k8s-openapi = { workspace = true, features = ["schemars"] }
 kube.workspace = true
@@ -34,10 +35,9 @@ serde_yaml = "0.9"
 thiserror.workspace = true
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tracing.workspace = true
-tracing-subscriber = { workspace = true, features = ["env-filter", "fmt"] }
+tracing-subscriber = { workspace = true, features = ["env-filter", "fmt", "json", "registry"] }
 
 [dev-dependencies]
-diom-backend.workspace = true
 rustls = { workspace = true, features = ["ring"] }
 temp-env = "0.3"
 test-utils = { path = "../../crates/test-utils" }
