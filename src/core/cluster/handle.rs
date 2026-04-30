@@ -28,7 +28,6 @@ use tokio::sync::mpsc::Sender;
 
 tokio::task_local! {
     pub(super) static APPLIED_LOG_ID: Mutex<Option<LogId>>;
-    pub(super) static FORWARD_HOP_COUNT: Mutex<Option<usize>>;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
