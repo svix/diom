@@ -3,7 +3,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::cfg::{Configuration, PeerAddr};
+use crate::{
+    cfg::{Configuration, PeerAddr},
+    core::metrics::{ClusterNetworkMetrics, ClusterRequestStatus},
+};
 
 use super::{LogId, Node, NodeId, proto, raft::TypeConfig};
 use anyhow::Context;
@@ -61,13 +64,15 @@ pub(super) fn build_client(
 pub(super) struct NetworkFactory {
     client: reqwest::Client,
     cfg: Configuration,
+    metrics: ClusterNetworkMetrics,
 }
 
 impl NetworkFactory {
-    pub(super) fn new(cfg: &Configuration) -> anyhow::Result<Self> {
+    pub(super) fn new(cfg: &Configuration, metrics: ClusterNetworkMetrics) -> anyhow::Result<Self> {
         Ok(Self {
             client: build_client(cfg, None, true)?,
             cfg: cfg.clone(),
+            metrics,
         })
     }
 }
@@ -78,6 +83,7 @@ pub(super) struct NetworkClient {
     client: reqwest::Client,
     cfg: Configuration,
     default_timeout: Duration,
+    metrics: ClusterNetworkMetrics,
 }
 
 impl NetworkClient {
@@ -108,6 +114,7 @@ impl NetworkClient {
         // TODO(jbrown|2026-02-20) handle multiple addresses
         let Ok(url) = self.node.url_for(path) else {
             tracing::warn!(node_id=?self.target, node=?self.node, "node has no valid addresses, cannot send rpc");
+            self.metrics.record_unaddressed_request(self.target);
             return Err(RPCError::Unreachable(Unreachable::new(
                 &crate::Error::internal("no has no known addresses"),
             )));
@@ -123,6 +130,11 @@ impl NetworkClient {
                 tracing::warn!(
                     ?err,
                     "serialization error on RPC! this should be impossible!"
+                );
+                self.metrics.record_request(
+                    self.target,
+                    ClusterRequestStatus::SerializationError,
+                    start.elapsed(),
                 );
                 RPCError::Network(NetworkError::new(&err))
             })?
@@ -142,6 +154,15 @@ impl NetworkClient {
             .await
             .map_err(|err| {
                 tracing::warn!(?err, "error sending message to peer");
+                let status = if err.is_timeout() {
+                    ClusterRequestStatus::TimeoutError
+                } else if err.is_connect() {
+                    ClusterRequestStatus::ConnectError
+                } else {
+                    ClusterRequestStatus::OtherError
+                };
+                self.metrics
+                    .record_request(self.target, status, start.elapsed());
                 if err.is_connect() {
                     RPCError::Unreachable(Unreachable::new(&err))
                 } else {
@@ -151,6 +172,11 @@ impl NetworkClient {
             .error_for_status()
             .map_err(|e| {
                 tracing::warn!(status = ?e.status(), "error from responding server");
+                self.metrics.record_request(
+                    self.target,
+                    ClusterRequestStatus::OtherError,
+                    start.elapsed(),
+                );
                 RPCError::Network(NetworkError::new(&e))
             })?;
 
@@ -159,10 +185,20 @@ impl NetworkClient {
             duration = ?start.elapsed(),
             "response from peer server");
 
-        response
-            .msgpack()
-            .await
-            .map_err(|e| RPCError::Network(NetworkError::new(&e)))
+        let body = response.msgpack().await.map_err(|err| {
+            tracing::warn!(?err, "error deserializing response status");
+            self.metrics.record_request(
+                self.target,
+                ClusterRequestStatus::DeserializationError,
+                start.elapsed(),
+            );
+            RPCError::Network(NetworkError::new(&err))
+        })?;
+
+        self.metrics
+            .record_request(self.target, ClusterRequestStatus::Success, start.elapsed());
+
+        Ok(body)
     }
 
     #[tracing::instrument(skip_all)]
@@ -281,6 +317,7 @@ impl NetworkFactory {
             client: self.client.clone(),
             cfg: self.cfg.clone(),
             default_timeout: Duration::from_secs(60),
+            metrics: self.metrics.clone(),
         }
     }
 }
