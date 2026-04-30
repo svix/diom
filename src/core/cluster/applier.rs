@@ -53,6 +53,12 @@ pub(super) async fn apply_request(
         child_span.set_attribute("hashed_key", hash);
     }
 
+    tracing::trace!(
+        timestamp = %request.timestamp,
+        last_timestamp = %state_machine.time.now_utm(),
+        "applying request with new timestamp"
+    );
+
     state_machine.time.update_from_other(request.timestamp);
 
     let context = diom_operations::OpContext {

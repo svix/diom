@@ -198,7 +198,6 @@ async fn wait_until_leader(
         };
         match value {
             Ok(Some(node)) if node == me => {
-                tracing::debug!("I believe I am the leader! Spawning background tasks");
                 return true;
             }
             Err(tokio::sync::broadcast::error::RecvError::Closed) => {
@@ -217,6 +216,7 @@ pub(super) async fn run_background_jobs_on_leader(
     let shutdown = crate::shutting_down_token();
     let mut chan = leadership_changes(handle.clone()).await;
     while wait_until_leader(handle.node_id, chan.resubscribe()).await {
+        tracing::info!("spawning leader-only background tasks");
         let mut runner = BackgroundJobRunner::new();
         runner.spawn_all(cfg.clone(), handle.clone()).await;
         loop {
