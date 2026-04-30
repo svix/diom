@@ -2,6 +2,9 @@
 
 ## Unreleased Changes
 
+### Breaking Changes
+* Libs/Rust: Revamp `ErrorKind` and error type methods
+
 ## Version 0.2.3
 * Rust SDK: expose `.is_retriable()` and `.kind()` on `diom::Error`
 * Rust SDK: do not leak feature `release_max_level_debug` into the tracing library

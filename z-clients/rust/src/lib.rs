@@ -12,7 +12,7 @@ pub(crate) use self::client::Configuration;
 pub use self::{
     client::{DEFAULT_URL, DiomClient, DiomOptions},
     error::{
-        ClientError, Error, ErrorKind, GenericError, NetworkError, Result, ServerError,
-        ValidationError,
+        ConnectionError, Error, ErrorKind, InvalidInput, OperationError, OtherError, Result,
+        ServerError,
     },
 };
