@@ -10,9 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httputil"
-	"reflect"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -161,77 +159,4 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		}
 	}
 	return resp, err
-}
-
-func SerializeParamToMap(key string, val interface{}, d map[string]string, err *error) {
-	// I pass the error in here so I don't have to "if err != nil" for every query param
-	if *err != nil {
-		return
-	}
-	// If val is null don't add it to the query params map
-	if val == nil || (reflect.ValueOf(val).Kind() == reflect.Ptr && reflect.ValueOf(val).IsNil()) {
-		return
-	}
-
-	v, localErr := serializeQueryOrHeaderParam(val, key)
-	if localErr != nil {
-		*err = localErr
-	} else {
-		d[key] = v
-	}
-}
-
-func serializeQueryOrHeaderParam(val interface{}, key string) (string, error) {
-	v := reflect.ValueOf(val)
-	var value string
-	if val == nil || (reflect.ValueOf(val).Kind() == reflect.Ptr && reflect.ValueOf(val).IsNil()) {
-		return "", fmt.Errorf("can't serialize nil as a query param, key: %s", key)
-	}
-
-	switch v.Kind() {
-	case reflect.Pointer:
-		innerVal, err := serializeQueryOrHeaderParam(v.Elem().Interface(), key)
-		if err != nil {
-			return "", err
-		}
-		value = innerVal
-	case reflect.String:
-		value = v.String()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		value = strconv.FormatInt(v.Int(), 10)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16,
-		reflect.Uint32, reflect.Uint64:
-		value = strconv.FormatUint(v.Uint(), 10)
-	case reflect.Float32, reflect.Float64:
-		value = strconv.FormatFloat(v.Float(), 'g', -1, 64)
-	case reflect.Bool:
-		if v.Bool() {
-			value = "true"
-		} else {
-			value = "false"
-		}
-	case reflect.Slice:
-		// we are assuming that the inner type is a simple type (no nested lists)
-		serializedValues := make([]string, v.Len())
-		for i := 0; i < v.Len(); i++ {
-			serializedVal, err := serializeQueryOrHeaderParam(v.Index(i).Interface(), key)
-			if err != nil {
-				return "", err
-			}
-			serializedValues[i] = serializedVal
-		}
-		value = strings.Join(serializedValues, ",")
-	case reflect.Struct:
-		// if it's a time.time
-		if t, ok := v.Interface().(time.Time); ok {
-			return t.Format(time.RFC3339), nil
-		}
-
-		// else fallthrough
-		fallthrough
-	default:
-		return "", fmt.Errorf("can't serialize %s as a query param, key: %s", v.Kind().String(), key)
-
-	}
-	return value, nil
 }
