@@ -1,4 +1,4 @@
-use std::{fmt, sync::Arc, time::Duration};
+use std::{fmt, num::NonZeroU64, sync::Arc, time::Duration};
 
 use super::{
     ClientWriteError, LogId, Node, NodeId, RaftError, discovery::Discovery,
@@ -24,6 +24,7 @@ use openraft::{RaftNetworkFactory, ServerState};
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use tap::TapFallible;
 use tokio::sync::mpsc::Sender;
 
 tokio::task_local! {
@@ -473,10 +474,7 @@ impl RaftState {
         Ok(())
     }
 
-    pub async fn is_up(&self) -> bool {
-        if self.state_machine.is_loading_snapshot() {
-            return false;
-        }
+    async fn has_known_leader(&self) -> bool {
         let Ok(state) = self
             .raft
             .with_raft_state(|s| s.server_state)
@@ -511,6 +509,49 @@ impl RaftState {
                 true
             }
         }
+    }
+
+    /// Check whether the cluster is ready to receive writes
+    pub async fn is_up(&self) -> bool {
+        if self.state_machine.is_loading_snapshot() {
+            return false;
+        }
+        if !self.has_known_leader().await {
+            return false;
+        }
+        if self
+            .raft
+            .with_raft_state(|s| s.membership_state.effective().nodes().count() == 1)
+            .await
+            .unwrap_or(false)
+        {
+            // if there's only one node, openraft doesn't bother heartbeating, so
+            // return true immediately
+            return true;
+        }
+        // wait to see if we get a heartbeat recorded
+        let duration = self
+            .cfg
+            .cluster
+            .heartbeat_interval
+            .saturating_mul(NonZeroU64::new(3).unwrap());
+        let Ok(last_applied) = self
+            .raft
+            .with_raft_state(|s| s.committed().map(|c| c.index()).unwrap_or(0))
+            .await
+        else {
+            return false;
+        };
+        self.raft
+            .wait(Some(duration.into()))
+            .committed_index_at_least(
+                Some(last_applied + 1),
+                "waiting for a write for proof-of-life",
+            )
+            .await
+            .inspect_err(|err| tracing::debug!(?err, "error waiting for log to be applied"))
+            .tap_ok(|_| tracing::debug!("at least one log was committed, we must be up"))
+            .is_ok()
     }
 
     pub async fn state(&self) -> anyhow::Result<ServerState> {
