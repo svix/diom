@@ -3,6 +3,7 @@
 // wraps all of the other Network APIs. This code is copy-pasted from openraft_legacy and is
 // licensed under the openraft license (dual MIT/Apache-2.0)
 
+use diom_core::backoff::ExponentialBackoffWithJitter;
 use futures_util::FutureExt;
 use openraft::{
     ErrorSubject, ErrorVerb, OptionalSend, Raft, RaftTypeConfig, SnapshotId, SnapshotSegmentId,
@@ -271,6 +272,11 @@ impl Sender {
             .await
             .sto_res(subject_verb)?;
 
+        let mut backoff = ExponentialBackoffWithJitter::new(
+            Duration::from_millis(10),
+            Duration::from_millis(500),
+        );
+
         let mut c = std::pin::pin!(cancel);
         loop {
             // If canceled, return at once
@@ -330,7 +336,10 @@ impl Sender {
 
             let resp = match res {
                 Ok(outer_res) => match outer_res {
-                    Ok(res) => res,
+                    Ok(res) => {
+                        backoff.reset_to_initial();
+                        res
+                    }
                     Err(err) => {
                         let err: RPCError<TypeConfig, RaftError<TypeConfig, InstallSnapshotError>> =
                             err;
@@ -340,7 +349,9 @@ impl Sender {
                         match err {
                             RPCError::Timeout(_)
                             | RPCError::Unreachable(_)
-                            | RPCError::Network(_) => {}
+                            | RPCError::Network(_) => {
+                                backoff.backoff().await;
+                            }
                             RPCError::RemoteError(remote_err) => match remote_err.source {
                                 RaftError::Fatal(_) => {}
                                 RaftError::APIError(snapshot_err) => match snapshot_err {
