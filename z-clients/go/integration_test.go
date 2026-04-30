@@ -4,6 +4,7 @@ package diom_test
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"os"
 	"testing"
@@ -17,6 +18,11 @@ func newClient(t *testing.T) *diom.Diom {
 	if token == "" {
 		t.Fatal("DIOM_TOKEN must be set")
 	}
+	return newClientWithToken(t, token)
+}
+
+func newClientWithToken(t *testing.T, token string) *diom.Diom {
+	t.Helper()
 	serverURL := os.Getenv("DIOM_SERVER_URL")
 	if serverURL == "" {
 		t.Fatal("DIOM_SERVER_URL must be set")
@@ -117,5 +123,60 @@ func TestCacheSetGetDelete(t *testing.T) {
 	}
 	if getResp2.Value != nil {
 		t.Fatalf("cache get after delete: expected nil, got %q", getResp2.Value)
+	}
+}
+
+func TestInvalidServerUrl(t *testing.T) {
+	u, err := url.Parse("http://test.invalid")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := diom.New("...", &diom.DiomOptions{ServerUrl: u})
+	if err != nil {
+		t.Fatalf("failed to create client: %v", err)
+	}
+
+	_, err = client.Health().Ping(context.Background())
+	if err == nil {
+		t.Fatalf("operation must fail due to invalid server URL")
+	}
+	var _connErr *diom.ConnectionError
+	if !errors.As(err, &_connErr) {
+		t.Fatal("unexpected error type", err)
+	}
+}
+
+func TestInvalidToken(t *testing.T) {
+	client := newClientWithToken(t, "wrongToken")
+	_, err := client.Cache().Get(context.Background(), "xxx", diom.CacheGetIn{})
+	if err == nil {
+		t.Fatalf("operation must fail due invalid token")
+	}
+	var opErr *diom.OperationError
+	if !errors.As(err, &opErr) {
+		t.Fatal("unexpected error type", err)
+	}
+
+	code := opErr.Code()
+	if code != "invalid-token" {
+		t.Fatal("unexpected error code", code)
+	}
+}
+
+func TestServerError(t *testing.T) {
+	client := newClient(t)
+	err := client.Health().Error(context.Background())
+	if err == nil {
+		t.Fatalf("operation must fail")
+	}
+
+	var serverErr *diom.ServerError
+	if !errors.As(err, &serverErr) {
+		t.Fatal("unexpected error type", err)
+	}
+
+	code := serverErr.Code()
+	if code != "internal" {
+		t.Fatal("unexpected error code", code)
 	}
 }

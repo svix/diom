@@ -4,15 +4,12 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/http/httputil"
-	"reflect"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -58,17 +55,17 @@ func ExecuteRequest[ReqBody any, ResBody any](
 	if reqBody != nil {
 		encodedBody, err := msgpack.Marshal(reqBody)
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 		req, err = http.NewRequestWithContext(ctx, method, urlStr, bytes.NewBuffer(encodedBody))
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 		req.Header.Set("content-type", "application/msgpack")
 	} else {
 		req, err = http.NewRequestWithContext(ctx, method, urlStr, &bytes.Buffer{})
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 	}
 
@@ -90,24 +87,20 @@ func ExecuteRequest[ReqBody any, ResBody any](
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, newConnectionError(err)
 	}
 
 	if res.StatusCode >= 200 && res.StatusCode <= 299 {
 		var ret ResBody
 		err = msgpack.Unmarshal(body, &ret)
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 
 		return &ret, nil
 	}
 
-	return nil, &Error{
-		status: res.StatusCode,
-		body:   body,
-		error:  fmt.Sprintf("status code %s", res.Status),
-	}
+	return nil, newResponseError(body)
 }
 
 func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http.Response, error) {
@@ -116,11 +109,11 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		var err error
 		bodyBytes, err = io.ReadAll(request.Body)
 		if err != nil {
-			return nil, err
+			return nil, newConnectionError(err)
 		}
 		err = request.Body.Close()
 		if err != nil {
-			return nil, err
+			return nil, newConnectionError(err)
 		}
 	}
 
@@ -132,7 +125,7 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		log.Printf("URL: %s", request.URL)
 		dump, err := httputil.DumpRequestOut(request, true)
 		if err != nil {
-			return nil, err
+			return nil, newOtherError(err)
 		}
 		log.Printf("\n%s\n", string(dump))
 	}
@@ -155,83 +148,15 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		if resp != nil {
 			dump, err := httputil.DumpResponse(resp, true)
 			if err != nil {
-				return resp, err
+				return resp, newOtherError(err)
 			}
 			log.Printf("\n%s\n", string(dump))
 		}
 	}
-	return resp, err
-}
 
-func SerializeParamToMap(key string, val interface{}, d map[string]string, err *error) {
-	// I pass the error in here so I don't have to "if err != nil" for every query param
-	if *err != nil {
-		return
-	}
-	// If val is null don't add it to the query params map
-	if val == nil || (reflect.ValueOf(val).Kind() == reflect.Ptr && reflect.ValueOf(val).IsNil()) {
-		return
-	}
-
-	v, localErr := serializeQueryOrHeaderParam(val, key)
-	if localErr != nil {
-		*err = localErr
+	if err != nil {
+		return nil, newConnectionError(err)
 	} else {
-		d[key] = v
+		return resp, nil
 	}
-}
-
-func serializeQueryOrHeaderParam(val interface{}, key string) (string, error) {
-	v := reflect.ValueOf(val)
-	var value string
-	if val == nil || (reflect.ValueOf(val).Kind() == reflect.Ptr && reflect.ValueOf(val).IsNil()) {
-		return "", fmt.Errorf("can't serialize nil as a query param, key: %s", key)
-	}
-
-	switch v.Kind() {
-	case reflect.Pointer:
-		innerVal, err := serializeQueryOrHeaderParam(v.Elem().Interface(), key)
-		if err != nil {
-			return "", err
-		}
-		value = innerVal
-	case reflect.String:
-		value = v.String()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		value = strconv.FormatInt(v.Int(), 10)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16,
-		reflect.Uint32, reflect.Uint64:
-		value = strconv.FormatUint(v.Uint(), 10)
-	case reflect.Float32, reflect.Float64:
-		value = strconv.FormatFloat(v.Float(), 'g', -1, 64)
-	case reflect.Bool:
-		if v.Bool() {
-			value = "true"
-		} else {
-			value = "false"
-		}
-	case reflect.Slice:
-		// we are assuming that the inner type is a simple type (no nested lists)
-		serializedValues := make([]string, v.Len())
-		for i := 0; i < v.Len(); i++ {
-			serializedVal, err := serializeQueryOrHeaderParam(v.Index(i).Interface(), key)
-			if err != nil {
-				return "", err
-			}
-			serializedValues[i] = serializedVal
-		}
-		value = strings.Join(serializedValues, ",")
-	case reflect.Struct:
-		// if it's a time.time
-		if t, ok := v.Interface().(time.Time); ok {
-			return t.Format(time.RFC3339), nil
-		}
-
-		// else fallthrough
-		fallthrough
-	default:
-		return "", fmt.Errorf("can't serialize %s as a query param, key: %s", v.Kind().String(), key)
-
-	}
-	return value, nil
 }
