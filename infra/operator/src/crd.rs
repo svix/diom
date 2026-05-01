@@ -3,15 +3,15 @@
 
 use k8s_openapi::{
     api::core::v1::{
-        Affinity, EnvVar, EnvVarSource, ResourceRequirements, SecretKeySelector, Toleration,
-        TopologySpreadConstraint,
+        Affinity, EnvVar, EnvVarSource, HTTPGetAction, Probe, ResourceRequirements,
+        SecretKeySelector, Toleration, TopologySpreadConstraint,
     },
     apimachinery::pkg::api::resource::Quantity,
 };
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, fmt};
+use std::{collections::BTreeMap, fmt, num::NonZeroU16};
 
 pub const DEFAULT_API_PORT: u16 = 8624;
 pub const INTRACLUSTER_PORT: u16 = 8625;
@@ -100,6 +100,9 @@ pub struct DiomClusterSpec {
     /// Optional image pull secret to use when pulling the Diom image.
     #[serde(default)]
     pub image_pull_secrets: Option<Vec<ImagePullSecret>>,
+
+    #[serde(default)]
+    pub probes: ProbesSpec,
 }
 
 /// Storage configuration for a Diom cluster.
@@ -239,6 +242,82 @@ pub struct ServiceSpec {
     /// Additional annotations for the Service (e.g. for cloud load balancer configuration).
     #[serde(default)]
     pub annotations: BTreeMap<String, String>,
+}
+
+/// Configuration for the pod Probes (healthchecks)
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+pub struct ProbesSpec {
+    #[serde(default = "ProbeSpec::default_liveness")]
+    pub liveness: ProbeSpec,
+
+    #[serde(default = "ProbeSpec::default_readiness")]
+    pub readiness: ProbeSpec,
+
+    #[serde(default = "ProbeSpec::default_startup")]
+    pub startup: ProbeSpec,
+}
+
+impl Default for ProbesSpec {
+    fn default() -> Self {
+        Self {
+            liveness: ProbeSpec::default_liveness(),
+            readiness: ProbeSpec::default_readiness(),
+            startup: ProbeSpec::default_startup(),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+pub struct ProbeSpec {
+    pub initial_delay_seconds: NonZeroU16,
+    pub period_seconds: NonZeroU16,
+    pub failure_threshold: NonZeroU16,
+    pub success_threshold: NonZeroU16,
+}
+
+impl ProbeSpec {
+    const fn default_liveness() -> Self {
+        Self {
+            initial_delay_seconds: NonZeroU16::new(5).unwrap(),
+            period_seconds: NonZeroU16::new(5).unwrap(),
+            failure_threshold: NonZeroU16::new(2).unwrap(),
+            success_threshold: NonZeroU16::new(1).unwrap(),
+        }
+    }
+
+    const fn default_readiness() -> Self {
+        Self {
+            initial_delay_seconds: NonZeroU16::new(15).unwrap(),
+            period_seconds: NonZeroU16::new(10).unwrap(),
+            failure_threshold: NonZeroU16::new(2).unwrap(),
+            success_threshold: NonZeroU16::new(1).unwrap(),
+        }
+    }
+
+    const fn default_startup() -> Self {
+        Self {
+            initial_delay_seconds: NonZeroU16::new(15).unwrap(),
+            period_seconds: NonZeroU16::new(10).unwrap(),
+            failure_threshold: NonZeroU16::new(120).unwrap(),
+            success_threshold: NonZeroU16::new(1).unwrap(),
+        }
+    }
+
+    fn nzu16asi32(value: NonZeroU16) -> i32 {
+        let value: u16 = value.into();
+        value.into()
+    }
+
+    pub fn as_probe_with_http_get(&self, http_get: HTTPGetAction) -> Probe {
+        Probe {
+            http_get: Some(http_get),
+            initial_delay_seconds: Some(Self::nzu16asi32(self.initial_delay_seconds)),
+            period_seconds: Some(Self::nzu16asi32(self.period_seconds)),
+            failure_threshold: Some(Self::nzu16asi32(self.failure_threshold)),
+            success_threshold: Some(Self::nzu16asi32(self.success_threshold)),
+            ..Default::default()
+        }
+    }
 }
 
 /// Status of a DiomCluster.
