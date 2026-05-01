@@ -65,12 +65,12 @@ test-dc-rebuild service:
     docker compose -f {{ HERE / "testing-docker-compose.yml" }} up --build -d {{ service }}
 
 # Generate all of the client libraries
-codegen: default-config
+codegen:
     cargo codegen
 
 # Dump out config.defaults.toml and ENVIRONMENT_VARIABLES.md
 default-config:
-    env -i PATH="$PATH" cargo run -- --skip-dot-env write-config config.defaults.toml
+    env -i PATH="$PATH" TERM="$TERM" COLORTERM="$COLORTERM" cargo run -- --skip-dot-env write-config config.defaults.toml
     cargo run -- describe-environment-variables ENVIRONMENT_VARIABLES.md
 
 # Run all the test commands
@@ -85,3 +85,6 @@ bench:
 [working-directory('infra/operator')]
 generate-crd:
     cargo run -- --print-crd-json > {{ HERE / "infra/helm-diom/charts/crds/crds/diomclusters.json" }}
+
+# Regenerate all checked-in generated assets (default configs, client libraries, CRD, etc)
+generate: default-config generate-crd codegen
