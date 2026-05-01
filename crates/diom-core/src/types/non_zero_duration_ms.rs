@@ -61,6 +61,14 @@ impl NonZeroDurationMs {
     pub const fn as_duration(&self) -> Duration {
         Duration::from_millis(self.as_millis())
     }
+
+    pub fn saturating_add(self, other: &NonZeroDurationMs) -> Self {
+        Self(self.0.saturating_add(other.0.into()))
+    }
+
+    pub fn saturating_mul(self, multiplier: NonZeroU64) -> Self {
+        Self(self.0.saturating_mul(multiplier))
+    }
 }
 
 impl From<NonZeroDurationMs> for Duration {
