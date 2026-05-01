@@ -1061,6 +1061,155 @@
                     "description": "Additional annotations to add to pods.",
                     "type": "object"
                   },
+                  "probes": {
+                    "default": {
+                      "liveness": {
+                        "failure_threshold": 2,
+                        "initial_delay_seconds": 5,
+                        "period_seconds": 5,
+                        "success_threshold": 1
+                      },
+                      "readiness": {
+                        "failure_threshold": 2,
+                        "initial_delay_seconds": 15,
+                        "period_seconds": 10,
+                        "success_threshold": 1
+                      },
+                      "startup": {
+                        "failure_threshold": 120,
+                        "initial_delay_seconds": 15,
+                        "period_seconds": 10,
+                        "success_threshold": 1
+                      }
+                    },
+                    "description": "Configuration for the pod Probes (healthchecks)",
+                    "properties": {
+                      "liveness": {
+                        "default": {
+                          "failure_threshold": 2,
+                          "initial_delay_seconds": 5,
+                          "period_seconds": 5,
+                          "success_threshold": 1
+                        },
+                        "properties": {
+                          "failure_threshold": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "initial_delay_seconds": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "period_seconds": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "success_threshold": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "failure_threshold",
+                          "initial_delay_seconds",
+                          "period_seconds",
+                          "success_threshold"
+                        ],
+                        "type": "object"
+                      },
+                      "readiness": {
+                        "default": {
+                          "failure_threshold": 2,
+                          "initial_delay_seconds": 15,
+                          "period_seconds": 10,
+                          "success_threshold": 1
+                        },
+                        "properties": {
+                          "failure_threshold": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "initial_delay_seconds": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "period_seconds": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "success_threshold": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "failure_threshold",
+                          "initial_delay_seconds",
+                          "period_seconds",
+                          "success_threshold"
+                        ],
+                        "type": "object"
+                      },
+                      "startup": {
+                        "default": {
+                          "failure_threshold": 120,
+                          "initial_delay_seconds": 15,
+                          "period_seconds": 10,
+                          "success_threshold": 1
+                        },
+                        "properties": {
+                          "failure_threshold": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "initial_delay_seconds": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "period_seconds": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "success_threshold": {
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "failure_threshold",
+                          "initial_delay_seconds",
+                          "period_seconds",
+                          "success_threshold"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
                   "replicas": {
                     "default": 1,
                     "description": "Number of Diom replicas.\n\nShould be an odd number. Recommended value is 3, or 1 if you want only a single node.",
