@@ -1,9 +1,10 @@
 use std::time::Duration;
 
+use bytes::Bytes;
 use diom_backend::cfg::{self, ConfigurationInner, OpenTelemetryProtocol};
 use diom_core::INSTANCE_ID;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
-use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_otlp::{WithExportConfig, WithHttpConfig};
 use opentelemetry_sdk::{
     metrics::{SdkMeterProvider, periodic_reader_with_async_runtime::PeriodicReader},
     runtime,
@@ -141,6 +142,7 @@ pub(crate) fn setup_metrics(cfg: &ConfigurationInner) {
             opentelemetry_otlp::MetricExporter::builder()
                 .with_http()
                 .with_endpoint(addr)
+                .with_http_client(OtelReqwestClient::from(reqwest::Client::new()))
                 .build()
                 .unwrap()
         } else {
@@ -177,4 +179,33 @@ pub(crate) fn setup_metrics(cfg: &ConfigurationInner) {
 
         opentelemetry::global::set_meter_provider(provider);
     };
+}
+
+#[derive(Debug, Default)]
+struct OtelReqwestClient(reqwest::Client);
+
+impl From<reqwest::Client> for OtelReqwestClient {
+    fn from(value: reqwest::Client) -> Self {
+        Self(value)
+    }
+}
+
+// From https://docs.rs/opentelemetry-http/0.31.0/src/opentelemetry_http/lib.rs.html#94-108
+// Using our own custom type because upstream hasn't released support for reqwest 0.13 yet.
+#[async_trait::async_trait]
+impl opentelemetry_http::HttpClient for OtelReqwestClient {
+    async fn send_bytes(
+        &self,
+        request: http::Request<Bytes>,
+    ) -> Result<http::Response<Bytes>, opentelemetry_http::HttpError> {
+        let request = request.try_into()?;
+        let mut response = self.0.execute(request).await?.error_for_status()?;
+        let headers = std::mem::take(response.headers_mut());
+        let mut http_response = http::Response::builder()
+            .status(response.status())
+            .body(response.bytes().await?)?;
+        *http_response.headers_mut() = headers;
+
+        Ok(http_response)
+    }
 }

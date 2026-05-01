@@ -1536,7 +1536,7 @@ dependencies = [
  "parking_lot",
  "pnet",
  "rand 0.10.1",
- "reqwest 0.13.3",
+ "reqwest",
  "rmp-serde",
  "rmpv",
  "schemars 1.2.1",
@@ -1571,7 +1571,7 @@ dependencies = [
  "diom-backend",
  "openraft",
  "rand 0.10.1",
- "reqwest 0.13.3",
+ "reqwest",
  "serde_json",
  "tempfile",
  "test-utils",
@@ -1811,7 +1811,7 @@ dependencies = [
  "http",
  "http-body-util",
  "mime",
- "reqwest 0.13.3",
+ "reqwest",
  "rmp-serde",
  "schemars 1.2.1",
  "serde",
@@ -1845,18 +1845,22 @@ name = "diom-server"
 version = "0.2.3"
 dependencies = [
  "anyhow",
+ "async-trait",
+ "bytes",
  "clap",
  "comfy-table",
  "diom-backend",
  "diom-core",
  "dotenvy",
  "fs-err",
+ "http",
  "mimalloc",
  "opentelemetry",
+ "opentelemetry-http",
  "opentelemetry-otlp",
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk",
- "reqwest 0.13.3",
+ "reqwest",
  "tokio",
  "tracing",
  "tracing-log",
@@ -3771,7 +3775,6 @@ dependencies = [
  "bytes",
  "http",
  "opentelemetry",
- "reqwest 0.12.28",
 ]
 
 [[package]]
@@ -3786,7 +3789,6 @@ dependencies = [
  "opentelemetry-proto",
  "opentelemetry_sdk",
  "prost",
- "reqwest 0.12.28",
  "thiserror 2.0.18",
  "tokio",
  "tonic",
@@ -4630,38 +4632,6 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.28"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
-dependencies = [
- "base64 0.22.1",
- "bytes",
- "futures-core",
- "http",
- "http-body",
- "http-body-util",
- "hyper",
- "hyper-util",
- "js-sys",
- "log",
- "percent-encoding",
- "pin-project-lite",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "sync_wrapper",
- "tokio",
- "tower",
- "tower-http",
- "tower-service",
- "url",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
-
-[[package]]
-name = "reqwest"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62e0021ea2c22aed41653bc7e1419abb2c97e038ff2c33d0e1309e49a97deec0"
@@ -5491,7 +5461,7 @@ dependencies = [
  "http",
  "http-body-util",
  "jiff",
- "reqwest 0.13.3",
+ "reqwest",
  "rmp-serde",
  "serde",
  "serde_json",

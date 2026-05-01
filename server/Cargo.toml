@@ -11,14 +11,18 @@ dist = false
 
 [dependencies]
 anyhow.workspace = true
+async-trait.workspace = true
+bytes.workspace = true
 clap.workspace = true
 comfy-table.workspace = true
 diom-backend.workspace = true
 diom-core.workspace = true
 dotenvy.workspace = true
 fs-err.workspace = true
+http.workspace = true
 mimalloc.workspace = true
 opentelemetry.workspace = true
+opentelemetry-http.workspace = true
 opentelemetry-otlp.workspace = true
 opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk.workspace = true
