@@ -5,7 +5,7 @@ use diom::DiomClient;
 #[allow(unused)]
 use crate::prelude::*;
 
-use super::{AdminAuthPolicyArgs, AdminAuthRoleArgs, AdminAuthTokenArgs};
+use super::{AdminAuthPolicyArgs, AdminAuthRoleArgs, AdminAuthTokenArgs, AdminMetricsArgs};
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct AdminArgs {
@@ -19,6 +19,7 @@ pub enum AdminCommands {
     AuthPolicy(AdminAuthPolicyArgs),
     AuthRole(AdminAuthRoleArgs),
     AuthToken(AdminAuthTokenArgs),
+    Metrics(AdminMetricsArgs),
 }
 
 impl AdminCommands {
@@ -31,6 +32,9 @@ impl AdminCommands {
                 args.command.exec(client).await?;
             }
             Self::AuthToken(args) => {
+                args.command.exec(client).await?;
+            }
+            Self::Metrics(args) => {
                 args.command.exec(client).await?;
             }
         }

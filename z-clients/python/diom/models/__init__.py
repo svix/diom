@@ -50,6 +50,7 @@ from .cluster_remove_node_out import ClusterRemoveNodeOut
 from .cluster_status_out import ClusterStatusOut
 from .consistency import Consistency
 from .eviction_policy import EvictionPolicy
+from .get_metrics_out import GetMetricsOut
 from .idempotency_abort_in import IdempotencyAbortIn
 from .idempotency_abort_out import IdempotencyAbortOut
 from .idempotency_complete_in import IdempotencyCompleteIn
@@ -74,6 +75,8 @@ from .kv_set_out import KvSetOut
 from .list_response_admin_access_policy_out import ListResponseAdminAccessPolicyOut
 from .list_response_admin_auth_token_out import ListResponseAdminAuthTokenOut
 from .list_response_admin_role_out import ListResponseAdminRoleOut
+from .metric_out import MetricOut
+from .metric_type import MetricType
 from .msg_in import MsgIn
 from .msg_namespace_configure_in import MsgNamespaceConfigureIn
 from .msg_namespace_configure_out import MsgNamespaceConfigureOut
@@ -177,6 +180,7 @@ __all__ = [
     "ClusterStatusOut",
     "Consistency",
     "EvictionPolicy",
+    "GetMetricsOut",
     "IdempotencyAbortIn",
     "IdempotencyAbortOut",
     "IdempotencyCompleteIn",
@@ -201,6 +205,8 @@ __all__ = [
     "ListResponseAdminAccessPolicyOut",
     "ListResponseAdminAuthTokenOut",
     "ListResponseAdminRoleOut",
+    "MetricOut",
+    "MetricType",
     "MsgIn",
     "MsgNamespaceConfigureIn",
     "MsgNamespaceConfigureOut",

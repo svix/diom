@@ -29,4 +29,8 @@ public class Admin {
     public AdminAuthToken authToken() {
         return new AdminAuthToken(this.client);
     }
+
+    public AdminMetrics metrics() {
+        return new AdminMetrics(this.client);
+    }
 }
