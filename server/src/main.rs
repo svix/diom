@@ -190,8 +190,8 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::DescribeEnvironmentVariables { path }) => dump_variables(path)?,
         Some(Commands::Server) | None => {
-            otel::setup_metrics(&cfg);
-            run(cfg).await
+            let metrics = otel::setup_metrics(&cfg);
+            run(cfg, metrics).await
         }
         Some(Commands::WriteConfig { path }) => dump_config(cfg, path)?,
     };

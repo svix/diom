@@ -1,7 +1,10 @@
 use std::time::Duration;
 
 use bytes::Bytes;
-use diom_backend::cfg::{ConfigurationInner, OpenTelemetryProtocol, build_fmt_layer};
+use diom_backend::{
+    cfg::{ConfigurationInner, OpenTelemetryProtocol, build_fmt_layer},
+    metrics::MostRecentMetricStore,
+};
 use diom_core::INSTANCE_ID;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::{WithExportConfig, WithHttpConfig};
@@ -122,8 +125,8 @@ pub(crate) fn setup_tracing(
     (dispatch.into(), otel_tracer_provider)
 }
 
-pub(crate) fn setup_metrics(cfg: &ConfigurationInner) {
-    if let Some(addr) = cfg
+pub(crate) fn setup_metrics(cfg: &ConfigurationInner) -> MostRecentMetricStore {
+    let reader = if let Some(addr) = cfg
         .opentelemetry
         .metrics_address
         .as_ref()
@@ -152,29 +155,45 @@ pub(crate) fn setup_metrics(cfg: &ConfigurationInner) {
                 .unwrap()
         };
 
-        let reader = PeriodicReader::builder(exporter, runtime::Tokio)
-            .with_interval(cfg.opentelemetry.metrics_period.into())
-            .build();
-
-        let provider = SdkMeterProvider::builder()
-            .with_reader(reader)
-            .with_resource(
-                opentelemetry_sdk::Resource::builder()
-                    .with_service_name(cfg.opentelemetry.service_name.clone())
-                    .with_attribute(opentelemetry::KeyValue::new(
-                        "instance_id",
-                        INSTANCE_ID.as_str(),
-                    ))
-                    .with_attribute(opentelemetry::KeyValue::new(
-                        "service.version",
-                        option_env!("GITHUB_SHA").unwrap_or("unknown"),
-                    ))
-                    .build(),
-            )
-            .build();
-
-        opentelemetry::global::set_meter_provider(provider);
+        Some(
+            PeriodicReader::builder(exporter, runtime::Tokio)
+                .with_interval(cfg.opentelemetry.metrics_period.into())
+                .build(),
+        )
+    } else {
+        None
     };
+
+    let most_recent_store = MostRecentMetricStore::new();
+    let most_recent_reader = PeriodicReader::builder(most_recent_store.clone(), runtime::Tokio)
+        .with_interval(cfg.opentelemetry.metrics_period.into())
+        .build();
+
+    let mut provider_builder = SdkMeterProvider::builder().with_reader(most_recent_reader);
+
+    if let Some(reader) = reader {
+        provider_builder = provider_builder.with_reader(reader)
+    }
+
+    let provider = provider_builder
+        .with_resource(
+            opentelemetry_sdk::Resource::builder()
+                .with_service_name(cfg.opentelemetry.service_name.clone())
+                .with_attribute(opentelemetry::KeyValue::new(
+                    "instance_id",
+                    INSTANCE_ID.as_str(),
+                ))
+                .with_attribute(opentelemetry::KeyValue::new(
+                    "service.version",
+                    option_env!("GITHUB_SHA").unwrap_or("unknown"),
+                ))
+                .build(),
+        )
+        .build();
+
+    opentelemetry::global::set_meter_provider(provider);
+
+    most_recent_store
 }
 
 #[derive(Debug, Default)]

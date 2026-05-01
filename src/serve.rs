@@ -32,7 +32,9 @@ use crate::{
         metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
         otel_spans::trace_layer,
     },
-    docs, openapi,
+    docs,
+    metrics::MostRecentMetricStore,
+    openapi,
     utils::{axum_tcp_listener, fail_until_bootstrapped, graceful_shutdown_handler, handle_panic},
     v1,
     workers::Workers,
@@ -40,8 +42,16 @@ use crate::{
 use diom_core::shutdown::{shutting_down_token, start_shut_down};
 
 /// Run the server with the given configuration
-pub async fn run(cfg: Configuration) {
-    run_with_listeners(cfg, None, None, Monotime::initial(), Initialized::new()).await
+pub async fn run(cfg: Configuration, metrics: MostRecentMetricStore) {
+    run_with_listeners(
+        cfg,
+        None,
+        None,
+        Monotime::initial(),
+        Initialized::new(),
+        Some(metrics),
+    )
+    .await
 }
 
 /// Run the server with the given configuration and initial state
@@ -54,6 +64,7 @@ pub async fn run_with_listeners(
     interserver_listener: Option<TcpListener>,
     time: Monotime,
     initialized: Initialized,
+    metrics: Option<MostRecentMetricStore>,
 ) {
     // OpenAPI/aide must be initialized before any routers are constructed
     // because its initialization sets generation-global settings which are
@@ -64,7 +75,7 @@ pub async fn run_with_listeners(
 
     let (internal_req_tx, internal_req_rx) = mpsc::channel(1);
     let internal_client = InternalClient::new(internal_req_tx);
-    let app_state = AppState::new(cfg.clone(), time.clone(), internal_client);
+    let app_state = AppState::new(cfg.clone(), time.clone(), internal_client, metrics);
 
     let raft_state =
         core::cluster::initialize_raft(&cfg, app_state.clone(), time, initialized.clone())

@@ -384,7 +384,7 @@ mod tests {
 
             // FIXME: Should we be spawning an internal API server task here?
             let internal_client = InternalClient::useless_instance_for_tests();
-            let app_state = AppState::new(cfg, time.clone(), internal_client);
+            let app_state = AppState::new(cfg, time.clone(), internal_client, None);
 
             let store = Store::new(
                 db,
