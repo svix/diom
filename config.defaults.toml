@@ -107,7 +107,7 @@ log_index_interval_ms = 600000
 # Level to use for cluster (human-readable) debugging logs
 #
 # If not passed, will use the application-wide `log_level`
-log_level = "debug"
+# log_level =
 
 # Location to store replication commit logs. For high-throughput systems, this should be a separate volume.
 #
