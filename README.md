@@ -9,7 +9,7 @@
 <h2>
 
 ![GitHub tag](https://img.shields.io/github/tag/svix/diom.svg)
-[![Build Status](https://github.com/svix/diom/workflows/Server%20CI/badge.svg)](https://github.com/svix/diom/actions)
+[![Build Status](https://github.com/svix/diom/workflows/CI%20on%20Push%20to%20Main/badge.svg)](https://github.com/svix/diom/actions)
 [![Server Security](https://github.com/svix/diom/actions/workflows/server-security.yml/badge.svg)](https://github.com/svix/diom/actions/workflows/server-security.yml)
 [![Twitter Follow](https://img.shields.io/twitter/follow/SvixHQ?style=social)](https://twitter.com/SvixHQ)
 [![Join our slack](https://img.shields.io/badge/Slack-join%20the%20community-blue?logo=slack&style=social)](https://www.svix.com/slack/)
