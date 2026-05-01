@@ -38,6 +38,9 @@ pub struct DbMetrics {
     compaction_time: Gauge<u64>,
     outstanding_flushes: Gauge<u64>,
 
+    journal_count: Gauge<u64>,
+    journal_bytes: Gauge<u64>,
+
     apply_latency: Histogram<u64>,
     snapshot_operations: Counter<u64>,
     snapshot_size: Histogram<u64>,
@@ -100,6 +103,15 @@ impl DbMetrics {
                 .with_description("Raft snapshot build latency")
                 .with_unit("ms")
                 .build(),
+            journal_count: meter
+                .u64_gauge("diom.db.journal_segments")
+                .with_description("Total number of journal segments on disk")
+                .build(),
+            journal_bytes: meter
+                .u64_gauge("diom.db.journal_size")
+                .with_description("Total number of bytes of journals on disk")
+                .with_unit("By")
+                .build(),
             node_id_kv: node_id.into(),
         }
     }
@@ -115,6 +127,7 @@ impl DbMetrics {
         let compactions = database.compactions_completed();
         let active_compactions = database.active_compactions();
         let outstanding_flushes = database.outstanding_flushes();
+        let journal_count = database.journal_count();
 
         let context = [self.node_id_kv.clone(), db_type.into()];
         self.cache_capacity.record(cache_capacity, &context);
@@ -126,10 +139,14 @@ impl DbMetrics {
             .record(active_compactions as _, &context);
         self.outstanding_flushes
             .record(outstanding_flushes as _, &context);
+        self.journal_count.record(journal_count as _, &context);
 
         if fetch_size {
             let bytes_used = database.disk_space()?;
             self.bytes_used.record(bytes_used, &context);
+            if let Ok(journal_size) = database.journal_disk_space() {
+                self.journal_bytes.record(journal_size, &context);
+            }
         }
 
         Ok(())
