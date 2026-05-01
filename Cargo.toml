@@ -127,6 +127,7 @@ aide = { version = "=0.16.0-alpha.4", features = ["axum", "axum-json"] }
 anyerror = { version = "0.1.13", features = ["anyhow"] }
 anyhow = "1.0.56"
 assert_matches = "1.5.0"
+async-trait = "0.1.89"
 axum = { version = "0.8.8", features = ["macros", "http2"] }
 axum-extra = { version = "0.12", features = ["typed-header"] }
 base64 = "0.22"
@@ -190,7 +191,7 @@ openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "15c0
 openraft = { version = "=0.10.0-alpha.19", default-features = false, features = ["tracing-log", "anyhow", "serde", "tokio-rt"] }
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
 opentelemetry-http = "0.31.0"
-opentelemetry-otlp = { version = "0.31.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto", "reqwest-client"] }
+opentelemetry-otlp = { version = "0.31.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto"] }
 opentelemetry-semantic-conventions = "0.31.0"
 opentelemetry_sdk = { version = "0.31.0", features = ["metrics", "rt-tokio", "rt-tokio-current-thread", "experimental_metrics_periodicreader_with_async_runtime", "experimental_trace_batch_span_processor_with_async_runtime"] }
 parking_lot = { version = "0.12", features = ["arc_lock", "send_guard"] }
