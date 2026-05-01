@@ -298,6 +298,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         environment: Environment::Dev,
         bootstrap_max_wait_time: NonZeroDurationMs::from_secs(10),
         cluster: ClusterConfiguration {
+            log_level: None,
             advertised_address: None,
             listen_address: cluster_addr,
             name: "diom-test".to_string(),

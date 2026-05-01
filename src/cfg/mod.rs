@@ -219,7 +219,7 @@ pub struct ClusterConfiguration {
     #[serde(default)]
     pub snapshot_path: Option<PathBuf>,
 
-    /// Location to store logs. For high-throughput systems, this should be a separate volume.
+    /// Location to store replication commit logs. For high-throughput systems, this should be a separate volume.
     ///
     /// Defaults to a subdirectory under the persistent DB path if not passed.
     #[serde(default)]
@@ -336,7 +336,7 @@ pub struct ClusterConfiguration {
     )]
     pub startup_discovery_delay: DurationMs,
 
-    /// How often to write log indexes
+    /// How often to write commit log indexes
     ///
     /// This controls the granularity for purging of old logs, and should not be set to a value
     /// smaller than 1 second or larger than one hour
@@ -375,7 +375,7 @@ pub struct ClusterConfiguration {
     #[serde(default = "defaults::default_true")]
     pub log_sync_interval_auto: bool,
 
-    /// Should a log sync actually trigger an fsync?
+    /// Should a commit log sync actually trigger an fsync?
     ///
     /// If this is set to "buffer" and a node suffers a catastrophic failure where OS buffers
     /// are not written to disk, that node should be erased and re-snapshotted before being
@@ -410,6 +410,11 @@ pub struct ClusterConfiguration {
     /// number of commits that you generate in the time it takes to replicate a full snapshot.
     #[serde(default = "defaults::cluster_replication_lag_threshold")]
     pub replication_lag_threshold: u64,
+
+    /// Level to use for cluster (human-readable) debugging logs
+    ///
+    /// If not passed, will use the application-wide `log_level`
+    pub log_level: Option<LogLevel>,
 }
 
 impl ClusterConfiguration {
