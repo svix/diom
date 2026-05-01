@@ -186,10 +186,10 @@ pub async fn run_with_listeners(
         .unwrap();
 
     // Wait for workers to finish cleanup
-    tracing::debug!("done serving; waiting for background tasks to finish");
+    tracing::info!("done serving; waiting for background tasks to finish");
     let _ = worker_handle.await;
     let _ = interserver.await;
-    tracing::debug!("running final fsync on databases");
+    tracing::info!("running final fsync on databases");
     app_state
         .do_not_use_dbs
         .persistent
@@ -200,7 +200,7 @@ pub async fn run_with_listeners(
         .ephemeral
         .persist(fjall::PersistMode::SyncAll)
         .expect("failed to fsync ephemeral db at shutdown");
-    tracing::debug!("we're outta here!");
+    tracing::info!("shutdown complete");
 }
 
 async fn run_interserver(
@@ -220,7 +220,7 @@ async fn run_interserver(
     )
     .await;
 
-    tracing::debug!(
+    tracing::info!(
         "Inter-Server: Listening on {}",
         listener.local_addr().unwrap()
     );
@@ -245,7 +245,13 @@ async fn run_interserver(
         .await
         .unwrap();
 
-    raft.raft.shutdown().await.unwrap();
+    tracing::info!("inter-server listener shut down; shutting down raft core");
+
+    if let Err(err) = raft.raft.shutdown().await {
+        tracing::error!(?err, "error shutting down raft core");
+    }
+
+    tracing::info!("raft core shut down");
 }
 
 async fn run_internal(
