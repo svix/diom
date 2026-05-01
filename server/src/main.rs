@@ -34,6 +34,10 @@ struct Args {
     #[clap(long)]
     env_file: Option<PathBuf>,
 
+    /// Skip loading .env
+    #[clap(long, hide = true)]
+    skip_dot_env: bool,
+
     #[clap(subcommand)]
     command: Option<Commands>,
 }
@@ -138,7 +142,9 @@ async fn main() -> anyhow::Result<()> {
         dotenvy::from_path(env_file).context("loading env file")?;
     }
 
-    _ = dotenv();
+    if !args.skip_dot_env {
+        _ = dotenv();
+    }
 
     if let Some(Commands::Healthcheck { server_url }) = args.command {
         let server_url = if let Some(url) = server_url {

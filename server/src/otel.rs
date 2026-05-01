@@ -24,7 +24,9 @@ pub(crate) fn setup_tracing(
         }
 
         let level = cfg.log_level.to_string();
+        let cluster_level = cfg.cluster.log_level.unwrap_or(cfg.log_level).to_string();
         let var = [
+            format!("diom_backend::core::cluster={cluster_level}"),
             format!("diom={level}"),
             format!("fjall_utils={level}"),
             format!("tower_http={level}"),

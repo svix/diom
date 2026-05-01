@@ -70,7 +70,7 @@ codegen: default-config
 
 # Dump out config.defaults.toml and ENVIRONMENT_VARIABLES.md
 default-config:
-    env -u DIOM_ADMIN_TOKEN cargo run -- write-config config.defaults.toml
+    env -i PATH="$PATH" cargo run -- --skip-dot-env write-config config.defaults.toml
     cargo run -- describe-environment-variables ENVIRONMENT_VARIABLES.md
 
 # Run all the test commands

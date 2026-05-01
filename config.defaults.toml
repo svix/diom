@@ -98,13 +98,18 @@ heartbeat_interval_ms = 500
 # The address to listen on for replication.
 listen_address = "[::]:8625"
 
-# How often to write log indexes
+# How often to write commit log indexes
 #
 # This controls the granularity for purging of old logs, and should not be set to a value
 # smaller than 1 second or larger than one hour
 log_index_interval_ms = 600000
 
-# Location to store logs. For high-throughput systems, this should be a separate volume.
+# Level to use for cluster (human-readable) debugging logs
+#
+# If not passed, will use the application-wide `log_level`
+# log_level =
+
+# Location to store replication commit logs. For high-throughput systems, this should be a separate volume.
 #
 # Defaults to a subdirectory under the persistent DB path if not passed.
 # log_path =
@@ -130,7 +135,7 @@ log_sync_interval_commits = 0
 # and will be auto-scaled
 log_sync_interval_ms = 2
 
-# Should a log sync actually trigger an fsync?
+# Should a commit log sync actually trigger an fsync?
 #
 # If this is set to "buffer" and a node suffers a catastrophic failure where OS buffers
 # are not written to disk, that node should be erased and re-snapshotted before being
