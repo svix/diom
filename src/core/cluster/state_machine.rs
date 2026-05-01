@@ -292,10 +292,29 @@ impl Store {
         self.stores.read_arc()
     }
 
+    fn record_snapshot_metrics(
+        metrics: &DbMetrics,
+        snapshot_directory: &Path,
+    ) -> anyhow::Result<()> {
+        let mut count = 0;
+        let mut bytes = 0;
+        for item in fs_err::read_dir(snapshot_directory)? {
+            // TOCTOU: the item might not be there any more, so ignore any
+            let Ok(metadata) = item.and_then(|i| i.metadata()) else {
+                continue;
+            };
+            count += 1;
+            bytes += metadata.len();
+        }
+        metrics.record_snapshot_total(count, bytes);
+        Ok(())
+    }
+
     /// Run a background task to collect metrics from the database
     fn start_metrics(&self) {
         let stores = Arc::clone(&self.stores);
         let metrics = self.metrics.clone();
+        let snapshot_directory = self.snapshot_directory.clone();
         tokio::spawn(async move {
             let shutdown = crate::shutting_down_token();
             let mut ticker = tokio::time::interval(Duration::from_secs(10));
@@ -307,6 +326,7 @@ impl Store {
                 spawn_blocking_in_current_span({
                     let stores = Arc::clone(&stores);
                     let metrics = metrics.clone();
+                    let snapshot_directory = snapshot_directory.clone();
                     move || {
                         let guard = stores.read();
                         metrics
@@ -323,6 +343,8 @@ impl Store {
                                 should_fetch_size,
                             )
                             .warn_on_fail("error fetching ephemeral DB metrics");
+                        Self::record_snapshot_metrics(&metrics, &snapshot_directory)
+                            .warn_on_fail("error fetching snapshot metrics");
                     }
                 })
                 .await
