@@ -28,7 +28,7 @@ fmt:
 sort:
     cargo sort --no-format --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
 
-# run `vacuum` to check openapi
+# run `vacuum` to check openapi; only prints out errors
 [group('lint')]
 vacuum-openapi:
     # keep this in sync with lint-openapi.yml
@@ -36,6 +36,28 @@ vacuum-openapi:
             -v .:/work:ro \
             dshanley/vacuum lint \
             openapi.json \
+            --no-banner \
+            --errors \
+            --all-results \
+            --details \
+            --silent \
+            --no-clip \
+            --no-message \
+            --fail-severity error \
+            --ruleset .vacuum.yaml \
+            --min-score 0
+
+# run `vacuum` to check openapi, showing the details of any failures/warnings
+[group('lint')]
+vacuum-openapi-details:
+    # keep this in sync with lint-openapi.yml
+    docker run --rm \
+            -v .:/work:ro \
+            dshanley/vacuum lint \
+            openapi.json \
+            --no-banner \
+            --details \
+            --all-results \
             --fail-severity error \
             --ruleset .vacuum.yaml \
             --min-score 0
