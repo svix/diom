@@ -246,6 +246,7 @@ pub struct ServiceSpec {
 
 /// Configuration for the pod Probes (healthchecks)
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ProbesSpec {
     #[serde(default = "ProbeSpec::default_liveness")]
     pub liveness: ProbeSpec,
@@ -268,11 +269,19 @@ impl Default for ProbesSpec {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+/// Configuration for an individual probe
 pub struct ProbeSpec {
+    /// Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
     pub initial_delay_seconds: NonZeroU16,
+    /// How often (in seconds) to perform the probe.
     pub period_seconds: NonZeroU16,
+    /// Minimum consecutive failures for the probe to be considered failed after having succeeded.
     pub failure_threshold: NonZeroU16,
+    /// Minimum consecutive successes for the probe to be considered successful after having failed.
     pub success_threshold: NonZeroU16,
+    /// Number of seconds after which the probe times out.
+    pub timeout_seconds: NonZeroU16,
 }
 
 impl ProbeSpec {
@@ -282,6 +291,7 @@ impl ProbeSpec {
             period_seconds: NonZeroU16::new(5).unwrap(),
             failure_threshold: NonZeroU16::new(2).unwrap(),
             success_threshold: NonZeroU16::new(1).unwrap(),
+            timeout_seconds: NonZeroU16::new(1).unwrap(),
         }
     }
 
@@ -291,6 +301,7 @@ impl ProbeSpec {
             period_seconds: NonZeroU16::new(10).unwrap(),
             failure_threshold: NonZeroU16::new(2).unwrap(),
             success_threshold: NonZeroU16::new(1).unwrap(),
+            timeout_seconds: NonZeroU16::new(1).unwrap(),
         }
     }
 
@@ -300,6 +311,7 @@ impl ProbeSpec {
             period_seconds: NonZeroU16::new(10).unwrap(),
             failure_threshold: NonZeroU16::new(120).unwrap(),
             success_threshold: NonZeroU16::new(1).unwrap(),
+            timeout_seconds: NonZeroU16::new(1).unwrap(),
         }
     }
 
@@ -315,6 +327,7 @@ impl ProbeSpec {
             period_seconds: Some(Self::nzu16asi32(self.period_seconds)),
             failure_threshold: Some(Self::nzu16asi32(self.failure_threshold)),
             success_threshold: Some(Self::nzu16asi32(self.success_threshold)),
+            timeout_seconds: Some(Self::nzu16asi32(self.timeout_seconds)),
             ..Default::default()
         }
     }
