@@ -416,6 +416,14 @@ pub struct ClusterConfiguration {
     ///
     /// If not passed, will use the application-wide `log_level`.
     pub log_level: Option<LogLevel>,
+
+    #[serde(default)]
+    /// Store an openetelemetry context in logs, for tracing.
+    ///
+    /// This will make it possible to trace individual requests through the Raft layer, but greatly
+    /// increases the size of raft logs, and may result in confusing traces when there are multiple
+    /// nodes in a cluster.
+    pub forward_opentelemetry_context: bool,
 }
 
 impl ClusterConfiguration {

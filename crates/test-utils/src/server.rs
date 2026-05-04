@@ -325,6 +325,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             shut_down_on_go_away: true,
             replication_lag_threshold: 1_000_000,
             send_snapshot_timeout: NonZeroDurationMs::from_secs(3).unwrap(),
+            forward_opentelemetry_context: false,
         },
         background_cleanup_interval: NonZeroDurationMs::from_secs(10).unwrap(),
         bootstrap_cfg: None,
