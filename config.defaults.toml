@@ -104,13 +104,14 @@ listen_address = "[::]:8625"
 # smaller than 1 second or larger than one hour
 log_index_interval_ms = 600000
 
-# Level to use for cluster (human-readable) debugging logs
+# Level to use for cluster (human-readable) debugging logs.
 #
-# If not passed, will use the application-wide `log_level`
+# If not passed, will use the application-wide `log_level`.
 # log_level =
 
-# Location to store replication commit logs. For high-throughput systems, this should be a separate volume.
+# Location to store replication commit logs.
 #
+# For high-throughput systems, this should be a separate volume.
 # Defaults to a subdirectory under the persistent DB path if not passed.
 # log_path =
 
@@ -161,7 +162,7 @@ replication_lag_threshold = 50000
 # This should be set to approximately 2X the RTT of your farthest-apart nodes.
 replication_request_timeout_ms = 5000
 
-# Shared secret for intra-cluster communications
+# Shared secret for intra-cluster communications.
 #
 # This must be the same on all nodes.
 # secret =
@@ -175,10 +176,10 @@ seed_nodes = []
 # and must not be less than `cluster_election_timeout_max`.
 send_snapshot_ms = 30000
 
-# Trigger a background snapshot after this many milliseconds
+# Trigger a background snapshot after this many milliseconds.
 snapshot_after_ms = 900000
 
-# Trigger a background snapshot after this many writes
+# Trigger a background snapshot after this many writes.
 # snapshot_after_writes =
 
 # Location to store snapshots.

@@ -219,13 +219,14 @@ pub struct ClusterConfiguration {
     #[serde(default)]
     pub snapshot_path: Option<PathBuf>,
 
-    /// Location to store replication commit logs. For high-throughput systems, this should be a separate volume.
+    /// Location to store replication commit logs.
     ///
+    /// For high-throughput systems, this should be a separate volume.
     /// Defaults to a subdirectory under the persistent DB path if not passed.
     #[serde(default)]
     pub log_path: Option<PathBuf>,
 
-    /// Shared secret for intra-cluster communications
+    /// Shared secret for intra-cluster communications.
     ///
     /// This must be the same on all nodes.
     #[serde(default)]
@@ -383,19 +384,19 @@ pub struct ClusterConfiguration {
     #[serde(default = "SyncMode::sync")]
     pub log_sync_mode: SyncMode,
 
-    /// Trigger a background snapshot after this many writes
+    /// Trigger a background snapshot after this many writes.
     pub snapshot_after_writes: Option<u32>,
 
-    /// Trigger a background snapshot after this many milliseconds
+    /// Trigger a background snapshot after this many milliseconds.
     #[serde(
         rename = "snapshot_after_ms",
         default = "defaults::cluster_snapshot_after_time"
     )]
     pub snapshot_after_time: Option<NonZeroDurationMs>,
 
-    /// Shut down the process when the it is evicted from the cluster
+    /// Shut down the process when the it is evicted from the cluster.
     ///
-    /// This should be true unless you are testing internal details of the replication system
+    /// This should be true unless you are testing internal details of the replication system.
     #[serde(default = "defaults::default_true")]
     #[env_overridable(skip)]
     #[dumpable_config(skip)]
@@ -411,9 +412,9 @@ pub struct ClusterConfiguration {
     #[serde(default = "defaults::cluster_replication_lag_threshold")]
     pub replication_lag_threshold: u64,
 
-    /// Level to use for cluster (human-readable) debugging logs
+    /// Level to use for cluster (human-readable) debugging logs.
     ///
-    /// If not passed, will use the application-wide `log_level`
+    /// If not passed, will use the application-wide `log_level`.
     pub log_level: Option<LogLevel>,
 }
 
