@@ -150,4 +150,4 @@ Many helpful commands are provided in the [justfile](.justfile) which can be inv
 
 ### Making changes
 
-Changes should be done in branches prefixed with your username (e.g., `johnsmith/my-cool-feature`) and should have commit messages that describe the change. Prior to sending any PRs, commits must pass `prek`, `just lint`, and `just test`. Any changes that affect the client libraries / CLI will require running `just codegen` to rebuild all client libraries.
+Changes should be done in branches prefixed with your username (e.g., `johnsmith/my-cool-feature`) and should have commit messages that describe the change. Prior to sending any PRs, commits must pass `prek`, `just lint`, and `just test`. Any changes that affect the client libraries / CLI will require running `just generate` to rebuild all client libraries and other checked-in assets.
