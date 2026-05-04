@@ -24,10 +24,10 @@ pub enum IdempotencyNamespaceCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"name\": \"some_namespace\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"name\": \"some_namespace\",
   \"created\": 1234567890123,
@@ -46,10 +46,10 @@ pub enum IdempotencyNamespaceCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"name\": \"some_namespace\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"name\": \"some_namespace\",
   \"created\": 1234567890123,

@@ -26,11 +26,11 @@ pub enum CacheCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"ttl_ms\": 60000
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     Set {
@@ -47,11 +47,11 @@ pub enum CacheCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"consistency\": \"strong\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"expiry\": 1234567890123,
   \"value\": \"...\"
@@ -69,10 +69,10 @@ pub enum CacheCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"success\": true
 }\n")]

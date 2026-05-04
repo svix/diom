@@ -67,7 +67,7 @@ use super::{
 {%- endmacro -%}
 
 {%- macro render_schema_example(title, schema, api) -%}
-\x1b[1;4m{{ title }}:\x1b[0m
+{{ title }}:
 {
 {%- for field in schema.fields | selectattr("positional", "false") %}
   \"{{ field.name }}\": {% if field.example is defined %}\"{{ field.example }}\"{% else %}{{ get_type_example(field, api) }}{% endif %}{{ "," if not loop.last else "" }}

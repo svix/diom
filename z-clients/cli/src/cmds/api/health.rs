@@ -24,7 +24,7 @@ pub enum HealthCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample response:\x1b[0m
+    #[command(after_help = "Example response:
 {
   \"ok\": true
 }\n")]

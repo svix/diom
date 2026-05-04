@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased Changes
+* CLI: Remove 'underline bold' ansi escape code from schema examples on `--help` messages
 
 ### Breaking Changes
 * Libs/Rust: Revamp `ErrorKind` and error type methods

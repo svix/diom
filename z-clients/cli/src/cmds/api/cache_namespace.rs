@@ -24,11 +24,11 @@ pub enum CacheNamespaceCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"name\": \"some_namespace\",
   \"eviction_policy\": \"no-eviction\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"name\": \"some_namespace\",
   \"eviction_policy\": \"no-eviction\",
@@ -47,10 +47,10 @@ pub enum CacheNamespaceCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"name\": \"some_namespace\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"name\": \"some_namespace\",
   \"eviction_policy\": \"no-eviction\",

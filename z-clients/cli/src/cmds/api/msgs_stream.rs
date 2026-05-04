@@ -27,14 +27,14 @@ pub enum MsgsStreamCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"batch_size\": 123,
   \"lease_duration_ms\": 60000,
   \"default_starting_position\": \"earliest\",
   \"batch_wait_ms\": 60000
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"msgs\": [{\"offset\": 123, \"topic\": \"...\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
 }\n")]
@@ -55,11 +55,11 @@ pub enum MsgsStreamCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"offset\": 123
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     Commit {
@@ -82,13 +82,13 @@ pub enum MsgsStreamCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"offset\": 123,
   \"position\": \"earliest\",
   \"timestamp\": 1234567890123
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     Seek {

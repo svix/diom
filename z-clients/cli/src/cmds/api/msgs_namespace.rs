@@ -24,10 +24,10 @@ pub enum MsgsNamespaceCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"retention\": {\"period_ms\": 60000}
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"name\": \"some_namespace\",
   \"retention\": {\"period_ms\": 60000},
@@ -48,9 +48,9 @@ pub enum MsgsNamespaceCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"name\": \"some_namespace\",
   \"retention\": {\"period_ms\": 60000},
