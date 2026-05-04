@@ -26,13 +26,13 @@ pub enum RateLimitCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
   \"tokens\": 123,
   \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"allowed\": true,
   \"remaining\": 123,
@@ -50,12 +50,12 @@ pub enum RateLimitCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
   \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"remaining\": 123,
   \"retry_after_ms\": 60000
@@ -72,12 +72,12 @@ pub enum RateLimitCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
   \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     Reset {

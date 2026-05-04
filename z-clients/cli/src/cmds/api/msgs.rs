@@ -29,12 +29,12 @@ pub enum MsgsCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"msgs\": [{\"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"key\": \"...\", \"delay_ms\": 60000}],
   \"idempotency_key\": \"...\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"topics\": [{\"topic\": \"...\", \"start_offset\": 123, \"offset\": 123}]
 }\n")]

@@ -28,13 +28,13 @@ pub enum MsgsQueueCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"batch_size\": 123,
   \"lease_duration_ms\": 60000,
   \"batch_wait_ms\": 60000
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"msgs\": [{\"msg_id\": \"...\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
 }\n")]
@@ -54,11 +54,11 @@ pub enum MsgsQueueCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"msg_ids\": [\"...\"]
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     Ack {
@@ -78,12 +78,12 @@ pub enum MsgsQueueCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"msg_ids\": [\"...\"],
   \"lease_duration_ms\": 60000
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     ExtendLease {
@@ -103,12 +103,12 @@ pub enum MsgsQueueCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"retry_schedule\": [123],
   \"dlq_topic\": \"...\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"retry_schedule\": [123],
   \"dlq_topic\": \"...\"
@@ -130,11 +130,11 @@ pub enum MsgsQueueCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"msg_ids\": [\"...\"]
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     Nack {
@@ -151,10 +151,10 @@ pub enum MsgsQueueCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     RedriveDlq {

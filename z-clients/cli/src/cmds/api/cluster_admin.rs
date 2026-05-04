@@ -24,7 +24,7 @@ pub enum ClusterAdminCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample response:\x1b[0m
+    #[command(after_help = "Example response:
 {
   \"cluster_id\": \"...\",
   \"cluster_name\": \"...\",
@@ -47,9 +47,9 @@ pub enum ClusterAdminCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"cluster_id\": \"...\"
 }\n")]
@@ -68,10 +68,10 @@ pub enum ClusterAdminCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"node_id\": \"...\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"node_id\": \"...\"
 }\n")]
@@ -87,9 +87,9 @@ pub enum ClusterAdminCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"snapshot_time\": 1234567890123,
   \"snapshot_log_index\": 123,

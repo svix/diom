@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased Changes
+* CLI: Remove underlining from schema examples on `--help` messages due to portability issues
 
 ### Breaking Changes
 * Libs/Rust: Revamp `ErrorKind` and error type methods

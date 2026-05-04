@@ -26,13 +26,13 @@ pub enum KvCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"ttl_ms\": 60000,
   \"behavior\": \"upsert\",
   \"version\": 123
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"version\": 123
 }\n")]
@@ -50,11 +50,11 @@ pub enum KvCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"consistency\": \"strong\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"expiry\": 1234567890123,
   \"value\": \"...\",
@@ -73,11 +73,11 @@ pub enum KvCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
   \"version\": 123
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"success\": true
 }\n")]

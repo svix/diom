@@ -24,13 +24,13 @@ pub enum AdminAuthTokenCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"name\": \"...\",
   \"role\": \"...\",
   \"expiry_ms\": 60000,
   \"enabled\": true
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"id\": \"...\",
   \"token\": \"...\",
@@ -49,11 +49,11 @@ pub enum AdminAuthTokenCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"id\": \"...\",
   \"expiry_ms\": 60000
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     Expire {
@@ -68,10 +68,10 @@ pub enum AdminAuthTokenCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"id\": \"...\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"id\": \"...\",
   \"token\": \"...\",
@@ -90,10 +90,10 @@ pub enum AdminAuthTokenCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"id\": \"...\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"success\": true
 }\n")]
@@ -109,11 +109,11 @@ pub enum AdminAuthTokenCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"limit\": 123,
   \"iterator\": \"...\"
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"data\": [{\"id\": \"...\", \"name\": \"...\", \"created\": 1234567890123, \"updated\": 1234567890123, \"expiry\": 1234567890123, \"role\": \"...\", \"enabled\": true}],
   \"iterator\": \"...\",
@@ -132,13 +132,13 @@ pub enum AdminAuthTokenCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
   \"id\": \"...\",
   \"name\": \"...\",
   \"expiry_ms\": 60000,
   \"enabled\": true
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
 }\n")]
     Update {
@@ -153,9 +153,9 @@ pub enum AdminAuthTokenCommands {
             "\n",
             "{all-args}",
         ))]
-    #[command(after_help = "\x1b[1;4mExample body:\x1b[0m
+    #[command(after_help = "Example body:
 {
-}\n\n\x1b[1;4mExample response:\x1b[0m
+}\n\nExample response:
 {
   \"role\": \"...\"
 }\n")]
