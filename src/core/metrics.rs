@@ -45,6 +45,8 @@ pub struct DbMetrics {
     snapshot_operations: Counter<u64>,
     snapshot_size: Histogram<u64>,
     snapshot_latency: Histogram<u64>,
+    snapshot_total_size: Gauge<u64>,
+    snapshot_count: Gauge<u64>,
 
     node_id_kv: KeyValue,
 }
@@ -112,6 +114,15 @@ impl DbMetrics {
                 .with_description("Total number of bytes of journals on disk")
                 .with_unit("By")
                 .build(),
+            snapshot_total_size: meter
+                .u64_gauge("diom.raft.on_disk_snapshot_total_size")
+                .with_description("Total size of Raft snapshots on disk")
+                .with_unit("By")
+                .build(),
+            snapshot_count: meter
+                .u64_gauge("diom.raft.on_disk_snapshot_count")
+                .with_description("Number of Raft snapshots on disk")
+                .build(),
             node_id_kv: node_id.into(),
         }
     }
@@ -164,6 +175,12 @@ impl DbMetrics {
         self.snapshot_size.record(bytes, context);
         self.snapshot_latency
             .record(duration.as_millis() as _, context);
+    }
+
+    pub fn record_snapshot_total(&self, count: usize, bytes: u64) {
+        let context = std::slice::from_ref(&self.node_id_kv);
+        self.snapshot_count.record(count as _, context);
+        self.snapshot_total_size.record(bytes, context);
     }
 }
 
