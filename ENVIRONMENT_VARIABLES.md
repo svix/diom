@@ -14,6 +14,7 @@ The diom server accepts the following environment variables:
 | `$DIOM_CLUSTER_DISCOVERY_TIMEOUT_MS` | Timeout for the entire discovery process |
 | `$DIOM_CLUSTER_ELECTION_TIMEOUT_MAX_MS` | The minimum time to let an election run for.<br/><br/>This should be set to at least 5x the RTT of your farthest-apart nodes and must not be less than `cluster_election_timeout_max`. |
 | `$DIOM_CLUSTER_ELECTION_TIMEOUT_MIN_MS` | The minimum time to let an election run for.<br/><br/>This should be set to at least 4x the RTT of your farthest-apart nodes, and must not be less than `heartbeat_interval_ms`. |
+| `$DIOM_CLUSTER_FORWARD_OPENTELEMETRY_CONTEXT` | Store an openetelemetry context in logs, for tracing.<br/><br/>This will make it possible to trace individual requests through the Raft layer, but greatly increases the size of raft logs, and may result in confusing traces when there are multiple nodes in a cluster. |
 | `$DIOM_CLUSTER_HEARTBEAT_INTERVAL_MS` | How often to send heartbeats.<br/><br/>This controls how fast lost leaders can be detected. Must not be less than `replication_request_timeout`. |
 | `$DIOM_CLUSTER_LISTEN_ADDRESS` | The address to listen on for replication. |
 | `$DIOM_CLUSTER_LOG_INDEX_INTERVAL_MS` | How often to write commit log indexes<br/><br/>This controls the granularity for purging of old logs, and should not be set to a value smaller than 1 second or larger than one hour |

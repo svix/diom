@@ -3,14 +3,15 @@
 listen_address = "0.0.0.0:8624"
 log_level="info"
 environment = "dev"
-
-opentelemetry_metrics_use_http=true
-opentelemetry_service_name="diom"
-opentelemetry_address="http://localhost:4317"
-opentelemetry_metrics_address="http://localhost:9090/api/v1/otlp/v1/metrics"
-opentelemetry_sample_ratio=0.001
 # for the primary data, write to the OS but do not fsync
 sync_mode = "buffer"
+
+[opentelemetry]
+address = "http://localhost:4317"
+metrics_address = "http://localhost:9090/api/v1/otlp/v1/metrics"
+metrics_protocol = "http"
+service_name = "diom"
+sample_ratio=0.001
 
 [cluster]
 # for the logs, also don't fsync; just flush to the OS every commit

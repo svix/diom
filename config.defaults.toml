@@ -89,6 +89,13 @@ election_timeout_max_ms = 3500
 # and must not be less than `heartbeat_interval_ms`.
 election_timeout_min_ms = 1500
 
+# Store an openetelemetry context in logs, for tracing.
+#
+# This will make it possible to trace individual requests through the Raft layer, but greatly
+# increases the size of raft logs, and may result in confusing traces when there are multiple
+# nodes in a cluster.
+forward_opentelemetry_context = false
+
 # How often to send heartbeats.
 #
 # This controls how fast lost leaders can be detected.
