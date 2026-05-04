@@ -180,6 +180,7 @@ fn deserialize_keyspace<R: Read + Seek>(
         } else {
             keyspace.clear()?;
         }
+        db.persist(fjall::PersistMode::SyncAll)?;
     }
     let mut key_buf = vec![];
     let mut value_buf = vec![];
@@ -202,7 +203,9 @@ fn deserialize_keyspace<R: Read + Seek>(
             i.write(&key_buf, &value_buf)?;
         }
         i.finish()?;
+        db.persist(fjall::PersistMode::Buffer)?;
     }
+    db.persist(fjall::PersistMode::SyncAll)?;
     Ok(())
 }
 
