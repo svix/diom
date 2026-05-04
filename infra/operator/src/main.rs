@@ -1,5 +1,7 @@
+use diom_backend::cfg::{LogFormat, build_fmt_layer};
 use diom_operator::crd::DiomCluster;
 use kube::Client;
+use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -16,8 +18,14 @@ async fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+    let log_format = std::env::var("LOG_FORMAT")
+        .ok()
+        .and_then(|s| s.parse::<LogFormat>().ok())
+        .unwrap_or_default();
+
+    tracing_subscriber::registry()
+        .with(build_fmt_layer(log_format))
+        .with(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
     let client = Client::try_default().await?;
