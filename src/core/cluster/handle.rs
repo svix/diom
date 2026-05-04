@@ -374,11 +374,11 @@ impl RaftState {
     {
         let inner: Request = op.into().into();
         let now = self.time.update_now();
-        let ctx = if self.cfg.cluster.forward_opentelemetry_context {
-            Some(opentelemetry::Context::current().into())
-        } else {
-            None
-        };
+        let ctx = self
+            .cfg
+            .cluster
+            .forward_opentelemetry_context
+            .then(|| opentelemetry::Context::current().into());
         let request = RequestWithContext::new(inner, now.into(), ctx);
         let (response, _) = self.client_write_inner(request, DEFAULT_HOP_TTL).await?;
         let module_response = <O::Response as OperationResponse>::ResponseParent::try_from(
@@ -824,11 +824,11 @@ impl diom_operations::OperationWriterBase for RaftState {
         request: Self::Request,
     ) -> diom_operations::BackgroundResult<Self::Response> {
         let now = self.time.update_now();
-        let ctx = if self.cfg.cluster.forward_opentelemetry_context {
-            Some(opentelemetry::Context::current().into())
-        } else {
-            None
-        };
+        let ctx = self
+            .cfg
+            .cluster
+            .forward_opentelemetry_context
+            .then(|| opentelemetry::Context::current().into());
         let request = RequestWithContext::new(request, now.into(), ctx);
         let request = Arc::new(request);
         match self.raft.client_write(request).await {
