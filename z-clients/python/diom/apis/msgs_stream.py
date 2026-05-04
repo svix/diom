@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase, parse_response
+from ..internal.api_common import ApiBase
 from ..models import (
     MsgStreamCommitIn,
     MsgStreamCommitOut,
@@ -36,12 +36,12 @@ class MsgsStreamAsync(ApiBase):
             batch_wait=msg_stream_receive_in.batch_wait,
         ).model_dump(exclude_none=True)
 
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.stream.receive",
             body=body,
+            response_type=MsgStreamReceiveOut,
         )
-        return parse_response(response, MsgStreamReceiveOut)
 
     async def commit(
         self,
@@ -60,12 +60,12 @@ class MsgsStreamAsync(ApiBase):
             offset=msg_stream_commit_in.offset,
         ).model_dump(exclude_none=True)
 
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.stream.commit",
             body=body,
+            response_type=MsgStreamCommitOut,
         )
-        return parse_response(response, MsgStreamCommitOut)
 
     async def seek(
         self,
@@ -89,12 +89,12 @@ class MsgsStreamAsync(ApiBase):
             timestamp=msg_stream_seek_in.timestamp,
         ).model_dump(exclude_none=True)
 
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.stream.seek",
             body=body,
+            response_type=MsgStreamSeekOut,
         )
-        return parse_response(response, MsgStreamSeekOut)
 
 
 class MsgsStream(ApiBase):
@@ -118,12 +118,12 @@ class MsgsStream(ApiBase):
             batch_wait=msg_stream_receive_in.batch_wait,
         ).model_dump(exclude_none=True)
 
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1.msgs.stream.receive",
             body=body,
+            response_type=MsgStreamReceiveOut,
         )
-        return parse_response(response, MsgStreamReceiveOut)
 
     def commit(
         self,
@@ -142,12 +142,12 @@ class MsgsStream(ApiBase):
             offset=msg_stream_commit_in.offset,
         ).model_dump(exclude_none=True)
 
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1.msgs.stream.commit",
             body=body,
+            response_type=MsgStreamCommitOut,
         )
-        return parse_response(response, MsgStreamCommitOut)
 
     def seek(
         self,
@@ -171,9 +171,9 @@ class MsgsStream(ApiBase):
             timestamp=msg_stream_seek_in.timestamp,
         ).model_dump(exclude_none=True)
 
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1.msgs.stream.seek",
             body=body,
+            response_type=MsgStreamSeekOut,
         )
-        return parse_response(response, MsgStreamSeekOut)

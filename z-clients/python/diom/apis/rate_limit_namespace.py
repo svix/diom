@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase, parse_response
+from ..internal.api_common import ApiBase
 from ..models import (
     RateLimitConfigureNamespaceIn,
     RateLimitConfigureNamespaceOut,
@@ -17,12 +17,12 @@ class RateLimitNamespaceAsync(ApiBase):
         """Configure rate limiter namespace"""
         body = rate_limit_configure_namespace_in.model_dump(exclude_none=True)
 
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1.rate-limit.namespace.configure",
             body=body,
+            response_type=RateLimitConfigureNamespaceOut,
         )
-        return parse_response(response, RateLimitConfigureNamespaceOut)
 
     async def get(
         self,
@@ -31,12 +31,12 @@ class RateLimitNamespaceAsync(ApiBase):
         """Get rate limiter namespace"""
         body = rate_limit_get_namespace_in.model_dump(exclude_none=True)
 
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1.rate-limit.namespace.get",
             body=body,
+            response_type=RateLimitGetNamespaceOut,
         )
-        return parse_response(response, RateLimitGetNamespaceOut)
 
 
 class RateLimitNamespace(ApiBase):
@@ -47,12 +47,12 @@ class RateLimitNamespace(ApiBase):
         """Configure rate limiter namespace"""
         body = rate_limit_configure_namespace_in.model_dump(exclude_none=True)
 
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1.rate-limit.namespace.configure",
             body=body,
+            response_type=RateLimitConfigureNamespaceOut,
         )
-        return parse_response(response, RateLimitConfigureNamespaceOut)
 
     def get(
         self,
@@ -61,9 +61,9 @@ class RateLimitNamespace(ApiBase):
         """Get rate limiter namespace"""
         body = rate_limit_get_namespace_in.model_dump(exclude_none=True)
 
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1.rate-limit.namespace.get",
             body=body,
+            response_type=RateLimitGetNamespaceOut,
         )
-        return parse_response(response, RateLimitGetNamespaceOut)

@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase, parse_response
+from ..internal.api_common import ApiBase
 from ..models import (
     CacheConfigureNamespaceIn,
     CacheConfigureNamespaceOut,
@@ -17,12 +17,12 @@ class CacheNamespaceAsync(ApiBase):
         """Configure cache namespace"""
         body = cache_configure_namespace_in.model_dump(exclude_none=True)
 
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1.cache.namespace.configure",
             body=body,
+            response_type=CacheConfigureNamespaceOut,
         )
-        return parse_response(response, CacheConfigureNamespaceOut)
 
     async def get(
         self,
@@ -31,12 +31,12 @@ class CacheNamespaceAsync(ApiBase):
         """Get cache namespace"""
         body = cache_get_namespace_in.model_dump(exclude_none=True)
 
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1.cache.namespace.get",
             body=body,
+            response_type=CacheGetNamespaceOut,
         )
-        return parse_response(response, CacheGetNamespaceOut)
 
 
 class CacheNamespace(ApiBase):
@@ -47,12 +47,12 @@ class CacheNamespace(ApiBase):
         """Configure cache namespace"""
         body = cache_configure_namespace_in.model_dump(exclude_none=True)
 
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1.cache.namespace.configure",
             body=body,
+            response_type=CacheConfigureNamespaceOut,
         )
-        return parse_response(response, CacheConfigureNamespaceOut)
 
     def get(
         self,
@@ -61,9 +61,9 @@ class CacheNamespace(ApiBase):
         """Get cache namespace"""
         body = cache_get_namespace_in.model_dump(exclude_none=True)
 
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1.cache.namespace.get",
             body=body,
+            response_type=CacheGetNamespaceOut,
         )
-        return parse_response(response, CacheGetNamespaceOut)

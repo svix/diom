@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase, parse_response
+from ..internal.api_common import ApiBase
 from ..models import (
     MsgNamespaceConfigureIn,
     MsgNamespaceConfigureOut,
@@ -24,12 +24,12 @@ class MsgsNamespaceAsync(ApiBase):
             retention=msg_namespace_configure_in.retention,
         ).model_dump(exclude_none=True)
 
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.namespace.configure",
             body=body,
+            response_type=MsgNamespaceConfigureOut,
         )
-        return parse_response(response, MsgNamespaceConfigureOut)
 
     async def get(
         self,
@@ -41,12 +41,12 @@ class MsgsNamespaceAsync(ApiBase):
             name=name,
         ).model_dump(exclude_none=True)
 
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.namespace.get",
             body=body,
+            response_type=MsgNamespaceGetOut,
         )
-        return parse_response(response, MsgNamespaceGetOut)
 
 
 class MsgsNamespace(ApiBase):
@@ -61,12 +61,12 @@ class MsgsNamespace(ApiBase):
             retention=msg_namespace_configure_in.retention,
         ).model_dump(exclude_none=True)
 
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1.msgs.namespace.configure",
             body=body,
+            response_type=MsgNamespaceConfigureOut,
         )
-        return parse_response(response, MsgNamespaceConfigureOut)
 
     def get(
         self,
@@ -78,9 +78,9 @@ class MsgsNamespace(ApiBase):
             name=name,
         ).model_dump(exclude_none=True)
 
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1.msgs.namespace.get",
             body=body,
+            response_type=MsgNamespaceGetOut,
         )
-        return parse_response(response, MsgNamespaceGetOut)
