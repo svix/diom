@@ -390,7 +390,7 @@ async fn flush_worker(
         .instrument(tracing::info_span!("logs:flush_worker"))
         .await;
 
-        if autoscale_duration && synced {
+        if autoscale_duration && synced && commits_before_fsync != 1 {
             let new_estimate = duration_estimator.estimate();
             if new_estimate < Duration::from_micros(1) {
                 tracing::debug!(?new_estimate, "ignoring obviously bogus fsync time")
