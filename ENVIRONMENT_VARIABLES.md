@@ -17,8 +17,8 @@ The diom server accepts the following environment variables:
 | `$DIOM_CLUSTER_HEARTBEAT_INTERVAL_MS` | How often to send heartbeats.<br/><br/>This controls how fast lost leaders can be detected. Must not be less than `replication_request_timeout`. |
 | `$DIOM_CLUSTER_LISTEN_ADDRESS` | The address to listen on for replication. |
 | `$DIOM_CLUSTER_LOG_INDEX_INTERVAL_MS` | How often to write commit log indexes<br/><br/>This controls the granularity for purging of old logs, and should not be set to a value smaller than 1 second or larger than one hour |
-| `$DIOM_CLUSTER_LOG_LEVEL` | Level to use for cluster (human-readable) debugging logs<br/><br/>If not passed, will use the application-wide `log_level` |
-| `$DIOM_CLUSTER_LOG_PATH` | Location to store replication commit logs. For high-throughput systems, this should be a separate volume.<br/><br/>Defaults to a subdirectory under the persistent DB path if not passed. |
+| `$DIOM_CLUSTER_LOG_LEVEL` | Level to use for cluster (human-readable) debugging logs.<br/><br/>If not passed, will use the application-wide `log_level`. |
+| `$DIOM_CLUSTER_LOG_PATH` | Location to store replication commit logs.<br/><br/>For high-throughput systems, this should be a separate volume. Defaults to a subdirectory under the persistent DB path if not passed. |
 | `$DIOM_CLUSTER_LOG_SYNC_INTERVAL_AUTO` | Automatically attempt to determine the log sync interval from observed fsync timings |
 | `$DIOM_CLUSTER_LOG_SYNC_INTERVAL_COMMITS` | Interval (in transactions) between fsyncing the commit log.<br/><br/>This can be used to force transactions to fsync logs more often than the default `log_sync_interval_ms` timer. If `log_sync_mode` is set to "buffer", it's reasonable to set this value to `1` to flush to the OS buffer on every log.<br/><br/>If this is set to 0, only the interval timer will be used<br/><br/>If this is set to a value higher than 1 and the interval timer is long, then single-threaded clients (including bootstrap) will be extremely slow. |
 | `$DIOM_CLUSTER_LOG_SYNC_INTERVAL_DURATION_MS` | Interval (in milliseconds) between fsyncing the commit log.<br/><br/>If `log_sync_interval_auto` is set to true, this is just the initial estimate and will be auto-scaled |
@@ -26,11 +26,11 @@ The diom server accepts the following environment variables:
 | `$DIOM_CLUSTER_NAME` | Human-facing name for this cluster.<br/><br/>Only used in discovery and debugging. |
 | `$DIOM_CLUSTER_REPLICATION_LAG_THRESHOLD` | How many commits behind must the current node be to be considered "lagging" and eligible for re-snapshotting?<br/><br/>The ideal value here depends both on your data-set size and on your average write-rate. If your data is large, then setting this value too small can mean that a snapshot can never catch up because it'll take too long to replicate. Typically this should be around twice the number of commits that you generate in the time it takes to replicate a full snapshot. |
 | `$DIOM_CLUSTER_REPLICATION_REQUEST_TIMEOUT_MS` | Timeout for replication requests.<br/><br/>This should be set to approximately 2X the RTT of your farthest-apart nodes. |
-| `$DIOM_CLUSTER_SECRET` | Shared secret for intra-cluster communications<br/><br/>This must be the same on all nodes. |
+| `$DIOM_CLUSTER_SECRET` | Shared secret for intra-cluster communications.<br/><br/>This must be the same on all nodes. |
 | `$DIOM_CLUSTER_SEED_NODES` | Other nodes that we should attempt to join a cluster with at boot time. |
 | `$DIOM_CLUSTER_SEND_SNAPSHOT_TIMEOUT_MS` | The minimum time to let an election run for.<br/><br/>This should be set to at least 5x the RTT of your farthest-apart nodes and must not be less than `cluster_election_timeout_max`. |
-| `$DIOM_CLUSTER_SNAPSHOT_AFTER_TIME_MS` | Trigger a background snapshot after this many milliseconds |
-| `$DIOM_CLUSTER_SNAPSHOT_AFTER_WRITES` | Trigger a background snapshot after this many writes |
+| `$DIOM_CLUSTER_SNAPSHOT_AFTER_TIME_MS` | Trigger a background snapshot after this many milliseconds. |
+| `$DIOM_CLUSTER_SNAPSHOT_AFTER_WRITES` | Trigger a background snapshot after this many writes. |
 | `$DIOM_CLUSTER_SNAPSHOT_PATH` | Location to store snapshots.<br/><br/>This volume must have at least as much space as the persistent DB path and ephemeral DB path combined. Defaults to a subdirectory under the persistent DB path if not passed. |
 | `$DIOM_ENVIRONMENT` | The environment (dev, staging, or prod) that the server is running in. |
 | `$DIOM_EPHEMERAL_DB_CACHE_SIZE` | Amount of memory to reserve for the database layer's caches for this database type.<br/><br/>Can be specified as a bare value of bytes (e.g., 1024000), a unit-ed amount (e.g., 1024MiB), or a percentage (e.g., 20%), which will be applied against the current cgroup limit if present and the total system memory otherwise |
