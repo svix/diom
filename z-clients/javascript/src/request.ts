@@ -1,6 +1,6 @@
 import { Packr } from "msgpackr";
-import { ApiException, type XOR } from "./util";
-import type { HttpErrorOut, HTTPValidationError } from "./HttpErrors";
+import type { XOR } from "./util";
+import { ConnectionError, type DiomError, type ErrorBody, makeErrorFromResponse, OtherError } from "./error";
 import type { DiomOptions } from "./options";
 
 export const LIB_VERSION = "0.2.3";
@@ -88,8 +88,6 @@ export function makeRequestContext(token: string, options: DiomOptions) {
   };
 }
 
-type QueryParameter = string | boolean | number | Date | string[] | null | undefined;
-
 export class DiomRequest {
   constructor(
     private readonly method: HttpMethod,
@@ -97,52 +95,6 @@ export class DiomRequest {
   ) { }
 
   private body?: BodyInit;
-  private queryParams: Record<string, string> = {};
-  private headerParams: Record<string, string> = {};
-
-  public setPathParam(name: string, value: string) {
-    const newPath = this.path.replace(`{${name}}`, encodeURIComponent(value));
-    if (this.path === newPath) {
-      throw new Error(`path parameter ${name} not found`);
-    }
-    this.path = newPath;
-  }
-
-  public setQueryParams(params: { [name: string]: QueryParameter }) {
-    for (const [name, value] of Object.entries(params)) {
-      this.setQueryParam(name, value);
-    }
-  }
-
-  public setQueryParam(name: string, value: QueryParameter) {
-    if (value === undefined || value === null) {
-      return;
-    }
-
-    if (typeof value === "string") {
-      this.queryParams[name] = value;
-    } else if (typeof value === "boolean" || typeof value === "number") {
-      this.queryParams[name] = value.toString();
-    } else if (value instanceof Date) {
-      this.queryParams[name] = value.toISOString();
-    } else if (Array.isArray(value)) {
-      if (value.length > 0) {
-        this.queryParams[name] = value.join(",");
-      }
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const _assert_unreachable: never = value;
-      throw new Error(`query parameter ${name} has unsupported type`);
-    }
-  }
-
-  public setHeaderParam(name: string, value?: string) {
-    if (value === undefined) {
-      return;
-    }
-
-    this.headerParams[name] = value;
-  }
 
   // biome-ignore lint/suspicious/noExplicitAny: intentional any
   public setBody(value: any) {
@@ -163,84 +115,102 @@ export class DiomRequest {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     parseResponseBody: (decoded: any) => R
   ): Promise<R> {
-    const response = await this.sendInner(ctx);
+    const operationId = this.operationId();
+    const response = await this.sendInner(ctx, operationId);
     if (response.status === 204) {
       return <R>null;
     }
-    const raw = new Uint8Array(await response.arrayBuffer());
-    const decoded = decodeMsgpackBody(raw);
+    const decoded = await readMsgpackResponse(response, operationId);
     return parseResponseBody(decoded);
   }
 
   /** Same as `send`, but the response body is discarded, not parsed. */
   public async sendNoResponseBody(ctx: DiomRequestContext): Promise<void> {
-    await this.sendInner(ctx);
+    await this.sendInner(ctx, this.operationId());
   }
 
-  private async sendInner(ctx: DiomRequestContext): Promise<Response> {
-    const url = new URL(ctx.baseUrl + this.path);
-    for (const [name, value] of Object.entries(this.queryParams)) {
-      url.searchParams.set(name, value);
+  private operationId(): string {
+    if (this.path.startsWith("/api/")) {
+      return this.path.substring("/api/".length);
+    } else {
+      console.error("request path must begin with /api/");
+      return "[ERROR]";
     }
+  }
 
+  private async sendInner(ctx: DiomRequestContext, operationId: string): Promise<Response> {
+    const url = new URL(ctx.baseUrl + this.path);
     const randomId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
 
-    if (this.body != null) {
-      this.headerParams["content-type"] = APPLICATION_MSGPACK;
-    }
     // Cloudflare Workers fail if the credentials option is used in a fetch call.
     // This work around that. Source:
     // https://github.com/cloudflare/workers-sdk/issues/2514#issuecomment-21.85.0014
     const isCredentialsSupported = "credentials" in Request.prototype;
 
-    const response = await sendWithRetry(
-      url,
-      {
-        method: this.method.toString(),
-        body: this.body,
-        headers: {
-          accept: APPLICATION_MSGPACK,
-          authorization: `Bearer ${ctx.token}`,
-          "user-agent": USER_AGENT,
-          "diom-req-id": randomId.toString(),
-          ...this.headerParams,
+    const headers: Record<string, string> = {
+      "accept": APPLICATION_MSGPACK,
+      "authorization": `Bearer ${ctx.token}`,
+      "user-agent": USER_AGENT,
+      "diom-req-id": randomId.toString(),
+    };
+    if (this.body != null) {
+      headers["content-type"] = APPLICATION_MSGPACK;
+    }
+
+    let response: Response;
+    try {
+      response = await sendWithRetry(
+        url,
+        {
+          method: this.method.toString(),
+          body: this.body,
+          headers,
+          credentials: isCredentialsSupported ? "same-origin" : undefined,
+          signal: ctx.timeout !== undefined ? AbortSignal.timeout(ctx.timeout) : undefined,
         },
-        credentials: isCredentialsSupported ? "same-origin" : undefined,
-        signal: ctx.timeout !== undefined ? AbortSignal.timeout(ctx.timeout) : undefined,
-      },
-      ctx.retryScheduleInMs,
-      ctx.retryScheduleInMs?.[0],
-      ctx.retryScheduleInMs?.length || ctx.numRetries,
-      ctx.fetch
-    );
-    return filterResponseForErrors(response);
+        ctx.retryScheduleInMs,
+        ctx.retryScheduleInMs?.[0],
+        ctx.retryScheduleInMs?.length || ctx.numRetries,
+        ctx.fetch
+      );
+    } catch(err) {
+      throw new ConnectionError(operationId, err);
+    }
+    return filterResponseForErrors(operationId, response);
   }
 }
 
-async function filterResponseForErrors(response: Response): Promise<Response> {
+async function filterResponseForErrors(operationId: string, response: Response): Promise<Response> {
   if (response.status < 300) {
     return response;
   }
 
-  const raw = new Uint8Array(await response.arrayBuffer());
-  const decoded = decodeMsgpackBody(raw);
+  const decoded = await readMsgpackResponse(response, operationId);
 
-  if (response.status === 422) {
-    throw new ApiException<HTTPValidationError>(
-      response.status,
-      decoded as HTTPValidationError,
-      response.headers
-    );
+  let error: DiomError;
+  try {
+    error = makeErrorFromResponse(operationId, decoded as ErrorBody);
+  } catch(err) {
+    // if an error happens during field access on the resulting object, throw 'OtherError'
+    throw new OtherError(operationId, err);
   }
 
-  if (response.status >= 400 && response.status <= 499) {
-    throw new ApiException<HttpErrorOut>(
-      response.status,
-      decoded as HttpErrorOut,
-      response.headers
-    );
+  throw error;
+}
+
+async function readMsgpackResponse(response: Response, operationId: string): Promise<unknown> {
+  let raw: Uint8Array;
+  try {
+    raw = new Uint8Array(await response.arrayBuffer());
+  } catch (err) {
+    throw new ConnectionError(operationId, err);
   }
-  throw new ApiException(response.status, decoded, response.headers);
+
+  try {
+    return decodeMsgpackBody(raw);
+  } catch(err) {
+    throw new OtherError(operationId, err);
+  }
 }
 
 function decodeMsgpackBody(raw: Uint8Array): unknown {

@@ -1,4 +1,10 @@
 export * from "./client";
 export type { DiomOptions } from "./options";
-export { ApiException } from "./util";
-export { HTTPValidationError, HttpErrorOut, ValidationError } from "./HttpErrors";
+export {
+  ConnectionError,
+  DiomError,
+  InvalidInputError,
+  OperationError,
+  OtherError,
+  ServerError,
+} from "./error";
