@@ -158,26 +158,28 @@ fn deserialize_keyspace<R: Read + Seek>(
         len = keyspace.len()?,
         "clearing and then deserializing keyspace",
     );
-    // TODO: remove this slow path after
-    // https://github.com/fjall-rs/fjall/issues/277 is fixed
-    if keyspace.is_kv_separated() {
-        if !keyspace.is_empty()? {
-            tracing::warn!("falling back to slow path to clear k-v separated database");
-            while !keyspace.is_empty()? {
-                let some_keys = keyspace
-                    .iter()
-                    .take(CLEAR_CHUNK_SIZE)
-                    .map(|k| k.key())
-                    .collect::<fjall::Result<Vec<_>>>()?;
-                let mut batch = db.batch().durability(Some(fjall::PersistMode::Buffer));
-                for key in some_keys {
-                    batch.remove(keyspace, key);
+    if !keyspace.is_empty()? {
+        // TODO: remove this slow path after
+        // https://github.com/fjall-rs/fjall/issues/277 is fixed
+        if keyspace.is_kv_separated() {
+            if !keyspace.is_empty()? {
+                tracing::warn!("falling back to slow path to clear k-v separated database");
+                while !keyspace.is_empty()? {
+                    let some_keys = keyspace
+                        .iter()
+                        .take(CLEAR_CHUNK_SIZE)
+                        .map(|k| k.key())
+                        .collect::<fjall::Result<Vec<_>>>()?;
+                    let mut batch = db.batch().durability(Some(fjall::PersistMode::Buffer));
+                    for key in some_keys {
+                        batch.remove(keyspace, key);
+                    }
+                    batch.commit()?;
                 }
-                batch.commit()?;
             }
+        } else {
+            keyspace.clear()?;
         }
-    } else {
-        keyspace.clear()?;
     }
     let mut key_buf = vec![];
     let mut value_buf = vec![];
