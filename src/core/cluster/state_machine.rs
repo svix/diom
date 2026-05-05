@@ -25,6 +25,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tap::TapOptional;
 use tokio::sync::RwLock as TokioRwLock;
+use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
 use super::{
@@ -185,6 +186,7 @@ pub struct Store {
     metrics: DbMetrics,
     persist_mode: PersistMode,
     snapshot_loading: TaskWatcher,
+    cancellation_token: CancellationToken,
 }
 
 trait SnapshotIdx {
@@ -219,6 +221,7 @@ impl Store {
         logs: DiomLogs,
         node_id: NodeId,
         time: Monotime,
+        cancellation_token: CancellationToken,
     ) -> anyhow::Result<Self> {
         let meta_keyspace =
             persistent_db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
@@ -278,6 +281,7 @@ impl Store {
             metrics,
             persist_mode,
             snapshot_loading: TaskWatcher::default(),
+            cancellation_token,
         };
         this.load_information().await?;
         this.start_metrics();
@@ -315,8 +319,8 @@ impl Store {
         let stores = Arc::clone(&self.stores);
         let metrics = self.metrics.clone();
         let snapshot_directory = self.snapshot_directory.clone();
+        let shutdown = self.cancellation_token.clone();
         tokio::spawn(async move {
-            let shutdown = crate::shutting_down_token();
             let mut ticker = tokio::time::interval(Duration::from_secs(10));
             let mut last_fetched_size = std::time::Instant::now();
 
