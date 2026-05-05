@@ -19,6 +19,14 @@ from .apis import (
     RateLimitAsync,
 )
 from .client_base import ClientBase
+from .internal.errors import (
+    DiomError,
+    ConnError,
+    InvalidInputError,
+    OperationError,
+    ServerError,
+    OtherError,
+)
 from .options import DiomOptions
 
 
@@ -90,4 +98,14 @@ class DiomAsync(ClientBase):
         return RateLimitAsync(self._client)
 
 
-__all__ = ["Diom", "DiomAsync", "DiomOptions"]
+__all__ = [
+    "Diom",
+    "DiomAsync",
+    "DiomOptions",
+    "DiomError",
+    "ConnError",
+    "InvalidInputError",
+    "OperationError",
+    "ServerError",
+    "OtherError",
+]
