@@ -41,6 +41,7 @@ tower-service.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+assert_matches2.workspace = true
 tokio = { workspace = true, features = ["macros"] }
 
 [lints]

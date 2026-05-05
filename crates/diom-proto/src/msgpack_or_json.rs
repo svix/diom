@@ -123,16 +123,17 @@ where
                 | rmp_serde::decode::Error::OutOfRange
                 | rmp_serde::decode::Error::LengthMismatch(_)
                 | rmp_serde::decode::Error::Uncategorized(_)
-                | rmp_serde::decode::Error::Syntax(_)
                 | rmp_serde::decode::Error::DepthLimitExceeded => {
                     MsgPackOrJsonRejection::InvalidEncoding {
                         msg: inner.to_string(),
                     }
                 }
-                rmp_serde::decode::Error::TypeMismatch(_) => MsgPackOrJsonRejection::InvalidData {
-                    location,
-                    msg: inner.to_string(),
-                },
+                rmp_serde::decode::Error::Syntax(_) | rmp_serde::decode::Error::TypeMismatch(_) => {
+                    MsgPackOrJsonRejection::InvalidData {
+                        location,
+                        msg: inner.to_string(),
+                    }
+                }
             }
         }
 

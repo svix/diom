@@ -125,6 +125,7 @@ addr = "0.15"
 aide = { version = "=0.16.0-alpha.4", features = ["axum", "axum-json"] }
 anyerror = { version = "0.1.13", features = ["anyhow"] }
 anyhow = "1.0.56"
+assert_matches2 = "0.1.2"
 async-trait = "0.1.89"
 axum = { version = "0.8.8", features = ["macros", "http2"] }
 axum-extra = { version = "0.12", features = ["typed-header"] }

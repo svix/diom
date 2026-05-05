@@ -116,7 +116,7 @@ class IntegrationTest {
         InvalidInputException e = assertThrows(InvalidInputException.class, () -> {
             client.kv().set("❤️", "whatever".getBytes(), new KvSetIn());
         });
-        assertEquals(e.getCode(), "invalid-encoding");
+        assertEquals(e.getCode(), "invalid-data");
         assertTrue(e.getDetail().startsWith("EntityKey must match the following pattern:"));
     }
 }
