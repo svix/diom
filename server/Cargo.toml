@@ -9,12 +9,16 @@ publish = false
 [package.metadata.dist]
 dist = false
 
+[features]
+tokio-console = ["dep:console-subscriber"]
+
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
 bytes.workspace = true
 clap.workspace = true
 comfy-table.workspace = true
+console-subscriber = {workspace = true, optional = true}
 diom-backend.workspace = true
 diom-core.workspace = true
 dotenvy.workspace = true

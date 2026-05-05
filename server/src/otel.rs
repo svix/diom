@@ -33,7 +33,7 @@ pub(crate) fn setup_tracing(
             format!("tower_http={level}"),
             "fjall=warn".to_string(),
             "openraft=warn".to_string(),
-            "opentelemetry_sdk=ERROR".to_string(),
+            "opentelemetry_sdk=error".to_string(),
         ];
 
         var.join(",")
@@ -93,7 +93,7 @@ pub(crate) fn setup_tracing(
         );
 
         opentelemetry::global::set_tracer_provider(provider.clone());
-        (layer, provider)
+        (layer.boxed(), provider)
     });
 
     let (otel_layer, otel_tracer_provider) = mapped.unzip();
@@ -106,11 +106,20 @@ pub(crate) fn setup_tracing(
         build_fmt_layer(cfg.log_format)
     };
 
-    let dispatch = tracing_subscriber::Registry::default()
-        .with(stdout_layer)
-        .with(otel_layer)
-        .with(tracing_subscriber::EnvFilter::new(filter_directives))
-        .into();
+    let debugging_layer = vec![Some(stdout_layer), otel_layer]
+        .with_filter(tracing_subscriber::EnvFilter::new(&filter_directives));
+
+    let dispatch = tracing_subscriber::Registry::default().with(debugging_layer);
+
+    #[cfg(feature = "tokio-console")]
+    let dispatch = {
+        let layer = console_subscriber::spawn();
+        let mut filter_directives = filter_directives;
+        filter_directives.push_str(",tokio=trace,runtime=trace");
+        dispatch.with(layer.with_filter(tracing_subscriber::EnvFilter::new(filter_directives)))
+    };
+
+    let dispatch = dispatch.into();
 
     (dispatch, otel_tracer_provider)
 }
