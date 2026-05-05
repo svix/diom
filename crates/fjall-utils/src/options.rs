@@ -153,6 +153,7 @@ impl SerializableKeyspaceCreateOptions {
             .map(fjall::Slice::from)
             .context("serializing schema")?;
         schema.insert(keyspace_name, serialized)?;
+        database.persist(fjall::PersistMode::Buffer)?;
         database
             .keyspace(keyspace_name, || self.into())
             .context("creating target keyspace")
