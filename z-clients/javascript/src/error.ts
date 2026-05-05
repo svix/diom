@@ -57,10 +57,10 @@ export class OtherError extends DiomError {
 function errorResponseMessage(code: string, detail: string, location?: string): string {
   let result = `code=${code}`;
   if (location !== undefined) {
-    result += ` location="${location}"`;
+    result += ` location=${location}`;
   }
   const d = detail.replaceAll('"', '\\"');
-  result += ` detail=${d}`;
+  result += ` detail="${d}"`;
 
   return result
 }
