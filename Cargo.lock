@@ -222,10 +222,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 
 [[package]]
-name = "assert_matches"
-version = "1.5.0"
+name = "assert_matches2"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
+checksum = "15832d94c458da98cac0ffa6eca52cc19c2a3c6c951058500a5ae8f01f0fdf56"
 
 [[package]]
 name = "async-broadcast"
@@ -1421,6 +1421,7 @@ dependencies = [
 name = "diom"
 version = "0.2.3"
 dependencies = [
+ "assert_matches2",
  "headers",
  "http",
  "http-body-util",
@@ -1494,7 +1495,6 @@ dependencies = [
  "aide 0.16.0-alpha.4",
  "anyerror",
  "anyhow",
- "assert_matches",
  "axum",
  "axum-extra",
  "byteorder",

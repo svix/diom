@@ -1,7 +1,8 @@
 use std::time::Duration;
 
+use assert_matches2::assert_let;
 use diom::{
-    DiomClient, DiomOptions,
+    DiomClient, DiomOptions, ErrorKind,
     models::{CacheDeleteIn, CacheGetIn, CacheSetIn, KvDeleteIn, KvGetIn, KvSetIn},
 };
 
@@ -90,4 +91,19 @@ async fn test_cache_set_get_delete() {
     // Verify deleted
     let get_resp = client.cache().get(key, CacheGetIn::new()).await.unwrap();
     assert_eq!(get_resp.value, None);
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_invalid_input() {
+    let client = client();
+
+    let err = client
+        .kv()
+        .set("❤️".to_owned(), b"whatever".to_vec(), KvSetIn::new())
+        .await
+        .unwrap_err();
+
+    assert_let!(ErrorKind::InvalidInput(i) = err.kind());
+    assert_eq!(i.code(), "invalid-data");
 }
