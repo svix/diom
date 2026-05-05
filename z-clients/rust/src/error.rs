@@ -355,9 +355,9 @@ impl fmt::Display for ErrorResponse {
             detail,
             location,
         } = self;
-        write!(f, "code={code:?}")?;
+        write!(f, "code={code}")?;
         if let Some(location) = location {
-            write!(f, " location={location:?}")?;
+            write!(f, " location={location}")?;
         }
         write!(f, " detail={detail:?}")
     }

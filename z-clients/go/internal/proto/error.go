@@ -2,6 +2,7 @@ package diom_proto
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -89,11 +90,11 @@ func (e *OtherError) Unwrap() error {
 }
 
 func errorResponse(code string, detail string, location *string) string {
-	result := fmt.Sprintf("code=\"%s\"", code)
+	result := fmt.Sprintf("code=%s", code)
 	if location != nil {
-		result += fmt.Sprintf(" location=\"%s\"", *location)
+		result += fmt.Sprintf(" location=%s", *location)
 	}
-	result += fmt.Sprintf(" detail=\"%s\"", detail)
+	result += fmt.Sprintf(" detail=\"%s\"", strings.ReplaceAll(detail, "\"", "\\\""))
 
 	return result
 }
