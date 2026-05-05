@@ -6,8 +6,7 @@ use k8s_openapi::{
         core::v1::{
             Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction, LocalObjectReference,
             ObjectFieldSelector, PersistentVolumeClaim, PersistentVolumeClaimSpec,
-            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, VolumeMount,
-            VolumeResourceRequirements,
+            PodSecurityContext, PodSpec, PodTemplateSpec, VolumeMount, VolumeResourceRequirements,
         },
     },
     apimachinery::pkg::{
@@ -286,42 +285,21 @@ fn build_container(
         ]),
         volume_mounts: Some(volume_mounts),
         resources: Some(spec.resources.clone()),
-        liveness_probe: Some(Probe {
-            http_get: Some(HTTPGetAction {
-                path: Some(API_HEALTH_ENDPOINT.into()),
-                port: IntOrString::Int(spec.diom.api_port as _),
-                ..Default::default()
-            }),
-            initial_delay_seconds: Some(5),
-            period_seconds: Some(10),
-            failure_threshold: Some(2),
-            success_threshold: Some(1),
+        liveness_probe: Some(spec.probes.liveness.as_probe_with_http_get(HTTPGetAction {
+            path: Some(API_HEALTH_ENDPOINT.into()),
+            port: IntOrString::Int(spec.diom.api_port as _),
             ..Default::default()
-        }),
-        readiness_probe: Some(Probe {
-            http_get: Some(HTTPGetAction {
-                path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
-                port: IntOrString::Int(intracluster_port as _),
-                ..Default::default()
-            }),
-            initial_delay_seconds: Some(15),
-            period_seconds: Some(10),
-            failure_threshold: Some(2),
-            success_threshold: Some(1),
+        })),
+        readiness_probe: Some(spec.probes.readiness.as_probe_with_http_get(HTTPGetAction {
+            path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
+            port: IntOrString::Int(intracluster_port as _),
             ..Default::default()
-        }),
-        startup_probe: Some(Probe {
-            http_get: Some(HTTPGetAction {
-                path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
-                port: IntOrString::Int(intracluster_port as _),
-                ..Default::default()
-            }),
-            initial_delay_seconds: Some(15),
-            period_seconds: Some(10),
-            failure_threshold: Some(120), // TODO: this should come from the helm chart
-            success_threshold: Some(1),
+        })),
+        startup_probe: Some(spec.probes.startup.as_probe_with_http_get(HTTPGetAction {
+            path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
+            port: IntOrString::Int(intracluster_port as _),
             ..Default::default()
-        }),
+        })),
         ..Default::default()
     }
 }
@@ -525,6 +503,7 @@ mod tests {
                 admin_token: None,
                 env_var: vec![],
             },
+            probes: Default::default(),
             image: "test-image".to_string(),
             image_pull_policy: None,
             service: Default::default(),

@@ -62,3 +62,9 @@ cluster:
     # extraEnv: []
     # nodeSelector: {}
     # tolerations: []
+    # probes:
+    #   liveness:
+    #     initialDelaySeconds: 5
+    #     periodSeconds: 10
+    #     failureThreshold: 2
+    #     successThreshold: 1

@@ -1061,6 +1061,200 @@
                     "description": "Additional annotations to add to pods.",
                     "type": "object"
                   },
+                  "probes": {
+                    "default": {
+                      "liveness": {
+                        "failureThreshold": 2,
+                        "initialDelaySeconds": 5,
+                        "periodSeconds": 5,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 1
+                      },
+                      "readiness": {
+                        "failureThreshold": 2,
+                        "initialDelaySeconds": 15,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 1
+                      },
+                      "startup": {
+                        "failureThreshold": 120,
+                        "initialDelaySeconds": 15,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 1
+                      }
+                    },
+                    "description": "Configuration for the pod Probes (healthchecks)",
+                    "properties": {
+                      "liveness": {
+                        "default": {
+                          "failureThreshold": 2,
+                          "initialDelaySeconds": 5,
+                          "periodSeconds": 5,
+                          "successThreshold": 1,
+                          "timeoutSeconds": 1
+                        },
+                        "description": "Configuration for an individual probe",
+                        "properties": {
+                          "failureThreshold": {
+                            "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "initialDelaySeconds": {
+                            "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "periodSeconds": {
+                            "description": "How often (in seconds) to perform the probe.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "successThreshold": {
+                            "description": "Minimum consecutive successes for the probe to be considered successful after having failed.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "timeoutSeconds": {
+                            "description": "Number of seconds after which the probe times out.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "failureThreshold",
+                          "initialDelaySeconds",
+                          "periodSeconds",
+                          "successThreshold",
+                          "timeoutSeconds"
+                        ],
+                        "type": "object"
+                      },
+                      "readiness": {
+                        "default": {
+                          "failureThreshold": 2,
+                          "initialDelaySeconds": 15,
+                          "periodSeconds": 10,
+                          "successThreshold": 1,
+                          "timeoutSeconds": 1
+                        },
+                        "description": "Configuration for an individual probe",
+                        "properties": {
+                          "failureThreshold": {
+                            "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "initialDelaySeconds": {
+                            "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "periodSeconds": {
+                            "description": "How often (in seconds) to perform the probe.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "successThreshold": {
+                            "description": "Minimum consecutive successes for the probe to be considered successful after having failed.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "timeoutSeconds": {
+                            "description": "Number of seconds after which the probe times out.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "failureThreshold",
+                          "initialDelaySeconds",
+                          "periodSeconds",
+                          "successThreshold",
+                          "timeoutSeconds"
+                        ],
+                        "type": "object"
+                      },
+                      "startup": {
+                        "default": {
+                          "failureThreshold": 120,
+                          "initialDelaySeconds": 15,
+                          "periodSeconds": 10,
+                          "successThreshold": 1,
+                          "timeoutSeconds": 1
+                        },
+                        "description": "Configuration for an individual probe",
+                        "properties": {
+                          "failureThreshold": {
+                            "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "initialDelaySeconds": {
+                            "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "periodSeconds": {
+                            "description": "How often (in seconds) to perform the probe.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "successThreshold": {
+                            "description": "Minimum consecutive successes for the probe to be considered successful after having failed.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          },
+                          "timeoutSeconds": {
+                            "description": "Number of seconds after which the probe times out.",
+                            "format": "uint16",
+                            "maximum": 65535.0,
+                            "minimum": 1.0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "failureThreshold",
+                          "initialDelaySeconds",
+                          "periodSeconds",
+                          "successThreshold",
+                          "timeoutSeconds"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
                   "replicas": {
                     "default": 1,
                     "description": "Number of Diom replicas.\n\nShould be an odd number. Recommended value is 3, or 1 if you want only a single node.",
