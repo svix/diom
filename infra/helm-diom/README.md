@@ -35,6 +35,8 @@ The CRD is enabled by default. The chart will attempt to manage upgrades of the 
 | `operator.serviceAccount.annotations` | Annotations for the ServiceAccount. | `{}` |
 | `operator.rbac.create` | Create ClusterRole and ClusterRoleBinding for the operator. | `true` |
 | `operator.logLevel` | Operator log level (`info`, `debug`, `trace`). | `info` |
+| `operator.logFormat` | Operator log format (`default`, `json`). | `default` |
+| `operator.extraEnv` | Additional environment variables to add to the operator container. | `[]` |
 | `operator.podAnnotations` | Annotations to add to the operator pod. | `{}` |
 | `operator.resources` | Resource requests/limits for the operator pod. | request cpu: 100m, memory: 128Mi, no limits |
 | `operator.nodeSelector` | Node selector for the operator pod. | `{}` |

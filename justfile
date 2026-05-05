@@ -103,6 +103,11 @@ test-all: test test-sdks
 bench:
     cargo bench
 
+# Run Helm chart unit tests
+[working-directory('infra/helm-diom')]
+test-helm:
+    helm unittest .
+
 # Regenerate the CRD JSON and write it into the Helm chart
 [working-directory('infra/operator')]
 generate-crd:

@@ -37,8 +37,17 @@ spec:
             capabilities:
               drop: ["ALL"]
           env:
+            {{- with .Values.operator.logLevel }}
             - name: RUST_LOG
-              value: {{ .Values.operator.logLevel | quote }}
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.operator.logFormat }}
+            - name: LOG_FORMAT
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.operator.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- with .Values.operator.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

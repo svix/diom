@@ -160,6 +160,15 @@ jobs:
           fi
   sdk-integration:
     uses: ./.github/workflows/sdk-integration.yml
+  helm-test:
+    name: Helm chart unit tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.0.3
+      - name: Run Helm unit tests
+        run: helm unittest ./infra/helm-diom
   check-crd:
     name: Check CRD JSON freshness
     runs-on: ubicloud-standard-4-ubuntu-2404
