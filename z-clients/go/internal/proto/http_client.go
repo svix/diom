@@ -80,9 +80,6 @@ func ExecuteRequest[ReqBody any, ResBody any](
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode == 204 {
-		return nil, nil
-	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)

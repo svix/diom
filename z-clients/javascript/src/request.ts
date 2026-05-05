@@ -117,9 +117,6 @@ export class DiomRequest {
   ): Promise<R> {
     const operationId = this.operationId();
     const response = await this.sendInner(ctx, operationId);
-    if (response.status === 204) {
-      return <R>null;
-    }
     const decoded = await readMsgpackResponse(response, operationId);
     return parseResponseBody(decoded);
   }

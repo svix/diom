@@ -184,10 +184,6 @@ public class HttpClient {
             throw new ConnectionException(opId, e);
         }
 
-        if (response.code() == 204) {
-            return null;
-        }
-
         ErrorBody errorBody;
         try {
             if (response.code() >= 200 && response.code() < 300) {
