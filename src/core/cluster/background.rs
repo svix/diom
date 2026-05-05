@@ -1,10 +1,7 @@
-use std::{
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::time::Duration;
 
 use super::{
-    LogId, NodeId,
+    LogId,
     handle::{BackgroundCommand, RaftState},
     operations::{RecordLogTimestampOperation, TickOperation},
     raft::TypeConfig,
@@ -14,6 +11,7 @@ use diom_error::CanFailExt;
 use diom_operations::{
     BackgroundError, BackgroundResult, OperationWriter, workers::BackgroundWorker,
 };
+use futures_util::TryFutureExt;
 use openraft::error::{ClientWriteError, RaftError};
 use tap::TapFallible;
 use tokio::task::JoinSet;
@@ -89,12 +87,14 @@ impl BackgroundWorker for Tick {
 
 struct BackgroundJobRunner {
     jobs: JoinSet<BackgroundResult<()>>,
+    spawned: bool,
 }
 
 impl BackgroundJobRunner {
     fn new() -> Self {
         Self {
             jobs: JoinSet::new(),
+            spawned: false,
         }
     }
 
@@ -104,6 +104,10 @@ impl BackgroundJobRunner {
     }
 
     async fn spawn_all(&mut self, cfg: Configuration, handle: RaftState) {
+        if self.spawned {
+            return;
+        }
+        tracing::debug!("starting leader-only background jobs");
         self.spawn_job(RecordLogTimestamps {
             cfg: cfg.clone(),
             handle: handle.clone(),
@@ -129,11 +133,17 @@ impl BackgroundJobRunner {
             cfg.background_cleanup_interval.into(),
             handle.clone(),
         ));
+        tracing::trace!("leader-only background jobs started");
+        self.spawned = true;
     }
 
-    async fn stop_all(mut self) -> anyhow::Result<()> {
-        tracing::debug!("shutting down background jobs");
+    async fn stop_all(&mut self) -> anyhow::Result<()> {
+        if !self.spawned {
+            return Ok(());
+        }
+        tracing::debug!("shutting down leader-only background jobs");
         self.jobs.abort_all();
+        self.spawned = false;
         while let Some(job) = self.jobs.join_next().await {
             match job {
                 Ok(Ok(_)) => {}
@@ -141,6 +151,7 @@ impl BackgroundJobRunner {
                     if e.is_forward_to_leader_err() {
                         tracing::trace!("some worker died with forward-to-leader, who cares");
                     } else {
+                        tracing::trace!(error=?e, "leader-only background job had an error");
                         return Err(e.into());
                     }
                 }
@@ -148,124 +159,122 @@ impl BackgroundJobRunner {
                 Err(e) => return Err(e.into()),
             }
         }
+        tracing::trace!("leader-only background jobs stopped");
         Ok(())
     }
 }
 
-/// Generate a channel of all leadership changes in the raft cluster
-async fn leadership_changes(handle: RaftState) -> tokio::sync::broadcast::Receiver<Option<NodeId>> {
-    // this is racy (because it could change multiple times in between calls to `.wait`), so we
-    // back it up by polling
-    const POLL_INTERVAL: Duration = Duration::from_secs(10);
-
-    let shutdown = crate::shutting_down_token();
-    let (tx, rx) = tokio::sync::broadcast::channel(10);
-    tokio::spawn(async move {
-        let last_leader = Arc::new(Mutex::new(None));
-        while shutdown
-            .run_until_cancelled(handle.raft.wait(Some(POLL_INTERVAL)).metrics(
-                |m| {
-                    let mut l = last_leader.lock().unwrap();
-                    if m.current_leader != *l {
-                        tracing::debug!(old_leader = ?l, new_leader = ?m.current_leader, "leader has changed");
-                        *l = m.current_leader;
-                        if tx.send(m.current_leader).is_err() {
-                            return true;
-                        }
-                        true
-                    } else {
-                        false
-                    }
-                },
-                "metrics to change",
-            ))
-            .await
-            .is_some()
-        {}
-    });
-    rx
-}
-
-/// Wait until the current node becomes the leader (or we shutdown)
-async fn wait_until_leader(
-    me: NodeId,
-    mut chan: tokio::sync::broadcast::Receiver<Option<NodeId>>,
-) -> bool {
-    let shutdown = crate::shutting_down_token();
-    loop {
-        let Some(value) = shutdown.run_until_cancelled(chan.recv()).await else {
-            return false;
-        };
-        match value {
-            Ok(Some(node)) if node == me => {
-                return true;
-            }
-            Err(tokio::sync::broadcast::error::RecvError::Closed) => {
-                tracing::debug!("shutdown detected");
-                return false;
-            }
-            _ => {}
-        }
-    }
+#[derive(Debug, Copy, Clone)]
+enum BackgroundJobLeaderMessage {
+    StartBeingLeader,
+    StopBeingLeader,
 }
 
 pub(super) async fn run_background_jobs_on_leader(
     cfg: Configuration,
     handle: RaftState,
 ) -> anyhow::Result<()> {
+    let mut runner = BackgroundJobRunner::new();
     let shutdown = crate::shutting_down_token();
-    let mut chan = leadership_changes(handle.clone()).await;
-    while wait_until_leader(handle.node_id, chan.resubscribe()).await {
-        tracing::info!("spawning leader-only background tasks");
-        let mut runner = BackgroundJobRunner::new();
-        runner.spawn_all(cfg.clone(), handle.clone()).await;
-        loop {
-            tokio::select! {
-                new_leader = chan.recv() => {
-                    match new_leader {
-                        Ok(new_leader) if new_leader == Some(handle.node_id) => {
-                            // we might receive ourselves several times
-                        },
-                        Ok(new_leader) => {
-                            tracing::debug!(?new_leader, "No longer the leader");
-                            break;
-                        },
-                        Err(err) => {
-                            tracing::warn!(?err, "leader detection died");
-                            break;
-                        }
+
+    let (tx, mut rx) = tokio::sync::mpsc::channel(5);
+
+    let watch_tx = tx.clone();
+
+    let my_node_id = handle.node_id;
+
+    tracing::trace!("initializing cluster leader change watcher");
+
+    let mut watcher = handle
+        .raft
+        .on_cluster_leader_change(move |_, (leader_id, _)| {
+            let tx = watch_tx.clone();
+            let message = if leader_id.node_id == my_node_id {
+                BackgroundJobLeaderMessage::StartBeingLeader
+            } else {
+                BackgroundJobLeaderMessage::StopBeingLeader
+            };
+            async move {
+                tx.send(message)
+                    .await
+                    .can_fail("sending notification of leader change")
+            }
+        });
+
+    tracing::trace!("checking for immediate leadership changes");
+
+    // we might miss the first transition if it happens before our watch is started,
+    // so once the watcher is registered, check once by hand
+    handle
+        .raft
+        .with_raft_state(|state| state.server_state.is_leader())
+        .map_err(|err| {
+            tracing::error!(?err, "unable to determine server state");
+            diom_error::Error::internal(err)
+        })
+        .and_then(|state| {
+            let message = if state {
+                BackgroundJobLeaderMessage::StartBeingLeader
+            } else {
+                BackgroundJobLeaderMessage::StopBeingLeader
+            };
+            tx.send(message).map_err(diom_error::Error::internal)
+        })
+        .await?;
+
+    tracing::trace!("starting loop waiting to become leader");
+
+    while !shutdown.is_cancelled() {
+        tracing::trace!("boop");
+        tokio::select! {
+            message = rx.recv() => {
+                tracing::trace!(?my_node_id, ?message, "receive message in leader background process");
+                match message {
+                    Some(BackgroundJobLeaderMessage::StartBeingLeader) => {
+                        runner.spawn_all(cfg.clone(), handle.clone()).await;
                     }
-                },
-                _ = shutdown.cancelled() => {
-                    tracing::debug!("shutting down");
-                    break;
-                },
-                res = runner.jobs.join_next() => {
-                    if let Some(res) = res {
-                        tracing::debug!("a background job ended unexpectedly");
-                        match res {
-                            Ok(Ok(_)) => {},
-                            Ok(Err(e)) => {
-                                if e.is_forward_to_leader_err() {
-                                    tracing::debug!("failed a write because we are not the leader");
-                                    break;
-                                } else {
-                                    runner.stop_all().await?;
-                                    return Err(e.into());
-                                }
+                    Some(BackgroundJobLeaderMessage::StopBeingLeader) => {
+                        runner.stop_all().await?;
+                    }
+                    None => {
+                        tracing::warn!("leader detection died");
+                        break;
+                    }
+                }
+            },
+            res = runner.jobs.join_next(), if !runner.jobs.is_empty() => {
+                if let Some(res) = res {
+                    tracing::debug!("a background job ended unexpectedly");
+                    match res {
+                        Ok(Ok(_)) => {},
+                        Ok(Err(e)) => {
+                            if e.is_forward_to_leader_err() {
+                                tracing::trace!("failed a write because we are not the leader");
+                                break;
+                            } else {
+                                runner.stop_all().await?;
+                                return Err(e.into());
                             }
-                            Err(e) => {
-                                if !e.is_cancelled() {
-                                    return Err(e.into());
-                                }
+                        }
+                        Err(e) => {
+                            if !e.is_cancelled() {
+                                return Err(e.into());
                             }
                         }
                     }
                 }
+            },
+            _ = shutdown.cancelled() => {
+                tracing::debug!("shutting down");
+                break
             }
         }
-        runner.stop_all().await?;
     }
+    tracing::trace!("shutting down leader-change watcher");
+    watcher.close().await;
+    tracing::trace!("shutting down any remaining background jobs");
+    runner.stop_all().await?;
+    tracing::trace!("and we're outta here");
     Ok(())
 }
 
@@ -329,6 +338,8 @@ pub(super) async fn run_background_jobs_on_all_nodes(
     handle: RaftState,
     mut receiver: tokio::sync::mpsc::Receiver<BackgroundCommand>,
 ) -> anyhow::Result<()> {
+    tracing::debug!("starting all-node background jobs");
+
     let mut last_snapshot_time = std::time::Instant::now();
     let mut last_snapshot_index = handle
         .raft
@@ -404,6 +415,6 @@ pub(super) async fn run_background_jobs_on_all_nodes(
             }
         }
     }
-    tracing::info!("shutting down");
+    tracing::debug!("shutting down all-node background jobs");
     Ok(())
 }
