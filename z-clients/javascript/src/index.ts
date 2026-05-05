@@ -3,7 +3,7 @@ export type { DiomOptions } from "./options";
 export {
   ConnectionError,
   DiomError,
-  InvalidInput,
+  InvalidInputError,
   OperationError,
   OtherError,
   ServerError,
