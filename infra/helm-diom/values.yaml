@@ -27,7 +27,10 @@ operator:
   rbac:
     create: true
 
-  logLevel: info
+  # logLevel: info
+  # logFormat: default
+
+  extraEnv: []
 
   podAnnotations: {}
 
@@ -59,7 +62,7 @@ cluster:
       persistent:
         size: 10Gi
         # storageClass: ""
-    # extraEnv: []
+    # envVar: []
     # nodeSelector: {}
     # tolerations: []
     # probes:

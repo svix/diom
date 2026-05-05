@@ -1,0 +1,87 @@
+suite: operator environment variables
+templates:
+  - deployment.yaml
+tests:
+  - it: sets no env vars by default
+    set:
+      operator.image.tag: test
+      cluster.enabled: false
+    asserts:
+      - isEmpty:
+          path: spec.template.spec.containers[0].env
+
+  - it: sets RUST_LOG when logLevel is configured
+    set:
+      operator.image.tag: test
+      cluster.enabled: false
+      operator.logLevel: info
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RUST_LOG
+            value: "info"
+
+  - it: does not set RUST_LOG when logLevel is unset
+    set:
+      operator.image.tag: test
+      cluster.enabled: false
+      operator.logFormat: json
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RUST_LOG
+
+  - it: sets LOG_FORMAT when logFormat is configured
+    set:
+      operator.image.tag: test
+      cluster.enabled: false
+      operator.logFormat: json
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_FORMAT
+            value: "json"
+
+  - it: supports multiple extra env vars
+    set:
+      operator.image.tag: test
+      cluster.enabled: false
+      operator.extraEnv:
+        - name: FOO
+          value: bar
+        - name: BAZ
+          value: qux
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FOO
+            value: bar
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: BAZ
+            value: qux
+
+  - it: supports valueFrom
+    set:
+      operator.image.tag: test
+      cluster.enabled: false
+      operator.extraEnv:
+        - name: MY_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: my-secret
+              key: my-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MY_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: my-secret
+                key: my-key
