@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { Diom } from "../dist/index.mjs";
+import { Diom, ServerError } from "../dist/index.mjs";
 import { Temporal } from "temporal-polyfill-lite";
 
 const TOKEN = process.env.DIOM_TOKEN;
@@ -67,5 +67,14 @@ describe("SDK Integration Tests", () => {
     // Verify deleted
     const getResp2 = await client.cache.get(key, {});
     assert.strictEqual(getResp2.value, null);
+  });
+
+  it("server_error", async () => {
+    const client = makeClient();
+    await assert.rejects(async () => await client.health.error(), (err) => {
+      assert(err instanceof ServerError);
+      assert.strictEqual(err.code, "internal");
+      return true;
+    });
   });
 });
