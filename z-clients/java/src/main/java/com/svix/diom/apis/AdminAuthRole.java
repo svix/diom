@@ -5,15 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.svix.diom.ApiException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.AdminRoleConfigureIn;
 import com.svix.diom.models.AdminRoleConfigureOut;
 import com.svix.diom.models.AdminRoleDeleteIn;
@@ -34,11 +31,10 @@ public class AdminAuthRole {
     public AdminRoleConfigureOut configure(
         final AdminRoleConfigureIn adminRoleConfigureIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-role.configure");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-role.configure",
             null,
             adminRoleConfigureIn,
             AdminRoleConfigureOut.class
@@ -49,11 +45,10 @@ public class AdminAuthRole {
     public AdminRoleDeleteOut delete(
         final AdminRoleDeleteIn adminRoleDeleteIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-role.delete");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-role.delete",
             null,
             adminRoleDeleteIn,
             AdminRoleDeleteOut.class
@@ -64,11 +59,10 @@ public class AdminAuthRole {
     public AdminRoleOut get(
         final AdminRoleGetIn adminRoleGetIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-role.get");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-role.get",
             null,
             adminRoleGetIn,
             AdminRoleOut.class
@@ -79,11 +73,10 @@ public class AdminAuthRole {
     public ListResponseAdminRoleOut list(
         final AdminRoleListIn adminRoleListIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-role.list");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-role.list",
             null,
             adminRoleListIn,
             ListResponseAdminRoleOut.class

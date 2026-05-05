@@ -5,15 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.svix.diom.ApiException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.IdempotencyAbortIn;
 import com.svix.diom.models.IdempotencyAbortOut;
 import com.svix.diom.models.IdempotencyCompleteIn;
@@ -40,7 +37,6 @@ public class Idempotency {
         String key,
         final IdempotencyStartIn idempotencyStartIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.start");
         IdempotencyStartIn_ body = new IdempotencyStartIn_(
             idempotencyStartIn.getNamespace(),
             key,
@@ -49,7 +45,7 @@ public class Idempotency {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.idempotency.start",
             null,
             body,
             IdempotencyStartOut.class
@@ -61,7 +57,6 @@ public class Idempotency {
         String key,
         final IdempotencyCompleteIn idempotencyCompleteIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.complete");
         IdempotencyCompleteIn_ body = new IdempotencyCompleteIn_(
             idempotencyCompleteIn.getNamespace(),
             key,
@@ -72,7 +67,7 @@ public class Idempotency {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.idempotency.complete",
             null,
             body,
             IdempotencyCompleteOut.class
@@ -84,7 +79,6 @@ public class Idempotency {
         String key,
         final IdempotencyAbortIn idempotencyAbortIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.abort");
         IdempotencyAbortIn_ body = new IdempotencyAbortIn_(
             idempotencyAbortIn.getNamespace(),
             key
@@ -92,7 +86,7 @@ public class Idempotency {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.idempotency.abort",
             null,
             body,
             IdempotencyAbortOut.class

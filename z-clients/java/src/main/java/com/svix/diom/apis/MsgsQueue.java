@@ -5,15 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.svix.diom.ApiException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.MsgQueueAckIn;
 import com.svix.diom.models.MsgQueueAckOut;
 import com.svix.diom.models.MsgQueueConfigureIn;
@@ -52,7 +49,6 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueReceiveIn msgQueueReceiveIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.receive");
         MsgQueueReceiveIn_ body = new MsgQueueReceiveIn_(
             msgQueueReceiveIn.getNamespace(),
             topic,
@@ -64,7 +60,7 @@ public class MsgsQueue {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.queue.receive",
             null,
             body,
             MsgQueueReceiveOut.class
@@ -99,7 +95,6 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueAckIn msgQueueAckIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.ack");
         MsgQueueAckIn_ body = new MsgQueueAckIn_(
             msgQueueAckIn.getNamespace(),
             topic,
@@ -109,7 +104,7 @@ public class MsgsQueue {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.queue.ack",
             null,
             body,
             MsgQueueAckOut.class
@@ -127,7 +122,6 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueExtendLeaseIn msgQueueExtendLeaseIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.extend-lease");
         MsgQueueExtendLeaseIn_ body = new MsgQueueExtendLeaseIn_(
             msgQueueExtendLeaseIn.getNamespace(),
             topic,
@@ -138,7 +132,7 @@ public class MsgsQueue {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.queue.extend-lease",
             null,
             body,
             MsgQueueExtendLeaseOut.class
@@ -156,7 +150,6 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueConfigureIn msgQueueConfigureIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.configure");
         MsgQueueConfigureIn_ body = new MsgQueueConfigureIn_(
             msgQueueConfigureIn.getNamespace(),
             topic,
@@ -167,7 +160,7 @@ public class MsgsQueue {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.queue.configure",
             null,
             body,
             MsgQueueConfigureOut.class
@@ -202,7 +195,6 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueNackIn msgQueueNackIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.nack");
         MsgQueueNackIn_ body = new MsgQueueNackIn_(
             msgQueueNackIn.getNamespace(),
             topic,
@@ -212,7 +204,7 @@ public class MsgsQueue {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.queue.nack",
             null,
             body,
             MsgQueueNackOut.class
@@ -225,7 +217,6 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueRedriveDlqIn msgQueueRedriveDlqIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.redrive-dlq");
         MsgQueueRedriveDlqIn_ body = new MsgQueueRedriveDlqIn_(
             msgQueueRedriveDlqIn.getNamespace(),
             topic,
@@ -234,7 +225,7 @@ public class MsgsQueue {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.queue.redrive-dlq",
             null,
             body,
             MsgQueueRedriveDlqOut.class

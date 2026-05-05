@@ -5,15 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.svix.diom.ApiException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.AdminAccessPolicyConfigureIn;
 import com.svix.diom.models.AdminAccessPolicyConfigureOut;
 import com.svix.diom.models.AdminAccessPolicyDeleteIn;
@@ -34,11 +31,10 @@ public class AdminAuthPolicy {
     public AdminAccessPolicyConfigureOut configure(
         final AdminAccessPolicyConfigureIn adminAccessPolicyConfigureIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-policy.configure");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-policy.configure",
             null,
             adminAccessPolicyConfigureIn,
             AdminAccessPolicyConfigureOut.class
@@ -49,11 +45,10 @@ public class AdminAuthPolicy {
     public AdminAccessPolicyDeleteOut delete(
         final AdminAccessPolicyDeleteIn adminAccessPolicyDeleteIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-policy.delete");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-policy.delete",
             null,
             adminAccessPolicyDeleteIn,
             AdminAccessPolicyDeleteOut.class
@@ -64,11 +59,10 @@ public class AdminAuthPolicy {
     public AdminAccessPolicyOut get(
         final AdminAccessPolicyGetIn adminAccessPolicyGetIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-policy.get");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-policy.get",
             null,
             adminAccessPolicyGetIn,
             AdminAccessPolicyOut.class
@@ -79,11 +73,10 @@ public class AdminAuthPolicy {
     public ListResponseAdminAccessPolicyOut list(
         final AdminAccessPolicyListIn adminAccessPolicyListIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-policy.list");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-policy.list",
             null,
             adminAccessPolicyListIn,
             ListResponseAdminAccessPolicyOut.class

@@ -5,15 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.svix.diom.ApiException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.ClusterForceSnapshotIn;
 import com.svix.diom.models.ClusterForceSnapshotOut;
 import com.svix.diom.models.ClusterInitializeIn;
@@ -33,11 +30,10 @@ public class ClusterAdmin {
     public ClusterStatusOut status(
         
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cluster-admin.status");
 
         return this.client.executeRequest(
             "GET",
-            url.build(),
+            "/api/v1.cluster-admin.status",
             null,
             null,
             ClusterStatusOut.class
@@ -53,11 +49,10 @@ public class ClusterAdmin {
     public ClusterInitializeOut initialize(
         final ClusterInitializeIn clusterInitializeIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cluster-admin.initialize");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.cluster-admin.initialize",
             null,
             clusterInitializeIn,
             ClusterInitializeOut.class
@@ -87,11 +82,10 @@ public class ClusterAdmin {
     public ClusterRemoveNodeOut removeNode(
         final ClusterRemoveNodeIn clusterRemoveNodeIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cluster-admin.remove-node");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.cluster-admin.remove-node",
             null,
             clusterRemoveNodeIn,
             ClusterRemoveNodeOut.class
@@ -102,11 +96,10 @@ public class ClusterAdmin {
     public ClusterForceSnapshotOut forceSnapshot(
         final ClusterForceSnapshotIn clusterForceSnapshotIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cluster-admin.force-snapshot");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.cluster-admin.force-snapshot",
             null,
             clusterForceSnapshotIn,
             ClusterForceSnapshotOut.class

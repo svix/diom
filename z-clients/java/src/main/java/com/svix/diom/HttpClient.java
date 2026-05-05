@@ -94,18 +94,21 @@ public class HttpClient {
         this.objectMapper = Utils.getMsgpackObjectMapper();
     }
 
-    public HttpUrl.Builder newUrlBuilder() {
-        return new HttpUrl.Builder()
-                .scheme(baseUrl.scheme())
-                .host(baseUrl.host())
-                .port(baseUrl.port());
-    }
-
     private static final MediaType APPLICATION_MSGPACK = MediaType.parse("application/msgpack");
 
     public <Req, Res> Res executeRequest(
-            String method, HttpUrl url, Headers headers, Req reqBody, Class<Res> responseClass)
-            throws ApiException, IOException {
+        final String method,
+        final String path,
+        final Headers headers,
+        final Req reqBody,
+        final Class<Res> responseClass
+    ) throws ApiException, IOException {
+        HttpUrl url = new HttpUrl.Builder()
+            .scheme(baseUrl.scheme())
+            .host(baseUrl.host())
+            .port(baseUrl.port())
+            .encodedPath(path)
+            .build();
         Request.Builder reqBuilder = new Request.Builder().url(url);
 
         // Handle request body

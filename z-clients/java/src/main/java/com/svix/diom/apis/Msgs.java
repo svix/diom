@@ -5,15 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.svix.diom.ApiException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.MsgPublishIn;
 import com.svix.diom.models.MsgPublishOut;
 import com.svix.diom.models.MsgPublishIn_;
@@ -46,7 +43,6 @@ public class Msgs {
         String topic,
         final MsgPublishIn msgPublishIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.publish");
         MsgPublishIn_ body = new MsgPublishIn_(
             msgPublishIn.getNamespace(),
             topic,
@@ -56,7 +52,7 @@ public class Msgs {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.publish",
             null,
             body,
             MsgPublishOut.class

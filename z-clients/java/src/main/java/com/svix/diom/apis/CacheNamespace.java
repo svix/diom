@@ -5,15 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.svix.diom.ApiException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.CacheConfigureNamespaceIn;
 import com.svix.diom.models.CacheConfigureNamespaceOut;
 import com.svix.diom.models.CacheGetNamespaceIn;
@@ -30,11 +27,10 @@ public class CacheNamespace {
     public CacheConfigureNamespaceOut configure(
         final CacheConfigureNamespaceIn cacheConfigureNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.namespace.configure");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.cache.namespace.configure",
             null,
             cacheConfigureNamespaceIn,
             CacheConfigureNamespaceOut.class
@@ -45,11 +41,10 @@ public class CacheNamespace {
     public CacheGetNamespaceOut get(
         final CacheGetNamespaceIn cacheGetNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.namespace.get");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.cache.namespace.get",
             null,
             cacheGetNamespaceIn,
             CacheGetNamespaceOut.class

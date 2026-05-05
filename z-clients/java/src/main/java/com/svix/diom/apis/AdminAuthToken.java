@@ -5,15 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.svix.diom.ApiException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.AdminAuthTokenCreateIn;
 import com.svix.diom.models.AdminAuthTokenCreateOut;
 import com.svix.diom.models.AdminAuthTokenDeleteIn;
@@ -40,11 +37,10 @@ public class AdminAuthToken {
     public AdminAuthTokenCreateOut create(
         final AdminAuthTokenCreateIn adminAuthTokenCreateIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.create");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.create",
             null,
             adminAuthTokenCreateIn,
             AdminAuthTokenCreateOut.class
@@ -55,11 +51,10 @@ public class AdminAuthToken {
     public AdminAuthTokenExpireOut expire(
         final AdminAuthTokenExpireIn adminAuthTokenExpireIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.expire");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.expire",
             null,
             adminAuthTokenExpireIn,
             AdminAuthTokenExpireOut.class
@@ -70,11 +65,10 @@ public class AdminAuthToken {
     public AdminAuthTokenRotateOut rotate(
         final AdminAuthTokenRotateIn adminAuthTokenRotateIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.rotate");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.rotate",
             null,
             adminAuthTokenRotateIn,
             AdminAuthTokenRotateOut.class
@@ -85,11 +79,10 @@ public class AdminAuthToken {
     public AdminAuthTokenDeleteOut delete(
         final AdminAuthTokenDeleteIn adminAuthTokenDeleteIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.delete");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.delete",
             null,
             adminAuthTokenDeleteIn,
             AdminAuthTokenDeleteOut.class
@@ -100,11 +93,10 @@ public class AdminAuthToken {
     public ListResponseAdminAuthTokenOut list(
         final AdminAuthTokenListIn adminAuthTokenListIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.list");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.list",
             null,
             adminAuthTokenListIn,
             ListResponseAdminAuthTokenOut.class
@@ -124,11 +116,10 @@ public class AdminAuthToken {
     public AdminAuthTokenUpdateOut update(
         final AdminAuthTokenUpdateIn adminAuthTokenUpdateIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.update");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.update",
             null,
             adminAuthTokenUpdateIn,
             AdminAuthTokenUpdateOut.class
@@ -139,11 +130,10 @@ public class AdminAuthToken {
     public AdminAuthTokenWhoamiOut whoami(
         final AdminAuthTokenWhoamiIn adminAuthTokenWhoamiIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.whoami");
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.whoami",
             null,
             adminAuthTokenWhoamiIn,
             AdminAuthTokenWhoamiOut.class

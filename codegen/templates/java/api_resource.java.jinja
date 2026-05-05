@@ -7,15 +7,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.svix.diom.ApiException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 {%- for c in referenced_components %}
 import com.svix.diom.models.{{ c | to_upper_camel_case }};
 {%- endfor %}
@@ -72,8 +69,6 @@ public class {{ resource_type_name }} {
         {% endset -%}
         {{ func_args | strip_trailing_comma }}
     ) {{ throws }} {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("{{ op.path }}");
-
         {#- request body #}
         {%- if op.request_body_schema_name is defined %}
             {%- if positional_fields | length > 0 %}
@@ -101,7 +96,7 @@ public class {{ resource_type_name }} {
         {% if res_type != "void" %}return {% endif -%}
         this.client.executeRequest(
             "{{ op.method | upper }}",
-            url.build(),
+            "{{ op.path }}",
             null,
             {{ body }},
             {#- response body class #}
