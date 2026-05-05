@@ -19,6 +19,7 @@ use openraft::{
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tap::{Pipe, Tap, TapFallible, TapOptional};
+use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, Span};
 
 use super::{NodeId, raft::TypeConfig};
@@ -312,10 +313,10 @@ async fn flush_worker(
     autoscale_duration: bool,
     sync_mode: SyncMode,
     fsync_mode: FsyncMode,
+    shutting_down: CancellationToken,
 ) {
     let mut pending = Vec::new();
     let mut done = false;
-    let shutting_down = crate::shutting_down_token();
     let mut duration_estimator = SimpleEstimator::<7>::new(duration_before_fsync);
     let mut last_estimate = duration_before_fsync;
     let mut ticker = tokio::time::interval(duration_before_fsync);
@@ -422,6 +423,7 @@ pub struct DiomLogs {
     metrics: Option<LogMetrics>,
     last_vote: Arc<Mutex<Option<Vote>>>,
     fsync_mode: FsyncMode,
+    cancellation_token: CancellationToken,
 }
 
 impl DiomLogs {
@@ -434,6 +436,7 @@ impl DiomLogs {
         autoscale_duration: bool,
         sync_mode: SyncMode,
         fsync_mode: FsyncMode,
+        cancellation_token: CancellationToken,
     ) -> anyhow::Result<Self> {
         let pb: std::path::PathBuf = path.into();
         let db = Database::builder(&pb).worker_threads(1).open()?;
@@ -456,6 +459,7 @@ impl DiomLogs {
             autoscale_duration,
             sync_mode,
             fsync_mode,
+            cancellation_token.clone(),
         ));
         Ok(Self {
             db,
@@ -466,6 +470,7 @@ impl DiomLogs {
             metrics: None,
             last_vote: Arc::new(Mutex::new(None)),
             fsync_mode,
+            cancellation_token,
         })
     }
 
@@ -747,7 +752,7 @@ impl DiomLogs {
     fn start_metrics(&self, metrics: LogMetrics) {
         let mut logs = self.clone();
         let db = self.db.clone();
-        let shutdown = crate::shutting_down_token();
+        let shutdown = self.cancellation_token.clone();
         tokio::spawn(async move {
             let mut ticker = tokio::time::interval(Duration::from_secs(60));
             while shutdown.run_until_cancelled(ticker.tick()).await.is_some() {
@@ -838,19 +843,23 @@ mod tests {
 
     use super::DiomLogs;
     use crate::cfg::{Dir, FsyncMode, SyncMode};
+    use diom_error::CanFailExt;
     use jiff::{Span, Timestamp};
     use tempfile::TempDir;
     use test_utils::TestResult;
+    use tokio_util::sync::CancellationToken;
 
     struct TestContext {
-        _workdir: TempDir,
+        workdir: Option<TempDir>,
         logs: DiomLogs,
+        cancellation_token: CancellationToken,
     }
 
     impl TestContext {
         fn new() -> Self {
             let workdir = tempfile::tempdir().unwrap();
             let logdir = Dir::new(&workdir).unwrap();
+            let token = CancellationToken::new();
             let logs = DiomLogs::new(
                 logdir,
                 0,
@@ -858,11 +867,22 @@ mod tests {
                 false,
                 SyncMode::Buffer,
                 FsyncMode::default(),
+                token.clone(),
             )
             .unwrap();
             Self {
-                _workdir: workdir,
+                workdir: Some(workdir),
                 logs,
+                cancellation_token: token,
+            }
+        }
+    }
+
+    impl Drop for TestContext {
+        fn drop(&mut self) {
+            self.cancellation_token.cancel();
+            if let Some(workdir) = self.workdir.take() {
+                workdir.close().can_fail("failure to close workdir")
             }
         }
     }

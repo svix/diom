@@ -78,6 +78,7 @@ pub async fn initialize_raft(
         cfg.cluster.log_sync_interval_auto,
         cfg.cluster.log_sync_mode,
         cfg.fsync_mode,
+        crate::shutting_down_token(),
     )
     .context("setting up log store")?;
     let id: NodeId = logs
@@ -119,6 +120,7 @@ pub async fn initialize_raft(
         logs.clone(),
         id,
         time.clone(),
+        crate::shutting_down_token(),
     )
     .await?;
     let state_machine: StoreHandle = state_machine.into();
@@ -214,10 +216,12 @@ pub async fn initialize_raft(
 mod tests {
     use std::time::Duration;
 
+    use diom_error::CanFailExt;
     use diom_proto::InternalClient;
     use fjall::Database;
     use openraft::testing::log::StoreBuilder;
     use tempfile::TempDir;
+    use tokio_util::sync::CancellationToken;
 
     use crate::{AppState, cfg::ConfigurationInner};
 
@@ -230,13 +234,31 @@ mod tests {
     };
     use crate::cfg::{Dir, FsyncMode};
 
+    struct DiomStoreGuard {
+        tempdir: Option<TempDir>,
+        cancel: CancellationToken,
+    }
+
+    impl Drop for DiomStoreGuard {
+        fn drop(&mut self) {
+            self.cancel.cancel();
+            // wait a beat for it to catch up since cancellation is async and we're sync
+            std::thread::sleep(Duration::from_millis(10));
+            if let Some(tempdir) = self.tempdir.take() {
+                tempdir.close().can_fail("error cleaning up tempdir");
+            }
+        }
+    }
+
     struct DiomStoreBuilder;
 
     impl DiomStoreBuilder {
-        async fn setup() -> anyhow::Result<(TempDir, DiomLogs, StoreHandle)> {
+        async fn setup() -> anyhow::Result<(DiomStoreGuard, DiomLogs, StoreHandle)> {
             let workdir = tempfile::tempdir()?;
             let log_path = workdir.path().to_path_buf().join("logs");
             let log_path = Dir::new(log_path)?;
+            let token = CancellationToken::new();
+
             let logs = DiomLogs::new(
                 log_path,
                 1,
@@ -244,6 +266,7 @@ mod tests {
                 false,
                 crate::cfg::SyncMode::Buffer,
                 FsyncMode::default(),
+                token.clone(),
             )?;
 
             let data_path = workdir.path().join("data");
@@ -275,17 +298,24 @@ mod tests {
                 logs.clone(),
                 1.into(),
                 time,
+                token.clone(),
             )
             .await?;
 
-            Ok((workdir, logs, store.into()))
+            let guard = DiomStoreGuard {
+                tempdir: Some(workdir),
+                cancel: token,
+            };
+
+            Ok((guard, logs, store.into()))
         }
     }
 
-    impl StoreBuilder<TypeConfig, DiomLogs, StoreHandle, TempDir> for DiomStoreBuilder {
+    impl StoreBuilder<TypeConfig, DiomLogs, StoreHandle, DiomStoreGuard> for DiomStoreBuilder {
         async fn build(
             &self,
-        ) -> Result<(TempDir, DiomLogs, StoreHandle), openraft::StorageError<TypeConfig>> {
+        ) -> Result<(DiomStoreGuard, DiomLogs, StoreHandle), openraft::StorageError<TypeConfig>>
+        {
             Ok(Self::setup().await.unwrap())
         }
     }
