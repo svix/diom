@@ -88,8 +88,6 @@ export function makeRequestContext(token: string, options: DiomOptions) {
   };
 }
 
-type QueryParameter = string | boolean | number | Date | string[] | null | undefined;
-
 export class DiomRequest {
   constructor(
     private readonly method: HttpMethod,
@@ -97,52 +95,6 @@ export class DiomRequest {
   ) { }
 
   private body?: BodyInit;
-  private queryParams: Record<string, string> = {};
-  private headerParams: Record<string, string> = {};
-
-  public setPathParam(name: string, value: string) {
-    const newPath = this.path.replace(`{${name}}`, encodeURIComponent(value));
-    if (this.path === newPath) {
-      throw new Error(`path parameter ${name} not found`);
-    }
-    this.path = newPath;
-  }
-
-  public setQueryParams(params: { [name: string]: QueryParameter }) {
-    for (const [name, value] of Object.entries(params)) {
-      this.setQueryParam(name, value);
-    }
-  }
-
-  public setQueryParam(name: string, value: QueryParameter) {
-    if (value === undefined || value === null) {
-      return;
-    }
-
-    if (typeof value === "string") {
-      this.queryParams[name] = value;
-    } else if (typeof value === "boolean" || typeof value === "number") {
-      this.queryParams[name] = value.toString();
-    } else if (value instanceof Date) {
-      this.queryParams[name] = value.toISOString();
-    } else if (Array.isArray(value)) {
-      if (value.length > 0) {
-        this.queryParams[name] = value.join(",");
-      }
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const _assert_unreachable: never = value;
-      throw new Error(`query parameter ${name} has unsupported type`);
-    }
-  }
-
-  public setHeaderParam(name: string, value?: string) {
-    if (value === undefined) {
-      return;
-    }
-
-    this.headerParams[name] = value;
-  }
 
   // biome-ignore lint/suspicious/noExplicitAny: intentional any
   public setBody(value: any) {
@@ -188,19 +140,22 @@ export class DiomRequest {
 
   private async sendInner(ctx: DiomRequestContext, operationId: string): Promise<Response> {
     const url = new URL(ctx.baseUrl + this.path);
-    for (const [name, value] of Object.entries(this.queryParams)) {
-      url.searchParams.set(name, value);
-    }
-
     const randomId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
 
-    if (this.body != null) {
-      this.headerParams["content-type"] = APPLICATION_MSGPACK;
-    }
     // Cloudflare Workers fail if the credentials option is used in a fetch call.
     // This work around that. Source:
     // https://github.com/cloudflare/workers-sdk/issues/2514#issuecomment-21.85.0014
     const isCredentialsSupported = "credentials" in Request.prototype;
+
+    const headers: Record<string, string> = {
+      "accept": APPLICATION_MSGPACK,
+      "authorization": `Bearer ${ctx.token}`,
+      "user-agent": USER_AGENT,
+      "diom-req-id": randomId.toString(),
+    };
+    if (this.body != null) {
+      headers["content-type"] = APPLICATION_MSGPACK;
+    }
 
     let response: Response;
     try {
@@ -209,13 +164,7 @@ export class DiomRequest {
         {
           method: this.method.toString(),
           body: this.body,
-          headers: {
-            accept: APPLICATION_MSGPACK,
-            authorization: `Bearer ${ctx.token}`,
-            "user-agent": USER_AGENT,
-            "diom-req-id": randomId.toString(),
-            ...this.headerParams,
-          },
+          headers,
           credentials: isCredentialsSupported ? "same-origin" : undefined,
           signal: ctx.timeout !== undefined ? AbortSignal.timeout(ctx.timeout) : undefined,
         },
