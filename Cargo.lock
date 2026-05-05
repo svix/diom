@@ -3427,6 +3427,7 @@ checksum = "805bfd7352166bae857ee569628b52bcd85a1cecf7810861ebceb1686b72b75d"
 dependencies = [
  "memo-map",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -3620,7 +3621,7 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 [[package]]
 name = "openapi-codegen"
 version = "0.1.0"
-source = "git+https://github.com/svix/openapi-codegen?rev=15c0f127de8e212ba5f6c8ae76cd782ba7c82695#15c0f127de8e212ba5f6c8ae76cd782ba7c82695"
+source = "git+https://github.com/svix/openapi-codegen?rev=6035af003ed000b1d15debde0219f0b2d3e5e85f#6035af003ed000b1d15debde0219f0b2d3e5e85f"
 dependencies = [
  "aide 0.14.2",
  "anyhow",

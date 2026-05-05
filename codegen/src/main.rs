@@ -55,7 +55,7 @@ fn main() -> anyhow::Result<ExitCode> {
         paths,
         components,
         &webhooks,
-        IncludeMode::OnlyPublic,
+        IncludeMode::Public,
         &BTreeSet::new(),
         &BTreeSet::new(),
     )?;
