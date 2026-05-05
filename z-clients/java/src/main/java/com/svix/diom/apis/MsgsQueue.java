@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +47,7 @@ public class MsgsQueue {
         String topic,
         String consumerGroup,
         final MsgQueueReceiveIn msgQueueReceiveIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgQueueReceiveIn_ body = new MsgQueueReceiveIn_(
             msgQueueReceiveIn.getNamespace(),
             topic,
@@ -77,7 +76,7 @@ public class MsgsQueue {
     public MsgQueueReceiveOut receive(
         String topic,
         String consumerGroup
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.receive(
             topic,
             consumerGroup,
@@ -94,7 +93,7 @@ public class MsgsQueue {
         String topic,
         String consumerGroup,
         final MsgQueueAckIn msgQueueAckIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgQueueAckIn_ body = new MsgQueueAckIn_(
             msgQueueAckIn.getNamespace(),
             topic,
@@ -121,7 +120,7 @@ public class MsgsQueue {
         String topic,
         String consumerGroup,
         final MsgQueueExtendLeaseIn msgQueueExtendLeaseIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgQueueExtendLeaseIn_ body = new MsgQueueExtendLeaseIn_(
             msgQueueExtendLeaseIn.getNamespace(),
             topic,
@@ -149,7 +148,7 @@ public class MsgsQueue {
         String topic,
         String consumerGroup,
         final MsgQueueConfigureIn msgQueueConfigureIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgQueueConfigureIn_ body = new MsgQueueConfigureIn_(
             msgQueueConfigureIn.getNamespace(),
             topic,
@@ -176,7 +175,7 @@ public class MsgsQueue {
     public MsgQueueConfigureOut configure(
         String topic,
         String consumerGroup
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.configure(
             topic,
             consumerGroup,
@@ -194,7 +193,7 @@ public class MsgsQueue {
         String topic,
         String consumerGroup,
         final MsgQueueNackIn msgQueueNackIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgQueueNackIn_ body = new MsgQueueNackIn_(
             msgQueueNackIn.getNamespace(),
             topic,
@@ -216,7 +215,7 @@ public class MsgsQueue {
         String topic,
         String consumerGroup,
         final MsgQueueRedriveDlqIn msgQueueRedriveDlqIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgQueueRedriveDlqIn_ body = new MsgQueueRedriveDlqIn_(
             msgQueueRedriveDlqIn.getNamespace(),
             topic,
@@ -236,7 +235,7 @@ public class MsgsQueue {
     public MsgQueueRedriveDlqOut redriveDlq(
         String topic,
         String consumerGroup
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.redriveDlq(
             topic,
             consumerGroup,

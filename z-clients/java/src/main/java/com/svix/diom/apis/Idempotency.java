@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +35,7 @@ public class Idempotency {
     public IdempotencyStartOut start(
         String key,
         final IdempotencyStartIn idempotencyStartIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         IdempotencyStartIn_ body = new IdempotencyStartIn_(
             idempotencyStartIn.getNamespace(),
             key,
@@ -56,7 +55,7 @@ public class Idempotency {
     public IdempotencyCompleteOut complete(
         String key,
         final IdempotencyCompleteIn idempotencyCompleteIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         IdempotencyCompleteIn_ body = new IdempotencyCompleteIn_(
             idempotencyCompleteIn.getNamespace(),
             key,
@@ -78,7 +77,7 @@ public class Idempotency {
     public IdempotencyAbortOut abort(
         String key,
         final IdempotencyAbortIn idempotencyAbortIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         IdempotencyAbortIn_ body = new IdempotencyAbortIn_(
             idempotencyAbortIn.getNamespace(),
             key
@@ -96,7 +95,7 @@ public class Idempotency {
     /** Abandon an idempotent request (remove lock without saving response) */
     public IdempotencyAbortOut abort(
         String key
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.abort(
             key,
             new IdempotencyAbortIn()

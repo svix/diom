@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,7 @@ public class AdminAuthRole {
     /** Create or update a role */
     public AdminRoleConfigureOut configure(
         final AdminRoleConfigureIn adminRoleConfigureIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -44,7 +43,7 @@ public class AdminAuthRole {
     /** Delete a role */
     public AdminRoleDeleteOut delete(
         final AdminRoleDeleteIn adminRoleDeleteIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -58,7 +57,7 @@ public class AdminAuthRole {
     /** Get a role by ID */
     public AdminRoleOut get(
         final AdminRoleGetIn adminRoleGetIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -72,7 +71,7 @@ public class AdminAuthRole {
     /** List all roles */
     public ListResponseAdminRoleOut list(
         final AdminRoleListIn adminRoleListIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -86,7 +85,7 @@ public class AdminAuthRole {
     /** List all roles */
     public ListResponseAdminRoleOut list(
         
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.list(
             new AdminRoleListIn()
         );

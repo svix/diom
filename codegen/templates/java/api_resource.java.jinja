@@ -5,9 +5,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +39,7 @@ public class {{ resource_type_name }} {
 
 {%- for op in resource.operations %}
     {%- set method_name = op.name | to_lower_camel_case %}
-    {%- set throws = "throws IOException, ApiException" %}
+    {%- set throws = "throws DiomException" %}
     {%- set res_type = "void" %}
     {%- if op.response_body_schema_name is defined %}
         {%- set res_type = op.response_body_schema_name | replace("_", "") %}

@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +25,7 @@ public class RateLimitNamespace {
     /** Configure rate limiter namespace */
     public RateLimitConfigureNamespaceOut configure(
         final RateLimitConfigureNamespaceIn rateLimitConfigureNamespaceIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -40,7 +39,7 @@ public class RateLimitNamespace {
     /** Get rate limiter namespace */
     public RateLimitGetNamespaceOut get(
         final RateLimitGetNamespaceIn rateLimitGetNamespaceIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",

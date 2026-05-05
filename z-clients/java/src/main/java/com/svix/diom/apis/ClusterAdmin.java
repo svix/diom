@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +28,7 @@ public class ClusterAdmin {
     /** Get information about the current cluster */
     public ClusterStatusOut status(
         
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "GET",
@@ -48,7 +47,7 @@ public class ClusterAdmin {
 */
     public ClusterInitializeOut initialize(
         final ClusterInitializeIn clusterInitializeIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -67,7 +66,7 @@ public class ClusterAdmin {
 */
     public ClusterInitializeOut initialize(
         
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.initialize(
             new ClusterInitializeIn()
         );
@@ -81,7 +80,7 @@ public class ClusterAdmin {
 */
     public ClusterRemoveNodeOut removeNode(
         final ClusterRemoveNodeIn clusterRemoveNodeIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -95,7 +94,7 @@ public class ClusterAdmin {
     /** Force the cluster to take a snapshot immediately */
     public ClusterForceSnapshotOut forceSnapshot(
         final ClusterForceSnapshotIn clusterForceSnapshotIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -109,7 +108,7 @@ public class ClusterAdmin {
     /** Force the cluster to take a snapshot immediately */
     public ClusterForceSnapshotOut forceSnapshot(
         
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.forceSnapshot(
             new ClusterForceSnapshotIn()
         );

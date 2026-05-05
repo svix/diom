@@ -2,6 +2,7 @@ package com.svix.diom;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.svix.diom.InvalidInputException;
 import com.svix.diom.models.*;
 import java.time.Duration;
 import java.util.Collections;
@@ -107,5 +108,15 @@ class IntegrationTest {
         // Verify deleted
         CacheGetOut getResp2 = client.cache().get(key);
         assertNull(getResp2.getValue());
+    }
+
+    @Test
+    @Tag("integration")
+    void testInvalidInput() throws Exception {
+        InvalidInputException e = assertThrows(InvalidInputException.class, () -> {
+            client.kv().set("❤️", "whatever".getBytes(), new KvSetIn());
+        });
+        assertEquals(e.getCode(), "invalid-encoding");
+        assertTrue(e.getDetail().startsWith("EntityKey must match the following pattern:"));
     }
 }

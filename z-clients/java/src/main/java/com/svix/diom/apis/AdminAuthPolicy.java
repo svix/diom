@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,7 @@ public class AdminAuthPolicy {
     /** Create or update an access policy */
     public AdminAccessPolicyConfigureOut configure(
         final AdminAccessPolicyConfigureIn adminAccessPolicyConfigureIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -44,7 +43,7 @@ public class AdminAuthPolicy {
     /** Delete an access policy */
     public AdminAccessPolicyDeleteOut delete(
         final AdminAccessPolicyDeleteIn adminAccessPolicyDeleteIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -58,7 +57,7 @@ public class AdminAuthPolicy {
     /** Get an access policy by ID */
     public AdminAccessPolicyOut get(
         final AdminAccessPolicyGetIn adminAccessPolicyGetIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -72,7 +71,7 @@ public class AdminAuthPolicy {
     /** List all access policies */
     public ListResponseAdminAccessPolicyOut list(
         final AdminAccessPolicyListIn adminAccessPolicyListIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -86,7 +85,7 @@ public class AdminAuthPolicy {
     /** List all access policies */
     public ListResponseAdminAccessPolicyOut list(
         
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.list(
             new AdminAccessPolicyListIn()
         );

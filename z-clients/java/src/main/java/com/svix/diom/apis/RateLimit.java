@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +31,7 @@ public class RateLimit {
     /** Rate Limiter Check and Consume */
     public RateLimitCheckOut limit(
         final RateLimitCheckIn rateLimitCheckIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -46,7 +45,7 @@ public class RateLimit {
     /** Rate Limiter Get Remaining */
     public RateLimitGetRemainingOut getRemaining(
         final RateLimitGetRemainingIn rateLimitGetRemainingIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
@@ -60,7 +59,7 @@ public class RateLimit {
     /** Rate Limiter Reset */
     public RateLimitResetOut reset(
         final RateLimitResetIn rateLimitResetIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",

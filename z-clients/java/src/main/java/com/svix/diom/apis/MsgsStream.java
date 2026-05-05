@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +37,7 @@ public class MsgsStream {
         String topic,
         String consumerGroup,
         final MsgStreamReceiveIn msgStreamReceiveIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgStreamReceiveIn_ body = new MsgStreamReceiveIn_(
             msgStreamReceiveIn.getNamespace(),
             topic,
@@ -67,7 +66,7 @@ public class MsgsStream {
     public MsgStreamReceiveOut receive(
         String topic,
         String consumerGroup
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.receive(
             topic,
             consumerGroup,
@@ -85,7 +84,7 @@ public class MsgsStream {
         String topic,
         String consumerGroup,
         final MsgStreamCommitIn msgStreamCommitIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgStreamCommitIn_ body = new MsgStreamCommitIn_(
             msgStreamCommitIn.getNamespace(),
             topic,
@@ -115,7 +114,7 @@ public class MsgsStream {
         String topic,
         String consumerGroup,
         final MsgStreamSeekIn msgStreamSeekIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgStreamSeekIn_ body = new MsgStreamSeekIn_(
             msgStreamSeekIn.getNamespace(),
             topic,
@@ -146,7 +145,7 @@ public class MsgsStream {
     public MsgStreamSeekOut seek(
         String topic,
         String consumerGroup
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.seek(
             topic,
             consumerGroup,

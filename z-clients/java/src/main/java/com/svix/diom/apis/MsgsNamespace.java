@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +28,7 @@ public class MsgsNamespace {
     public MsgNamespaceConfigureOut configure(
         String name,
         final MsgNamespaceConfigureIn msgNamespaceConfigureIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgNamespaceConfigureIn_ body = new MsgNamespaceConfigureIn_(
             name,
             msgNamespaceConfigureIn.getRetention()
@@ -47,7 +46,7 @@ public class MsgsNamespace {
     /** Configures a msgs namespace with the given name. */
     public MsgNamespaceConfigureOut configure(
         String name
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.configure(
             name,
             new MsgNamespaceConfigureIn()
@@ -58,7 +57,7 @@ public class MsgsNamespace {
     public MsgNamespaceGetOut get(
         String name,
         final MsgNamespaceGetIn msgNamespaceGetIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         MsgNamespaceGetIn_ body = new MsgNamespaceGetIn_(
             name
         );
@@ -75,7 +74,7 @@ public class MsgsNamespace {
     /** Gets a msgs namespace by name. */
     public MsgNamespaceGetOut get(
         String name
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.get(
             name,
             new MsgNamespaceGetIn()

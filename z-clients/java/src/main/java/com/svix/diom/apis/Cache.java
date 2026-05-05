@@ -3,9 +3,8 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +36,7 @@ public class Cache {
         String key,
         byte[] value,
         final CacheSetIn cacheSetIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         CacheSetIn_ body = new CacheSetIn_(
             cacheSetIn.getNamespace(),
             key,
@@ -58,7 +57,7 @@ public class Cache {
     public CacheGetOut get(
         String key,
         final CacheGetIn cacheGetIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         CacheGetIn_ body = new CacheGetIn_(
             cacheGetIn.getNamespace(),
             key,
@@ -77,7 +76,7 @@ public class Cache {
     /** Cache Get */
     public CacheGetOut get(
         String key
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.get(
             key,
             new CacheGetIn()
@@ -88,7 +87,7 @@ public class Cache {
     public CacheDeleteOut delete(
         String key,
         final CacheDeleteIn cacheDeleteIn
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         CacheDeleteIn_ body = new CacheDeleteIn_(
             cacheDeleteIn.getNamespace(),
             key
@@ -106,7 +105,7 @@ public class Cache {
     /** Cache Delete */
     public CacheDeleteOut delete(
         String key
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.delete(
             key,
             new CacheDeleteIn()
