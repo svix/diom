@@ -3,17 +3,13 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.IdempotencyConfigureNamespaceIn;
 import com.svix.diom.models.IdempotencyConfigureNamespaceOut;
 import com.svix.diom.models.IdempotencyGetNamespaceIn;
@@ -29,12 +25,11 @@ public class IdempotencyNamespace {
     /** Configure idempotency namespace */
     public IdempotencyConfigureNamespaceOut configure(
         final IdempotencyConfigureNamespaceIn idempotencyConfigureNamespaceIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.namespace.configure");
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.idempotency.namespace.configure",
             null,
             idempotencyConfigureNamespaceIn,
             IdempotencyConfigureNamespaceOut.class
@@ -44,12 +39,11 @@ public class IdempotencyNamespace {
     /** Get idempotency namespace */
     public IdempotencyGetNamespaceOut get(
         final IdempotencyGetNamespaceIn idempotencyGetNamespaceIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.namespace.get");
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.idempotency.namespace.get",
             null,
             idempotencyGetNamespaceIn,
             IdempotencyGetNamespaceOut.class

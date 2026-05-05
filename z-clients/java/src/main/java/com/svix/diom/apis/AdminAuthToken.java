@@ -3,17 +3,13 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.AdminAuthTokenCreateIn;
 import com.svix.diom.models.AdminAuthTokenCreateOut;
 import com.svix.diom.models.AdminAuthTokenDeleteIn;
@@ -39,12 +35,11 @@ public class AdminAuthToken {
     /** Create an auth token */
     public AdminAuthTokenCreateOut create(
         final AdminAuthTokenCreateIn adminAuthTokenCreateIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.create");
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.create",
             null,
             adminAuthTokenCreateIn,
             AdminAuthTokenCreateOut.class
@@ -54,12 +49,11 @@ public class AdminAuthToken {
     /** Expire an auth token */
     public AdminAuthTokenExpireOut expire(
         final AdminAuthTokenExpireIn adminAuthTokenExpireIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.expire");
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.expire",
             null,
             adminAuthTokenExpireIn,
             AdminAuthTokenExpireOut.class
@@ -69,12 +63,11 @@ public class AdminAuthToken {
     /** Rotate an auth token, invalidating the old one and issuing a new secret */
     public AdminAuthTokenRotateOut rotate(
         final AdminAuthTokenRotateIn adminAuthTokenRotateIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.rotate");
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.rotate",
             null,
             adminAuthTokenRotateIn,
             AdminAuthTokenRotateOut.class
@@ -84,12 +77,11 @@ public class AdminAuthToken {
     /** Delete an auth token */
     public AdminAuthTokenDeleteOut delete(
         final AdminAuthTokenDeleteIn adminAuthTokenDeleteIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.delete");
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.delete",
             null,
             adminAuthTokenDeleteIn,
             AdminAuthTokenDeleteOut.class
@@ -99,12 +91,11 @@ public class AdminAuthToken {
     /** List auth tokens for a given owner */
     public ListResponseAdminAuthTokenOut list(
         final AdminAuthTokenListIn adminAuthTokenListIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.list");
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.list",
             null,
             adminAuthTokenListIn,
             ListResponseAdminAuthTokenOut.class
@@ -114,7 +105,7 @@ public class AdminAuthToken {
     /** List auth tokens for a given owner */
     public ListResponseAdminAuthTokenOut list(
         
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.list(
             new AdminAuthTokenListIn()
         );
@@ -123,12 +114,11 @@ public class AdminAuthToken {
     /** Update an auth token's properties */
     public AdminAuthTokenUpdateOut update(
         final AdminAuthTokenUpdateIn adminAuthTokenUpdateIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.update");
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.update",
             null,
             adminAuthTokenUpdateIn,
             AdminAuthTokenUpdateOut.class
@@ -138,12 +128,11 @@ public class AdminAuthToken {
     /** Return the role of the currently authenticated token */
     public AdminAuthTokenWhoamiOut whoami(
         final AdminAuthTokenWhoamiIn adminAuthTokenWhoamiIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-token.whoami");
+    ) throws DiomException {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.admin.auth-token.whoami",
             null,
             adminAuthTokenWhoamiIn,
             AdminAuthTokenWhoamiOut.class
@@ -153,7 +142,7 @@ public class AdminAuthToken {
     /** Return the role of the currently authenticated token */
     public AdminAuthTokenWhoamiOut whoami(
         
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.whoami(
             new AdminAuthTokenWhoamiIn()
         );

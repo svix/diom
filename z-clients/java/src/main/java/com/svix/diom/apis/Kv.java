@@ -3,17 +3,13 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.KvDeleteIn;
 import com.svix.diom.models.KvDeleteOut;
 import com.svix.diom.models.KvGetIn;
@@ -40,8 +36,7 @@ public class Kv {
         String key,
         byte[] value,
         final KvSetIn kvSetIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.set");
+    ) throws DiomException {
         KvSetIn_ body = new KvSetIn_(
             kvSetIn.getNamespace(),
             key,
@@ -53,7 +48,7 @@ public class Kv {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.kv.set",
             null,
             body,
             KvSetOut.class
@@ -64,7 +59,7 @@ public class Kv {
     public KvSetOut set(
         String key,
         byte[] value
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.set(
             key,
             value,
@@ -76,8 +71,7 @@ public class Kv {
     public KvGetOut get(
         String key,
         final KvGetIn kvGetIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.get");
+    ) throws DiomException {
         KvGetIn_ body = new KvGetIn_(
             kvGetIn.getNamespace(),
             key,
@@ -86,7 +80,7 @@ public class Kv {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.kv.get",
             null,
             body,
             KvGetOut.class
@@ -96,7 +90,7 @@ public class Kv {
     /** KV Get */
     public KvGetOut get(
         String key
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.get(
             key,
             new KvGetIn()
@@ -107,8 +101,7 @@ public class Kv {
     public KvDeleteOut delete(
         String key,
         final KvDeleteIn kvDeleteIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.delete");
+    ) throws DiomException {
         KvDeleteIn_ body = new KvDeleteIn_(
             kvDeleteIn.getNamespace(),
             key,
@@ -117,7 +110,7 @@ public class Kv {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.kv.delete",
             null,
             body,
             KvDeleteOut.class
@@ -127,7 +120,7 @@ public class Kv {
     /** KV Delete */
     public KvDeleteOut delete(
         String key
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.delete(
             key,
             new KvDeleteIn()

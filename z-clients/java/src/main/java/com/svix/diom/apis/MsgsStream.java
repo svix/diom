@@ -3,17 +3,13 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.MsgStreamCommitIn;
 import com.svix.diom.models.MsgStreamCommitOut;
 import com.svix.diom.models.MsgStreamReceiveIn;
@@ -41,8 +37,7 @@ public class MsgsStream {
         String topic,
         String consumerGroup,
         final MsgStreamReceiveIn msgStreamReceiveIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.stream.receive");
+    ) throws DiomException {
         MsgStreamReceiveIn_ body = new MsgStreamReceiveIn_(
             msgStreamReceiveIn.getNamespace(),
             topic,
@@ -55,7 +50,7 @@ public class MsgsStream {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.stream.receive",
             null,
             body,
             MsgStreamReceiveOut.class
@@ -71,7 +66,7 @@ public class MsgsStream {
     public MsgStreamReceiveOut receive(
         String topic,
         String consumerGroup
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.receive(
             topic,
             consumerGroup,
@@ -89,8 +84,7 @@ public class MsgsStream {
         String topic,
         String consumerGroup,
         final MsgStreamCommitIn msgStreamCommitIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.stream.commit");
+    ) throws DiomException {
         MsgStreamCommitIn_ body = new MsgStreamCommitIn_(
             msgStreamCommitIn.getNamespace(),
             topic,
@@ -100,7 +94,7 @@ public class MsgsStream {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.stream.commit",
             null,
             body,
             MsgStreamCommitOut.class
@@ -120,8 +114,7 @@ public class MsgsStream {
         String topic,
         String consumerGroup,
         final MsgStreamSeekIn msgStreamSeekIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.stream.seek");
+    ) throws DiomException {
         MsgStreamSeekIn_ body = new MsgStreamSeekIn_(
             msgStreamSeekIn.getNamespace(),
             topic,
@@ -133,7 +126,7 @@ public class MsgsStream {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.stream.seek",
             null,
             body,
             MsgStreamSeekOut.class
@@ -152,7 +145,7 @@ public class MsgsStream {
     public MsgStreamSeekOut seek(
         String topic,
         String consumerGroup
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.seek(
             topic,
             consumerGroup,

@@ -3,17 +3,13 @@ package com.svix.diom.apis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.svix.diom.ApiException;
+import com.svix.diom.DiomException;
 import com.svix.diom.HttpClient;
-import com.svix.diom.Utils;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import com.svix.diom.models.MsgNamespaceConfigureIn;
 import com.svix.diom.models.MsgNamespaceConfigureOut;
 import com.svix.diom.models.MsgNamespaceGetIn;
@@ -32,8 +28,7 @@ public class MsgsNamespace {
     public MsgNamespaceConfigureOut configure(
         String name,
         final MsgNamespaceConfigureIn msgNamespaceConfigureIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.namespace.configure");
+    ) throws DiomException {
         MsgNamespaceConfigureIn_ body = new MsgNamespaceConfigureIn_(
             name,
             msgNamespaceConfigureIn.getRetention()
@@ -41,7 +36,7 @@ public class MsgsNamespace {
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.namespace.configure",
             null,
             body,
             MsgNamespaceConfigureOut.class
@@ -51,7 +46,7 @@ public class MsgsNamespace {
     /** Configures a msgs namespace with the given name. */
     public MsgNamespaceConfigureOut configure(
         String name
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.configure(
             name,
             new MsgNamespaceConfigureIn()
@@ -62,15 +57,14 @@ public class MsgsNamespace {
     public MsgNamespaceGetOut get(
         String name,
         final MsgNamespaceGetIn msgNamespaceGetIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.namespace.get");
+    ) throws DiomException {
         MsgNamespaceGetIn_ body = new MsgNamespaceGetIn_(
             name
         );
 
         return this.client.executeRequest(
             "POST",
-            url.build(),
+            "/api/v1.msgs.namespace.get",
             null,
             body,
             MsgNamespaceGetOut.class
@@ -80,7 +74,7 @@ public class MsgsNamespace {
     /** Gets a msgs namespace by name. */
     public MsgNamespaceGetOut get(
         String name
-    ) throws IOException, ApiException {
+    ) throws DiomException {
         return this.get(
             name,
             new MsgNamespaceGetIn()

@@ -8,12 +8,19 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.net.SocketFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.svix.diom.ConnectionException;
+import com.svix.diom.InvalidInputException;
+import com.svix.diom.OperationErrorException;
+import com.svix.diom.OtherException;
+import com.svix.diom.ServerErrorException;
 
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -94,25 +101,40 @@ public class HttpClient {
         this.objectMapper = Utils.getMsgpackObjectMapper();
     }
 
-    public HttpUrl.Builder newUrlBuilder() {
-        return new HttpUrl.Builder()
-                .scheme(baseUrl.scheme())
-                .host(baseUrl.host())
-                .port(baseUrl.port());
-    }
-
     private static final MediaType APPLICATION_MSGPACK = MediaType.parse("application/msgpack");
 
     public <Req, Res> Res executeRequest(
-            String method, HttpUrl url, Headers headers, Req reqBody, Class<Res> responseClass)
-            throws ApiException, IOException {
+        final String method,
+        final String path,
+        final Headers headers,
+        final Req reqBody,
+        final Class<Res> responseClass
+    ) throws DiomException {
+        String opId;
+        if (path.startsWith("/api/")) {
+            opId = path.substring("/api/".length());
+        } else {
+            Logger.getLogger("Diom").log(Level.WARNING, "request path must begin with /api/");
+            opId = "[ERROR]";
+        }
+
+        HttpUrl url = new HttpUrl.Builder()
+            .scheme(baseUrl.scheme())
+            .host(baseUrl.host())
+            .port(baseUrl.port())
+            .encodedPath(path)
+            .build();
         Request.Builder reqBuilder = new Request.Builder().url(url);
 
         // Handle request body
         if (reqBody != null) {
-            byte[] msgpackBody = objectMapper.writeValueAsBytes(reqBody);
-            RequestBody body = RequestBody.create(msgpackBody, APPLICATION_MSGPACK);
-            reqBuilder.method(method, body);
+            try {
+                byte[] msgpackBody = objectMapper.writeValueAsBytes(reqBody);
+                RequestBody body = RequestBody.create(msgpackBody, APPLICATION_MSGPACK);
+                reqBuilder.method(method, body);
+            } catch (Exception e) {
+                throw new OtherException(opId, e);
+            }
         } else {
             reqBuilder.method(method, null);
         }
@@ -124,7 +146,7 @@ public class HttpClient {
 
         String idempotencyKey = headers == null ? null : headers.get("idempotency-key");
         if ((idempotencyKey == null || idempotencyKey.isEmpty()) && method.toUpperCase() == "POST") {
-                reqBuilder.addHeader("idempotency-key", "auto_" + UUID.randomUUID().toString());
+            reqBuilder.addHeader("idempotency-key", "auto_" + UUID.randomUUID().toString());
         }
 
         // Add custom headers if present
@@ -133,30 +155,50 @@ public class HttpClient {
         }
 
         reqBuilder.addHeader(
-                "diom-req-id",
-                String.valueOf(ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE)));
+            "diom-req-id",
+            String.valueOf(ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE))
+        );
 
-        Request request = reqBuilder.build();
-        Response response = executeRequestWithRetry(request);
-
-        if (response.body() == null) {
-            throw new ApiException("Body is null", response.code(), "");
+        Request request;
+        try {
+            request = reqBuilder.build();
+        } catch (Exception e) {
+            throw new OtherException(opId, e);
         }
 
-        byte[] bodyBytes = response.body().bytes();
+        Response response;
+        try {
+            response = executeRequestWithRetry(request);
+        } catch (Exception e) {
+            throw new ConnectionException(opId, e);
+        }
+
+        if (response.body() == null) {
+            throw new OtherException(opId, "Body is null (status code " + response.code() + ")");
+        }
+
+        byte[] bodyBytes;
+        try {
+            bodyBytes = response.body().bytes();
+        } catch (Exception e) {
+            throw new ConnectionException(opId, e);
+        }
 
         if (response.code() == 204) {
             return null;
         }
 
-        if (response.code() >= 200 && response.code() < 300) {
-            return objectMapper.readValue(bodyBytes, responseClass);
+        ErrorBody errorBody;
+        try {
+            if (response.code() >= 200 && response.code() < 300) {
+                return objectMapper.readValue(bodyBytes, responseClass);
+            }
+            errorBody = objectMapper.readValue(bodyBytes, ErrorBody.class);
+        } catch (Exception e) {
+            throw new OtherException(opId, e);
         }
 
-        String bodyString = objectMapper.readTree(bodyBytes).toString();
-
-        throw new ApiException(
-                "Non 200 status code: `" + response.code() + "`", response.code(), bodyString);
+        throw HttpClient.newResponseException(opId, errorBody);
     }
 
     private Response executeRequestWithRetry(Request request) throws IOException {
@@ -177,5 +219,18 @@ public class HttpClient {
             retryCount++;
         }
         return response;
+    }
+
+    private static DiomException newResponseException(final String opId, final ErrorBody body) {
+        switch (body.type) {
+            case "invalid-input":
+                return new InvalidInputException(opId, body.code, body.detail, body.location);
+            case "operation-error":
+                return new OperationErrorException(opId, body.code, body.detail, body.location);
+            case "server-error":
+                return new ServerErrorException(opId, body.code, body.detail, body.location);
+            default:
+                return new OtherException(opId, "invalid error type `" + body.type + "`");
+        }
     }
 }
