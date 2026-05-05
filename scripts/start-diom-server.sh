@@ -6,23 +6,22 @@ set -euo pipefail
 # Usage: ./start-diom-server.sh [<binary-path>]
 #
 # Arguments:
-#   binary-path   Path to the diom-server binary (default: target/release/diom-server)
+#   binary-path   Path to the diom-server binary (default: target/debug/diom-server)
 #
 # Environment variables:
 #   DIOM_ADMIN_TOKEN  Admin token (default: admin_abcdefghijlmnopqrstuvwxyz012345)
 #   DIOM_PORT         Port to listen on (default: 8624)
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT_DIR="$SCRIPT_DIR/.."
+cd "$(dirname "$0")/.."
 
-BINARY="${1:-$ROOT_DIR/target/release/diom-server}"
+BINARY="${1:-target/debug/diom-server}"
 DIOM_ADMIN_TOKEN="${DIOM_ADMIN_TOKEN:-admin_abcdefghijlmnopqrstuvwxyz012345}"
 PORT="${DIOM_PORT:-8624}"
 PID_FILE="/tmp/diom-server.pid"
 
 if [[ ! -f "$BINARY" ]]; then
     echo "Error: binary not found at $BINARY"
-    echo "Build it with: cargo build --release --package diom-server"
+    echo "Build it with: cargo build --package diom-server"
     exit 1
 fi
 
