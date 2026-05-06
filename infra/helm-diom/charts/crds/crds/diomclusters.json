@@ -1332,6 +1332,104 @@
                   "storage": {
                     "description": "Storage configuration.",
                     "properties": {
+                      "ephemeral": {
+                        "description": "Optional separate volume for ephemeral database storage.",
+                        "nullable": true,
+                        "oneOf": [
+                          {
+                            "required": [
+                              "emptyDir"
+                            ]
+                          },
+                          {
+                            "required": [
+                              "hostPath"
+                            ]
+                          },
+                          {
+                            "required": [
+                              "genericEphemeral"
+                            ]
+                          },
+                          {
+                            "required": [
+                              "pvc"
+                            ]
+                          }
+                        ],
+                        "properties": {
+                          "emptyDir": {
+                            "description": "An emptyDir volume.\n\nRecommended only for testing. Data is lost on pod restart.",
+                            "properties": {
+                              "medium": {
+                                "description": "medium represents what type of storage medium should back this directory. The default is \"\" which means to use the node's default medium. Must be an empty string (default) or Memory. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir",
+                                "type": "string"
+                              },
+                              "sizeLimit": {
+                                "description": "sizeLimit is the total amount of local storage required for this EmptyDir volume. The size limit is also applicable for memory medium. The maximum usage on memory medium EmptyDir would be the minimum value between the SizeLimit specified here and the sum of memory limits of all containers in a pod. The default is nil which means that the limit is undefined. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir",
+                                "nullable": true,
+                                "x-kubernetes-int-or-string": true
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "genericEphemeral": {
+                            "description": "A generic ephemeral volume provisioned by a CSI driver.\n\nRecommended only for testing. Data is lost on pod restart.",
+                            "properties": {
+                              "size": {
+                                "description": "Storage size, e.g. \"10Gi\".",
+                                "x-kubernetes-int-or-string": true
+                              },
+                              "storageClass": {
+                                "description": "Storage class name. Uses the cluster default if not specified.",
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "size"
+                            ],
+                            "type": "object"
+                          },
+                          "hostPath": {
+                            "description": "A directory mounted directly from the host node.\n\nData persists across pod restarts as long as the pod is rescheduled onto the same node.",
+                            "properties": {
+                              "path": {
+                                "description": "Absolute path on the host node to mount into the container.",
+                                "type": "string"
+                              },
+                              "type": {
+                                "description": "Type of hostPath volume.",
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path"
+                            ],
+                            "type": "object"
+                          },
+                          "pvc": {
+                            "description": "A persistent volume claim.",
+                            "properties": {
+                              "size": {
+                                "description": "Storage size, e.g. \"10Gi\".",
+                                "x-kubernetes-int-or-string": true
+                              },
+                              "storageClass": {
+                                "description": "Storage class name. Uses the cluster default if not specified.",
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "size"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      },
                       "logs": {
                         "description": "Separate volume for Raft commit logs.\nRecommended for high-throughput deployments to avoid I/O contention\nwith the persistent DB.",
                         "nullable": true,
@@ -1352,7 +1450,7 @@
                         "type": "object"
                       },
                       "persistent": {
-                        "description": "Persistent database storage",
+                        "description": "Persistent database storage.",
                         "properties": {
                           "size": {
                             "description": "Storage size, e.g. \"10Gi\".",

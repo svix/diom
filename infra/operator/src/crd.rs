@@ -3,8 +3,8 @@
 
 use k8s_openapi::{
     api::core::v1::{
-        Affinity, EnvVar, EnvVarSource, HTTPGetAction, Probe, ResourceRequirements,
-        SecretKeySelector, Toleration, TopologySpreadConstraint,
+        Affinity, EmptyDirVolumeSource, EnvVar, EnvVarSource, HTTPGetAction, Probe,
+        ResourceRequirements, SecretKeySelector, Toleration, TopologySpreadConstraint,
     },
     apimachinery::pkg::api::resource::Quantity,
 };
@@ -108,11 +108,13 @@ pub struct DiomClusterSpec {
 /// Storage configuration for a Diom cluster.
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 pub struct DiomStorageSpec {
-    /// Persistent database storage
+    /// Persistent database storage.
     pub persistent: VolumeSpec,
 
-    // TODO: ephemeral DB storage — fjall ephemeral DB
-    // pub ephemeral: VolumeSpec,
+    /// Optional separate volume for ephemeral database storage.
+    #[serde(default)]
+    pub ephemeral: Option<EphemeralVolumeSpec>,
+
     /// Separate volume for Raft commit logs.
     /// Recommended for high-throughput deployments to avoid I/O contention
     /// with the persistent DB.
@@ -123,6 +125,47 @@ pub struct DiomStorageSpec {
     /// Must be at least as large as persistent + ephemeral DB combined.
     #[serde(default)]
     pub snapshots: Option<VolumeSpec>,
+}
+
+/// Ephemeral storage configuration.
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum EphemeralVolumeSpec {
+    /// An emptyDir volume.
+    ///
+    /// Recommended only for testing. Data is lost on pod restart.
+    EmptyDir(EmptyDirVolumeSource),
+    /// A directory mounted directly from the host node.
+    ///
+    /// Data persists across pod restarts as long as the pod is rescheduled onto the same node.
+    HostPath(HostPathSpec),
+    /// A generic ephemeral volume provisioned by a CSI driver.
+    ///
+    /// Recommended only for testing. Data is lost on pod restart.
+    GenericEphemeral(VolumeSpec),
+    /// A persistent volume claim.
+    Pvc(VolumeSpec),
+}
+
+/// Configuration for a hostPath volume.
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct HostPathSpec {
+    /// Absolute path on the host node to mount into the container.
+    pub path: String,
+
+    /// Type of hostPath volume.
+    #[serde(rename = "type", default)]
+    pub path_type: Option<String>,
+}
+
+impl From<HostPathSpec> for k8s_openapi::api::core::v1::HostPathVolumeSource {
+    fn from(s: HostPathSpec) -> Self {
+        Self {
+            path: s.path,
+            type_: s.path_type,
+        }
+    }
 }
 
 /// Configuration for a single persistent volume.

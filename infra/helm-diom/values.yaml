@@ -61,7 +61,6 @@ cluster:
     storage:
       persistent:
         size: 10Gi
-        # storageClass: ""
     # envVar: []
     # nodeSelector: {}
     # tolerations: []

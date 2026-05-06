@@ -4,9 +4,10 @@ use k8s_openapi::{
     api::{
         apps::v1::{StatefulSet, StatefulSetPersistentVolumeClaimRetentionPolicy, StatefulSetSpec},
         core::v1::{
-            Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction, LocalObjectReference,
-            ObjectFieldSelector, PersistentVolumeClaim, PersistentVolumeClaimSpec,
-            PodSecurityContext, PodSpec, PodTemplateSpec, VolumeMount, VolumeResourceRequirements,
+            Container, ContainerPort, EnvVar, EnvVarSource, EphemeralVolumeSource, HTTPGetAction,
+            LocalObjectReference, ObjectFieldSelector, PersistentVolumeClaim,
+            PersistentVolumeClaimSpec, PersistentVolumeClaimTemplate, PodSecurityContext, PodSpec,
+            PodTemplateSpec, Volume, VolumeMount, VolumeResourceRequirements,
         },
     },
     apimachinery::pkg::{
@@ -21,7 +22,7 @@ use kube::{
 
 use crate::{
     context::ClusterCtx,
-    crd::{DiomClusterSpec, INTRACLUSTER_PORT},
+    crd::{DiomClusterSpec, EphemeralVolumeSpec, INTRACLUSTER_PORT},
     error::{Error, Result},
     labels,
     resources::services,
@@ -30,8 +31,8 @@ use crate::{
 /// Path inside the container for the persistent DB.
 const PERSISTENT_DATA_PATH: &str = "/data/persistent";
 
-// TODO: path for ephemeral DB
-// const EPHEMERAL_DATA_PATH: &str = "/data/ephemeral";
+/// Path inside the container for the ephemeral DB (when a separate volume is configured).
+const EPHEMERAL_DATA_PATH: &str = "/data/ephemeral";
 
 /// Path inside the container for Raft commit logs (when a separate volume is configured).
 const LOGS_DATA_PATH: &str = "/data/logs";
@@ -76,6 +77,7 @@ fn build(ctx: &ClusterCtx) -> Result<StatefulSet> {
     let headless_svc = services::headless_svc_name(cluster_name);
 
     let env = build_env(spec, cluster_name, &headless_svc, &ctx.ns);
+    let pod_volumes = build_pod_volumes(spec);
     let volume_claim_templates = build_volume_claim_templates(spec);
     let volume_mounts = build_volume_mounts(spec);
     let container = build_container(spec, env, volume_mounts);
@@ -85,7 +87,11 @@ fn build(ctx: &ClusterCtx) -> Result<StatefulSet> {
 
     let pod_spec = PodSpec {
         containers: vec![container],
-        volumes: None,
+        volumes: if pod_volumes.is_empty() {
+            None
+        } else {
+            Some(pod_volumes)
+        },
         // appuser in the diom-server image is created with plain `useradd`, giving it UID/GID
         // 1000. fsGroup ensures mounted PVC directories are chowned to that group on attach.
         security_context: Some(PodSecurityContext {
@@ -190,6 +196,10 @@ fn build_env(
         ),
         env_var("DIOM_PERSISTENT_DB_PATH", PERSISTENT_DATA_PATH),
     ];
+
+    if spec.diom.storage.ephemeral.is_some() {
+        env.push(env_var("DIOM_EPHEMERAL_DB_PATH", EPHEMERAL_DATA_PATH));
+    }
 
     // Always set log and snapshot paths explicitly to avoid the Dockerfile defaults, which point
     // to ephemeral storage and cause crashes on pod restart if Raft references a missing snapshot.
@@ -304,12 +314,58 @@ fn build_container(
     }
 }
 
+fn build_pod_volumes(spec: &DiomClusterSpec) -> Vec<Volume> {
+    match &spec.diom.storage.ephemeral {
+        Some(EphemeralVolumeSpec::EmptyDir(e)) => vec![Volume {
+            name: "ephemeral".into(),
+            empty_dir: Some(e.clone()),
+            ..Default::default()
+        }],
+        Some(EphemeralVolumeSpec::HostPath(h)) => vec![Volume {
+            name: "ephemeral".into(),
+            host_path: Some(h.clone().into()),
+            ..Default::default()
+        }],
+        Some(EphemeralVolumeSpec::GenericEphemeral(v)) => {
+            let mut resources: BTreeMap<String, Quantity> = BTreeMap::new();
+            resources.insert("storage".into(), v.size.clone());
+            vec![Volume {
+                name: "ephemeral".into(),
+                ephemeral: Some(EphemeralVolumeSource {
+                    volume_claim_template: Some(PersistentVolumeClaimTemplate {
+                        spec: PersistentVolumeClaimSpec {
+                            access_modes: Some(vec!["ReadWriteOnce".into()]),
+                            storage_class_name: v.storage_class.clone(),
+                            resources: Some(VolumeResourceRequirements {
+                                requests: Some(resources),
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    }),
+                }),
+                ..Default::default()
+            }]
+        }
+        Some(EphemeralVolumeSpec::Pvc(_)) | None => vec![],
+    }
+}
+
 fn build_volume_claim_templates(spec: &DiomClusterSpec) -> Vec<PersistentVolumeClaim> {
     let mut templates = vec![pvc_template(
         "persistent",
         &spec.diom.storage.persistent.size,
         spec.diom.storage.persistent.storage_class.as_deref(),
     )];
+
+    if let Some(EphemeralVolumeSpec::Pvc(v)) = &spec.diom.storage.ephemeral {
+        templates.push(pvc_template(
+            "ephemeral",
+            &v.size,
+            v.storage_class.as_deref(),
+        ));
+    }
 
     if let Some(logs) = &spec.diom.storage.logs {
         templates.push(pvc_template(
@@ -336,6 +392,14 @@ fn build_volume_mounts(spec: &DiomClusterSpec) -> Vec<VolumeMount> {
         mount_path: PERSISTENT_DATA_PATH.into(),
         ..Default::default()
     }];
+
+    if spec.diom.storage.ephemeral.is_some() {
+        mounts.push(VolumeMount {
+            name: "ephemeral".into(),
+            mount_path: EPHEMERAL_DATA_PATH.into(),
+            ..Default::default()
+        });
+    }
 
     if spec.diom.storage.logs.is_some() {
         mounts.push(VolumeMount {
@@ -472,11 +536,13 @@ async fn wait_for_sts_deleted(sts_api: &kube::Api<StatefulSet>, name: &str) -> R
 mod tests {
     use super::*;
     use crate::crd::{
-        DiomSpec, DiomStorageSpec, OpenTelemetryProtocol, OpenTelemetrySpec, VolumeSpec,
+        DiomSpec, DiomStorageSpec, EphemeralVolumeSpec, HostPathSpec, OpenTelemetryProtocol,
+        OpenTelemetrySpec, VolumeSpec,
     };
     use k8s_openapi::{
         api::core::v1::{
-            PersistentVolumeClaim, PersistentVolumeClaimSpec, VolumeResourceRequirements,
+            EmptyDirVolumeSource, PersistentVolumeClaim, PersistentVolumeClaimSpec,
+            VolumeResourceRequirements,
         },
         apimachinery::pkg::{api::resource::Quantity, apis::meta::v1::ObjectMeta},
     };
@@ -492,6 +558,7 @@ mod tests {
                         size: Quantity("1Gi".to_string()),
                         storage_class: None,
                     },
+                    ephemeral: None,
                     logs: None,
                     snapshots: None,
                 },
@@ -640,5 +707,134 @@ mod tests {
 
         let empty = make_sts(vec![]);
         assert!(!volume_claim_templates_differ(&empty, &empty));
+    }
+
+    #[test]
+    fn test_ephemeral_storage_config() {
+        let mut spec = make_spec();
+
+        // None (default)
+        assert!(build_pod_volumes(&spec).is_empty());
+
+        let templates = build_volume_claim_templates(&spec);
+        assert_eq!(templates.len(), 1);
+        assert_eq!(templates[0].metadata.name.as_deref(), Some("persistent"));
+
+        let mounts = build_volume_mounts(&spec);
+        assert!(!mounts.iter().any(|m| m.mount_path == EPHEMERAL_DATA_PATH));
+
+        assert!(
+            build_env(&spec, "test", "test-headless", "test-ns")
+                .into_iter()
+                .find(|e| e.name == "DIOM_EPHEMERAL_DB_PATH")
+                .is_none()
+        );
+
+        // emptyDir
+        spec.diom.storage.ephemeral = Some(EphemeralVolumeSpec::EmptyDir(EmptyDirVolumeSource {
+            size_limit: Some(Quantity("10Gi".into())),
+            ..Default::default()
+        }));
+        let vols = build_pod_volumes(&spec);
+        assert_eq!(vols.len(), 1);
+        assert_eq!(vols[0].name, "ephemeral");
+        assert!(vols[0].empty_dir.is_some());
+        assert_eq!(
+            vols[0].empty_dir.as_ref().unwrap().size_limit,
+            Some(Quantity("10Gi".into()))
+        );
+        assert!(
+            build_env(&spec, "test", "test-headless", "test-ns")
+                .into_iter()
+                .find(|e| e.name == "DIOM_EPHEMERAL_DB_PATH")
+                .is_some()
+        );
+
+        let templates = build_volume_claim_templates(&spec);
+        assert_eq!(templates.len(), 1);
+        assert_eq!(templates[0].metadata.name.as_deref(), Some("persistent"));
+
+        let mounts = build_volume_mounts(&spec);
+        assert!(mounts.iter().any(|m| m.mount_path == EPHEMERAL_DATA_PATH));
+
+        assert!(
+            build_env(&spec, "test", "test-headless", "test-ns")
+                .into_iter()
+                .find(|e| e.name == "DIOM_EPHEMERAL_DB_PATH")
+                .is_some()
+        );
+
+        // hostPath
+        spec.diom.storage.ephemeral = Some(EphemeralVolumeSpec::HostPath(HostPathSpec {
+            path: "/mnt/nvme".into(),
+            path_type: None,
+        }));
+        let vols = build_pod_volumes(&spec);
+        assert_eq!(vols.len(), 1);
+        assert_eq!(vols[0].name, "ephemeral");
+        assert_eq!(vols[0].host_path.as_ref().unwrap().path, "/mnt/nvme");
+
+        let templates = build_volume_claim_templates(&spec);
+        assert_eq!(templates.len(), 1);
+        assert_eq!(templates[0].metadata.name.as_deref(), Some("persistent"));
+
+        let mounts = build_volume_mounts(&spec);
+        assert!(mounts.iter().any(|m| m.mount_path == EPHEMERAL_DATA_PATH));
+
+        assert!(
+            build_env(&spec, "test", "test-headless", "test-ns")
+                .into_iter()
+                .find(|e| e.name == "DIOM_EPHEMERAL_DB_PATH")
+                .is_some()
+        );
+
+        // genericEphemeral
+        spec.diom.storage.ephemeral = Some(EphemeralVolumeSpec::GenericEphemeral(VolumeSpec {
+            size: Quantity("10Gi".into()),
+            storage_class: Some("local-nvme".into()),
+        }));
+        let vols = build_pod_volumes(&spec);
+        assert_eq!(vols.len(), 1);
+        assert_eq!(vols[0].name, "ephemeral");
+        assert!(vols[0].ephemeral.is_some());
+
+        let templates = build_volume_claim_templates(&spec);
+        assert_eq!(templates.len(), 1);
+        assert_eq!(templates[0].metadata.name.as_deref(), Some("persistent"));
+
+        let mounts = build_volume_mounts(&spec);
+        assert!(mounts.iter().any(|m| m.mount_path == EPHEMERAL_DATA_PATH));
+
+        assert!(
+            build_env(&spec, "test", "test-headless", "test-ns")
+                .into_iter()
+                .find(|e| e.name == "DIOM_EPHEMERAL_DB_PATH")
+                .is_some()
+        );
+
+        // pvc
+        spec.diom.storage.ephemeral = Some(EphemeralVolumeSpec::Pvc(VolumeSpec {
+            size: Quantity("10Gi".into()),
+            storage_class: None,
+        }));
+        assert!(build_pod_volumes(&spec).is_empty());
+
+        let templates = build_volume_claim_templates(&spec);
+        assert_eq!(templates.len(), 2);
+        assert!(
+            templates
+                .iter()
+                .any(|t| t.metadata.name.as_deref() == Some("ephemeral"))
+        );
+
+        let mounts = build_volume_mounts(&spec);
+        assert!(mounts.iter().any(|m| m.mount_path == EPHEMERAL_DATA_PATH));
+
+        assert!(
+            build_env(&spec, "test", "test-headless", "test-ns")
+                .into_iter()
+                .find(|e| e.name == "DIOM_EPHEMERAL_DB_PATH")
+                .is_some()
+        );
     }
 }

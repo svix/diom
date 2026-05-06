@@ -95,6 +95,14 @@ cluster:
 | `cluster.spec.storage.logs.storageClass` | Storage class for the logs volume. | `""` |
 | `cluster.spec.storage.snapshots.size` | Size of the separate Raft snapshot volume. Should be at least as large as the persistent volume. | `""` |
 | `cluster.spec.storage.snapshots.storageClass` | Storage class for the snapshots volume. | `""` |
+| `cluster.spec.storage.ephemeral` | Optional separate volume for ephemeral database storage. When omitted, ephemeral data is stored in a subdirectory of the persistent volume.Options: `emptyDir`, `hostPath`, `genericEphemeral`, or `pvc`. | null |
+| `cluster.spec.storage.ephemeral.emptyDir` | An emptyDir volume. Recommended only for testing. Data is lost on pod restart. | `""` |
+| `cluster.spec.storage.ephemeral.emptyDir.sizeLimit` | Optional maximum size of the volume. | null |
+| `cluster.spec.storage.ephemeral.hostPath.path` | Absolute path on the host node to mount into the container. Data persists across pod restarts as long as the pod is rescheduled onto the same node. | `""` |
+| `cluster.spec.storage.ephemeral.genericEphemeral.size` | A generic ephemeral volume provisioned by a CSI driver. Recommended only for testing. Data is lost on pod restart. Required. | `""` |
+| `cluster.spec.storage.ephemeral.genericEphemeral.storageClass` | Storage class name. Uses the cluster default if not specified. | cluster default |
+| `cluster.spec.storage.ephemeral.pvc.size` | A persistent volume claim. Required. | `""` |
+| `cluster.spec.storage.ephemeral.pvc.storageClass` | Storage class name. Uses the cluster default if not specified. | cluster default |
 | `cluster.spec.imagePullPolicy` | Image pull policy (`Always`, `IfNotPresent`, `Never`). | `""` |
 | `cluster.spec.podAnnotations` | Additional annotations to add to pods. | `{}` |
 | `cluster.spec.nodeSelector` | Node selector labels for pod scheduling. | `{}` |
