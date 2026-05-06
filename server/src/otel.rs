@@ -119,9 +119,7 @@ pub(crate) fn setup_tracing(
         dispatch.with(layer.with_filter(tracing_subscriber::EnvFilter::new(filter_directives)))
     };
 
-    let dispatch = dispatch.into();
-
-    (dispatch, otel_tracer_provider)
+    (dispatch.into(), otel_tracer_provider)
 }
 
 pub(crate) fn setup_metrics(cfg: &ConfigurationInner) {
