@@ -21,6 +21,9 @@ ignored = [
 openapi = []
 # This causes the replication layer to periodically dump stats to stdout
 raft-runtime-stats = ["openraft/runtime-stats"]
+# this enables console_subscriber / tokio-console
+tokio-console = []
+default = []
 
 [dependencies]
 addr.workspace = true
@@ -139,6 +142,7 @@ clap_complete = "4.5.38"
 comfy-table = "7"
 concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
+console-subscriber = "0.5"
 constant_time_eq = "0.4"
 criterion = "0.8.2"
 ctor = "0.10.0"
