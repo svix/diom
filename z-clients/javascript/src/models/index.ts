@@ -39,6 +39,8 @@ export type { CacheGetNamespaceOut } from "./cacheGetNamespaceOut";
 export type { CacheGetOut } from "./cacheGetOut";
 export type { CacheSetIn } from "./cacheSetIn";
 export type { CacheSetOut } from "./cacheSetOut";
+export type { ClusterForceElectionIn } from "./clusterForceElectionIn";
+export type { ClusterForceElectionOut } from "./clusterForceElectionOut";
 export type { ClusterForceSnapshotIn } from "./clusterForceSnapshotIn";
 export type { ClusterForceSnapshotOut } from "./clusterForceSnapshotOut";
 export type { ClusterInitializeIn } from "./clusterInitializeIn";

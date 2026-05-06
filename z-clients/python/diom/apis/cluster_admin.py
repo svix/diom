@@ -2,6 +2,8 @@
 
 from ..internal.api_common import ApiBase
 from ..models import (
+    ClusterForceElectionIn,
+    ClusterForceElectionOut,
     ClusterForceSnapshotIn,
     ClusterForceSnapshotOut,
     ClusterInitializeIn,
@@ -72,6 +74,20 @@ class ClusterAdminAsync(ApiBase):
             response_type=ClusterForceSnapshotOut,
         )
 
+    async def force_election(
+        self,
+        cluster_force_election_in: ClusterForceElectionIn = ClusterForceElectionIn(),
+    ) -> ClusterForceElectionOut:
+        """Force the cluster to conduct an election immediately"""
+        body = cluster_force_election_in.model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1.cluster-admin.force-election",
+            body=body,
+            response_type=ClusterForceElectionOut,
+        )
+
 
 class ClusterAdmin(ApiBase):
     def status(
@@ -131,4 +147,18 @@ class ClusterAdmin(ApiBase):
             path="/api/v1.cluster-admin.force-snapshot",
             body=body,
             response_type=ClusterForceSnapshotOut,
+        )
+
+    def force_election(
+        self,
+        cluster_force_election_in: ClusterForceElectionIn = ClusterForceElectionIn(),
+    ) -> ClusterForceElectionOut:
+        """Force the cluster to conduct an election immediately"""
+        body = cluster_force_election_in.model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1.cluster-admin.force-election",
+            body=body,
+            response_type=ClusterForceElectionOut,
         )

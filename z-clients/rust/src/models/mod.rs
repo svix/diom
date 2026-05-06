@@ -41,6 +41,8 @@ mod cache_get_namespace_out;
 mod cache_get_out;
 mod cache_set_in;
 mod cache_set_out;
+mod cluster_force_election_in;
+mod cluster_force_election_out;
 mod cluster_force_snapshot_in;
 mod cluster_force_snapshot_out;
 mod cluster_initialize_in;
@@ -152,6 +154,8 @@ pub use self::{
     cache_delete_out::CacheDeleteOut, cache_get_in::CacheGetIn,
     cache_get_namespace_in::CacheGetNamespaceIn, cache_get_namespace_out::CacheGetNamespaceOut,
     cache_get_out::CacheGetOut, cache_set_in::CacheSetIn, cache_set_out::CacheSetOut,
+    cluster_force_election_in::ClusterForceElectionIn,
+    cluster_force_election_out::ClusterForceElectionOut,
     cluster_force_snapshot_in::ClusterForceSnapshotIn,
     cluster_force_snapshot_out::ClusterForceSnapshotOut,
     cluster_initialize_in::ClusterInitializeIn, cluster_initialize_out::ClusterInitializeOut,

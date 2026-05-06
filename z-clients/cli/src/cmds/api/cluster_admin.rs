@@ -99,6 +99,26 @@ pub enum ClusterAdminCommands {
         cluster_force_snapshot_in:
             Option<crate::json::JsonOf<diom::models::ClusterForceSnapshotIn>>,
     },
+    /// Force the cluster to conduct an election immediately
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cluster-admin force-election {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "Example body:
+{
+}\n\nExample response:
+{
+  \"previous_leader_id\": \"...\",
+  \"new_leader_id\": \"...\"
+}\n")]
+    ForceElection {
+        cluster_force_election_in:
+            Option<crate::json::JsonOf<diom::models::ClusterForceElectionIn>>,
+    },
 }
 
 impl ClusterAdminCommands {
@@ -132,6 +152,15 @@ impl ClusterAdminCommands {
                 let resp = client
                     .cluster_admin()
                     .force_snapshot(cluster_force_snapshot_in.unwrap_or_default().into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp)?;
+            }
+            Self::ForceElection {
+                cluster_force_election_in,
+            } => {
+                let resp = client
+                    .cluster_admin()
+                    .force_election(cluster_force_election_in.unwrap_or_default().into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }
