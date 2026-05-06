@@ -1,3 +1,4 @@
+use diom_backend::core::cluster::NodeId;
 use serde_json::json;
 use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestResult,
@@ -129,79 +130,30 @@ async fn test_cluster_force_snapshot() -> TestResult {
 
 #[tokio::test]
 async fn test_cluster_force_election() -> TestResult {
-    let TestContext {
-        client,
-        handle: _handle,
-        node_id,
-        repl_addr,
-        cfg: _,
-        ..
-    } = TestServerBuilder::with_default_config()
-        .tap_cfg(|cfg| {
-            cfg.cluster.auto_initialize = true;
-        })
-        .build()
-        .await;
-
-    let TestContext {
-        client: second_client,
-        handle: _second_handle,
-        node_id: second_node_id,
-        ..
-    } = TestServerBuilder::with_default_config()
-        .tap_cfg(|cfg| {
-            cfg.cluster.seed_nodes = vec![PeerAddr::from(repl_addr)];
-            cfg.cluster.auto_initialize = false;
-        })
-        .build()
-        .await;
+    let context = start_cluster(2).await;
+    let leader = context.get_leader_id().await;
+    let leader_client = context.leader_client().await;
+    let follower_client = context.follower_client().await;
 
     // make sure at least one write occurs
-    client
+    leader_client
         .post("v1.kv.set")
         .json(json!({"key": "foo", "value" :"bar"}))
         .await?
         .expect(StatusCode::OK);
 
-    // make sure both nodes are present
-    let cluster_status = client
-        .get("v1.cluster-admin.status")
-        .await?
-        .expect(StatusCode::OK)
-        .json();
-    assert_eq!(cluster_status["nodes"].assert_array().len(), 2);
-    let node_ids = cluster_status["nodes"]
-        .assert_array()
-        .iter()
-        .map(|n| n["node_id"].assert_str().to_string())
-        .collect::<BTreeSet<_>>();
-    assert_eq!(
-        node_ids,
-        btreeset! { node_id.to_string(), second_node_id.to_string() }
-    );
-    // figure out which node is the leader
-    let leader = cluster_status["nodes"]
-        .assert_array()
-        .iter()
-        .find_map(|n| {
-            if n["state"] == "leader" {
-                Some(n["node_id"].assert_str().to_string())
-            } else {
-                None
-            }
-        })
-        .expect("someone should be the leader");
     // now trigger an election
-    let resp = second_client
+    let resp = follower_client
         .post("v1.cluster-admin.force-election")
         .json(json!({}))
         .await?
         .expect(StatusCode::OK)
         .json();
     // technically, an election isn't guaranteed to change the leader
-    assert_eq!(resp["previous_leader_id"].assert_str(), leader);
-    let new_leader = resp["new_leader_id"].assert_str();
-    assert!(new_leader == node_id.to_string() || new_leader == second_node_id.to_string());
+    let previous_leader: NodeId = resp["previous_leader_id"].assert_str().parse().unwrap();
+    assert_eq!(previous_leader, leader);
+    let new_leader: NodeId = resp["new_leader_id"].assert_str().parse().unwrap();
+    assert!(context.node_ids().contains(&new_leader));
 
     Ok(())
 }

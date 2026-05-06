@@ -95,6 +95,14 @@ pub struct NodeId {
     inner: Uuid,
 }
 
+impl std::str::FromStr for NodeId {
+    type Err = uuid::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|inner| Self { inner })
+    }
+}
+
 impl JsonSchema for NodeId {
     fn schema_name() -> std::borrow::Cow<'static, str> {
         String::schema_name()

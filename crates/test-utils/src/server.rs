@@ -1,4 +1,9 @@
-use std::{collections::BTreeMap, net::SocketAddr, path::Path, sync::Arc};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    net::SocketAddr,
+    path::Path,
+    sync::Arc,
+};
 
 use crate::{TestClient, json::JsonFastAndLoose, retry::run_with_retries};
 use diom_backend::{
@@ -394,6 +399,10 @@ impl ClusterTestContext {
             }
         }
         panic!("failed to get follower from any peer");
+    }
+
+    pub fn node_ids(&self) -> BTreeSet<NodeId> {
+        self.handles.keys().copied().collect()
     }
 }
 

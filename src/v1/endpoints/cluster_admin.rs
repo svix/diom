@@ -361,10 +361,8 @@ async fn cluster_force_election(
     MsgPackOrJson(_data): MsgPackOrJson<ClusterForceElectionIn>,
 ) -> Result<MsgPackOrJson<ClusterForceElectionOut>> {
     let previous_leader_id = repl.raft.current_leader().await;
-    repl.raft.trigger().elect().await.map_err(|err| {
-        tracing::error!(?err, "error triggering election");
-        Error::internal(err)
-    })?;
+
+    repl.raft.trigger().elect().await.or_internal_error()?;
 
     let new_leader_id = repl.raft.current_leader().await;
 
