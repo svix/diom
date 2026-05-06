@@ -16,7 +16,7 @@ impl JsonFastAndLoose for serde_json::Value {
     #[track_caller]
     fn assert_bytes(&self) -> Vec<u8> {
         self.assert_array()
-            .into_iter()
+            .iter()
             .map(|a| a.assert_u64().try_into().unwrap())
             .collect()
     }
