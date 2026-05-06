@@ -162,7 +162,7 @@ name = "diom"
 # your data is large, then setting this value too small can mean that a snapshot can never
 # catch up because it'll take too long to replicate. Typically this should be around twice the
 # number of commits that you generate in the time it takes to replicate a full snapshot.
-replication_lag_threshold = 50000
+replication_lag_threshold = 100000
 
 # Timeout for replication requests.
 #

@@ -502,6 +502,10 @@ impl Store {
                 tracing::trace!(filename = ?dent.file_name(), "preserving last_snapshot");
                 continue;
             }
+            if !dent.file_name().as_encoded_bytes().starts_with(b"diom-") {
+                tracing::trace!(filename = ?dent.file_name(), "ignoring non-snapshot file");
+                continue;
+            }
             tracing::debug!(filename = ?dent.file_name(), "deleting unused snapshot");
             tokio::fs::remove_file(dent.path()).await?;
         }
