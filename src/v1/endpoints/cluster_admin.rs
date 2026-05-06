@@ -343,6 +343,35 @@ async fn cluster_force_snapshot(
     }))
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct ClusterForceElectionIn {}
+
+request_input!(ClusterForceElectionIn, "force-election");
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct ClusterForceElectionOut {
+    previous_leader_id: Option<NodeId>,
+    new_leader_id: Option<NodeId>,
+}
+
+/// Force the cluster to conduct an election immediately
+#[aide_annotate(op_id = "v1.cluster-admin.force-election")]
+async fn cluster_force_election(
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(_data): MsgPackOrJson<ClusterForceElectionIn>,
+) -> Result<MsgPackOrJson<ClusterForceElectionOut>> {
+    let previous_leader_id = repl.raft.current_leader().await;
+
+    repl.raft.trigger().elect().await.or_internal_error()?;
+
+    let new_leader_id = repl.raft.current_leader().await;
+
+    Ok(MsgPackOrJson(ClusterForceElectionOut {
+        previous_leader_id,
+        new_leader_id,
+    }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("ClusterAdmin");
 
@@ -365,6 +394,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             cluster_force_snapshot_path,
             post_with(cluster_force_snapshot, cluster_force_snapshot_operation),
+            &tag,
+        )
+        .api_route_with(
+            cluster_force_election_path,
+            post_with(cluster_force_election, cluster_force_election_operation),
             &tag,
         )
 }

@@ -1,3 +1,4 @@
+use diom_backend::core::cluster::NodeId;
 use serde_json::json;
 use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestResult,
@@ -123,6 +124,36 @@ async fn test_cluster_force_snapshot() -> TestResult {
         &later_cluster_status["this_node_last_snapshot_id"],
         previous_snapshot
     );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_cluster_force_election() -> TestResult {
+    let context = start_cluster(2).await;
+    let leader = context.get_leader_id().await;
+    let leader_client = context.leader_client().await;
+    let follower_client = context.follower_client().await;
+
+    // make sure at least one write occurs
+    leader_client
+        .post("v1.kv.set")
+        .json(json!({"key": "foo", "value" :"bar"}))
+        .await?
+        .expect(StatusCode::OK);
+
+    // now trigger an election
+    let resp = follower_client
+        .post("v1.cluster-admin.force-election")
+        .json(json!({}))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    // technically, an election isn't guaranteed to change the leader
+    let previous_leader: NodeId = resp["previous_leader_id"].assert_str().parse().unwrap();
+    assert_eq!(previous_leader, leader);
+    let new_leader: NodeId = resp["new_leader_id"].assert_str().parse().unwrap();
+    assert!(context.node_ids().contains(&new_leader));
 
     Ok(())
 }

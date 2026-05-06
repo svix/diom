@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type ClusterForceElectionIn,
+    ClusterForceElectionInSerializer,
+} from '../models/clusterForceElectionIn';
+import {
+    type ClusterForceElectionOut,
+    ClusterForceElectionOutSerializer,
+} from '../models/clusterForceElectionOut';
+import {
     type ClusterForceSnapshotIn,
     ClusterForceSnapshotInSerializer,
 } from '../models/clusterForceSnapshotIn';
@@ -94,6 +102,20 @@ export class ClusterAdmin {
         return request.send(
             this.requestCtx,
             ClusterForceSnapshotOutSerializer._fromJsonObject,
+        );
+    }/** Force the cluster to conduct an election immediately */
+    public forceElection(
+        clusterForceElectionIn: ClusterForceElectionIn,
+    ): Promise<ClusterForceElectionOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cluster-admin.force-election");
+
+        request.setBody(
+            ClusterForceElectionInSerializer._toJsonObject(clusterForceElectionIn)
+        );
+        
+        return request.send(
+            this.requestCtx,
+            ClusterForceElectionOutSerializer._fromJsonObject,
         );
     }
 }

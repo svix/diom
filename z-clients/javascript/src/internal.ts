@@ -40,6 +40,8 @@ export { CacheGetNamespaceOutSerializer } from "./models/cacheGetNamespaceOut";
 export { CacheGetOutSerializer } from "./models/cacheGetOut";
 export { CacheSetInSerializer } from "./models/cacheSetIn";
 export { CacheSetOutSerializer } from "./models/cacheSetOut";
+export { ClusterForceElectionInSerializer } from "./models/clusterForceElectionIn";
+export { ClusterForceElectionOutSerializer } from "./models/clusterForceElectionOut";
 export { ClusterForceSnapshotInSerializer } from "./models/clusterForceSnapshotIn";
 export { ClusterForceSnapshotOutSerializer } from "./models/clusterForceSnapshotOut";
 export { ClusterInitializeInSerializer } from "./models/clusterInitializeIn";

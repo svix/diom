@@ -308,6 +308,83 @@
         ]
       }
     },
+    "/api/v1.cluster-admin.force-election": {
+      "post": {
+        "tags": [
+          "ClusterAdmin"
+        ],
+        "summary": "Cluster Force Election",
+        "description": "Force the cluster to conduct an election immediately",
+        "operationId": "v1.cluster-admin.force-election",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClusterForceElectionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterForceElectionOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1.admin.auth-token.create": {
       "post": {
         "tags": [
@@ -6124,6 +6201,22 @@
       },
       "CacheSetOut": {
         "type": "object"
+      },
+      "ClusterForceElectionIn": {
+        "type": "object"
+      },
+      "ClusterForceElectionOut": {
+        "type": "object",
+        "properties": {
+          "previous_leader_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "new_leader_id": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
       "ClusterForceSnapshotIn": {
         "type": "object"

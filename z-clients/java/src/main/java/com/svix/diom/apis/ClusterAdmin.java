@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.svix.diom.models.ClusterForceElectionIn;
+import com.svix.diom.models.ClusterForceElectionOut;
 import com.svix.diom.models.ClusterForceSnapshotIn;
 import com.svix.diom.models.ClusterForceSnapshotOut;
 import com.svix.diom.models.ClusterInitializeIn;
@@ -111,6 +113,29 @@ public class ClusterAdmin {
     ) throws DiomException {
         return this.forceSnapshot(
             new ClusterForceSnapshotIn()
+        );
+    }
+
+    /** Force the cluster to conduct an election immediately */
+    public ClusterForceElectionOut forceElection(
+        final ClusterForceElectionIn clusterForceElectionIn
+    ) throws DiomException {
+
+        return this.client.executeRequest(
+            "POST",
+            "/api/v1.cluster-admin.force-election",
+            null,
+            clusterForceElectionIn,
+            ClusterForceElectionOut.class
+        );
+    }
+
+    /** Force the cluster to conduct an election immediately */
+    public ClusterForceElectionOut forceElection(
+        
+    ) throws DiomException {
+        return this.forceElection(
+            new ClusterForceElectionIn()
         );
     }
 }

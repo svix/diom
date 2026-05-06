@@ -55,4 +55,15 @@ impl<'a> ClusterAdmin<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// Force the cluster to conduct an election immediately
+    pub async fn force_election(
+        &self,
+        cluster_force_election_in: ClusterForceElectionIn,
+    ) -> Result<ClusterForceElectionOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1.cluster-admin.force-election")
+            .with_body(cluster_force_election_in)
+            .execute(self.cfg)
+            .await
+    }
 }

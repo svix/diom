@@ -77,3 +77,17 @@ func (clusterAdmin ClusterAdmin) ForceSnapshot(
 		&clusterForceSnapshotIn,
 	)
 }
+
+// Force the cluster to conduct an election immediately
+func (clusterAdmin ClusterAdmin) ForceElection(
+	ctx context.Context,
+	clusterForceElectionIn diom_models.ClusterForceElectionIn,
+) (*diom_models.ClusterForceElectionOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.ClusterForceElectionIn, diom_models.ClusterForceElectionOut](
+		ctx,
+		clusterAdmin.client,
+		"POST",
+		"/api/v1.cluster-admin.force-election",
+		&clusterForceElectionIn,
+	)
+}
