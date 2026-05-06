@@ -7,6 +7,10 @@ use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _
 async fn main() -> anyhow::Result<()> {
     use kube::CustomResourceExt;
 
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .expect("failed to install rustls crypto provider");
+
     if std::env::args().any(|a| a == "--print-crd") {
         print!("{}", serde_yaml::to_string(&DiomCluster::crd())?);
         return Ok(());

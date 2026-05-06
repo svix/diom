@@ -181,7 +181,7 @@ impl TestContextBuilder {
 
     pub(crate) async fn build(self) -> TestContext {
         let _ = tracing_subscriber::fmt().with_test_writer().try_init();
-        let _ = rustls::crypto::ring::default_provider().install_default();
+        let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
         if self.image == E2E_IMAGE {
             ensure_e2e_image_built();
         }
