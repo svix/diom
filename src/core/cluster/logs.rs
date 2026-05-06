@@ -20,7 +20,7 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tap::{Pipe, Tap, TapFallible, TapOptional};
 use tokio_util::sync::CancellationToken;
-use tracing::{Instrument, Span};
+use tracing::Span;
 
 use super::{NodeId, raft::TypeConfig};
 use crate::{
@@ -304,112 +304,198 @@ enum FlushMessage {
     Callback(IoFlushedCallback),
 }
 
-/// General background worker for flushing the fjall database
-async fn flush_worker(
-    db: Database,
-    mut channel: tokio::sync::mpsc::Receiver<FlushMessage>,
-    commits_before_fsync: usize,
-    duration_before_fsync: Duration,
-    autoscale_duration: bool,
-    sync_mode: SyncMode,
-    fsync_mode: FsyncMode,
-    shutting_down: CancellationToken,
-) {
-    let mut pending = Vec::new();
-    let mut done = false;
-    let mut duration_estimator = SimpleEstimator::<7>::new(duration_before_fsync);
-    let mut last_estimate = duration_before_fsync;
-    let mut ticker = tokio::time::interval(duration_before_fsync);
+struct FlushDebouncer {
+    interval: Duration,
+    deadline: Option<tokio::time::Instant>,
+}
 
-    let persist_mode = sync_mode.into_persist_mode(fsync_mode);
-
-    let mut metrics = None;
-
-    while !done {
-        let mut synced = false;
-
-        async {
-            let mut sync_from_ticker = false;
-
-            tokio::select! {
-                message = channel.recv() => {
-                    match message {
-                        Some(FlushMessage::EnableMetrics(new_metrics)) => {
-                            tracing::info!("enabling metrics in background flush worker");
-                            metrics = Some(new_metrics)
-                        },
-                        Some(FlushMessage::Callback(callback)) => {
-                            pending.push(Some(callback))
-                        },
-                        None => { done = true }
-                    }
-                },
-                _ = shutting_down.cancelled() => {
-                    done = true
-                },
-                _ = ticker.tick() => {
-                    sync_from_ticker = true;
-                }
-            }
-
-            let sync_from_count = commits_before_fsync > 0 && pending.len() >= commits_before_fsync;
-
-            if !pending.is_empty() && (sync_from_ticker || sync_from_count) {
-                let db = db.clone();
-                let num_commits = pending.len();
-                let result = spawn_blocking_in_current_span(
-                    move || -> Result<Duration, BackgroundFsyncFailedError> {
-                        let _guard =
-                            tracing::info_span!("logs:flush_worker:flush", num_commits).entered();
-                        tracing::trace!(?sync_mode, "flushing logs to disk");
-                        let start_persist = std::time::Instant::now();
-                        db.persist(persist_mode).map_err(|err| {
-                            tracing::error!(?err, "error flushing fjall");
-                            BackgroundFsyncFailedError(err.to_string())
-                        })?;
-                        let persist_time = start_persist.elapsed();
-                        Ok(persist_time)
-                    },
-                )
-                .await
-                .expect("failed joining blocking task")
-                .map(|persist_time| {
-                    duration_estimator.push(persist_time);
-                    if let Some(metrics) = &metrics {
-                        metrics.record_fsync(persist_time, pending.len());
-                    }
-                    synced = true;
-                });
-                tracing::trace!(num_pending = pending.len(), "committed for some items");
-                tracing::info_span!("logs:flush_worker:drain").in_scope(|| {
-                    for callback in pending.drain(..).flatten() {
-                        callback.io_completed(result.clone().map_err(std::io::Error::other))
-                    }
-                });
-            }
+impl FlushDebouncer {
+    fn new(interval: Duration) -> Self {
+        Self {
+            interval,
+            deadline: None,
         }
-        .instrument(tracing::info_span!("logs:flush_worker"))
-        .await;
+    }
 
-        if autoscale_duration && synced && commits_before_fsync != 1 {
-            let new_estimate = duration_estimator.estimate();
-            if new_estimate < Duration::from_micros(1) {
-                tracing::debug!(?new_estimate, "ignoring obviously bogus fsync time")
-            } else if new_estimate.abs_diff(last_estimate) > Duration::from_micros(100) {
-                // only update when it changed significantly so we're not tearing down and
-                // recreating the tokio timer all the time
-                tracing::trace!(
-                    ?last_estimate,
-                    ?new_estimate,
-                    "updating fsync time estimate"
-                );
-                ticker = tokio::time::interval(new_estimate);
-                last_estimate = new_estimate;
+    fn enable(&mut self) {
+        if self.deadline.is_none() {
+            tracing::trace!(interval=?self.interval, "debouncing log fsync");
+            self.deadline = Some(tokio::time::Instant::now() + self.interval)
+        }
+    }
+
+    async fn wait(&mut self) {
+        if let Some(deadline) = self.deadline {
+            tokio::time::sleep_until(deadline).await;
+        } else {
+            std::future::pending().await
+        }
+        self.deadline.take();
+    }
+}
+
+struct FlushWorker {
+    db: Database,
+    rx: tokio::sync::mpsc::Receiver<FlushMessage>,
+    commits_before_fsync: usize,
+    autoscale_duration: bool,
+    duration_estimator: SimpleEstimator<7>,
+    persist_mode: PersistMode,
+    shutting_down: CancellationToken,
+    pending: Vec<IoFlushedCallback>,
+    metrics: Option<LogMetrics>,
+    done: bool,
+    debouncer: FlushDebouncer,
+}
+
+impl FlushWorker {
+    fn new(
+        db: Database,
+        rx: tokio::sync::mpsc::Receiver<FlushMessage>,
+        commits_before_fsync: usize,
+        duration_before_fsync: Duration,
+        autoscale_duration: bool,
+        sync_mode: SyncMode,
+        fsync_mode: FsyncMode,
+        shutting_down: CancellationToken,
+    ) -> Self {
+        let persist_mode = sync_mode.into_persist_mode(fsync_mode);
+        tracing::debug!(
+            ?commits_before_fsync,
+            ?duration_before_fsync,
+            ?persist_mode,
+            "initializing background flush worker"
+        );
+        Self {
+            db,
+            rx,
+            commits_before_fsync,
+            autoscale_duration,
+            persist_mode,
+            shutting_down,
+            pending: Vec::new(),
+            duration_estimator: SimpleEstimator::<7>::new(duration_before_fsync),
+            metrics: None,
+            done: false,
+            debouncer: FlushDebouncer::new(duration_before_fsync),
+        }
+    }
+
+    fn handle_message(&mut self, message: FlushMessage) {
+        match message {
+            FlushMessage::EnableMetrics(new_metrics) => {
+                tracing::info!("enabling metrics in background flush worker");
+                self.metrics = Some(new_metrics)
+            }
+            FlushMessage::Callback(callback) => {
+                self.pending.push(callback);
+                if self.commits_before_fsync != 1 {
+                    self.debouncer.enable();
+                }
             }
         }
     }
-    if let Err(err) = db.persist(fsync_mode.into()) {
-        tracing::error!(?err, "error flushing fjall at shutdown");
+
+    async fn run(mut self) {
+        while !self.done {
+            let synced = self.run_one_loop().await;
+            if self.autoscale_duration && synced && self.commits_before_fsync != 1 {
+                self.update_fsync_estimate();
+            }
+        }
+        if let Err(err) = self.db.persist(self.persist_mode) {
+            tracing::error!(?err, "error flushing fjall at shutdown");
+        }
+    }
+
+    #[tracing::instrument("logs:flush_worker", skip_all)]
+    async fn run_one_loop(&mut self) -> bool {
+        const FLUSH_BUF: usize = 10;
+        let mut buf = Vec::with_capacity(FLUSH_BUF);
+        let mut sync_from_ticker = false;
+        buf.clear();
+
+        tokio::select! {
+            num_messages = self.rx.recv_many(&mut buf, FLUSH_BUF) => {
+                if num_messages == 0 {
+                    self.done = true
+                } else {
+                    for message in buf.drain(..) {
+                        self.handle_message(message);
+                    }
+                }
+            },
+            _ = self.shutting_down.cancelled() => {
+                self.done = true
+            },
+            _ = self.debouncer.wait() => {
+                tracing::trace!("flushing after debounce");
+                sync_from_ticker = true
+            }
+        }
+
+        if self.pending.is_empty() {
+            return false;
+        }
+
+        let sync_from_count =
+            self.commits_before_fsync > 0 && self.pending.len() >= self.commits_before_fsync;
+
+        if sync_from_count {
+            tracing::trace!("flushing after count");
+        }
+
+        if sync_from_ticker || sync_from_count {
+            let db = self.db.clone();
+            let num_commits = self.pending.len();
+            let persist_mode = self.persist_mode;
+            let result = spawn_blocking_in_current_span(
+                move || -> Result<Duration, BackgroundFsyncFailedError> {
+                    let _guard =
+                        tracing::info_span!("logs:flush_worker:flush", num_commits).entered();
+                    tracing::trace!(?persist_mode, "flushing logs to disk");
+                    let start_persist = std::time::Instant::now();
+                    db.persist(persist_mode).map_err(|err| {
+                        tracing::error!(?err, "error flushing fjall");
+                        BackgroundFsyncFailedError(err.to_string())
+                    })?;
+                    let persist_time = start_persist.elapsed();
+                    Ok(persist_time)
+                },
+            )
+            .await
+            .expect("failed joining blocking task")
+            .map(|persist_time| {
+                self.duration_estimator.push(persist_time);
+                if let Some(metrics) = &self.metrics {
+                    metrics.record_fsync(persist_time, self.pending.len());
+                }
+            });
+            tracing::trace!(num_pending = self.pending.len(), "committed for some items");
+            {
+                let _guard = tracing::info_span!("logs:flush_worker:drain").entered();
+                for callback in self.pending.drain(..) {
+                    callback.io_completed(result.clone().map_err(std::io::Error::other))
+                }
+            }
+        }
+        true
+    }
+
+    fn update_fsync_estimate(&mut self) {
+        let new_estimate = self.duration_estimator.estimate();
+        if new_estimate < Duration::from_micros(1) {
+            tracing::trace!(?new_estimate, "ignoring obviously bogus fsync time")
+        } else if new_estimate.abs_diff(self.debouncer.interval) > Duration::from_micros(100) {
+            // only update when it changed significantly so we're not tearing down and
+            // recreating the tokio timer all the time
+            tracing::trace!(
+                last_estimate = ?self.debouncer.interval,
+                ?new_estimate,
+                "updating fsync time estimate"
+            );
+            self.debouncer.interval = new_estimate;
+        }
     }
 }
 
@@ -451,7 +537,7 @@ impl DiomLogs {
                 .expect_point_read_hits(true)
         })?;
         let (flush_tx, flush_rx) = tokio::sync::mpsc::channel(65536);
-        tokio::spawn(flush_worker(
+        let flush_worker = FlushWorker::new(
             db.clone(),
             flush_rx,
             commits_before_fsync,
@@ -460,7 +546,8 @@ impl DiomLogs {
             sync_mode,
             fsync_mode,
             cancellation_token.clone(),
-        ));
+        );
+        tokio::spawn(flush_worker.run());
         Ok(Self {
             db,
             log_keyspace,
