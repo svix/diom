@@ -1,6 +1,6 @@
-use std::{net::SocketAddr, path::Path, sync::Arc};
+use std::{collections::BTreeMap, net::SocketAddr, path::Path, sync::Arc};
 
-use crate::TestClient;
+use crate::{TestClient, retry::run_with_retries};
 use diom_backend::{
     Initialized,
     cfg::{
@@ -15,6 +15,7 @@ use diom_core::{
     types::{DurationMs, NonZeroDurationMs},
 };
 use futures_util::TryFutureExt;
+use http::StatusCode;
 use tempfile::TempDir;
 use tokio::{
     net::TcpListener,
@@ -340,4 +341,103 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
 
 pub async fn start_server() -> TestContext {
     TestServerBuilder::with_default_config().build().await
+}
+
+pub struct ClusterTestContext {
+    pub handles: BTreeMap<NodeId, TestContext>,
+    pub admin_token: String,
+}
+
+impl ClusterTestContext {
+    /// Return a reference to a client pointed at what it currently
+    /// the leader
+    ///
+    /// Panics if there is no leader
+    pub async fn leader_client(&self) -> &TestClient {
+        &self.handles[&self.get_leader_id().await].client
+    }
+
+    /// Return a reference to a client pointed at some arbitrary follower.
+    ///
+    /// Panics if there is no follower
+    pub async fn follower_client(&self) -> &TestClient {
+        &self.handles[&self.get_follower_id().await].client
+    }
+
+    pub async fn get_leader_id(&self) -> NodeId {
+        for (node_id, ctx) in &self.handles {
+            let Ok(resp) = ctx.client.get("v1.cluster-admin.status").await else {
+                continue;
+            };
+            let Ok(resp) = resp.ensure(StatusCode::OK) else {
+                continue;
+            };
+            let resp = resp.json();
+            if resp["this_node_state"] == "leader" {
+                return *node_id;
+            }
+        }
+        panic!("failed to get leader from any peer");
+    }
+
+    /// Return some arbitrary non-leader id
+    pub async fn get_follower_id(&self) -> NodeId {
+        for (node_id, ctx) in &self.handles {
+            let Ok(resp) = ctx.client.get("v1.cluster-admin.status").await else {
+                continue;
+            };
+            let Ok(resp) = resp.ensure(StatusCode::OK) else {
+                continue;
+            };
+            let resp = resp.json();
+            if resp["this_node_state"] == "follower" {
+                return *node_id;
+            }
+        }
+        panic!("failed to get follower from any peer");
+    }
+}
+
+pub async fn start_cluster(num_nodes: usize) -> ClusterTestContext {
+    if num_nodes < 2 {
+        panic!("cannot start a cluster with fewer than 2 nodes");
+    }
+    let mut peers = vec![];
+    let mut handles = BTreeMap::new();
+    let admin_token = TEST_ADMIN_TOKEN.to_owned();
+    for node_idx in 0..num_nodes {
+        let context = TestServerBuilder::with_default_config()
+            .token(admin_token.clone())
+            .tap_cfg(|cfg| {
+                cfg.cluster.auto_initialize = node_idx == 0;
+                cfg.cluster.seed_nodes = peers.clone();
+                cfg.cluster.shut_down_on_go_away = false;
+            })
+            .build()
+            .await;
+        peers.push(context.repl_addr.into());
+        handles.insert(context.node_id, context);
+    }
+
+    let client = &handles.first_key_value().unwrap().1.client;
+
+    run_with_retries(async || {
+        let cluster_status = client
+            .get("v1.cluster-admin.status")
+            .await?
+            .ensure(StatusCode::OK)?
+            .json();
+        let Some(nodes) = cluster_status["nodes"].as_array() else {
+            anyhow::bail!("invalid cluster_status output");
+        };
+        anyhow::ensure!(nodes.len() == num_nodes);
+        Ok(())
+    })
+    .await
+    .expect("cluster failed to start up");
+
+    ClusterTestContext {
+        handles,
+        admin_token,
+    }
 }

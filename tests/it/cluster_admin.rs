@@ -1,10 +1,7 @@
-use diom_backend::cfg::PeerAddr;
-use maplit::btreeset;
 use serde_json::json;
-use std::collections::BTreeSet;
 use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestResult,
-    server::{TestContext, TestServerBuilder},
+    server::{TestContext, TestServerBuilder, start_cluster},
 };
 
 #[tokio::test]
@@ -52,78 +49,28 @@ async fn test_cluster_status() -> TestResult {
 
 #[tokio::test]
 async fn test_cluster_remove() -> TestResult {
-    let TestContext {
-        client,
-        handle: _handle,
-        node_id,
-        repl_addr,
-        ..
-    } = TestServerBuilder::with_default_config()
-        .tap_cfg(|cfg| {
-            cfg.cluster.auto_initialize = true;
-            cfg.cluster.shut_down_on_go_away = false;
-        })
-        .build()
-        .await;
+    let context = start_cluster(2).await;
 
-    let TestContext {
-        client: second_client,
-        handle: _second_handle,
-        node_id: second_node_id,
-        ..
-    } = TestServerBuilder::with_default_config()
-        .tap_cfg(|cfg| {
-            cfg.cluster.seed_nodes = vec![PeerAddr::from(repl_addr)];
-            cfg.cluster.auto_initialize = false;
-            cfg.cluster.shut_down_on_go_away = false;
-        })
-        .build()
-        .await;
-
-    // make sure both nodes are present
-    let cluster_status = client
-        .get("v1.cluster-admin.status")
-        .await?
-        .expect(StatusCode::OK)
-        .json();
-    assert_eq!(cluster_status["nodes"].assert_array().len(), 2);
-    let node_ids = cluster_status["nodes"]
-        .assert_array()
-        .iter()
-        .map(|n| n["node_id"].assert_str().to_string())
-        .collect::<BTreeSet<_>>();
-    assert_eq!(
-        node_ids,
-        btreeset! { node_id.to_string(), second_node_id.to_string() }
-    );
-    // ideally, the first node is still the leader before we evict the second node
-    assert_eq!(cluster_status["this_node_state"], "leader");
-    let cluster_status_from_second_node = second_client
-        .get("v1.cluster-admin.status")
-        .await?
-        .expect(StatusCode::OK)
-        .json();
-    assert_eq!(
-        cluster_status_from_second_node["this_node_state"],
-        "follower"
-    );
+    let leader_id = context.get_leader_id().await;
+    let follower_id = context.get_follower_id().await;
+    let leader_client = &context.handles[&leader_id].client;
 
     // now remove the second node
-    let resp = client
+    let resp = leader_client
         .post("v1.cluster-admin.remove-node")
-        .json(json!({"node_id": second_node_id}))
+        .json(json!({"node_id": follower_id}))
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(resp["node_id"].assert_str(), second_node_id.to_string());
+    assert_eq!(resp["node_id"].assert_str(), follower_id.to_string());
 
-    let cluster_status = client
+    let cluster_status = leader_client
         .get("v1.cluster-admin.status")
         .await?
         .expect(StatusCode::OK)
         .json();
     assert_eq!(cluster_status["nodes"].assert_array().len(), 1);
-    assert_eq!(cluster_status["nodes"][0]["node_id"], node_id.to_string());
+    assert_eq!(cluster_status["nodes"][0]["node_id"], leader_id.to_string());
 
     Ok(())
 }

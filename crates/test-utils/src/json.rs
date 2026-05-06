@@ -2,6 +2,7 @@
 
 pub trait JsonFastAndLoose {
     fn assert_u64(&self) -> u64;
+    fn assert_u8(&self) -> u8;
     fn assert_str(&self) -> &str;
     fn assert_array(&self) -> &[serde_json::Value];
 }
@@ -10,6 +11,13 @@ impl JsonFastAndLoose for serde_json::Value {
     #[track_caller]
     fn assert_u64(&self) -> u64 {
         self.as_u64().unwrap()
+    }
+
+    #[track_caller]
+    fn assert_u8(&self) -> u8 {
+        let value = self.as_u64().unwrap();
+        assert!(value < 256);
+        value as _
     }
 
     #[track_caller]
