@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, net::SocketAddr, path::Path, sync::Arc};
 
-use crate::{TestClient, retry::run_with_retries};
+use crate::{TestClient, json::JsonFastAndLoose, retry::run_with_retries};
 use diom_backend::{
     Initialized,
     cfg::{
@@ -349,15 +349,14 @@ pub struct ClusterTestContext {
 }
 
 impl ClusterTestContext {
-    /// Return a reference to a client pointed at what it currently
-    /// the leader
+    /// Return a reference to a client pointed at the leader
     ///
     /// Panics if there is no leader
     pub async fn leader_client(&self) -> &TestClient {
         &self.handles[&self.get_leader_id().await].client
     }
 
-    /// Return a reference to a client pointed at some arbitrary follower.
+    /// Return a reference to a client pointed at some arbitrary follower
     ///
     /// Panics if there is no follower
     pub async fn follower_client(&self) -> &TestClient {
@@ -422,15 +421,14 @@ pub async fn start_cluster(num_nodes: usize) -> ClusterTestContext {
     let client = &handles.first_key_value().unwrap().1.client;
 
     run_with_retries(async || {
-        let cluster_status = client
+        let num_found_nodes = client
             .get("v1.cluster-admin.status")
             .await?
             .ensure(StatusCode::OK)?
-            .json();
-        let Some(nodes) = cluster_status["nodes"].as_array() else {
-            anyhow::bail!("invalid cluster_status output");
-        };
-        anyhow::ensure!(nodes.len() == num_nodes);
+            .json()["nodes"]
+            .assert_array()
+            .len();
+        anyhow::ensure!(num_found_nodes == num_nodes);
         Ok(())
     })
     .await

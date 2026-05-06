@@ -108,10 +108,7 @@ async fn test_replication_end_to_end() -> TestResult {
             .json()
             .get("value")
             .context("no val in response")?
-            .assert_array()
-            .iter()
-            .map(|a| a.assert_u8())
-            .collect::<Vec<u8>>()
+            .assert_bytes()
             .pipe(String::from_utf8)
             .unwrap();
         anyhow::ensure!(found_value == expected_value);

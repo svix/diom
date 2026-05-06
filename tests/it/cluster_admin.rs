@@ -62,7 +62,7 @@ async fn test_cluster_remove() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(resp["node_id"].assert_str(), follower_id.to_string());
+    assert_eq!(resp["node_id"], follower_id.to_string());
 
     let cluster_status = leader_client
         .get("v1.cluster-admin.status")
