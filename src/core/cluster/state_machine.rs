@@ -217,6 +217,8 @@ static LAST_SNAPSHOT: FjallFixedKey<LastSnapshot> = FjallFixedKey::new("last_sna
 static LAST_MEMBERSHIP: FjallFixedKey<StoredMembership> = FjallFixedKey::new("last_membership");
 static CLUSTER_UUID: FjallFixedKey<ClusterId> = FjallFixedKey::new("cluster_uuid");
 
+type SnapshotTarget = (StorageType, Database, fjall::Snapshot, Vec<String>);
+
 impl Store {
     #[allow(clippy::too_many_arguments)]
     pub async fn new(
@@ -658,10 +660,6 @@ impl Store {
         })
     }
 
-    fn prep_snapshot_builder_(&mut self) {
-        self.snapshot_idx += 1;
-    }
-
     #[tracing::instrument(skip_all)]
     async fn get_current_snapshot_(&mut self) -> anyhow::Result<Option<Snapshot>> {
         // clone to avoid holding a lock over an await point
@@ -685,7 +683,8 @@ impl Store {
         }
     }
 
-    async fn build_snapshot_(&self) -> anyhow::Result<Snapshot> {
+    async fn snapshot_phase_1(&mut self) -> anyhow::Result<(SnapshotMeta, Vec<SnapshotTarget>)> {
+        self.snapshot_idx += 1;
         let last_log_id = self.last_applied_log_id;
         let last_membership = self.last_membership.clone();
 
@@ -701,8 +700,6 @@ impl Store {
             snapshot_id,
         };
 
-        let start = std::time::Instant::now();
-
         let handle = self.stores.clone();
 
         fn list_keyspaces(db: &Database) -> Vec<String> {
@@ -714,6 +711,8 @@ impl Store {
         }
 
         let targets = spawn_blocking_in_current_span(move || {
+            // this is the only time we lock the underlying databases,
+            // and it should just be for the duration of a fjall snapshot
             let store = handle.write();
             let dbs = &store.databases;
 
@@ -735,20 +734,7 @@ impl Store {
         .await
         .context("failed to generate snapshot targets")?;
 
-        let snapshot = StoredSnapshot::new(&meta, &self.snapshot_directory, targets)
-            .await
-            .context("failed to build snapshot")?;
-
-        let path = snapshot.path.clone();
-
-        let size =
-            spawn_blocking_in_current_span(move || std::fs::metadata(&path).map(|m| m.len()))
-                .await?
-                .context("getting size of snapshot")?;
-
-        self.metrics.record_snapshot(size, start.elapsed());
-
-        Ok(Snapshot { meta, snapshot })
+        Ok((meta, targets))
     }
 }
 
@@ -890,28 +876,62 @@ impl StoredSnapshot {
 }
 
 pub struct StoreSnapshotHandle {
+    // a handle to the actual StoreHandle
     inner: Arc<TokioRwLock<Store>>,
+    // keep our own references to these (cheaply-copyable) items
+    metrics: DbMetrics,
+    snapshot_directory: PathBuf,
 }
 
 impl RaftSnapshotBuilder<TypeConfig> for StoreSnapshotHandle {
     async fn build_snapshot(&mut self) -> StorageResult<Snapshot> {
-        // build the snapshot with a read lock so we don't block writes
-        let snapshot = self
-            .inner
-            .read()
+        self.build_snapshot_().await.map_err(io_err)
+    }
+}
+
+impl StoreSnapshotHandle {
+    async fn build_snapshot_(&mut self) -> anyhow::Result<Snapshot> {
+        let start = std::time::Instant::now();
+
+        // lock the underlying store while we pull out some fields atomically
+        let (meta, targets) = {
+            let mut guard = self.inner.write().await;
+            guard.snapshot_phase_1().await
+        }?;
+
+        let snapshot = StoredSnapshot::new(&meta, &self.snapshot_directory, targets)
             .await
-            .build_snapshot_()
+            .context("failed to build snapshot")?;
+
+        let path = snapshot.path.clone();
+
+        let size = tokio::fs::metadata(&path)
             .await
-            .map_err(io_err)?;
-        // but set the last_snapshot_ field with a write lock to serialize
+            .context("getting size of snapshot")?
+            .len();
+
+        let runtime = start.elapsed();
+        let path = snapshot.path.clone();
+
+        tracing::debug!(
+            ?path,
+            last_log_id = ?meta.last_log_id(),
+            size,
+            ?runtime,
+            "finished generating a snapshot");
+
+        self.metrics.record_snapshot(size, runtime);
+
+        // set the last_snapshot_ field with a write lock to serialize
         self.inner
             .write()
             .await
-            .set_last_snapshot_(snapshot.meta.clone(), snapshot.snapshot.path.clone())
+            .set_last_snapshot_(meta.clone(), path)
             .await
             .context("failed to set last snapshot")
             .map_err(io_err)?;
-        Ok(snapshot)
+
+        Ok(Snapshot { meta, snapshot })
     }
 }
 
@@ -945,9 +965,16 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
     }
 
     async fn get_snapshot_builder(&mut self) -> Self::SnapshotBuilder {
-        self.inner.write().await.prep_snapshot_builder_();
+        // briefly lock
+        let (metrics, snapshot_directory) = {
+            let guard = self.inner.read().await;
+            (guard.metrics.clone(), guard.snapshot_directory.clone())
+        };
+
         StoreSnapshotHandle {
             inner: self.inner.clone(),
+            metrics,
+            snapshot_directory,
         }
     }
 

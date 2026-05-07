@@ -119,7 +119,7 @@ impl<'a, B: Write + Seek> KeyspaceSerializer<'a, B> {
             storage_type = ?self.storage_type,
             keyspace_name = self.keyspace_name,
             path = %keyspace.path().display(),
-            len = keyspace.len()?,
+            approximate_len = keyspace.approximate_len(),
             "serializing keyspace"
         );
         for guard in snapshot.iter(keyspace) {
