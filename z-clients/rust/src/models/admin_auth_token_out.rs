@@ -23,6 +23,11 @@ pub struct AdminAuthTokenOut {
 
     /// Whether this token is currently enabled.
     pub enabled: bool,
+
+    /// Whether this token has expired.
+    ///
+    /// Expired tokens may be pruned in the background at any time.
+    pub expired: bool,
 }
 
 impl AdminAuthTokenOut {
@@ -33,6 +38,7 @@ impl AdminAuthTokenOut {
         updated: jiff::Timestamp,
         role: String,
         enabled: bool,
+        expired: bool,
     ) -> Self {
         Self {
             id,
@@ -42,6 +48,7 @@ impl AdminAuthTokenOut {
             expiry: None,
             role,
             enabled,
+            expired,
         }
     }
 

@@ -115,7 +115,7 @@ pub enum AdminAuthTokenCommands {
   \"iterator\": \"...\"
 }\n\nExample response:
 {
-  \"data\": [{\"id\": \"...\", \"name\": \"...\", \"created\": 1234567890123, \"updated\": 1234567890123, \"expiry\": 1234567890123, \"role\": \"...\", \"enabled\": true}],
+  \"data\": [{\"id\": \"...\", \"name\": \"...\", \"created\": 1234567890123, \"updated\": 1234567890123, \"expiry\": 1234567890123, \"role\": \"...\", \"enabled\": true, \"expired\": true}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": true
