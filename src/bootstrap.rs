@@ -315,31 +315,19 @@ fn load_commands(
 }
 
 async fn wait_for_up(config: &AppConfig, raft_state: &RaftState) -> anyhow::Result<()> {
-    let mut deadline: std::pin::Pin<Box<dyn Future<Output = ()> + Send>> =
-        if let Some(time) = config.bootstrap_max_wait_time {
-            Box::pin(tokio::time::sleep(time.into()))
-        } else {
-            Box::pin(futures_util::future::pending())
-        };
     let shutdown = crate::shutting_down_token();
-    let mut interval = tokio::time::interval(std::time::Duration::from_millis(100));
-
-    loop {
-        tokio::select! {
-            _ = shutdown.cancelled() => {
-                anyhow::bail!("process shut down before bootstrap finished");
-            }
-            _ = deadline.as_mut() => {
-                anyhow::bail!("bootstrap timeout exceeded");
-            },
-            _ = interval.tick() => {
-                if raft_state.is_up().await {
-                    tracing::trace!("cluster is up");
-                    return Ok(())
-                }
-            }
-        }
+    let value = if let Some(time) = config.bootstrap_max_wait_time {
+        shutdown
+            .run_until_cancelled(tokio::time::timeout(time.into(), raft_state.wait_for_up()))
+            .await
+            .transpose()
+            .context("waiting for node to be up for bootstrapping")?
+    } else {
+        shutdown.run_until_cancelled(raft_state.wait_for_up()).await
     }
+    .ok_or_else(|| anyhow::anyhow!("node shut down before bootstrapping finished"))?;
+    anyhow::ensure!(value, "node has failed to come up");
+    Ok(())
 }
 
 pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result<()> {

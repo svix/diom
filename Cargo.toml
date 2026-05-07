@@ -49,6 +49,7 @@ diom-namespace.workspace = true
 diom-operations.workspace = true
 diom-proto.workspace = true
 diom-rate-limit.workspace = true
+eyeball.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
 fs-err.workspace = true
@@ -165,6 +166,7 @@ diom-proto.path = "crates/diom-proto"
 diom-rate-limit.path = "crates/rate-limit"
 dirs = "6.0.0"
 dotenvy = "0.15.7"
+eyeball = "0.8.8"
 fjall = { version = "3.0.1", features = ["lz4", "metrics"] }
 fjall-utils.path = "crates/fjall-utils"
 fs-err = "3.3.0"

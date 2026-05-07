@@ -11,7 +11,10 @@ use std::{
 
 use crate::{
     cfg::Dir,
-    core::metrics::{DbMetrics, DbType},
+    core::{
+        cluster::raft::RaftStateWatcher,
+        metrics::{DbMetrics, DbType},
+    },
 };
 use anyhow::Context;
 use diom_core::{Monotime, PersistableValue, task::spawn_blocking_in_current_span};
@@ -177,6 +180,7 @@ pub struct Store {
     meta_keyspace: Keyspace,
     readonly_meta_keyspace: ReadonlyKeyspace,
     snapshot_idx: u64,
+    has_applied_logs: bool,
     last_applied_log_id: Option<LogId>,
     last_membership: StoredMembership,
     last_snapshot: Arc<RwLock<Option<LastSnapshot>>>,
@@ -187,6 +191,7 @@ pub struct Store {
     persist_mode: PersistMode,
     snapshot_loading: TaskWatcher,
     cancellation_token: CancellationToken,
+    state_watcher: RaftStateWatcher,
 }
 
 trait SnapshotIdx {
@@ -213,6 +218,7 @@ static LAST_MEMBERSHIP: FjallFixedKey<StoredMembership> = FjallFixedKey::new("la
 static CLUSTER_UUID: FjallFixedKey<ClusterId> = FjallFixedKey::new("cluster_uuid");
 
 impl Store {
+    #[allow(clippy::too_many_arguments)]
     pub async fn new(
         persistent_db: Database,
         ephemeral_db: Database,
@@ -222,6 +228,7 @@ impl Store {
         node_id: NodeId,
         time: Monotime,
         cancellation_token: CancellationToken,
+        state_watcher: RaftStateWatcher,
     ) -> anyhow::Result<Self> {
         let meta_keyspace =
             persistent_db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
@@ -273,6 +280,7 @@ impl Store {
             meta_keyspace,
             last_snapshot: Arc::new(RwLock::new(None)),
             snapshot_idx: 0,
+            has_applied_logs: false,
             last_applied_log_id: None,
             last_membership: Default::default(),
             cluster_id: None,
@@ -282,6 +290,7 @@ impl Store {
             persist_mode,
             snapshot_loading: TaskWatcher::default(),
             cancellation_token,
+            state_watcher,
         };
         this.load_information().await?;
         this.start_metrics();
@@ -561,10 +570,13 @@ impl Store {
 
         let mut touched_ephemeral = false;
         let mut touched_persistent = false;
+        let mut first_log = false;
 
         while let Some(entry) = entries.next().await {
             let (item, responder) = entry?;
 
+            first_log |= !self.has_applied_logs;
+            self.has_applied_logs = true;
             self.last_applied_log_id = Some(item.log_id);
             changed_log_id = true;
 
@@ -621,6 +633,9 @@ impl Store {
                 .databases
                 .ephemeral
                 .persist(self.persist_mode)?;
+        }
+        if first_log {
+            self.state_watcher.record_first_applied_log();
         }
         self.metrics.record_apply(start.elapsed());
         Ok(())

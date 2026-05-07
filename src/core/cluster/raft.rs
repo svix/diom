@@ -2,6 +2,7 @@ use std::{collections::BTreeMap, sync::Arc, time::Instant};
 
 use anyhow::Context;
 use diom_core::Monotime;
+use eyeball::Observable;
 use openraft::error::{InitializeError, RaftError};
 use tap::TapFallible;
 
@@ -65,6 +66,93 @@ pub(crate) async fn initialize_cluster(
     Ok(new_id)
 }
 
+struct RaftStateWatcherInner {
+    has_applied_log: bool,
+    is_single_node: bool,
+    leader: Option<(NodeId, u64)>,
+    is_ready: Observable<bool>,
+    handle: Option<openraft::raft::WatchChangeHandle<TypeConfig>>,
+}
+
+impl RaftStateWatcherInner {
+    fn recompute_ready(&mut self) {
+        let new_ready = self.leader.is_some() && (self.is_single_node || self.has_applied_log);
+        Observable::set_if_not_eq(&mut self.is_ready, new_ready);
+    }
+}
+
+#[derive(Clone)]
+pub struct RaftStateWatcher {
+    inner: Arc<parking_lot::RwLock<RaftStateWatcherInner>>,
+}
+
+impl RaftStateWatcher {
+    fn new() -> Self {
+        let inner = Arc::new(parking_lot::RwLock::new(RaftStateWatcherInner {
+            is_ready: Observable::new(false),
+            has_applied_log: false,
+            is_single_node: false,
+            leader: None,
+            handle: None,
+        }));
+        Self { inner }
+    }
+
+    pub(crate) fn record_first_applied_log(&self) {
+        let mut inner = self.inner.write();
+        inner.has_applied_log = true;
+        inner.recompute_ready();
+    }
+
+    async fn connect_raft(&mut self, raft: &Raft) {
+        let inner_h = Arc::clone(&self.inner);
+        let handle = raft.on_cluster_leader_change(move |_, (new_leader_id, _)| {
+            let inner_h = Arc::clone(&inner_h);
+            async move {
+                let mut guard = inner_h.write();
+                guard.leader = Some((new_leader_id.node_id, new_leader_id.term));
+                guard.recompute_ready();
+            }
+        });
+        let is_single_node = raft
+            .with_raft_state(|s| s.membership_state.effective().nodes().count() == 1)
+            .await
+            .inspect_err(|err| {
+                tracing::warn!(?err, "error determining if raft is in single-node mode")
+            })
+            .unwrap_or(false);
+        let mut guard = self.inner.write();
+        guard.handle = Some(handle);
+        guard.is_single_node = is_single_node;
+        guard.recompute_ready();
+    }
+
+    pub(crate) async fn wait_for_up(&self) -> bool {
+        let mut rx = {
+            let guard = self.inner.read();
+            Observable::subscribe(&guard.is_ready)
+        };
+        if rx.next_now() {
+            tracing::debug!("node is already up");
+            return true;
+        }
+        tracing::debug!("waiting for node to come up");
+        loop {
+            match rx.next().await {
+                Some(true) => {
+                    tracing::debug!("node has come up");
+                    return true;
+                }
+                Some(false) => {}
+                None => {
+                    tracing::debug!("state monitor shut down");
+                    return false;
+                }
+            }
+        }
+    }
+}
+
 pub async fn initialize_raft(
     cfg: &Configuration,
     app_state: AppState,
@@ -112,6 +200,8 @@ pub async fn initialize_raft(
 
     let metrics = ClusterMetrics::new(&app_state.meter, id);
 
+    let mut state_watcher = RaftStateWatcher::new();
+
     let state_machine = super::state_machine::Store::new(
         db,
         edb,
@@ -121,6 +211,7 @@ pub async fn initialize_raft(
         id,
         time.clone(),
         crate::shutting_down_token(),
+        state_watcher.clone(),
     )
     .await?;
     let state_machine: StoreHandle = state_machine.into();
@@ -128,6 +219,8 @@ pub async fn initialize_raft(
     let raft = Raft::new(id, config, network.clone(), logs, state_machine.clone())
         .await
         .context("initializing openraft")?;
+
+    state_watcher.connect_raft(&raft).await;
 
     let openraft_metrics = OpenraftMetrics::new(&app_state.meter, id);
     raft.set_metrics_recorder(Some(Arc::new(openraft_metrics)))
@@ -143,6 +236,7 @@ pub async fn initialize_raft(
         time,
         cfg: cfg.clone(),
         metrics: metrics.clone(),
+        state_watcher,
     };
 
     #[cfg(feature = "raft-runtime-stats")]
@@ -299,6 +393,7 @@ mod tests {
                 1.into(),
                 time,
                 token.clone(),
+                super::RaftStateWatcher::new(),
             )
             .await?;
 
