@@ -2,6 +2,7 @@ use std::{collections::BTreeMap, sync::Arc, time::Instant};
 
 use anyhow::Context;
 use diom_core::Monotime;
+use eyeball::Observable;
 use openraft::error::{InitializeError, RaftError};
 use tap::TapFallible;
 
@@ -69,14 +70,14 @@ struct RaftStateWatcherInner {
     has_applied_log: bool,
     is_single_node: bool,
     leader: Option<(NodeId, u64)>,
-    is_ready: eyeball::SharedObservable<bool>,
+    is_ready: Observable<bool>,
     handle: Option<openraft::raft::WatchChangeHandle<TypeConfig>>,
 }
 
 impl RaftStateWatcherInner {
     fn recompute_ready(&mut self) {
         let new_ready = self.leader.is_some() && (self.is_single_node || self.has_applied_log);
-        self.is_ready.set_if_not_eq(new_ready);
+        Observable::set_if_not_eq(&mut self.is_ready, new_ready);
     }
 }
 
@@ -88,7 +89,7 @@ pub struct RaftStateWatcher {
 impl RaftStateWatcher {
     fn new() -> Self {
         let inner = Arc::new(parking_lot::RwLock::new(RaftStateWatcherInner {
-            is_ready: eyeball::SharedObservable::new(false),
+            is_ready: Observable::new(false),
             has_applied_log: false,
             is_single_node: false,
             leader: None,
@@ -129,7 +130,7 @@ impl RaftStateWatcher {
     pub(crate) async fn wait_for_up(&self) -> bool {
         let mut rx = {
             let guard = self.inner.read();
-            guard.is_ready.subscribe()
+            Observable::subscribe(&guard.is_ready)
         };
         if rx.next_now() {
             tracing::debug!("node is already up");
