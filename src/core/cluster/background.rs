@@ -289,6 +289,10 @@ async fn trigger_snapshot(
         tracing::warn!("refusing to snapshot a learner");
         return Ok(false);
     }
+    if handle.state_machine.is_loading_snapshot() {
+        tracing::warn!("refusing to snapshot while loading another snapshot");
+        return Ok(false);
+    }
 
     tracing::debug!("triggering background snapshot");
     if let Err(err) = handle.raft.trigger().snapshot().await {

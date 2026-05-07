@@ -101,7 +101,7 @@ pub(super) const fn cluster_send_snapshot_timeout() -> NonZeroDurationMs {
 }
 
 pub(super) fn cluster_replication_lag_threshold() -> u64 {
-    50_000
+    100_000
 }
 
 pub(super) const fn background_cleanup_interval() -> NonZeroDurationMs {
