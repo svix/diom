@@ -888,8 +888,8 @@ impl StoreSnapshotHandle {
 
         let size = tokio::fs::metadata(&path)
             .await
-            .map(|m| m.len())
-            .context("getting size of snapshot")?;
+            .context("getting size of snapshot")?
+            .len();
 
         let runtime = start.elapsed();
         let path = snapshot.path.clone();
