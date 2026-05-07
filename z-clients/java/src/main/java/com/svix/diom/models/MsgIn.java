@@ -37,7 +37,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgIn {
     @JsonProperty private byte[] value;
-    @JsonProperty private Map<String,String> headers;
+    @JsonProperty private Map<String, String> headers;
     @JsonProperty private String key;
     @JsonProperty("delay_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration delay;
     public MsgIn() {}
@@ -61,7 +61,7 @@ public class MsgIn {
         this.value = value;
     }
 
-    public MsgIn headers(Map<String,String> headers) {
+    public MsgIn headers(Map<String, String> headers) {
         this.headers = headers;
         return this;
     }
@@ -79,11 +79,11 @@ public class MsgIn {
      * @return headers
      */
     @javax.annotation.Nullable
-    public Map<String,String> getHeaders() {
+    public Map<String, String> getHeaders() {
         return headers;
     }
 
-    public void setHeaders(Map<String,String> headers) {
+    public void setHeaders(Map<String, String> headers) {
         this.headers = headers;
     }
 

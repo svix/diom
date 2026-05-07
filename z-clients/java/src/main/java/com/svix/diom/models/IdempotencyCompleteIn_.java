@@ -34,14 +34,14 @@ public class IdempotencyCompleteIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private byte[] response;
-    @JsonProperty private Map<String,String> context;
+    @JsonProperty private Map<String, String> context;
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
 
     public IdempotencyCompleteIn_(
         String namespace,
         String key,
         byte[] response,
-        Map<String,String> context,
+        Map<String, String> context,
         Duration ttl
     ) {
         this.namespace = namespace;

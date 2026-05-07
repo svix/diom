@@ -40,7 +40,7 @@ public class AdminRoleOut {
     @JsonProperty private String description;
     @JsonProperty private List<AccessRule> rules;
     @JsonProperty private List<String> policies;
-    @JsonProperty private Map<String,String> context;
+    @JsonProperty private Map<String, String> context;
     @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant created;
     @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant updated;
     public AdminRoleOut() {}
@@ -135,7 +135,7 @@ public class AdminRoleOut {
         this.policies = policies;
     }
 
-    public AdminRoleOut context(Map<String,String> context) {
+    public AdminRoleOut context(Map<String, String> context) {
         this.context = context;
         return this;
     }
@@ -153,11 +153,11 @@ public class AdminRoleOut {
      * @return context
      */
     @javax.annotation.Nonnull
-    public Map<String,String> getContext() {
+    public Map<String, String> getContext() {
         return context;
     }
 
-    public void setContext(Map<String,String> context) {
+    public void setContext(Map<String, String> context) {
         this.context = context;
     }
 
