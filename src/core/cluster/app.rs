@@ -53,6 +53,8 @@ async fn authenticate(
 }
 
 pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
+    // TODO: there should be v2 versions of these APIs that have their own
+    // openapi spec instead of just returning raw openraft data types
     let mut authenticated = axum::Router::new()
         .route("/repl/discover", get(discover))
         .route("/repl/raft/append_entries", post(append_entries))
@@ -108,11 +110,14 @@ fn internal_error(s: impl ToString) -> Response {
 fn rpc_response<Ok, Err>(result: Result<Ok, Err>) -> Response
 where
     Ok: Serialize,
-    Err: Serialize,
+    Err: Serialize + std::fmt::Debug,
 {
     match result {
         Ok(ok) => (StatusCode::OK, MsgPack(ok)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, MsgPack(e)).into_response(),
+        Err(e) => {
+            tracing::error!(err=?e, "error in interserver RPC");
+            (StatusCode::INTERNAL_SERVER_ERROR, MsgPack(e)).into_response()
+        }
     }
 }
 
