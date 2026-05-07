@@ -66,42 +66,35 @@ pub(crate) async fn initialize_cluster(
 }
 
 struct RaftStateWatcherInner {
-    ready: bool,
     has_applied_log: bool,
     is_single_node: bool,
     leader: Option<(NodeId, u64)>,
-    tx: tokio::sync::watch::Sender<bool>,
+    is_ready: eyeball::SharedObservable<bool>,
     handle: Option<openraft::raft::WatchChangeHandle<TypeConfig>>,
 }
 
 impl RaftStateWatcherInner {
     fn recompute_ready(&mut self) {
         let new_ready = self.leader.is_some() && (self.is_single_node || self.has_applied_log);
-        if new_ready != self.ready {
-            self.ready = new_ready;
-            self.tx.send_replace(new_ready);
-        }
+        self.is_ready.set_if_not_eq(new_ready);
     }
 }
 
 #[derive(Clone)]
 pub struct RaftStateWatcher {
     inner: Arc<parking_lot::RwLock<RaftStateWatcherInner>>,
-    rx: tokio::sync::watch::Receiver<bool>,
 }
 
 impl RaftStateWatcher {
     fn new() -> Self {
-        let (tx, rx) = tokio::sync::watch::channel(false);
         let inner = Arc::new(parking_lot::RwLock::new(RaftStateWatcherInner {
-            ready: false,
+            is_ready: eyeball::SharedObservable::new(false),
             has_applied_log: false,
             is_single_node: false,
             leader: None,
             handle: None,
-            tx,
         }));
-        Self { inner, rx }
+        Self { inner }
     }
 
     pub(crate) fn record_first_applied_log(&self) {
@@ -134,21 +127,28 @@ impl RaftStateWatcher {
     }
 
     pub(crate) async fn wait_for_up(&self) -> bool {
-        {
+        let mut rx = {
             let guard = self.inner.read();
-            if guard.ready {
-                tracing::debug!("node is already up");
-                return true;
-            }
+            guard.is_ready.subscribe()
+        };
+        if rx.next_now() {
+            tracing::debug!("node is already up");
+            return true;
         }
         tracing::debug!("waiting for node to come up");
-        let mut rx = self.rx.clone();
-        if rx.wait_for(|v| *v).await.is_err() {
-            tracing::warn!("state watcher was shut down while waiting for up");
-            return false;
+        loop {
+            match rx.next().await {
+                Some(true) => {
+                    tracing::debug!("node has come up");
+                    return true;
+                }
+                Some(false) => {}
+                None => {
+                    tracing::debug!("state monitor shut down");
+                    return false;
+                }
+            }
         }
-        tracing::debug!("node has come up");
-        true
     }
 }
 

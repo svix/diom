@@ -326,9 +326,7 @@ async fn wait_for_up(config: &AppConfig, raft_state: &RaftState) -> anyhow::Resu
         shutdown.run_until_cancelled(raft_state.wait_for_up()).await
     }
     .ok_or_else(|| anyhow::anyhow!("node shut down before bootstrapping finished"))?;
-    if !value {
-        anyhow::bail!("node failed to come up");
-    }
+    anyhow::ensure!(value, "node has failed to come up");
     Ok(())
 }
 
