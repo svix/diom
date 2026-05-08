@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+export DIOM_LOG_LEVEL=debug
+export DIOM_CLUSTER_LOG_LEVEL=debug
+
 cargo llvm-cov nextest --profile ci --no-clean
 status=$?
 
