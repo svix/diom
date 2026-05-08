@@ -37,7 +37,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyCompleted {
     @JsonProperty private byte[] response;
-    @JsonProperty private Map<String,String> context;
+    @JsonProperty private Map<String, String> context;
     public IdempotencyCompleted() {}
 
     public IdempotencyCompleted response(byte[] response) {
@@ -59,7 +59,7 @@ public class IdempotencyCompleted {
         this.response = response;
     }
 
-    public IdempotencyCompleted context(Map<String,String> context) {
+    public IdempotencyCompleted context(Map<String, String> context) {
         this.context = context;
         return this;
     }
@@ -77,11 +77,11 @@ public class IdempotencyCompleted {
      * @return context
      */
     @javax.annotation.Nullable
-    public Map<String,String> getContext() {
+    public Map<String, String> getContext() {
         return context;
     }
 
-    public void setContext(Map<String,String> context) {
+    public void setContext(Map<String, String> context) {
         this.context = context;
     }
 

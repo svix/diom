@@ -40,7 +40,7 @@ public class AdminRoleConfigureIn {
     @JsonProperty private String description;
     @JsonProperty private List<AccessRule> rules;
     @JsonProperty private List<String> policies;
-    @JsonProperty private Map<String,String> context;
+    @JsonProperty private Map<String, String> context;
     public AdminRoleConfigureIn() {}
 
     public AdminRoleConfigureIn id(String id) {
@@ -133,7 +133,7 @@ public class AdminRoleConfigureIn {
         this.policies = policies;
     }
 
-    public AdminRoleConfigureIn context(Map<String,String> context) {
+    public AdminRoleConfigureIn context(Map<String, String> context) {
         this.context = context;
         return this;
     }
@@ -151,11 +151,11 @@ public class AdminRoleConfigureIn {
      * @return context
      */
     @javax.annotation.Nullable
-    public Map<String,String> getContext() {
+    public Map<String, String> getContext() {
         return context;
     }
 
-    public void setContext(Map<String,String> context) {
+    public void setContext(Map<String, String> context) {
         this.context = context;
     }
 

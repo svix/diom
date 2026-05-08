@@ -38,7 +38,7 @@ import lombok.ToString;
 public class IdempotencyCompleteIn {
     @JsonProperty private String namespace;
     @JsonProperty private byte[] response;
-    @JsonProperty private Map<String,String> context;
+    @JsonProperty private Map<String, String> context;
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     public IdempotencyCompleteIn() {}
 
@@ -80,7 +80,7 @@ public class IdempotencyCompleteIn {
         this.response = response;
     }
 
-    public IdempotencyCompleteIn context(Map<String,String> context) {
+    public IdempotencyCompleteIn context(Map<String, String> context) {
         this.context = context;
         return this;
     }
@@ -98,11 +98,11 @@ public class IdempotencyCompleteIn {
      * @return context
      */
     @javax.annotation.Nullable
-    public Map<String,String> getContext() {
+    public Map<String, String> getContext() {
         return context;
     }
 
-    public void setContext(Map<String,String> context) {
+    public void setContext(Map<String, String> context) {
         this.context = context;
     }
 

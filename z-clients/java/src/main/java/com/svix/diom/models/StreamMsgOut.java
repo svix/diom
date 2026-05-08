@@ -39,7 +39,7 @@ public class StreamMsgOut {
     @JsonProperty private Long offset;
     @JsonProperty private String topic;
     @JsonProperty private byte[] value;
-    @JsonProperty private Map<String,String> headers;
+    @JsonProperty private Map<String, String> headers;
     @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant timestamp;
     @JsonProperty("scheduled_at") @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant scheduledAt;
     public StreamMsgOut() {}
@@ -101,7 +101,7 @@ public class StreamMsgOut {
         this.value = value;
     }
 
-    public StreamMsgOut headers(Map<String,String> headers) {
+    public StreamMsgOut headers(Map<String, String> headers) {
         this.headers = headers;
         return this;
     }
@@ -119,11 +119,11 @@ public class StreamMsgOut {
      * @return headers
      */
     @javax.annotation.Nonnull
-    public Map<String,String> getHeaders() {
+    public Map<String, String> getHeaders() {
         return headers;
     }
 
-    public void setHeaders(Map<String,String> headers) {
+    public void setHeaders(Map<String, String> headers) {
         this.headers = headers;
     }
 

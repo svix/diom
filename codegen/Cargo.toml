@@ -7,6 +7,12 @@ repository.workspace = true
 edition = "2024"
 publish = false
 
+[package.metadata.cargo-machete]
+ignored = [
+    # need to configure its Cargo features (see comment below)
+    "schemars",
+]
+
 [package.metadata.dist]
 dist = false
 

@@ -38,7 +38,7 @@ import lombok.ToString;
 public class QueueMsgOut {
     @JsonProperty("msg_id") private String msgId;
     @JsonProperty private byte[] value;
-    @JsonProperty private Map<String,String> headers;
+    @JsonProperty private Map<String, String> headers;
     @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant timestamp;
     @JsonProperty("scheduled_at") @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant scheduledAt;
     public QueueMsgOut() {}
@@ -81,7 +81,7 @@ public class QueueMsgOut {
         this.value = value;
     }
 
-    public QueueMsgOut headers(Map<String,String> headers) {
+    public QueueMsgOut headers(Map<String, String> headers) {
         this.headers = headers;
         return this;
     }
@@ -99,11 +99,11 @@ public class QueueMsgOut {
      * @return headers
      */
     @javax.annotation.Nonnull
-    public Map<String,String> getHeaders() {
+    public Map<String, String> getHeaders() {
         return headers;
     }
 
-    public void setHeaders(Map<String,String> headers) {
+    public void setHeaders(Map<String, String> headers) {
         this.headers = headers;
     }
 

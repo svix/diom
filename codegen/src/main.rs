@@ -1,7 +1,8 @@
 use std::{collections::BTreeSet, fs, path::Path, process::ExitCode};
 
+use aide::openapi::OpenApi;
 use anyhow::Context as _;
-use openapi_codegen::{IncludeMode, api::Api, schemars::schema::Schema};
+use openapi_codegen::{IncludeMode, api::Api};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
 mod go;
@@ -43,10 +44,6 @@ fn main() -> anyhow::Result<ExitCode> {
         fs::write("openapi.json", &openapi_json).context("writing openapi.json")?;
     }
 
-    // FIXME: No longer needed once aide is upgraded in openapi-codegen
-    let openapi: openapi_codegen::aide::openapi::OpenApi =
-        serde_json::from_str(&openapi_json).context("deserializing OpenAPI")?;
-
     let webhooks = get_webhooks(&openapi);
     let paths = openapi.paths.context("spec must not be empty")?;
     let components = &mut openapi.components.unwrap_or_default();
@@ -82,7 +79,7 @@ fn repo_root() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap()
 }
 
-fn get_webhooks(spec: &openapi_codegen::aide::openapi::OpenApi) -> Vec<String> {
+fn get_webhooks(spec: &OpenApi) -> Vec<String> {
     let mut referenced_components = BTreeSet::new();
 
     for (_, webhook) in &spec.webhooks {
@@ -95,8 +92,7 @@ fn get_webhooks(spec: &openapi_codegen::aide::openapi::OpenApi) -> Vec<String> {
                 && let Some(item) = body.as_item()
                 && let Some(json_content) = item.content.get("application/json")
                 && let Some(schema) = &json_content.schema
-                && let Schema::Object(obj) = &schema.json_schema
-                && let Some(reference) = &obj.reference
+                && let Some(reference) = schema.json_schema.as_value()["$ref"].as_str()
                 && let Some(component_name) = reference.split('/').next_back()
             {
                 referenced_components.insert(component_name.to_owned());
