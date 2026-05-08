@@ -577,7 +577,7 @@ pub struct DiomLogs {
 impl DiomLogs {
     const DELETE_BATCH_SIZE: usize = 10_000;
 
-    pub fn new(
+    pub async fn new(
         path: Dir,
         commits_before_fsync: usize,
         duration_before_fsync: Duration,
@@ -613,7 +613,7 @@ impl DiomLogs {
         let (purge_tx, purge_rx) = tokio::sync::mpsc::channel(2);
         let purge_worker = PurgeWorker::new(db.clone(), log_keyspace.clone(), purge_rx);
         tokio::spawn(purge_worker.run());
-        Ok(Self {
+        let mut this = Self {
             db,
             log_keyspace,
             meta_keyspace,
@@ -625,7 +625,10 @@ impl DiomLogs {
             last_vote: Arc::new(Mutex::new(None)),
             fsync_mode,
             cancellation_token,
-        })
+        };
+        let state = this.get_log_state().await?;
+        this.purged_index = state.last_purged_log_id.map(|l| l.index);
+        Ok(this)
     }
 
     async fn read_metadata<T: Serialize + serde::de::DeserializeOwned + Send + Sync + 'static>(
@@ -1018,7 +1021,7 @@ mod tests {
     }
 
     impl TestContext {
-        fn new() -> Self {
+        async fn new() -> Self {
             let workdir = tempfile::tempdir().unwrap();
             let logdir = Dir::new(&workdir).unwrap();
             let token = CancellationToken::new();
@@ -1031,6 +1034,7 @@ mod tests {
                 FsyncMode::default(),
                 token.clone(),
             )
+            .await
             .unwrap();
             Self {
                 workdir: Some(workdir),
@@ -1051,7 +1055,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_log_timestamps() -> TestResult {
-        let context = TestContext::new();
+        let context = TestContext::new().await;
         #[allow(clippy::disallowed_methods)]
         let now = Timestamp::now();
         context
