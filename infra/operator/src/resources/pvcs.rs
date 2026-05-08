@@ -12,6 +12,7 @@ use kube_quantity::{ParseQuantityError, ParsedQuantity};
 
 use crate::{
     context::ClusterCtx,
+    crd::EphemeralVolumeSpec,
     error::{Error, Result},
 };
 
@@ -28,6 +29,10 @@ pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
         nodes,
     )
     .await?;
+
+    if let Some(EphemeralVolumeSpec::Pvc(v)) = &storage.ephemeral {
+        reconcile_volume(ctx, "ephemeral", &v.size, v.storage_class.as_deref(), nodes).await?;
+    }
 
     if let Some(logs) = &storage.logs {
         reconcile_volume(
