@@ -3,7 +3,7 @@ use std::{
     fmt::Debug,
     ops::{Bound, RangeBounds},
     sync::Arc,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use anyhow::Context;
@@ -454,7 +454,7 @@ impl FlushWorker {
                     let _guard =
                         tracing::info_span!("logs:flush_worker:flush", num_commits).entered();
                     tracing::trace!(?persist_mode, "flushing logs to disk");
-                    let start_persist = std::time::Instant::now();
+                    let start_persist = Instant::now();
                     db.persist(persist_mode).map_err(|err| {
                         tracing::error!(?err, "error flushing fjall");
                         BackgroundFsyncFailedError(err.to_string())
@@ -499,12 +499,74 @@ impl FlushWorker {
     }
 }
 
+struct PurgeWorker {
+    rx: tokio::sync::mpsc::Receiver<(Instant, LogId)>,
+    db: Database,
+    log_keyspace: Keyspace,
+}
+
+impl PurgeWorker {
+    const DELETE_BATCH_SIZE: usize = 10_000;
+
+    fn new(
+        db: Database,
+        log_keyspace: Keyspace,
+        rx: tokio::sync::mpsc::Receiver<(Instant, LogId)>,
+    ) -> Self {
+        Self {
+            db,
+            log_keyspace,
+            rx,
+        }
+    }
+
+    async fn run(mut self) {
+        while let Some((start_time, log_id)) = self.rx.recv().await {
+            if let Err(err) = self.purge_one(start_time, log_id).await {
+                tracing::error!(?err, "error while purging logs");
+            }
+        }
+        tracing::debug!("purge worker shutting down");
+    }
+
+    async fn purge_one(&self, start: Instant, log_id: LogId) -> anyhow::Result<()> {
+        // precondition; the LAST_PURGED_LOG_ID has already been set
+        let log_keyspace = self.log_keyspace.clone();
+        let db = self.db.clone();
+        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
+            let fjall_start = Instant::now();
+            // do the very slow purge. If we crash here, we might leak some rows
+            // in the database, but they'll be cleared on the next purge since
+            // we always start at 0.
+            let deleted = Log::remove_keys_in_range(
+                &db,
+                &log_keyspace,
+                ..=log_id.index,
+                Self::DELETE_BATCH_SIZE,
+                PersistMode::Buffer,
+            )?;
+            let fjall_purge_time = fjall_start.elapsed();
+            let total_purge_time = start.elapsed();
+            tracing::debug!(
+                ?total_purge_time,
+                ?fjall_purge_time,
+                deleted,
+                "deleted entries for purge"
+            );
+            Ok(())
+        })
+        .await?
+    }
+}
+
 #[derive(Clone)]
 pub struct DiomLogs {
     db: Database,
     meta_keyspace: Keyspace,
     log_keyspace: Keyspace,
     flush_tx: tokio::sync::mpsc::Sender<FlushMessage>,
+    purge_tx: tokio::sync::mpsc::Sender<(Instant, LogId)>,
+    purged_index: Option<u64>,
     log_cache: LogCache,
     metrics: Option<LogMetrics>,
     last_vote: Arc<Mutex<Option<Vote>>>,
@@ -548,11 +610,16 @@ impl DiomLogs {
             cancellation_token.clone(),
         );
         tokio::spawn(flush_worker.run());
+        let (purge_tx, purge_rx) = tokio::sync::mpsc::channel(2);
+        let purge_worker = PurgeWorker::new(db.clone(), log_keyspace.clone(), purge_rx);
+        tokio::spawn(purge_worker.run());
         Ok(Self {
             db,
             log_keyspace,
             meta_keyspace,
             flush_tx,
+            purge_tx,
+            purged_index: None,
             log_cache: LogCache::new(100),
             metrics: None,
             last_vote: Arc::new(Mutex::new(None)),
@@ -648,7 +715,7 @@ impl DiomLogs {
         callback: IOFlushed<TypeConfig>,
     ) -> anyhow::Result<()> {
         Span::current().record("num_entries", entries.len());
-        let start = std::time::Instant::now();
+        let start = Instant::now();
         let num_entries = entries.len();
 
         let keyspace = self.log_keyspace.clone();
@@ -704,26 +771,32 @@ impl DiomLogs {
     }
 
     /// Purge logs upto log_id, inclusive
-    async fn purge_entries_(&self, log_id: LogId) -> anyhow::Result<()> {
+    async fn purge_entries_(&mut self, log_id: LogId) -> anyhow::Result<()> {
+        tracing::debug!(?log_id, "scheduling background purge of logs");
+
+        let start = Instant::now();
+
+        // synchronously purge the cache and set the flag
         self.log_cache.purge(log_id.index);
-        let meta_keyspace = self.meta_keyspace.clone();
-        let log_keyspace = self.log_keyspace.clone();
-        let db = self.db.clone();
-        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            let mut tx = db.batch().durability(Some(PersistMode::Buffer));
-            LAST_PURGED_LOG_ID.store_tx(&mut tx, &meta_keyspace, &log_id)?;
-            tx.commit()?;
-            let deleted = Log::remove_keys_in_range(
-                &db,
-                &log_keyspace,
-                ..=log_id.index,
-                Self::DELETE_BATCH_SIZE,
-                PersistMode::Buffer,
-            )?;
-            tracing::debug!(deleted, "deleted entries for purge");
-            Ok(())
+        self.purged_index = Some(log_id.index);
+
+        // first, set LAST_PURGED_LOG_ID so that if we crash and restart, we'll
+        // ignore any IDs that have been purged
+        spawn_blocking_in_current_span({
+            let db = self.db.clone();
+            let meta_keyspace = self.meta_keyspace.clone();
+            move || -> anyhow::Result<()> {
+                let mut tx = db.batch().durability(Some(PersistMode::Buffer));
+                LAST_PURGED_LOG_ID.store_tx(&mut tx, &meta_keyspace, &log_id)?;
+                tx.commit()?;
+                Ok(())
+            }
         })
-        .await?
+        .await??;
+
+        // now run the rest in a background task
+        self.purge_tx.send((start, log_id)).await?;
+        Ok(())
     }
 
     async fn get_log_state_(&mut self) -> anyhow::Result<openraft::LogState<TypeConfig>> {
@@ -763,12 +836,14 @@ impl DiomLogs {
             _ => {}
         }
 
+        let purged_index = self.purged_index.unwrap_or(0);
+
         // For some reason, RB isn't specified as Send in the trait, so we can't
         // use it directly across the boundary. ARGH!
         let send_range = match range.start_bound() {
-            Bound::Unbounded => 0..,
-            Bound::Included(i) => *i..,
-            Bound::Excluded(i) => (*i + 1)..,
+            Bound::Unbounded => purged_index..,
+            Bound::Included(i) => (*i).max(purged_index)..,
+            Bound::Excluded(i) => (*i + 1).max(purged_index)..,
         };
         // why isn't RB always Send? it's a goddamn range...
         let end = match range.end_bound() {
