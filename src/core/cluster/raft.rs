@@ -168,6 +168,7 @@ pub async fn initialize_raft(
         cfg.fsync_mode,
         crate::shutting_down_token(),
     )
+    .await
     .context("setting up log store")?;
     let id: NodeId = logs
         .get_node_id()
@@ -361,7 +362,8 @@ mod tests {
                 crate::cfg::SyncMode::Buffer,
                 FsyncMode::default(),
                 token.clone(),
-            )?;
+            )
+            .await?;
 
             let data_path = workdir.path().join("data");
             let e_data_path = workdir.path().join("edata");

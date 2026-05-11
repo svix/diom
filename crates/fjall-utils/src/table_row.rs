@@ -326,7 +326,7 @@ pub trait MonotonicTableRow: TableRow {
     /// Remove all keys in the given range
     ///
     /// Implemented via a loop; may take a long time
-    fn remove_keys_in_range<B: RangeBounds<Self::KeyType> + Send + Clone>(
+    fn remove_keys_in_range<B: RangeBounds<Self::KeyType> + Send + Clone + std::fmt::Debug>(
         db: &fjall::Database,
         keyspace: &fjall::Keyspace,
         bounds: B,
