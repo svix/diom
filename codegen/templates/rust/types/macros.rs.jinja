@@ -33,11 +33,15 @@
     {% endif -%}
     {% if field.type.is_bytes() -%}
         {% if not field.required or field.nullable -%}
+            default,
             with = "crate::serde_bytes_opt",
         {% else -%}
             with = "serde_bytes",
         {% endif -%}
     {% elif field.type.is_unix_timestamp_ms() -%}
+        {% if not field.required or field.nullable -%}
+            default,
+        {% endif -%}
         with = "crate::unix_timestamp_ms_serde
             {%- if not field.required or field.nullable %}::optional{% endif -%}
         ",
@@ -49,6 +53,7 @@
         {% set serde_with = "crate::duration_ms_serde" -%}
         {% if not field.required or field.nullable -%}
             {% set serde_with = serde_with ~ "::optional" -%}
+            default,
         {% endif -%}
         with = "{{ serde_with }}",
     {% endif -%}

@@ -11,6 +11,7 @@ pub struct MsgQueueExtendLeaseIn {
     #[serde(
         rename = "lease_duration_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub lease_duration: Option<std::time::Duration>,
@@ -50,6 +51,7 @@ pub(crate) struct MsgQueueExtendLeaseIn_ {
     #[serde(
         rename = "lease_duration_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub lease_duration: Option<std::time::Duration>,

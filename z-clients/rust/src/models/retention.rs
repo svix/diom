@@ -6,6 +6,7 @@ pub struct Retention {
     #[serde(
         rename = "period_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub period: Option<std::time::Duration>,
