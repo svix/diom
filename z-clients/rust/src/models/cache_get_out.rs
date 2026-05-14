@@ -5,12 +5,14 @@ use serde::{Deserialize, Serialize};
 pub struct CacheGetOut {
     /// Time of expiry
     #[serde(
+        default,
         with = "crate::unix_timestamp_ms_serde::optional",
         skip_serializing_if = "Option::is_none"
     )]
     pub expiry: Option<jiff::Timestamp>,
 
     #[serde(
+        default,
         with = "crate::serde_bytes_opt",
         skip_serializing_if = "Option::is_none"
     )]

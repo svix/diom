@@ -16,6 +16,7 @@ pub struct StreamMsgOut {
     pub timestamp: jiff::Timestamp,
 
     #[serde(
+        default,
         with = "crate::unix_timestamp_ms_serde::optional",
         skip_serializing_if = "Option::is_none"
     )]

@@ -12,6 +12,7 @@ pub struct MsgQueueReceiveIn {
     #[serde(
         rename = "lease_duration_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub lease_duration: Option<std::time::Duration>,
@@ -20,6 +21,7 @@ pub struct MsgQueueReceiveIn {
     #[serde(
         rename = "batch_wait_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub batch_wait: Option<std::time::Duration>,
@@ -71,6 +73,7 @@ pub(crate) struct MsgQueueReceiveIn_ {
     #[serde(
         rename = "lease_duration_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub lease_duration: Option<std::time::Duration>,
@@ -79,6 +82,7 @@ pub(crate) struct MsgQueueReceiveIn_ {
     #[serde(
         rename = "batch_wait_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub batch_wait: Option<std::time::Duration>,

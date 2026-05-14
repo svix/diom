@@ -15,6 +15,7 @@ pub struct MsgStreamSeekIn {
     pub position: Option<SeekPosition>,
 
     #[serde(
+        default,
         with = "crate::unix_timestamp_ms_serde::optional",
         skip_serializing_if = "Option::is_none"
     )]
@@ -68,6 +69,7 @@ pub(crate) struct MsgStreamSeekIn_ {
     pub position: Option<SeekPosition>,
 
     #[serde(
+        default,
         with = "crate::unix_timestamp_ms_serde::optional",
         skip_serializing_if = "Option::is_none"
     )]

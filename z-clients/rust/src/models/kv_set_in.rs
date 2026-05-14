@@ -12,6 +12,7 @@ pub struct KvSetIn {
     #[serde(
         rename = "ttl_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub ttl: Option<std::time::Duration>,
@@ -70,6 +71,7 @@ pub(crate) struct KvSetIn_ {
     #[serde(
         rename = "ttl_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub ttl: Option<std::time::Duration>,

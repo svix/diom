@@ -13,6 +13,7 @@ pub struct RateLimitConfig {
     #[serde(
         rename = "refill_interval_ms",
         skip_serializing_if = "Option::is_none",
+        default,
         with = "crate::duration_ms_serde::optional"
     )]
     pub refill_interval: Option<std::time::Duration>,
