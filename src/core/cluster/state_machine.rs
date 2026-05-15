@@ -554,8 +554,6 @@ impl Store {
         // clean up the snapshot directory
         self.set_last_snapshot_(meta.clone(), snapshot.path.clone())
             .await?;
-        self.delete_unused_snapshots(snapshot.path.as_path())
-            .await?;
         Ok(())
     }
 

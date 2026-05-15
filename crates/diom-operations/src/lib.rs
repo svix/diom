@@ -31,10 +31,6 @@ impl std::fmt::Display for BackgroundError {
 }
 
 impl std::error::Error for BackgroundError {
-    fn description(&self) -> &str {
-        "Error while writing from background job"
-    }
-
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match &self {
             Self::Other(e) => Some(e),

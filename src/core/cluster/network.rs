@@ -11,7 +11,7 @@ use crate::{
 use super::{LogId, Node, NodeId, proto, raft::TypeConfig};
 use anyhow::Context;
 use diom_proto::prelude::*;
-use http::{HeaderMap, HeaderValue, header};
+use http::{HeaderMap, HeaderValue, StatusCode, header};
 use openraft::{
     RaftNetworkFactory, RaftNetworkV2,
     error::{NetworkError, Unreachable},
@@ -22,6 +22,23 @@ use tap::Pipe;
 
 type RPCError<E = openraft::errors::Infallible> = openraft::error::RPCError<TypeConfig, E>;
 type RPCResult<T, E = openraft::errors::Infallible> = Result<T, RPCError<E>>;
+
+#[derive(Debug, Clone)]
+pub(super) struct BadStatusError(StatusCode);
+
+impl From<StatusCode> for BadStatusError {
+    fn from(value: StatusCode) -> Self {
+        Self(value)
+    }
+}
+
+impl std::fmt::Display for BadStatusError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "BadStatusError({})", self.0)
+    }
+}
+
+impl std::error::Error for BadStatusError {}
 
 pub(super) fn build_client(
     cfg: &Configuration,
@@ -168,32 +185,55 @@ impl NetworkClient {
                 } else {
                     RPCError::Network(NetworkError::new(&err))
                 }
-            })?
-            .error_for_status()
-            .map_err(|e| {
-                tracing::warn!(status = ?e.status(), "error from responding server");
+            })?;
+
+        let status = response.status();
+
+        let body = match status {
+            s if s.is_success() => response.msgpack().await.map_err(|err| {
+                tracing::warn!(?err, ?status, "error deserializing response body");
+                self.metrics.record_request(
+                    self.target,
+                    ClusterRequestStatus::DeserializationError,
+                    start.elapsed(),
+                );
+                RPCError::Network(NetworkError::new(&err))
+            })?,
+            StatusCode::INTERNAL_SERVER_ERROR => {
+                let err_response = response.msgpack().await.map_err(|err| {
+                    tracing::warn!(?err, ?status, "error deserializing response body");
+                    self.metrics.record_request(
+                        self.target,
+                        ClusterRequestStatus::DeserializationError,
+                        start.elapsed(),
+                    );
+                    RPCError::Network(NetworkError::new(&err))
+                })?;
                 self.metrics.record_request(
                     self.target,
                     ClusterRequestStatus::OtherError,
                     start.elapsed(),
                 );
-                RPCError::Network(NetworkError::new(&e))
-            })?;
+                let error = openraft::error::RemoteError::new(self.target, err_response);
+                return Err(RPCError::RemoteError(error));
+            }
+            _ => {
+                tracing::warn!(?status, "error from responding server");
+                self.metrics.record_request(
+                    self.target,
+                    ClusterRequestStatus::OtherError,
+                    start.elapsed(),
+                );
+                return Err(RPCError::Network(NetworkError::new(&BadStatusError::from(
+                    status,
+                ))));
+            }
+        };
 
         tracing::trace!(
-            status = ?response.status(),
+            ?status,
             duration = ?start.elapsed(),
             "response from peer server");
-
-        let body = response.msgpack().await.map_err(|err| {
-            tracing::warn!(?err, "error deserializing response status");
-            self.metrics.record_request(
-                self.target,
-                ClusterRequestStatus::DeserializationError,
-                start.elapsed(),
-            );
-            RPCError::Network(NetworkError::new(&err))
-        })?;
 
         self.metrics
             .record_request(self.target, ClusterRequestStatus::Success, start.elapsed());
@@ -259,6 +299,10 @@ impl NetworkClient {
     > {
         self.send_request_with_timeout("/repl/raft/stream-snapshot", rpc, option.soft_ttl())
             .await
+    }
+
+    pub(super) fn target(&self) -> NodeId {
+        self.target
     }
 }
 

@@ -265,6 +265,12 @@ impl Sender {
             )
         };
 
+        tracing::info!(
+            target_node_id = %net.target(),
+            snapshot_id = snapshot.meta.snapshot_id,
+            "starting send of snapshot"
+        );
+
         let mut offset = 0;
         let end = snapshot
             .snapshot
