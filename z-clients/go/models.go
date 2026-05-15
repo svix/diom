@@ -100,6 +100,8 @@ type (
 	MsgQueueReceiveOut               = diom_models.MsgQueueReceiveOut
 	MsgQueueRedriveDlqIn             = diom_models.MsgQueueRedriveDlqIn
 	MsgQueueRedriveDlqOut            = diom_models.MsgQueueRedriveDlqOut
+	MsgStreamCancelLeaseIn           = diom_models.MsgStreamCancelLeaseIn
+	MsgStreamCancelLeaseOut          = diom_models.MsgStreamCancelLeaseOut
 	MsgStreamCommitIn                = diom_models.MsgStreamCommitIn
 	MsgStreamCommitOut               = diom_models.MsgStreamCommitOut
 	MsgStreamReceiveIn               = diom_models.MsgStreamReceiveIn

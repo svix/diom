@@ -4244,6 +4244,83 @@
         ]
       }
     },
+    "/api/v1.msgs.stream.cancel-lease": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Stream Cancel Lease",
+        "description": "Cancels a current stream lease.\n\nUsed when a consumer cannot process a batch and wants to release it immediately rather than\nwait for lease expiration.",
+        "operationId": "v1.msgs.stream.cancel-lease",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgStreamCancelLeaseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgStreamCancelLeaseOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1.msgs.queue.receive": {
       "post": {
         "tags": [
@@ -7536,6 +7613,37 @@
         ]
       },
       "MsgQueueRedriveDlqOut": {
+        "type": "object"
+      },
+      "MsgStreamCancelLeaseIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgStreamCancelLeaseOut": {
         "type": "object"
       },
       "MsgStreamCommitIn": {

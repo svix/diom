@@ -73,6 +73,7 @@ impl_persistable_value_for_tuple! { 0 1 2 3 4 5 6 7 8 }
 impl_persistable_value_for_tuple! { 0 1 2 3 4 5 6 7 8 9 }
 impl_persistable_value_for_tuple! { 0 1 2 3 4 5 6 7 8 9 10 }
 impl_persistable_value_for_tuple! { 0 1 2 3 4 5 6 7 8 9 10 11 }
+impl_persistable_value_for_tuple! { 0 1 2 3 4 5 6 7 8 9 10 11 12 }
 
 /// Helper trait for making sure that composite structures (structs and enums) implement
 /// PersistableValue for all of their fields.

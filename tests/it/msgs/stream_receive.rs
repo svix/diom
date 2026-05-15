@@ -1367,3 +1367,187 @@ async fn stream_receive_wakes_on_publish_notification() -> TestResult {
 
     Ok(())
 }
+
+// ---------------------------------------------------------------------------
+// stream/cancel-lease
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn stream_cancel_lease_redelivers_and_preserves_cursor() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "ns-cancel" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-cancel",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-cancel",
+            "topic": "t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive both messages, commit only the first
+    let r1 = client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-cancel",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    let msgs = r1["msgs"].assert_array();
+    assert_eq!(msgs.len(), 2);
+    let partition_topic = msgs[0]["topic"].assert_str().to_owned();
+    let offset0 = msgs[0]["offset"].assert_u64();
+    let offset1 = msgs[1]["offset"].assert_u64();
+
+    // Commit first message only
+    client
+        .post("v1.msgs.stream.commit")
+        .json(json!({
+            "namespace": "ns-cancel",
+            "topic": partition_topic,
+            "consumer_group": "cg1",
+            "offset": offset0,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Partition still locked
+    let locked = client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-cancel",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::BAD_REQUEST)
+        .json();
+    assert_eq!(locked["code"], "no-available-leases");
+
+    // Cancel
+    client
+        .post("v1.msgs.stream.cancel-lease")
+        .json(json!({
+            "namespace": "ns-cancel",
+            "topic": partition_topic,
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Re-receive
+    let r2 = client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-cancel",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    let msgs2 = r2["msgs"].assert_array();
+    assert_eq!(msgs2.len(), 1);
+    assert_eq!(msgs2[0]["offset"].assert_u64(), offset1);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn stream_cancel_lease_no_active_lease_errors() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "ns-cancel-err" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-cancel-err",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-cancel-err",
+            "topic": "t1",
+            "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let r1 = client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-cancel-err",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    let msgs = r1["msgs"].assert_array();
+    let partition_topic = msgs[0]["topic"].assert_str().to_owned();
+    let last_offset = msgs[0]["offset"].assert_u64();
+
+    client
+        .post("v1.msgs.stream.commit")
+        .json(json!({
+            "namespace": "ns-cancel-err",
+            "topic": partition_topic,
+            "consumer_group": "cg1",
+            "offset": last_offset,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.stream.cancel-lease")
+        .json(json!({
+            "namespace": "ns-cancel-err",
+            "topic": partition_topic,
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::BAD_REQUEST);
+
+    Ok(())
+}

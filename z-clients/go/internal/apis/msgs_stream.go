@@ -102,3 +102,28 @@ func (msgsStream MsgsStream) Seek(
 		&body,
 	)
 }
+
+// Cancels a current stream lease.
+//
+// Used when a consumer cannot process a batch and wants to release it immediately rather than
+// wait for lease expiration.
+func (msgsStream MsgsStream) CancelLease(
+	ctx context.Context,
+	topic string,
+	consumerGroup string,
+	msgStreamCancelLeaseIn diom_models.MsgStreamCancelLeaseIn,
+) (*diom_models.MsgStreamCancelLeaseOut, error) {
+	body := diom_models.MsgStreamCancelLeaseIn_{
+		Namespace:     msgStreamCancelLeaseIn.Namespace,
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgStreamCancelLeaseIn_, diom_models.MsgStreamCancelLeaseOut](
+		ctx,
+		msgsStream.client,
+		"POST",
+		"/api/v1.msgs.stream.cancel-lease",
+		&body,
+	)
+}

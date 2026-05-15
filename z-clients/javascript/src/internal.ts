@@ -95,6 +95,8 @@ export { MsgQueueReceiveInSerializer } from "./models/msgQueueReceiveIn";
 export { MsgQueueReceiveOutSerializer } from "./models/msgQueueReceiveOut";
 export { MsgQueueRedriveDlqInSerializer } from "./models/msgQueueRedriveDlqIn";
 export { MsgQueueRedriveDlqOutSerializer } from "./models/msgQueueRedriveDlqOut";
+export { MsgStreamCancelLeaseInSerializer } from "./models/msgStreamCancelLeaseIn";
+export { MsgStreamCancelLeaseOutSerializer } from "./models/msgStreamCancelLeaseOut";
 export { MsgStreamCommitInSerializer } from "./models/msgStreamCommitIn";
 export { MsgStreamCommitOutSerializer } from "./models/msgStreamCommitOut";
 export { MsgStreamReceiveInSerializer } from "./models/msgStreamReceiveIn";

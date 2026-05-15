@@ -94,6 +94,8 @@ export type { MsgQueueReceiveIn } from "./msgQueueReceiveIn";
 export type { MsgQueueReceiveOut } from "./msgQueueReceiveOut";
 export type { MsgQueueRedriveDlqIn } from "./msgQueueRedriveDlqIn";
 export type { MsgQueueRedriveDlqOut } from "./msgQueueRedriveDlqOut";
+export type { MsgStreamCancelLeaseIn } from "./msgStreamCancelLeaseIn";
+export type { MsgStreamCancelLeaseOut } from "./msgStreamCancelLeaseOut";
 export type { MsgStreamCommitIn } from "./msgStreamCommitIn";
 export type { MsgStreamCommitOut } from "./msgStreamCommitOut";
 export type { MsgStreamReceiveIn } from "./msgStreamReceiveIn";
