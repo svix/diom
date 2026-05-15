@@ -99,13 +99,6 @@ impl fmt::Display for NonZeroDurationMsParseErr {
 }
 
 impl std::error::Error for NonZeroDurationMsParseErr {
-    fn description(&self) -> &str {
-        match self {
-            Self::Zero => "value was unexpectedly zero",
-            Self::ParseIntError(_) => "error parsing value as integer number of millis",
-        }
-    }
-
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Zero => None,

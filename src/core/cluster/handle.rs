@@ -42,15 +42,7 @@ impl fmt::Display for ResponseParseError {
     }
 }
 
-impl std::error::Error for ResponseParseError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
-    }
-
-    fn description(&self) -> &str {
-        "Invalid response from consensus system"
-    }
-}
+impl std::error::Error for ResponseParseError {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PersistableValue)]
 pub enum Request {

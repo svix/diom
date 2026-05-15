@@ -261,11 +261,7 @@ impl std::fmt::Display for BackgroundFsyncFailedError {
     }
 }
 
-impl std::error::Error for BackgroundFsyncFailedError {
-    fn description(&self) -> &str {
-        "background fsync failed"
-    }
-}
+impl std::error::Error for BackgroundFsyncFailedError {}
 
 struct SimpleEstimator<const COUNT: usize> {
     samples: [Option<Duration>; COUNT],

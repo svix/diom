@@ -38,15 +38,7 @@ impl std::fmt::Display for BadStatusError {
     }
 }
 
-impl std::error::Error for BadStatusError {
-    fn description(&self) -> &str {
-        "a network request returned an invalid status code"
-    }
-
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
-    }
-}
+impl std::error::Error for BadStatusError {}
 
 pub(super) fn build_client(
     cfg: &Configuration,
@@ -217,6 +209,11 @@ impl NetworkClient {
                     );
                     RPCError::Network(NetworkError::new(&err))
                 })?;
+                self.metrics.record_request(
+                    self.target,
+                    ClusterRequestStatus::OtherError,
+                    start.elapsed(),
+                );
                 let error = openraft::error::RemoteError::new(self.target, err_response);
                 return Err(RPCError::RemoteError(error));
             }

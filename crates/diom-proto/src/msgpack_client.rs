@@ -43,10 +43,6 @@ impl std::fmt::Display for MsgpackResponseError {
 }
 
 impl std::error::Error for MsgpackResponseError {
-    fn description(&self) -> &str {
-        "error reading msgpack body"
-    }
-
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Network(e) => Some(e),
