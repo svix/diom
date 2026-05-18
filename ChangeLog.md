@@ -1,7 +1,12 @@
 # Changelog
 
 ## Unreleased Changes
+
+## Version 0.2.4
 * CLI: Remove underlining from schema examples on `--help` messages due to portability issues
+* Msgs: Add lease cancellation operation
+* Server: Various clustering improvements
+* Libs/Rust: Don't require optional fields
 
 ### Breaking Changes
 * Libs/Rust: Revamp `ErrorKind` and error type methods

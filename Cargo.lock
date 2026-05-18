@@ -885,7 +885,7 @@ dependencies = [
 
 [[package]]
 name = "codegen"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "aide",
  "anyhow",
@@ -1444,7 +1444,7 @@ dependencies = [
 
 [[package]]
 name = "diom"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "assert_matches2",
  "headers",
@@ -1468,7 +1468,7 @@ dependencies = [
 
 [[package]]
 name = "diom-admin-auth"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-authorization",
  "diom-core",
@@ -1481,7 +1481,7 @@ dependencies = [
 
 [[package]]
 name = "diom-auth-token"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "base64 0.22.1",
  "diom-core",
@@ -1502,7 +1502,7 @@ dependencies = [
 
 [[package]]
 name = "diom-authorization"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-core",
  "diom-id",
@@ -1514,7 +1514,7 @@ dependencies = [
 
 [[package]]
 name = "diom-backend"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "addr",
  "aide",
@@ -1590,7 +1590,7 @@ dependencies = [
 
 [[package]]
 name = "diom-benchmarks"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "criterion",
@@ -1607,7 +1607,7 @@ dependencies = [
 
 [[package]]
 name = "diom-cache"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-core",
  "diom-error",
@@ -1622,7 +1622,7 @@ dependencies = [
 
 [[package]]
 name = "diom-cli"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "clap",
@@ -1653,7 +1653,7 @@ dependencies = [
 
 [[package]]
 name = "diom-core"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-derive",
  "jiff",
@@ -1676,7 +1676,7 @@ dependencies = [
 
 [[package]]
 name = "diom-derive"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1685,7 +1685,7 @@ dependencies = [
 
 [[package]]
 name = "diom-error"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "aide",
  "axum",
@@ -1698,7 +1698,7 @@ dependencies = [
 
 [[package]]
 name = "diom-id"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "data-encoding",
  "data-encoding-macro",
@@ -1714,7 +1714,7 @@ dependencies = [
 
 [[package]]
 name = "diom-idempotency"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-core",
  "diom-error",
@@ -1732,7 +1732,7 @@ dependencies = [
 
 [[package]]
 name = "diom-kv"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-core",
  "diom-error",
@@ -1751,7 +1751,7 @@ dependencies = [
 
 [[package]]
 name = "diom-msgs"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-core",
  "diom-error",
@@ -1774,7 +1774,7 @@ dependencies = [
 
 [[package]]
 name = "diom-namespace"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-core",
  "diom-error",
@@ -1789,7 +1789,7 @@ dependencies = [
 
 [[package]]
 name = "diom-operations"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-core",
  "diom-error",
@@ -1829,7 +1829,7 @@ dependencies = [
 
 [[package]]
 name = "diom-proto"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "aide",
  "axum",
@@ -1852,7 +1852,7 @@ dependencies = [
 
 [[package]]
 name = "diom-rate-limit"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "diom-core",
  "diom-error",
@@ -1869,7 +1869,7 @@ dependencies = [
 
 [[package]]
 name = "diom-server"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2136,7 +2136,7 @@ dependencies = [
 
 [[package]]
 name = "fjall-utils"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "byteview",
@@ -5474,7 +5474,7 @@ dependencies = [
 
 [[package]]
 name = "test-utils"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "bytes",
