@@ -67,7 +67,7 @@ RUN cargo build --release --package diom-cli --bin diom --frozen
 # shared base image with dependencies
 FROM docker.io/debian:trixie-slim AS base
 
-ENV __BUST_DOCKER_BUILD_CACHE=2026-01-30
+ENV __BUST_DOCKER_BUILD_CACHE=2026-05-18
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     #!/bin/bash
     set -euxo pipefail
@@ -77,6 +77,19 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
         ca-certificates=20250419 \
         --no-install-recommends
     update-ca-certificates
+EOF
+
+# Temporary: pin patched versions of CVE-2026-4437, CVE-2026-4046, CVE-2026-4878 until upstream image rebuilds
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
+    #!/bin/bash
+    set -euxo pipefail
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -q
+    apt-get install -y \
+        libc-bin=2.41-12+deb13u3 \
+        libc6=2.41-12+deb13u3 \
+        libcap2=1:2.75-10+deb13u1+b1 \
+        --no-install-recommends
 EOF
 
 RUN <<EOF
