@@ -96,6 +96,8 @@ mod msg_queue_receive_in;
 mod msg_queue_receive_out;
 mod msg_queue_redrive_dlq_in;
 mod msg_queue_redrive_dlq_out;
+mod msg_stream_cancel_lease_in;
+mod msg_stream_cancel_lease_out;
 mod msg_stream_commit_in;
 mod msg_stream_commit_out;
 mod msg_stream_receive_in;
@@ -186,7 +188,9 @@ pub use self::{
     msg_queue_extend_lease_out::MsgQueueExtendLeaseOut, msg_queue_nack_in::MsgQueueNackIn,
     msg_queue_nack_out::MsgQueueNackOut, msg_queue_receive_in::MsgQueueReceiveIn,
     msg_queue_receive_out::MsgQueueReceiveOut, msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn,
-    msg_queue_redrive_dlq_out::MsgQueueRedriveDlqOut, msg_stream_commit_in::MsgStreamCommitIn,
+    msg_queue_redrive_dlq_out::MsgQueueRedriveDlqOut,
+    msg_stream_cancel_lease_in::MsgStreamCancelLeaseIn,
+    msg_stream_cancel_lease_out::MsgStreamCancelLeaseOut, msg_stream_commit_in::MsgStreamCommitIn,
     msg_stream_commit_out::MsgStreamCommitOut, msg_stream_receive_in::MsgStreamReceiveIn,
     msg_stream_receive_out::MsgStreamReceiveOut, msg_stream_seek_in::MsgStreamSeekIn,
     msg_stream_seek_out::MsgStreamSeekOut, msg_topic_configure_in::MsgTopicConfigureIn,
@@ -213,6 +217,7 @@ pub(crate) use self::{
     msg_queue_ack_in::MsgQueueAckIn_, msg_queue_configure_in::MsgQueueConfigureIn_,
     msg_queue_extend_lease_in::MsgQueueExtendLeaseIn_, msg_queue_nack_in::MsgQueueNackIn_,
     msg_queue_receive_in::MsgQueueReceiveIn_, msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn_,
-    msg_stream_commit_in::MsgStreamCommitIn_, msg_stream_receive_in::MsgStreamReceiveIn_,
-    msg_stream_seek_in::MsgStreamSeekIn_, msg_topic_configure_in::MsgTopicConfigureIn_,
+    msg_stream_cancel_lease_in::MsgStreamCancelLeaseIn_, msg_stream_commit_in::MsgStreamCommitIn_,
+    msg_stream_receive_in::MsgStreamReceiveIn_, msg_stream_seek_in::MsgStreamSeekIn_,
+    msg_topic_configure_in::MsgTopicConfigureIn_,
 };

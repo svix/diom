@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.svix.diom.models.MsgStreamCancelLeaseIn;
+import com.svix.diom.models.MsgStreamCancelLeaseOut;
 import com.svix.diom.models.MsgStreamCommitIn;
 import com.svix.diom.models.MsgStreamCommitOut;
 import com.svix.diom.models.MsgStreamReceiveIn;
@@ -19,6 +21,7 @@ import com.svix.diom.models.MsgStreamSeekOut;
 import com.svix.diom.models.MsgStreamReceiveIn_;
 import com.svix.diom.models.MsgStreamCommitIn_;
 import com.svix.diom.models.MsgStreamSeekIn_;
+import com.svix.diom.models.MsgStreamCancelLeaseIn_;
 
 public class MsgsStream {
     private final HttpClient client;
@@ -150,6 +153,49 @@ public class MsgsStream {
             topic,
             consumerGroup,
             new MsgStreamSeekIn()
+        );
+    }
+
+    /**
+* Cancels a current stream lease.
+* 
+* Used when a consumer cannot process a batch and wants to release it immediately rather than
+* wait for lease expiration.
+*/
+    public MsgStreamCancelLeaseOut cancelLease(
+        String topic,
+        String consumerGroup,
+        final MsgStreamCancelLeaseIn msgStreamCancelLeaseIn
+    ) throws DiomException {
+        MsgStreamCancelLeaseIn_ body = new MsgStreamCancelLeaseIn_(
+            msgStreamCancelLeaseIn.getNamespace(),
+            topic,
+            consumerGroup
+        );
+
+        return this.client.executeRequest(
+            "POST",
+            "/api/v1.msgs.stream.cancel-lease",
+            null,
+            body,
+            MsgStreamCancelLeaseOut.class
+        );
+    }
+
+    /**
+* Cancels a current stream lease.
+* 
+* Used when a consumer cannot process a batch and wants to release it immediately rather than
+* wait for lease expiration.
+*/
+    public MsgStreamCancelLeaseOut cancelLease(
+        String topic,
+        String consumerGroup
+    ) throws DiomException {
+        return this.cancelLease(
+            topic,
+            consumerGroup,
+            new MsgStreamCancelLeaseIn()
         );
     }
 }

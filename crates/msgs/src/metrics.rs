@@ -43,6 +43,7 @@ pub struct MsgMetrics {
     pub(crate) stream_committed: Counter<u64>,
     pub(crate) stream_no_lease: Counter<u64>,
     pub(crate) stream_seeks: Counter<u64>,
+    pub(crate) stream_lease_cancelled: Counter<u64>,
     pub(crate) topic_end_offset: Gauge<u64>,
 }
 
@@ -112,6 +113,11 @@ impl MsgMetrics {
             stream_seeks: meter
                 .u64_counter("diom.msgs.stream.seek")
                 .with_description("Stream seek operations")
+                .with_unit("{event}")
+                .build(),
+            stream_lease_cancelled: meter
+                .u64_counter("diom.msgs.stream.lease_cancelled")
+                .with_description("Stream lease cancellations")
                 .with_unit("{event}")
                 .build(),
             topic_lag: meter
@@ -211,6 +217,15 @@ impl MsgMetrics {
     ) {
         let attrs = &[topic.into(), consumer_group.into()];
         self.stream_committed.add(1, attrs);
+    }
+
+    pub(crate) fn record_stream_lease_cancelled(
+        &self,
+        topic: &TopicName,
+        consumer_group: &ConsumerGroup,
+    ) {
+        let attrs = &[topic.into(), consumer_group.into()];
+        self.stream_lease_cancelled.add(1, attrs);
     }
 
     pub(crate) fn record_stream_seek(&self, topic: &TopicName, consumer_group: &ConsumerGroup) {

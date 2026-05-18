@@ -86,4 +86,26 @@ impl<'a> MsgsStream<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// Cancels a current stream lease.
+    ///
+    /// Used when a consumer cannot process a batch and wants to release it immediately rather than
+    /// wait for lease expiration.
+    pub async fn cancel_lease(
+        &self,
+        topic: String,
+        consumer_group: String,
+        msg_stream_cancel_lease_in: MsgStreamCancelLeaseIn,
+    ) -> Result<MsgStreamCancelLeaseOut> {
+        let msg_stream_cancel_lease_in = MsgStreamCancelLeaseIn_ {
+            namespace: msg_stream_cancel_lease_in.namespace,
+            topic,
+            consumer_group,
+        };
+
+        crate::request::Request::new(http::Method::POST, "/api/v1.msgs.stream.cancel-lease")
+            .with_body(msg_stream_cancel_lease_in)
+            .execute(self.cfg)
+            .await
+    }
 }

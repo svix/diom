@@ -94,6 +94,8 @@ from .msg_queue_receive_in import MsgQueueReceiveIn
 from .msg_queue_receive_out import MsgQueueReceiveOut
 from .msg_queue_redrive_dlq_in import MsgQueueRedriveDlqIn
 from .msg_queue_redrive_dlq_out import MsgQueueRedriveDlqOut
+from .msg_stream_cancel_lease_in import MsgStreamCancelLeaseIn
+from .msg_stream_cancel_lease_out import MsgStreamCancelLeaseOut
 from .msg_stream_commit_in import MsgStreamCommitIn
 from .msg_stream_commit_out import MsgStreamCommitOut
 from .msg_stream_receive_in import MsgStreamReceiveIn
@@ -219,6 +221,8 @@ __all__ = [
     "MsgQueueReceiveOut",
     "MsgQueueRedriveDlqIn",
     "MsgQueueRedriveDlqOut",
+    "MsgStreamCancelLeaseIn",
+    "MsgStreamCancelLeaseOut",
     "MsgStreamCommitIn",
     "MsgStreamCommitOut",
     "MsgStreamReceiveIn",

@@ -21,8 +21,8 @@ use diom_msgs::{
     operations::{
         ConfigureNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
         QueueExtendLeaseOperation, QueueNackOperation, QueueReceiveOperation,
-        QueueRedriveDlqOperation, SeekTarget, StreamCommitOperation, StreamReceiveOperation,
-        StreamSeekOperation, TopicConfigureOperation,
+        QueueRedriveDlqOperation, SeekTarget, StreamCancelLeaseOperation, StreamCommitOperation,
+        StreamReceiveOperation, StreamSeekOperation, TopicConfigureOperation,
     },
 };
 use diom_namespace::entities::NamespaceName;
@@ -415,6 +415,45 @@ async fn stream_seek(
     repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgStreamSeekOut {}))
+}
+
+// ---------------------------------------------------------------------------
+// stream/cancel-lease
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgStreamCancelLeaseIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicPartition,
+    pub consumer_group: ConsumerGroup,
+}
+
+request_input!(MsgStreamCancelLeaseIn, "stream.cancel-lease");
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+struct MsgStreamCancelLeaseOut {}
+
+/// Cancels a current stream lease.
+///
+/// Used when a consumer cannot process a batch and wants to release it immediately rather than
+/// wait for lease expiration.
+#[aide_annotate(op_id = "v1.msgs.stream.cancel-lease")]
+async fn stream_cancel_lease(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgStreamCancelLeaseIn>,
+) -> Result<MsgPackOrJson<MsgStreamCancelLeaseOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let operation = StreamCancelLeaseOperation::new(namespace.id, data.topic, data.consumer_group);
+    repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(MsgStreamCancelLeaseOut {}))
 }
 
 // ---------------------------------------------------------------------------
@@ -831,6 +870,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             stream_seek_path,
             post_with(stream_seek, stream_seek_operation),
+            &tag,
+        )
+        .api_route_with(
+            stream_cancel_lease_path,
+            post_with(stream_cancel_lease, stream_cancel_lease_operation),
             &tag,
         )
         .api_route_with(

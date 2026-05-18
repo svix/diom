@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type MsgStreamCancelLeaseIn,
+    MsgStreamCancelLeaseInSerializer,
+} from '../models/msgStreamCancelLeaseIn';
+import {
+    type MsgStreamCancelLeaseOut,
+    MsgStreamCancelLeaseOutSerializer,
+} from '../models/msgStreamCancelLeaseOut';
+import {
     type MsgStreamCommitIn,
     MsgStreamCommitInSerializer,
 } from '../models/msgStreamCommitIn';
@@ -106,6 +114,31 @@ export class MsgsStream {
         return request.send(
             this.requestCtx,
             MsgStreamSeekOutSerializer._fromJsonObject,
+        );
+    }/**
+* Cancels a current stream lease.
+* 
+* Used when a consumer cannot process a batch and wants to release it immediately rather than
+* wait for lease expiration.
+*/
+    public cancelLease(
+        topic: string,
+        consumer_group: string,
+        msgStreamCancelLeaseIn: MsgStreamCancelLeaseIn,
+    ): Promise<MsgStreamCancelLeaseOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.msgs.stream.cancel-lease");
+
+        request.setBody(
+            MsgStreamCancelLeaseInSerializer._toJsonObject({
+                ...msgStreamCancelLeaseIn,
+                topic: topic,
+                consumerGroup: consumer_group,
+            })
+        );
+        
+        return request.send(
+            this.requestCtx,
+            MsgStreamCancelLeaseOutSerializer._fromJsonObject,
         );
     }
 }

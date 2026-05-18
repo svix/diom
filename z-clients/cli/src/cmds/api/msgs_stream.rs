@@ -96,6 +96,30 @@ pub enum MsgsStreamCommands {
         consumer_group: String,
         msg_stream_seek_in: Option<crate::json::JsonOf<diom::models::MsgStreamSeekIn>>,
     },
+    /// Cancels a current stream lease.
+    ///
+    /// Used when a consumer cannot process a batch and wants to release it immediately rather than
+    /// wait for lease expiration.
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs stream cancel-lease TOPIC CONSUMER_GROUP {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "Example body:
+{
+  \"namespace\": \"some_namespace\"
+}\n\nExample response:
+{
+}\n")]
+    CancelLease {
+        topic: String,
+        consumer_group: String,
+        msg_stream_cancel_lease_in:
+            Option<crate::json::JsonOf<diom::models::MsgStreamCancelLeaseIn>>,
+    },
 }
 
 impl MsgsStreamCommands {
@@ -141,6 +165,22 @@ impl MsgsStreamCommands {
                         topic,
                         consumer_group,
                         msg_stream_seek_in.unwrap_or_default().into_inner(),
+                    )
+                    .await?;
+                crate::json::print_json_output(&resp)?;
+            }
+            Self::CancelLease {
+                topic,
+                consumer_group,
+                msg_stream_cancel_lease_in,
+            } => {
+                let resp = client
+                    .msgs()
+                    .stream()
+                    .cancel_lease(
+                        topic,
+                        consumer_group,
+                        msg_stream_cancel_lease_in.unwrap_or_default().into_inner(),
                     )
                     .await?;
                 crate::json::print_json_output(&resp)?;

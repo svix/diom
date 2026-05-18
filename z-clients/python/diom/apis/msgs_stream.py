@@ -2,6 +2,8 @@
 
 from ..internal.api_common import ApiBase
 from ..models import (
+    MsgStreamCancelLeaseIn,
+    MsgStreamCancelLeaseOut,
     MsgStreamCommitIn,
     MsgStreamCommitOut,
     MsgStreamReceiveIn,
@@ -13,6 +15,7 @@ from ..models import (
 from ..models.msg_stream_receive_in import _MsgStreamReceiveIn
 from ..models.msg_stream_commit_in import _MsgStreamCommitIn
 from ..models.msg_stream_seek_in import _MsgStreamSeekIn
+from ..models.msg_stream_cancel_lease_in import _MsgStreamCancelLeaseIn
 
 
 class MsgsStreamAsync(ApiBase):
@@ -96,6 +99,29 @@ class MsgsStreamAsync(ApiBase):
             response_type=MsgStreamSeekOut,
         )
 
+    async def cancel_lease(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_stream_cancel_lease_in: MsgStreamCancelLeaseIn = MsgStreamCancelLeaseIn(),
+    ) -> MsgStreamCancelLeaseOut:
+        """Cancels a current stream lease.
+
+        Used when a consumer cannot process a batch and wants to release it immediately rather than
+        wait for lease expiration."""
+        body = _MsgStreamCancelLeaseIn(
+            namespace=msg_stream_cancel_lease_in.namespace,
+            topic=topic,
+            consumer_group=consumer_group,
+        ).model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1.msgs.stream.cancel-lease",
+            body=body,
+            response_type=MsgStreamCancelLeaseOut,
+        )
+
 
 class MsgsStream(ApiBase):
     def receive(
@@ -176,4 +202,27 @@ class MsgsStream(ApiBase):
             path="/api/v1.msgs.stream.seek",
             body=body,
             response_type=MsgStreamSeekOut,
+        )
+
+    def cancel_lease(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_stream_cancel_lease_in: MsgStreamCancelLeaseIn = MsgStreamCancelLeaseIn(),
+    ) -> MsgStreamCancelLeaseOut:
+        """Cancels a current stream lease.
+
+        Used when a consumer cannot process a batch and wants to release it immediately rather than
+        wait for lease expiration."""
+        body = _MsgStreamCancelLeaseIn(
+            namespace=msg_stream_cancel_lease_in.namespace,
+            topic=topic,
+            consumer_group=consumer_group,
+        ).model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1.msgs.stream.cancel-lease",
+            body=body,
+            response_type=MsgStreamCancelLeaseOut,
         )
