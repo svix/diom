@@ -1806,7 +1806,7 @@ dependencies = [
 
 [[package]]
 name = "diom-operator"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "diom-backend",
