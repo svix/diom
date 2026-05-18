@@ -3,21 +3,12 @@ name: Helm Publish to GHCR
 on:
   workflow_call:
     inputs:
-      version:
-        required: false
-        type: string
-        description: 'Override the version specified in Chart.yaml (only used for private deployments)'
-      operator_image_tag:
-        required: true
-        type: string
-      server_image_tag:
-        required: true
-        type: string
       is_release:
         type: boolean
         default: false
       dry_run:
         type: boolean
+        default: false
 
 jobs:
   helm-publish:
@@ -39,25 +30,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set image tags
-        run: |
-          yq -i '.cluster.image.tag = "${{ inputs.server_image_tag }}"' infra/helm-diom/values.yaml
-          yq -i '.operator.image.tag = "${{ inputs.operator_image_tag }}"' infra/helm-diom/values.yaml
-
       - name: Mangle charts for private deploys
         if: ${{ !inputs.is_release }}
         run: |
+          # Change image repositories
           yq -i '.name = "diom-private"' infra/helm-diom/Chart.yaml
           yq -i '.operator.image.repository = "ghcr.io/svix/diom-operator-private"' infra/helm-diom/values.yaml
           yq -i '.cluster.image.repository = "ghcr.io/svix/diom-server-private"' infra/helm-diom/values.yaml
 
-      - name: Package chart
+          # Change image tags
+          yq -i '.cluster.image.tag = "sha-${{ github.sha }}"' infra/helm-diom/values.yaml
+          yq -i '.operator.image.tag = "sha-${{ github.sha }}"' infra/helm-diom/values.yaml
+
+          helm package ./infra/helm-diom --version "0.0.0-${{ github.sha }}"
+
+      - name: Package release chart
+        if: ${{ inputs.is_release }}
         run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            helm package ./infra/helm-diom --version ${{ inputs.version }}
-          else
-            helm package ./infra/helm-diom
-          fi
+          helm package ./infra/helm-diom
 
       - name: Push chart
         if: ${{ !inputs.dry_run }}
