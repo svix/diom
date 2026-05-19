@@ -1,5 +1,8 @@
 use std::{
-    sync::{Arc, atomic::Ordering},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     time::Duration,
 };
 
@@ -30,10 +33,7 @@ use crate::{
         otel_spans::trace_layer,
     },
     docs, openapi,
-    utils::{
-        BOOTSTRAPPED, axum_tcp_listener, fail_until_bootstrapped, graceful_shutdown_handler,
-        handle_panic,
-    },
+    utils::{axum_tcp_listener, fail_until_bootstrapped, graceful_shutdown_handler, handle_panic},
     v1,
     workers::Workers,
 };
@@ -60,6 +60,8 @@ pub async fn run_with_listeners(
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
+    let bootstrapped_flag = Arc::new(AtomicBool::new(false));
+
     let (internal_req_tx, internal_req_rx) = mpsc::channel(1);
     let internal_client = InternalClient::new(internal_req_tx);
     let app_state = AppState::new(cfg.clone(), time.clone(), internal_client);
@@ -79,7 +81,7 @@ pub async fn run_with_listeners(
             core::otel_spans::request_metrics_middleware,
         ))
         .route_layer((
-            middleware::from_fn(fail_until_bootstrapped),
+            middleware::from_fn_with_state(Arc::clone(&bootstrapped_flag), fail_until_bootstrapped),
             Extension(raft_state.clone()),
         ));
 
@@ -149,7 +151,7 @@ pub async fn run_with_listeners(
                 tracing::error!(?err, "bootstrap failed");
                 start_shut_down();
             }
-            BOOTSTRAPPED.store(true, Ordering::SeqCst);
+            bootstrapped_flag.store(true, Ordering::SeqCst);
             if initialized.set().is_err() {
                 tracing::error!("bootstrap ran twice???");
             }

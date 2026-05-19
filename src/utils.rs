@@ -8,6 +8,7 @@ use std::{
 };
 
 use axum::{
+    extract::State,
     middleware,
     response::IntoResponse as _,
     serve::{Listener, ListenerExt as _},
@@ -51,15 +52,14 @@ impl Initialized {
     }
 }
 
-pub(crate) static BOOTSTRAPPED: AtomicBool = AtomicBool::new(false);
-
 pub(crate) async fn fail_until_bootstrapped(
+    State(bootstrapped): State<Arc<AtomicBool>>,
     path: axum::extract::MatchedPath,
     request: axum::extract::Request,
     next: middleware::Next,
 ) -> axum::response::Response {
     let is_admin_route = path.as_str().starts_with("/api/v1.admin.cluster.");
-    if !(is_admin_route || BOOTSTRAPPED.load(Ordering::Relaxed)) {
+    if !(is_admin_route || bootstrapped.load(Ordering::Relaxed)) {
         return Error::not_ready("this node has not yet finished bootstrapping").into_response();
     }
 
