@@ -13,10 +13,10 @@ jobs:
     runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
       - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
           toolchain: '1.95'
-      - uses: ubicloud/rust-cache@v2
+      - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build server binary
@@ -46,10 +46,10 @@ jobs:
           path: /tmp
       - name: Start Diom server
         run: scripts/start-diom-server.sh /tmp/diom-server
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
           toolchain: ${{ matrix.rust }}
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Run Rust SDK integration tests
@@ -75,7 +75,7 @@ jobs:
           path: /tmp
       - name: Start Diom server
         run: scripts/start-diom-server.sh /tmp/diom-server
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run Python SDK integration tests

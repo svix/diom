@@ -12,10 +12,10 @@ jobs:
         working-directory: ./benchmarks
     steps:
       - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
           toolchain: '1.95'
-      - uses: ubicloud/rust-cache@v2
+      - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
       - name: Install cargo-criterion
         run: cargo install cargo-criterion
       - name: Run benchmarks
@@ -28,7 +28,7 @@ jobs:
           path: ./cache
           key: ${{ runner.os }}-benchmark
       - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@f4c8b6b6887e53d3f07a8f026d9d75157713386b # v1
         with:
           tool: 'cargo'
           output-file-path: ./benchmarks/output.txt
