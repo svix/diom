@@ -55,27 +55,34 @@ fn test_setup() {
 
 mod docs {
     use aide::{axum::ApiRouter, openapi::OpenApi};
-    use axum::{
-        response::{Html, IntoResponse, Redirect},
-        routing::get,
-    };
+    use axum::{response::Redirect, routing::get};
 
-    // TODO: switch to generated docs instead of hardcoded JSON once generated
-    // is comparable/better than hardcoded one.
     pub(crate) fn router(_docs: OpenApi) -> ApiRouter {
+        cfg_select! {
+            // For debug builds, read docs.html and openapi.json from disk on every request
+            // so we don't have to rebuild when they change
+            debug_assertions => {
+                use tower_http::services::ServeFile;
+
+                let docs_route = ServeFile::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/static/docs.html"));
+                let openapi_json_route = ServeFile::new(concat!(env!("CARGO_MANIFEST_DIR"), "/openapi.json"));
+            }
+            // For release builds, embed both files in the binary for ease of deployment
+            _ => {
+                use axum::response::Html;
+
+                let docs_route = get(|| async { Html(include_str!("static/docs.html")) });
+                let openapi_json_route = get(|| async {
+                    static BODY: &str = include_str!("../openapi.json");
+                    ([(http::header::CONTENT_TYPE, "application/json")], BODY)
+                });
+            }
+        }
+
         ApiRouter::new()
             .route("/", get(|| async { Redirect::temporary("/docs") }))
-            .route("/docs", get(get_docs))
-            .route("/api/v1/openapi.json", get(get_openapi_json))
+            .route_service("/docs", docs_route)
+            .route_service("/api/v1/openapi.json", openapi_json_route)
             .with_state(_docs)
-    }
-
-    async fn get_docs() -> Html<&'static str> {
-        Html(include_str!("static/docs.html"))
-    }
-
-    async fn get_openapi_json() -> impl IntoResponse {
-        static BODY: &str = include_str!("../openapi.json");
-        ([(http::header::CONTENT_TYPE, "application/json")], BODY)
     }
 }
