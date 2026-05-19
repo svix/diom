@@ -122,7 +122,7 @@ resolver = "2"
 [workspace.package]
 license = "MIT"
 version = "0.2.4"
-rust-version = "1.91"
+rust-version = "1.95"
 repository = "https://github.com/svix/diom"
 
 [workspace.dependencies]
@@ -229,7 +229,7 @@ tokio = { version = "1.24.2", features = ["rt", "rt-multi-thread", "signal", "ti
 tokio-util = "0.7"
 toml = { version = "1.0.3", default-features = false, features = ["parse", "serde", "display"] }
 tower = "0.5.1"
-tower-http = { version = "0.6.1", features = ["catch-panic", "compression-full", "cors", "request-id", "trace"] }
+tower-http = { version = "0.6.1", features = ["catch-panic", "compression-full", "cors", "fs", "request-id", "trace"] }
 tower-service = "0.3.3"
 tracing = "0.1.44"
 tracing-log = "0.2.0"

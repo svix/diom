@@ -99,6 +99,13 @@
     .dark-mode *::selection {
       background-color: color-mix(in srgb, var(--scalar-color-accent), transparent 50%);
     }
+
+    /* Button sidebar element with light/dark toggle looks broken w/ mcp disabled, restore previous style */
+    .darklight-reference {
+      padding-top: 12px;
+      border-top-style: var(--tw-border-style);
+      border-top-width: var(--scalar-border-width);
+    }
   </style>
 </head>
 
@@ -115,16 +122,18 @@
   </header>
   <div id="app"></div>
   <!-- Load the Script -->
-  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.57.2" integrity="sha256-U4vqDEUa5yyiYkIkRJGjWzvuThuigvAHb0VKaLg3iOU=" crossorigin="anonymous"></script>
 
   <!-- Initialize the Scalar API Reference -->
   <script>
     Scalar.createApiReference('#app', {
       url: '/api/v1/openapi.json',
       hideModels: true,
-      // FIXME hideClientButton: true,
-      // FIXME hiddenClients: true,
+      hideClientButton: true,
+      hiddenClients: true,
       darkMode: false,
+      agent: { disabled: true },
+      mcp: { disabled: true },
       showToolbar: "never",
       generateOperationSlug: (operation) => `operation/${operation.operationId}`,
       generateTagSlug: (tag) => `${tag.name.replace(" ", "-")}`,
