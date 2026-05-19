@@ -21,6 +21,7 @@ pub(super) fn persistent_db() -> DatabaseConfig {
         path: "./db".into(),
         filename: "fjall_persistent".into(),
         cache_size: default_database_size(),
+        worker_threads: None,
     }
 }
 
@@ -29,6 +30,7 @@ pub(super) fn ephemeral_db() -> DatabaseConfig {
         path: "./db".into(),
         filename: "fjall_ephemeral".into(),
         cache_size: default_database_size(),
+        worker_threads: None,
     }
 }
 

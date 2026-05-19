@@ -2,6 +2,7 @@ use std::{
     fmt,
     io::ErrorKind,
     net::SocketAddr,
+    num::NonZeroU16,
     path::{Path, PathBuf},
     str::FromStr,
     sync::Arc,
@@ -121,6 +122,10 @@ pub struct DatabaseConfig {
     /// the current cgroup limit if present and the total system memory otherwise
     #[serde(default = "defaults::default_database_size")]
     pub cache_size: MemorySize,
+    /// Number of worker threads
+    ///
+    /// If not passed, defaults to min(# CPU cores, 4)
+    pub worker_threads: Option<NonZeroU16>,
 }
 
 /// Wrapper around a path that we know to be an extant dir
@@ -179,7 +184,7 @@ impl DatabaseConfig {
             tracing::debug!(path = %path.display(), "initializing new {label} database");
         }
         let cache_size = self.cache_size;
-        fjall::Database::builder(path)
+        let builder = fjall::Database::builder(path)
             .cache_size(cache_size.as_bytes())
             .manual_journal_persist(true)
             .with_compaction_filter_factories(Arc::new(move |keyspace| match keyspace {
@@ -187,12 +192,16 @@ impl DatabaseConfig {
                     diom_msgs::compaction::IdempotencyExpiryFilterFactory::new(time.clone()),
                 )),
                 _ => None,
-            }))
-            .open()
-            .map_err(|err| {
-                tracing::error!(?err, "error building database");
-                err.into()
-            })
+            }));
+        let builder = if let Some(worker_threads) = self.worker_threads {
+            builder.worker_threads(worker_threads.get() as _)
+        } else {
+            builder
+        };
+        builder.open().map_err(|err| {
+            tracing::error!(?err, "error building database");
+            err.into()
+        })
     }
 }
 

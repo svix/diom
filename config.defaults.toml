@@ -214,6 +214,11 @@ filename = "fjall_ephemeral"
 # Directory in which this database is stored
 path = "./db"
 
+# Number of worker threads
+#
+# If not passed, defaults to min(# CPU cores, 4)
+# worker_threads =
+
 # Configuration for verifying JWT bearer tokens.
 #
 # When set, bearer tokens in JWT format are verified using this configuration.
@@ -288,3 +293,8 @@ filename = "fjall_persistent"
 
 # Directory in which this database is stored
 path = "./db"
+
+# Number of worker threads
+#
+# If not passed, defaults to min(# CPU cores, 4)
+# worker_threads =

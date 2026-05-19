@@ -287,11 +287,13 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             path: db_dir.clone(),
             filename: "fjall_ephemeral".into(),
             cache_size: MemorySize::fjall_default_cache(),
+            worker_threads: Some(1.try_into().unwrap()),
         },
         persistent_db: DatabaseConfig {
             path: db_dir,
             filename: "fjall_persistent".into(),
             cache_size: MemorySize::fjall_default_cache(),
+            worker_threads: Some(1.try_into().unwrap()),
         },
         log_level: LogLevel::Debug,
         log_format: LogFormat::Default,
