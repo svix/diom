@@ -72,9 +72,6 @@ jobs:
       contents: read
       packages: write
     with:
-      version: 0.0.0-${{ github.sha }}
-      server_image_tag: sha-${{ github.sha }}
-      operator_image_tag: sha-${{ github.sha }}
       is_release: false
 
   staging-deploy:

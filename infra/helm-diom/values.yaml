@@ -13,8 +13,7 @@ operator:
   image:
     repository: svix/diom-operator
     pullPolicy: IfNotPresent
-    # Overrides the image tag. Defaults to the chart's appVersion.
-    tag: ""
+    tag: "0.2.1"
 
   imagePullSecrets: []
 
@@ -52,7 +51,7 @@ cluster:
   image:
     repository: svix/diom-server
     # tag is required when cluster.enabled=true.
-    tag: ""
+    tag: "0.2.4"
   spec:
     replicas: 3
     service:
