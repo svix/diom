@@ -37,6 +37,7 @@ The diom server accepts the following environment variables:
 | `$DIOM_EPHEMERAL_DB_CACHE_SIZE` | Amount of memory to reserve for the database layer's caches for this database type.<br/><br/>Can be specified as a bare value of bytes (e.g., 1024000), a unit-ed amount (e.g., 1024MiB), or a percentage (e.g., 20%), which will be applied against the current cgroup limit if present and the total system memory otherwise |
 | `$DIOM_EPHEMERAL_DB_FILENAME` | Filename under the directory specified in `path`. |
 | `$DIOM_EPHEMERAL_DB_PATH` | Directory in which this database is stored |
+| `$DIOM_EPHEMERAL_DB_WORKER_THREADS` | Number of worker threads<br/><br/>If not passed, defaults to min(# CPU cores, 4) |
 | `$DIOM_FSYNC_MODE` | When fsyncing, should we use fsync(2) or fdatasync(2) |
 | `$DIOM_JWT_ALGORITHM` | JWT signature algorithm |
 | `$DIOM_JWT_AUDIENCE` | Expected `aud` values. When set, the token must contain one of these values in its `aud` claim. When absent, `aud` is not validated. |
@@ -55,6 +56,7 @@ The diom server accepts the following environment variables:
 | `$DIOM_PERSISTENT_DB_CACHE_SIZE` | Amount of memory to reserve for the database layer's caches for this database type.<br/><br/>Can be specified as a bare value of bytes (e.g., 1024000), a unit-ed amount (e.g., 1024MiB), or a percentage (e.g., 20%), which will be applied against the current cgroup limit if present and the total system memory otherwise |
 | `$DIOM_PERSISTENT_DB_FILENAME` | Filename under the directory specified in `path`. |
 | `$DIOM_PERSISTENT_DB_PATH` | Directory in which this database is stored |
+| `$DIOM_PERSISTENT_DB_WORKER_THREADS` | Number of worker threads<br/><br/>If not passed, defaults to min(# CPU cores, 4) |
 | `$DIOM_SYNC_MODE` | How to persist data to the actual underlying database<br/><br/>This is similar to the `cluster.log_sync` options, but applies to the actual primary data as opposed to the log, and is applied at every batch commit from the underlying replication system. |
 
 
