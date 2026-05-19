@@ -1,4 +1,5 @@
 use diom_core::types::UnixTimestampMs;
+use opentelemetry::metrics::Meter;
 use std::time::Duration;
 
 use diom_core::Monotime;
@@ -44,6 +45,7 @@ impl State {
     pub fn init(
         db: fjall::Database,
         topic_publish_notifier: TopicPublishNotifier,
+        meter: &Meter,
     ) -> Result<Self, Error> {
         let metadata_tables = db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
 
@@ -53,13 +55,11 @@ impl State {
             .create_and_record(&db, MSG_KEYSPACE)
             .or_internal_error()?;
 
-        let meter = opentelemetry::global::meter("diom.svix.com");
-
         Ok(Self {
             db,
             metadata_tables,
             msg_table,
-            metrics: metrics::MsgMetrics::new(&meter),
+            metrics: metrics::MsgMetrics::new(meter),
             topic_publish_notifier,
         })
     }
@@ -278,6 +278,7 @@ mod delete_expired_tests {
     use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
     use diom_namespace::{entities::NamespaceName, operations::create_namespace::CreateNamespace};
     use fjall_utils::{Databases, WriteBatchExt};
+    use opentelemetry::metrics::MeterProvider as _;
 
     use super::*;
     use crate::{
@@ -302,9 +303,10 @@ mod delete_expired_tests {
                 .temporary(true)
                 .open()
                 .unwrap();
+            let meter = opentelemetry::metrics::NoopMeterProvider::default().meter("diom.testing");
             let namespace_state =
                 diom_namespace::State::init(Databases::new(persistent.clone(), ephemeral)).unwrap();
-            let state = State::init(persistent, TopicPublishNotifier::new()).unwrap();
+            let state = State::init(persistent, TopicPublishNotifier::new(), &meter).unwrap();
             Self {
                 _workdir: workdir,
                 state,
