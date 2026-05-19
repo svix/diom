@@ -1,0 +1,15 @@
+rules:
+  camel-case-properties:
+    category:
+      id: schemas
+    description: Schema property names should use camelCase.
+    given: $.components.schemas..properties
+    id: camel-case-properties
+    recommended: true
+    resolved: true
+    severity: error
+    then:
+      function: casing
+      functionOptions:
+        type: camel
+    type: style
