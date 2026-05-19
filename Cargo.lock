@@ -894,6 +894,7 @@ dependencies = [
  "diom-backend",
  "fs-err",
  "futures-lite",
+ "indexmap",
  "openapi-codegen",
  "schemars",
  "serde_json",
