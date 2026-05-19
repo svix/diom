@@ -5,6 +5,7 @@ use anyhow::Context as _;
 use openapi_codegen::{IncludeMode, api::Api};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
+mod code_samples;
 mod go;
 mod java;
 mod javascript;
@@ -34,6 +35,7 @@ fn main() -> anyhow::Result<ExitCode> {
         .finish_api_with(&mut openapi, diom_backend::openapi::add_security_scheme);
 
     diom_backend::openapi::postprocess_spec(&mut openapi);
+    code_samples::add_to_spec(&mut openapi)?;
 
     let openapi_json = serde_json::to_string_pretty(&openapi)? + "\n";
 
