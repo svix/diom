@@ -23,7 +23,7 @@ jobs:
         # to stderr:
         run: cargo criterion --output-format bencher 2>&1 | tee output.txt
       - name: Download previous benchmark data
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ./cache
           key: ${{ runner.os }}-benchmark
