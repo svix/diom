@@ -1,0 +1,15 @@
+name: Lint Operator OpenAPI
+
+on:
+  workflow_call:
+
+jobs:
+  lint-operator-openapi:
+    name: Lint operator CRD schema
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run vacuum lint
+        run: ./scripts/vacuum-operator-openapi.sh --pipeline-output

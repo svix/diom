@@ -4,7 +4,7 @@ HERE := justfile_directory()
 
 # run all lints
 [group('lint')]
-lint: clippy machete fmt sort vacuum-openapi audit
+lint: clippy machete fmt sort vacuum-openapi vacuum-operator-openapi audit
 
 # run clippy in --fix mode
 [group('lint')]
@@ -46,6 +46,11 @@ vacuum-openapi:
             --fail-severity error \
             --ruleset .vacuum.yaml \
             --min-score 0
+
+# run `vacuum` to check operator CRD openapi schema
+[group('lint')]
+vacuum-operator-openapi:
+    {{HERE}}/scripts/vacuum-operator-openapi.sh
 
 # run `vacuum` to check openapi, showing the details of any failures/warnings
 [group('lint')]
