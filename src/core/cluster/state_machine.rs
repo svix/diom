@@ -242,6 +242,7 @@ impl Store {
             msgs_state: diom_msgs::State::init(
                 persistent_db.clone(),
                 app_state.topic_publish_notifier.clone(),
+                &app_state.meter,
             )
             .context("initializing msgs state")?,
             kv_state: diom_kv::State::init(databases.clone()).context("initializing kv state")?,
