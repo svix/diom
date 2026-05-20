@@ -33,10 +33,10 @@ pub enum MsgsCommands {
 {
   \"namespace\": \"some_namespace\",
   \"msgs\": [{\"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"key\": \"...\", \"delay_ms\": 60000}],
-  \"idempotency_key\": \"...\"
+  \"idempotency_key\": \"my_idempotency_key\"
 }\n\nExample response:
 {
-  \"topics\": [{\"topic\": \"...\", \"start_offset\": 123, \"offset\": 123}]
+  \"topics\": [{\"topic\": \"some_topic_name~0\", \"start_offset\": 123, \"offset\": 123}]
 }\n")]
     Publish {
         topic: String,

@@ -83,6 +83,7 @@ impl From<RoleModel> for AdminRoleOut {
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminRoleConfigureIn {
     pub id: RoleId,
+    #[schemars(example = "role description…")]
     pub description: String,
     #[serde(default)]
     pub rules: Vec<AccessRule>,

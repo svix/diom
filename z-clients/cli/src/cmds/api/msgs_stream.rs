@@ -36,7 +36,7 @@ pub enum MsgsStreamCommands {
   \"batch_wait_ms\": 60000
 }\n\nExample response:
 {
-  \"msgs\": [{\"offset\": 123, \"topic\": \"...\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
+  \"msgs\": [{\"offset\": 123, \"topic\": \"some_topic_name~0\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
 }\n")]
     Receive {
         topic: String,

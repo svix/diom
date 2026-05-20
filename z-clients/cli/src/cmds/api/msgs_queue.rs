@@ -107,11 +107,11 @@ pub enum MsgsQueueCommands {
 {
   \"namespace\": \"some_namespace\",
   \"retry_schedule\": [123],
-  \"dlq_topic\": \"...\"
+  \"dlq_topic\": \"some_topic_name\"
 }\n\nExample response:
 {
   \"retry_schedule\": [123],
-  \"dlq_topic\": \"...\"
+  \"dlq_topic\": \"some_topic_name\"
 }\n")]
     Configure {
         topic: String,

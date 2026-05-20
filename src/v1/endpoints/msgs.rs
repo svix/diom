@@ -145,6 +145,7 @@ struct MsgPublishIn {
     pub topic: TopicIn,
     pub msgs: Vec<diom_msgs::entities::MsgIn>,
     #[serde(default)]
+    #[schemars(example = &"my_idempotency_key")]
     pub idempotency_key: Option<String>,
 }
 

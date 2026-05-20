@@ -3,7 +3,7 @@ use std::{borrow::Cow, fmt, str::FromStr};
 use diom_core::PersistableValue;
 use diom_id::Module;
 use itertools::Itertools as _;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, json_schema};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
     pattern::{KeyPattern, NamespacePattern},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, PersistableValue)]
 #[serde(transparent)]
 pub struct RoleId(pub String);
 
@@ -42,7 +42,24 @@ impl fmt::Display for RoleId {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
+impl JsonSchema for RoleId {
+    fn schema_name() -> Cow<'static, str> {
+        std::any::type_name::<Self>().into()
+    }
+
+    fn inline_schema() -> bool {
+        true
+    }
+
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        json_schema!({
+            "type": "string",
+            "example": "some_role_id",
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, PersistableValue)]
 #[serde(transparent)]
 pub struct AccessPolicyId(pub String);
 
@@ -55,6 +72,23 @@ impl AccessPolicyId {
 impl fmt::Display for AccessPolicyId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.as_str().fmt(f)
+    }
+}
+
+impl JsonSchema for AccessPolicyId {
+    fn schema_name() -> Cow<'static, str> {
+        std::any::type_name::<Self>().into()
+    }
+
+    fn inline_schema() -> bool {
+        true
+    }
+
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        json_schema!({
+            "type": "string",
+            "example": "some_access_policy",
+        })
     }
 }
 

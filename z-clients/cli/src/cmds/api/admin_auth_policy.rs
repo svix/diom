@@ -26,12 +26,12 @@ pub enum AdminAuthPolicyCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\",
-  \"description\": \"...\",
+  \"id\": \"some_access_policy\",
+  \"description\": \"policy description…\",
   \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}]
 }\n\nExample response:
 {
-  \"id\": \"...\",
+  \"id\": \"some_access_policy\",
   \"created\": 1234567890123,
   \"updated\": 1234567890123
 }\n")]
@@ -50,7 +50,7 @@ pub enum AdminAuthPolicyCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\"
+  \"id\": \"some_access_policy\"
 }\n\nExample response:
 {
   \"success\": true
@@ -69,10 +69,10 @@ pub enum AdminAuthPolicyCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\"
+  \"id\": \"some_access_policy\"
 }\n\nExample response:
 {
-  \"id\": \"...\",
+  \"id\": \"some_access_policy\",
   \"description\": \"...\",
   \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"created\": 1234567890123,
@@ -93,10 +93,10 @@ pub enum AdminAuthPolicyCommands {
     #[command(after_help = "Example body:
 {
   \"limit\": 123,
-  \"iterator\": \"...\"
+  \"iterator\": \"some_access_policy\"
 }\n\nExample response:
 {
-  \"data\": [{\"id\": \"...\", \"description\": \"...\", \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}], \"created\": 1234567890123, \"updated\": 1234567890123}],
+  \"data\": [{\"id\": \"some_access_policy\", \"description\": \"...\", \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}], \"created\": 1234567890123, \"updated\": 1234567890123}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": true
