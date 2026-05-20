@@ -49,7 +49,7 @@
         {%- endif -%}
         .to_owned()
     {%- elif field.type.is_unix_timestamp_ms() -%}
-        "2026-04-20 12:00:00".parse()?
+        "2026-04-20 12:00:00Z".parse()?
     {%- elif field.type.is_duration_ms() -%}
         Duration::from_secs(30)
     {%- elif field.type.is_map() -%}

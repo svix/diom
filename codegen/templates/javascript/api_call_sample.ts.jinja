@@ -1,0 +1,115 @@
+{% macro field_name(field) -%}
+    {%- set field_name = field.name | to_lower_camel_case -%}
+    {%- if field.type.is_duration_ms() %}
+        {%- set field_name = field_name | strip_trailing_str("Ms") -%}
+    {%- endif -%}
+    {{ field_name }}
+{%- endmacro -%}
+
+{% macro render_example_resource(resource) -%}
+
+{%- if resource.kind == "string_enum" -%}
+    {{ resource.name | to_upper_camel_case }}.{{ resource.values[0] | to_upper_camel_case }}
+{%- elif resource.kind == "integer_enum" -%}
+    {{ resource.name | to_upper_camel_case }}.{{ resource.variants[0][0] | to_upper_camel_case }}
+{%- elif resource.fields | length == 0 and resource.kind == "struct" -%}
+    {}
+{%- else -%}
+{
+    {%- for field in resource.fields %}
+        {%- set field_val = field_example(field) %}
+    {{ field_name(field) }}: {{ field_example(field) }},
+    {%- endfor %}
+    {%- if resource.kind == "struct_enum" %}
+    {%- set variant = resource.variants[1] %}
+    {%- set variant_val %}
+        {%- if variant.schema_ref is defined -%}
+            {{ render_example_resource(variant.inner) }}
+        {% endif -%}
+    {% endset -%}
+    {{ resource.discriminator_field | to_lower_camel_case }}: "{{ variant.name }}",
+    {{ resource.content_field | to_lower_camel_case }}: {{ variant_val }}
+
+    {%- endif %}
+}
+{%- endif %}
+
+{%- endmacro -%}
+
+{% macro field_example(field) -%}
+    {%- if field.type.is_string() or field.type.is_uri() -%}
+        {%- if field.example is defined -%}
+            "{{ field.example }}"
+        {%- else -%}
+            "sample string"
+        {%- endif -%}
+    {%- elif field.type.is_unix_timestamp_ms() -%}
+        new Date("2026-04-20 12:00:00Z")
+    {%- elif field.type.is_duration_ms() -%}
+        Temporal.Duration.from({ seconds: 30 })
+    {%- elif field.type.is_map() -%}
+        {%- if field.example is defined -%}
+            {{ field.example }}
+        {%- else -%}
+            {}
+        {%- endif -%}
+    {%- elif field.type.is_json_object() -%}
+        {%- if field.example is defined -%}
+            {{ field.example }}
+        {%- else %}
+            {}
+        {%- endif %}
+    {%- elif field.type.is_int_or_uint() -%}
+        {%- if field.example is defined -%}
+            {{ field.example | fix_serde_number_repr }}
+        {%- else -%}
+            1
+        {%- endif -%}
+    {%- elif field.type.is_schema_ref() -%}
+        {{ render_example_resource(field.type.inner_schema_ref_ty()) | indent(4) -}}
+    {%- elif field.type.is_set() or field.type.is_list() -%}
+        {%- if field.example is defined -%}
+        [
+            {%- for v in field.example -%}
+            "{{ v }}",
+            {%- endfor -%}
+        ]
+        {%- else -%}
+        []
+        {%- endif -%}
+    {%- elif field.type.is_bool() -%}
+        true
+    {%- else -%}
+        /* TODO */
+    {%- endif -%}
+{% endmacro -%}
+
+{# build the resource path (for example: ingest.source) -#}
+{% set resource_path -%}
+    {% for resource_name in resource_parents -%}
+        .{{ resource_name | to_lower_camel_case }}
+    {%- endfor -%}
+{% endset -%}
+
+{# output starts here -#}
+{% if operation.response_body_schema_name is defined %}const response = {% endif -%}
+await diom{{ resource_path }}.{{ operation.name | to_lower_camel_case }}
+{%- if operation.request_body_schema_name is defined -%}
+
+(
+{#- positional body parameters #}
+{%- set body_schema = api.types[operation.request_body_schema_name] %}
+{%- set positional_fields = body_schema.fields | selectattr("positional") %}
+{%- if positional_fields | length > 0 %}
+{%- for field in positional_fields %}
+    {{ field_example(field) }},
+{%- endfor %}
+    {{ render_example_resource(req_body_ty) | indent(4) }},
+{% else -%}
+    {# no indent, no trailing comma -#}
+    {{ render_example_resource(req_body_ty) }}
+{%- endif -%}
+)
+
+{%- else %}()
+{%- endif %};
