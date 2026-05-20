@@ -4561,7 +4561,7 @@
           {
             "lang": "Rust",
             "label": "Rust",
-            "source": "let response = diom.msgs()\n    .stream()\n    .seek(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgStreamSeekIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_offset(1)\n            .with_position(SeekPosition::Earliest)\n            .with_timestamp(\"2026-04-20 12:00:00\".parse()?),\n    )\n    .await?;"
+            "source": "let response = diom.msgs()\n    .stream()\n    .seek(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgStreamSeekIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_offset(1)\n            .with_position(SeekPosition::Earliest)\n            .with_timestamp(\"2026-04-20 12:00:00Z\".parse()?),\n    )\n    .await?;"
           }
         ]
       }
