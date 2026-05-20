@@ -1,4 +1,11 @@
-{% macro field_name(field) %}{{field.name | to_lower_camel_case | strip_trailing_str("Ms")}}{% endmacro %}
+{% macro field_name(field) -%}
+    {%- set field_name = field.name | to_lower_camel_case -%}
+    {%- if field.type.is_duration_ms() %}
+        {%- set field_name = field_name | strip_trailing_str("Ms") -%}
+    {%- endif -%}
+    {{ field_name }}
+{%- endmacro %}
+
 {% macro field_decl(field) -%}
     {% if field.description is defined -%}
         {{ field.description | with_javadoc_deprecation(field.deprecated) | to_doc_comment(style="js") | indent(5) }}
