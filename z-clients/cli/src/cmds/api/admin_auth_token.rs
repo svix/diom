@@ -26,13 +26,13 @@ pub enum AdminAuthTokenCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"name\": \"...\",
-  \"role\": \"...\",
+  \"name\": \"some token name\",
+  \"role\": \"some token role\",
   \"expiry_ms\": 60000,
   \"enabled\": true
 }\n\nExample response:
 {
-  \"id\": \"...\",
+  \"id\": \"key_06etngr201xwv7qj08mt4cs03w\",
   \"token\": \"...\",
   \"created\": 1234567890123,
   \"updated\": 1234567890123
@@ -51,7 +51,7 @@ pub enum AdminAuthTokenCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\",
+  \"id\": \"key_06etngr201xwv7qj08mt4cs03w\",
   \"expiry_ms\": 60000
 }\n\nExample response:
 {
@@ -70,10 +70,10 @@ pub enum AdminAuthTokenCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\"
+  \"id\": \"key_06etngr201xwv7qj08mt4cs03w\"
 }\n\nExample response:
 {
-  \"id\": \"...\",
+  \"id\": \"key_06etngr201xwv7qj08mt4cs03w\",
   \"token\": \"...\",
   \"created\": 1234567890123,
   \"updated\": 1234567890123
@@ -92,7 +92,7 @@ pub enum AdminAuthTokenCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\"
+  \"id\": \"key_06etngr201xwv7qj08mt4cs03w\"
 }\n\nExample response:
 {
   \"success\": true
@@ -112,10 +112,10 @@ pub enum AdminAuthTokenCommands {
     #[command(after_help = "Example body:
 {
   \"limit\": 123,
-  \"iterator\": \"...\"
+  \"iterator\": \"key_06etngr201xwv7qj08mt4cs03w\"
 }\n\nExample response:
 {
-  \"data\": [{\"id\": \"...\", \"name\": \"...\", \"created\": 1234567890123, \"updated\": 1234567890123, \"expiry\": 1234567890123, \"role\": \"...\", \"enabled\": true, \"expired\": true}],
+  \"data\": [{\"id\": \"key_06etngr201xwv7qj08mt4cs03w\", \"name\": \"...\", \"created\": 1234567890123, \"updated\": 1234567890123, \"expiry\": 1234567890123, \"role\": \"...\", \"enabled\": true, \"expired\": true}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": true
@@ -134,8 +134,8 @@ pub enum AdminAuthTokenCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\",
-  \"name\": \"...\",
+  \"id\": \"key_06etngr201xwv7qj08mt4cs03w\",
+  \"name\": \"some token name\",
   \"expiry_ms\": 60000,
   \"enabled\": true
 }\n\nExample response:
@@ -157,7 +157,7 @@ pub enum AdminAuthTokenCommands {
 {
 }\n\nExample response:
 {
-  \"role\": \"...\"
+  \"role\": \"some_role_id\"
 }\n")]
     Whoami {
         admin_auth_token_whoami_in:

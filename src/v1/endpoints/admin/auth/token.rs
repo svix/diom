@@ -66,7 +66,9 @@ pub struct AdminAuthTokenOut {
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAuthTokenCreateIn {
+    #[schemars(example = "some token name")]
     pub name: String,
+    #[schemars(example = "some token role")]
     pub role: String,
     /// Milliseconds from now until the token expires.
     #[serde(rename = "expiry_ms")]
@@ -309,6 +311,7 @@ async fn auth_token_list(
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAuthTokenUpdateIn {
     pub id: Public<AuthTokenId>,
+    #[schemars(example = "some token name")]
     pub name: Option<String>,
     #[serde(rename = "expiry_ms")]
     pub expiry: Option<DurationMs>,

@@ -26,14 +26,14 @@ pub enum AdminAuthRoleCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\",
-  \"description\": \"...\",
+  \"id\": \"some_role_id\",
+  \"description\": \"role description…\",
   \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"policies\": [\"...\"],
   \"context\": {\"key\": \"...\"}
 }\n\nExample response:
 {
-  \"id\": \"...\",
+  \"id\": \"some_role_id\",
   \"created\": 1234567890123,
   \"updated\": 1234567890123
 }\n")]
@@ -51,7 +51,7 @@ pub enum AdminAuthRoleCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\"
+  \"id\": \"some_role_id\"
 }\n\nExample response:
 {
   \"success\": true
@@ -70,10 +70,10 @@ pub enum AdminAuthRoleCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"id\": \"...\"
+  \"id\": \"some_role_id\"
 }\n\nExample response:
 {
-  \"id\": \"...\",
+  \"id\": \"some_role_id\",
   \"description\": \"...\",
   \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"policies\": [\"...\"],
@@ -96,10 +96,10 @@ pub enum AdminAuthRoleCommands {
     #[command(after_help = "Example body:
 {
   \"limit\": 123,
-  \"iterator\": \"...\"
+  \"iterator\": \"some_role_id\"
 }\n\nExample response:
 {
-  \"data\": [{\"id\": \"...\", \"description\": \"...\", \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}], \"policies\": [\"...\"], \"context\": {\"key\": \"...\"}, \"created\": 1234567890123, \"updated\": 1234567890123}],
+  \"data\": [{\"id\": \"some_role_id\", \"description\": \"...\", \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}], \"policies\": [\"...\"], \"context\": {\"key\": \"...\"}, \"created\": 1234567890123, \"updated\": 1234567890123}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": true

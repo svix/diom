@@ -42,7 +42,12 @@
 
 {% macro field_example(field) -%}
     {%- if field.type.is_string() or field.type.is_uri() -%}
-        "sample string".to_owned()
+        {%- if field.example is defined -%}
+            "{{ field.example }}"
+        {%- else -%}
+            "sample string"
+        {%- endif -%}
+        .to_owned()
     {%- elif field.type.is_unix_timestamp_ms() -%}
         "2026-04-20 12:00:00".parse()?
     {%- elif field.type.is_duration_ms() -%}

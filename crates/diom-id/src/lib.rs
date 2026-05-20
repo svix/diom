@@ -24,6 +24,11 @@ const V7_RANDOM_BYTES_LEN: usize = 10;
 pub struct UuidV7RandomBytes([u8; V7_RANDOM_BYTES_LEN]);
 
 impl UuidV7RandomBytes {
+    /// Return an arbitrary value used in example IDs.
+    pub fn example() -> Self {
+        Self([0xab, 0xcd, 0xde, 0xf2, 0x02, 0x29, 0xa2, 0x33, 0x20, 0x1f])
+    }
+
     pub fn new_random() -> Self {
         Self(rand::random())
     }

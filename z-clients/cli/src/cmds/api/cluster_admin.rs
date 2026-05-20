@@ -28,11 +28,11 @@ pub enum ClusterAdminCommands {
 {
   \"cluster_id\": \"...\",
   \"cluster_name\": \"...\",
-  \"this_node_id\": \"...\",
+  \"this_node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",
   \"this_node_state\": \"leader\",
   \"this_node_last_committed_timestamp\": 1234567890123,
   \"this_node_last_snapshot_id\": \"...\",
-  \"nodes\": [{\"node_id\": \"...\", \"address\": \"...\", \"state\": \"leader\", \"last_committed_log_index\": 123, \"last_committed_term\": 123}]
+  \"nodes\": [{\"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\", \"address\": \"...\", \"state\": \"leader\", \"last_committed_log_index\": 123, \"last_committed_term\": 123}]
 }\n")]
     Status {},
     /// Initialize this node as the leader of a new cluster
@@ -70,10 +70,10 @@ pub enum ClusterAdminCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"node_id\": \"...\"
+  \"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\"
 }\n\nExample response:
 {
-  \"node_id\": \"...\"
+  \"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\"
 }\n")]
     RemoveNode {
         cluster_remove_node_in: crate::json::JsonOf<diom::models::ClusterRemoveNodeIn>,
@@ -112,8 +112,8 @@ pub enum ClusterAdminCommands {
 {
 }\n\nExample response:
 {
-  \"previous_leader_id\": \"...\",
-  \"new_leader_id\": \"...\"
+  \"previous_leader_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",
+  \"new_leader_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\"
 }\n")]
     ForceElection {
         cluster_force_election_in:

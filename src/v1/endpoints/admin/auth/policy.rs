@@ -77,6 +77,7 @@ impl From<AccessPolicyModel> for AdminAccessPolicyOut {
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AdminAccessPolicyConfigureIn {
     pub id: AccessPolicyId,
+    #[schemars(example = "policy description…")]
     pub description: String,
     #[serde(default)]
     pub rules: Vec<AccessRule>,

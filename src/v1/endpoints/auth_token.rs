@@ -91,6 +91,7 @@ impl From<AuthTokenModel> for AuthTokenOut {
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct AuthTokenCreateIn {
     pub namespace: Option<NamespaceName>,
+    #[schemars(example = "some token name")]
     pub name: String,
     #[serde(default = "default_prefix")]
     pub prefix: String,
@@ -100,6 +101,7 @@ pub struct AuthTokenCreateIn {
     pub expiry: Option<DurationMs>,
     #[serde(default)]
     pub metadata: Metadata,
+    #[schemars(example = "owner ID")]
     pub owner_id: String,
     #[serde(default)]
     pub scopes: Vec<String>,

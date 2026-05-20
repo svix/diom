@@ -1,7 +1,7 @@
 use anyhow::Context;
 use http::HeaderValue;
 use opentelemetry::{KeyValue, Value};
-use schemars::JsonSchema;
+use schemars::{JsonSchema, json_schema};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use tap::Pipe;
@@ -112,8 +112,15 @@ impl JsonSchema for NodeId {
         true
     }
 
-    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        String::json_schema(generator)
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        let example = NodeId {
+            inner: Uuid::from_u128(0xa1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8),
+        };
+
+        json_schema!({
+            "type": "string",
+            "example": example,
+        })
     }
 }
 

@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize, de};
 use uuid::Uuid;
 
 use super::{Id, PublicIdMarker};
+use crate::UuidV7RandomBytes;
 
 /// serde wrapper for ID types that uses a verbose format (using `M`s prefix).
 #[derive(Clone, Copy, Debug)]
@@ -57,9 +58,16 @@ impl<M: PublicIdMarker> JsonSchema for Public<Id<M>> {
     }
 
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        let example = Id::<M>::new(
+            "2026-04-20 12:00:00Z".parse::<jiff::Timestamp>().unwrap(),
+            UuidV7RandomBytes::example(),
+        )
+        .public();
+
         // FIXME: Add some more details
         json_schema!({
             "type": "string",
+            "example": example,
         })
     }
 

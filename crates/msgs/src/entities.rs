@@ -12,7 +12,7 @@ use diom_core::{
 };
 use diom_error::Error;
 use fjall_utils::FjallKeyComponent;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, json_schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use sha2::{Digest, Sha256};
 
@@ -147,8 +147,11 @@ impl JsonSchema for TopicName {
         true
     }
 
-    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        String::json_schema(generator)
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        json_schema!({
+            "type": "string",
+            "example": "some_topic_name",
+        })
     }
 }
 
@@ -221,8 +224,11 @@ impl JsonSchema for TopicPartition {
         true
     }
 
-    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        String::json_schema(generator)
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        json_schema!({
+            "type": "string",
+            "example": "some_topic_name~0",
+        })
     }
 }
 
@@ -271,8 +277,11 @@ impl JsonSchema for TopicIn {
         true
     }
 
-    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        String::json_schema(generator)
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        json_schema!({
+            "type": "string",
+            "example": "some_topic_name",
+        })
     }
 }
 
@@ -515,8 +524,11 @@ impl JsonSchema for ConsumerGroup {
         true
     }
 
-    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        String::json_schema(generator)
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        json_schema!({
+            "type": "string",
+            "example": "some_consumer_group",
+        })
     }
 }
 
