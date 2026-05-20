@@ -77,6 +77,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.ClusterAdmin.Status(ctx)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.clusterAdmin.status();"
@@ -165,6 +170,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.ClusterAdmin.Initialize(\n    ctx,\n    ClusterInitializeIn{\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -255,6 +265,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.ClusterAdmin.RemoveNode(\n    ctx,\n    ClusterRemoveNodeIn{\n        NodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.clusterAdmin.removeNode({\n    nodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n});"
@@ -343,6 +358,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.ClusterAdmin.ForceSnapshot(\n    ctx,\n    ClusterForceSnapshotIn{\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -433,6 +453,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.ClusterAdmin.ForceElection(\n    ctx,\n    ClusterForceElectionIn{\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.clusterAdmin.forceElection({});"
@@ -521,6 +546,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthToken.Create(\n    ctx,\n    AdminAuthTokenCreateIn{\n        Name: \"some token name\",\n        Role: \"some token role\",\n        Expiry: new(diom.DurationMs(30000)),\n        Enabled: new(true),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -611,6 +641,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthToken.Expire(\n    ctx,\n    AdminAuthTokenExpireIn{\n        Id: \"key_06etngr201xwv7qj08mt4cs03w\",\n        Expiry: new(diom.DurationMs(30000)),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authToken.expire({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    expiry: Temporal.Duration.from({ seconds: 30 }),\n});"
@@ -699,6 +734,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthToken.Rotate(\n    ctx,\n    AdminAuthTokenRotateIn{\n        Id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -789,6 +829,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthToken.Delete(\n    ctx,\n    AdminAuthTokenDeleteIn{\n        Id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authToken.delete({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n});"
@@ -877,6 +922,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthToken.List(\n    ctx,\n    AdminAuthTokenListIn{\n        Limit: new(uint64(1)),\n        Iterator: new(\"key_06etngr201xwv7qj08mt4cs03w\"),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -967,6 +1017,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthToken.Update(\n    ctx,\n    AdminAuthTokenUpdateIn{\n        Id: \"key_06etngr201xwv7qj08mt4cs03w\",\n        Name: new(\"some token name\"),\n        Expiry: new(diom.DurationMs(30000)),\n        Enabled: new(true),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authToken.update({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    name: \"some token name\",\n    expiry: Temporal.Duration.from({ seconds: 30 }),\n    enabled: true,\n});"
@@ -1055,6 +1110,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthToken.Whoami(\n    ctx,\n    AdminAuthTokenWhoamiIn{\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -1145,6 +1205,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthRole.Configure(\n    ctx,\n    AdminRoleConfigureIn{\n        Id: \"some_role_id\",\n        Description: \"role description…\",\n        Rules: []AccessRule{},\n        Policies: []string{},\n        Context: nil,\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authRole.configure({\n    id: \"some_role_id\",\n    description: \"role description…\",\n    rules: [],\n    policies: [],\n    context: {},\n});"
@@ -1233,6 +1298,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthRole.Delete(\n    ctx,\n    AdminRoleDeleteIn{\n        Id: \"some_role_id\",\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -1323,6 +1393,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthRole.Get(\n    ctx,\n    AdminRoleGetIn{\n        Id: \"some_role_id\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authRole.get({\n    id: \"some_role_id\",\n});"
@@ -1411,6 +1486,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthRole.List(\n    ctx,\n    AdminRoleListIn{\n        Limit: new(uint64(1)),\n        Iterator: new(\"some_role_id\"),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -1501,6 +1581,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthPolicy.Configure(\n    ctx,\n    AdminAccessPolicyConfigureIn{\n        Id: \"some_access_policy\",\n        Description: \"policy description…\",\n        Rules: []AccessRule{},\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authPolicy.configure({\n    id: \"some_access_policy\",\n    description: \"policy description…\",\n    rules: [],\n});"
@@ -1589,6 +1674,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthPolicy.Delete(\n    ctx,\n    AdminAccessPolicyDeleteIn{\n        Id: \"some_access_policy\",\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -1679,6 +1769,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthPolicy.Get(\n    ctx,\n    AdminAccessPolicyGetIn{\n        Id: \"some_access_policy\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authPolicy.get({\n    id: \"some_access_policy\",\n});"
@@ -1767,6 +1862,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.AuthPolicy.List(\n    ctx,\n    AdminAccessPolicyListIn{\n        Limit: new(uint64(1)),\n        Iterator: new(\"some_access_policy\"),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -2559,6 +2659,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Cache.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    CacheSetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Value: []uint8{},\n        Ttl: diom.DurationMs(30000),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.cache.set(\n    \"some_key\",\n    [],\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        value: [],\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
@@ -2647,6 +2752,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Cache.Get(\n    ctx,\n    \"some_key\",\n    CacheGetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -2737,6 +2847,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Cache.Namespace.Configure(\n    ctx,\n    CacheConfigureNamespaceIn{\n        Name: \"some_namespace\",\n        EvictionPolicy: new(EVICTIONPOLICY_NO_EVICTION),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.cache.namespace.configure({\n    name: \"some_namespace\",\n    evictionPolicy: EvictionPolicy.NoEviction,\n});"
@@ -2825,6 +2940,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Cache.Namespace.Get(\n    ctx,\n    CacheGetNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -2915,6 +3035,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Cache.Delete(\n    ctx,\n    \"some_key\",\n    CacheDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.cache.delete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n    },\n);"
@@ -3003,6 +3128,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Kv.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    KvSetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Value: []uint8{},\n        Ttl: new(diom.DurationMs(30000)),\n        Behavior: new(OPERATIONBEHAVIOR_UPSERT),\n        Version: new(uint64(1)),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -3093,6 +3223,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Kv.Get(\n    ctx,\n    \"some_key\",\n    KvGetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.kv.get(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        consistency: Consistency.Strong,\n    },\n);"
@@ -3181,6 +3316,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Kv.Namespace.Configure(\n    ctx,\n    KvConfigureNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -3271,6 +3411,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Kv.Namespace.Get(\n    ctx,\n    KvGetNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.kv.namespace.get({\n    name: \"some_namespace\",\n});"
@@ -3359,6 +3504,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Kv.Delete(\n    ctx,\n    \"some_key\",\n    KvDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Version: new(uint64(1)),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -3449,6 +3599,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.RateLimit.Limit(\n    ctx,\n    RateLimitCheckIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Tokens: new(uint64(1)),\n        Config: RateLimitConfig{\n            Capacity: uint64(1),\n            RefillAmount: uint64(1),\n            RefillInterval: new(diom.DurationMs(30000)),\n        },\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.rateLimit.limit({\n    namespace: \"some_namespace\",\n    key: \"some_key\",\n    tokens: 1,\n    config: {\n        capacity: 1,\n        refillAmount: 1,\n        refillInterval: Temporal.Duration.from({ seconds: 30 }),\n    },\n});"
@@ -3537,6 +3692,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.RateLimit.GetRemaining(\n    ctx,\n    RateLimitGetRemainingIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Config: RateLimitConfig{\n            Capacity: uint64(1),\n            RefillAmount: uint64(1),\n            RefillInterval: new(diom.DurationMs(30000)),\n        },\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -3627,6 +3787,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.RateLimit.Reset(\n    ctx,\n    RateLimitResetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Config: RateLimitConfig{\n            Capacity: uint64(1),\n            RefillAmount: uint64(1),\n            RefillInterval: new(diom.DurationMs(30000)),\n        },\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.rateLimit.reset({\n    namespace: \"some_namespace\",\n    key: \"some_key\",\n    config: {\n        capacity: 1,\n        refillAmount: 1,\n        refillInterval: Temporal.Duration.from({ seconds: 30 }),\n    },\n});"
@@ -3715,6 +3880,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.RateLimit.Namespace.Configure(\n    ctx,\n    RateLimitConfigureNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -3805,6 +3975,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.RateLimit.Namespace.Get(\n    ctx,\n    RateLimitGetNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.rateLimit.namespace.get({\n    name: \"some_namespace\",\n});"
@@ -3893,6 +4068,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Idempotency.Start(\n    ctx,\n    \"some_key\",\n    IdempotencyStartIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        LockPeriod: diom.DurationMs(30000),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -3983,6 +4163,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Idempotency.Complete(\n    ctx,\n    \"some_key\",\n    IdempotencyCompleteIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Response: []uint8{},\n        Context: nil,\n        Ttl: diom.DurationMs(30000),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.idempotency.complete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        response: [],\n        context: {},\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
@@ -4071,6 +4256,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Idempotency.Abort(\n    ctx,\n    \"some_key\",\n    IdempotencyAbortIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -4161,6 +4351,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Idempotency.Namespace.Configure(\n    ctx,\n    IdempotencyConfigureNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.idempotency.namespace.configure({\n    name: \"some_namespace\",\n});"
@@ -4249,6 +4444,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Idempotency.Namespace.Get(\n    ctx,\n    IdempotencyGetNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -4339,6 +4539,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Namespace.Configure(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceConfigureIn{\n        Name: \"some_namespace\",\n        Retention: new(Retention{\n            Period: new(diom.DurationMs(30000)),\n        }),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.namespace.configure(\n    \"some_namespace\",\n    {\n        name: \"some_namespace\",\n        retention: {\n            period: Temporal.Duration.from({ seconds: 30 }),\n        },\n    },\n);"
@@ -4427,6 +4632,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Namespace.Get(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceGetIn{\n        Name: \"some_namespace\",\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -4517,6 +4727,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Publish(\n    ctx,\n    \"some_topic_name\",\n    MsgPublishIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        Msgs: []MsgIn{},\n        IdempotencyKey: new(\"my_idempotency_key\"),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.publish(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        msgs: [],\n        idempotencyKey: \"my_idempotency_key\",\n    },\n);"
@@ -4605,6 +4820,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Stream.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        DefaultStartingPosition: new(SEEKPOSITION_EARLIEST),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -4695,6 +4915,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Stream.Commit(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCommitIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name~0\",\n        ConsumerGroup: \"some_consumer_group\",\n        Offset: uint64(1),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.stream.commit(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name~0\",\n        consumerGroup: \"some_consumer_group\",\n        offset: 1,\n    },\n);"
@@ -4783,6 +5008,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Stream.Seek(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamSeekIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        Offset: new(uint64(1)),\n        Position: new(SEEKPOSITION_EARLIEST),\n        Timestamp: new(diom.Timestamp(time.Date(2026, 04, 20, 12, 0, 0, 0, time.UTC))),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -4873,6 +5103,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Stream.CancelLease(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCancelLeaseIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name~0\",\n        ConsumerGroup: \"some_consumer_group\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.stream.cancelLease(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name~0\",\n        consumerGroup: \"some_consumer_group\",\n    },\n);"
@@ -4961,6 +5196,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Queue.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -5051,6 +5291,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Queue.Ack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueAckIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        MsgIds: []string{},\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.queue.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n        msgIds: [],\n    },\n);"
@@ -5139,6 +5384,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Queue.ExtendLease(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueExtendLeaseIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        MsgIds: []string{},\n        LeaseDuration: new(diom.DurationMs(30000)),\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -5229,6 +5479,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Queue.Configure(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        RetrySchedule: []uint64{},\n        DlqTopic: new(\"some_topic_name\"),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.queue.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n        retrySchedule: [],\n        dlqTopic: \"some_topic_name\",\n    },\n);"
@@ -5317,6 +5572,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Queue.Nack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueNackIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        MsgIds: []string{},\n    },\n)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
@@ -5407,6 +5667,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Queue.RedriveDlq(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueRedriveDlqIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.queue.redriveDlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n    },\n);"
@@ -5496,6 +5761,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Topic.Configure(\n    ctx,\n    \"some_topic_name\",\n    MsgTopicConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        Partitions: uint16(1),\n    },\n)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.topic.configure(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        partitions: 1,\n    },\n);"
@@ -5575,6 +5845,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Health.Ping(ctx)"
+          },
+          {
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.health.ping();"
@@ -5646,6 +5921,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "err := diom.Health.Error(ctx)"
+          },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
