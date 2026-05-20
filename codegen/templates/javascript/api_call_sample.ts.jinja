@@ -12,6 +12,8 @@
     {{ resource.name | to_upper_camel_case }}.{{ resource.values[0] | to_upper_camel_case }}
 {%- elif resource.kind == "integer_enum" -%}
     {{ resource.name | to_upper_camel_case }}.{{ resource.variants[0][0] | to_upper_camel_case }}
+{%- elif resource.fields | length == 0 and resource.kind == "struct" -%}
+    {}
 {%- else -%}
 {
     {%- for field in resource.fields %}
@@ -98,10 +100,15 @@ await diom{{ resource_path }}.{{ operation.name | to_lower_camel_case }}
 {#- positional body parameters #}
 {%- set body_schema = api.types[operation.request_body_schema_name] %}
 {%- set positional_fields = body_schema.fields | selectattr("positional") %}
+{%- if positional_fields | length > 0 %}
 {%- for field in positional_fields %}
     {{ field_example(field) }},
 {%- endfor %}
     {{ render_example_resource(req_body_ty) | indent(4) }},
+{% else -%}
+    {# no indent, no trailing comma -#}
+    {{ render_example_resource(req_body_ty) }}
+{%- endif -%}
 )
 
 {%- else %}()

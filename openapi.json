@@ -168,7 +168,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.clusterAdmin.initialize(\n    {\n    },\n);"
+            "source": "const response = await diom.clusterAdmin.initialize({});"
           },
           {
             "lang": "Rust",
@@ -257,7 +257,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.clusterAdmin.removeNode(\n    {\n        nodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n    },\n);"
+            "source": "const response = await diom.clusterAdmin.removeNode({\n    nodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n});"
           },
           {
             "lang": "Rust",
@@ -346,7 +346,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.clusterAdmin.forceSnapshot(\n    {\n    },\n);"
+            "source": "const response = await diom.clusterAdmin.forceSnapshot({});"
           },
           {
             "lang": "Rust",
@@ -435,7 +435,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.clusterAdmin.forceElection(\n    {\n    },\n);"
+            "source": "const response = await diom.clusterAdmin.forceElection({});"
           },
           {
             "lang": "Rust",
@@ -524,7 +524,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authToken.create(\n    {\n        name: \"some token name\",\n        role: \"some token role\",\n        expiry: Temporal.Duration.from({ seconds: 30 }),\n        enabled: true,\n    },\n);"
+            "source": "const response = await diom.admin.authToken.create({\n    name: \"some token name\",\n    role: \"some token role\",\n    expiry: Temporal.Duration.from({ seconds: 30 }),\n    enabled: true,\n});"
           },
           {
             "lang": "Rust",
@@ -613,7 +613,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authToken.expire(\n    {\n        id: \"key_06etngr201xwv7qj08mt4cs03w\",\n        expiry: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+            "source": "const response = await diom.admin.authToken.expire({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    expiry: Temporal.Duration.from({ seconds: 30 }),\n});"
           },
           {
             "lang": "Rust",
@@ -702,7 +702,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authToken.rotate(\n    {\n        id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    },\n);"
+            "source": "const response = await diom.admin.authToken.rotate({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n});"
           },
           {
             "lang": "Rust",
@@ -791,7 +791,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authToken.delete(\n    {\n        id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    },\n);"
+            "source": "const response = await diom.admin.authToken.delete({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n});"
           },
           {
             "lang": "Rust",
@@ -880,7 +880,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authToken.list(\n    {\n        limit: 1,\n        iterator: \"key_06etngr201xwv7qj08mt4cs03w\",\n    },\n);"
+            "source": "const response = await diom.admin.authToken.list({\n    limit: 1,\n    iterator: \"key_06etngr201xwv7qj08mt4cs03w\",\n});"
           },
           {
             "lang": "Rust",
@@ -969,7 +969,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authToken.update(\n    {\n        id: \"key_06etngr201xwv7qj08mt4cs03w\",\n        name: \"some token name\",\n        expiry: Temporal.Duration.from({ seconds: 30 }),\n        enabled: true,\n    },\n);"
+            "source": "const response = await diom.admin.authToken.update({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    name: \"some token name\",\n    expiry: Temporal.Duration.from({ seconds: 30 }),\n    enabled: true,\n});"
           },
           {
             "lang": "Rust",
@@ -1058,7 +1058,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authToken.whoami(\n    {\n    },\n);"
+            "source": "const response = await diom.admin.authToken.whoami({});"
           },
           {
             "lang": "Rust",
@@ -1147,7 +1147,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authRole.configure(\n    {\n        id: \"some_role_id\",\n        description: \"role description…\",\n        rules: [],\n        policies: [],\n        context: {},\n    },\n);"
+            "source": "const response = await diom.admin.authRole.configure({\n    id: \"some_role_id\",\n    description: \"role description…\",\n    rules: [],\n    policies: [],\n    context: {},\n});"
           },
           {
             "lang": "Rust",
@@ -1236,7 +1236,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authRole.delete(\n    {\n        id: \"some_role_id\",\n    },\n);"
+            "source": "const response = await diom.admin.authRole.delete({\n    id: \"some_role_id\",\n});"
           },
           {
             "lang": "Rust",
@@ -1325,7 +1325,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authRole.get(\n    {\n        id: \"some_role_id\",\n    },\n);"
+            "source": "const response = await diom.admin.authRole.get({\n    id: \"some_role_id\",\n});"
           },
           {
             "lang": "Rust",
@@ -1414,7 +1414,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authRole.list(\n    {\n        limit: 1,\n        iterator: \"some_role_id\",\n    },\n);"
+            "source": "const response = await diom.admin.authRole.list({\n    limit: 1,\n    iterator: \"some_role_id\",\n});"
           },
           {
             "lang": "Rust",
@@ -1503,7 +1503,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authPolicy.configure(\n    {\n        id: \"some_access_policy\",\n        description: \"policy description…\",\n        rules: [],\n    },\n);"
+            "source": "const response = await diom.admin.authPolicy.configure({\n    id: \"some_access_policy\",\n    description: \"policy description…\",\n    rules: [],\n});"
           },
           {
             "lang": "Rust",
@@ -1592,7 +1592,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authPolicy.delete(\n    {\n        id: \"some_access_policy\",\n    },\n);"
+            "source": "const response = await diom.admin.authPolicy.delete({\n    id: \"some_access_policy\",\n});"
           },
           {
             "lang": "Rust",
@@ -1681,7 +1681,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authPolicy.get(\n    {\n        id: \"some_access_policy\",\n    },\n);"
+            "source": "const response = await diom.admin.authPolicy.get({\n    id: \"some_access_policy\",\n});"
           },
           {
             "lang": "Rust",
@@ -1770,7 +1770,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.admin.authPolicy.list(\n    {\n        limit: 1,\n        iterator: \"some_access_policy\",\n    },\n);"
+            "source": "const response = await diom.admin.authPolicy.list({\n    limit: 1,\n    iterator: \"some_access_policy\",\n});"
           },
           {
             "lang": "Rust",
@@ -2739,7 +2739,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.cache.namespace.configure(\n    {\n        name: \"some_namespace\",\n        evictionPolicy: EvictionPolicy.NoEviction,\n    },\n);"
+            "source": "const response = await diom.cache.namespace.configure({\n    name: \"some_namespace\",\n    evictionPolicy: EvictionPolicy.NoEviction,\n});"
           },
           {
             "lang": "Rust",
@@ -2828,7 +2828,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.cache.namespace.get(\n    {\n        name: \"some_namespace\",\n    },\n);"
+            "source": "const response = await diom.cache.namespace.get({\n    name: \"some_namespace\",\n});"
           },
           {
             "lang": "Rust",
@@ -3184,7 +3184,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.kv.namespace.configure(\n    {\n        name: \"some_namespace\",\n    },\n);"
+            "source": "const response = await diom.kv.namespace.configure({\n    name: \"some_namespace\",\n});"
           },
           {
             "lang": "Rust",
@@ -3273,7 +3273,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.kv.namespace.get(\n    {\n        name: \"some_namespace\",\n    },\n);"
+            "source": "const response = await diom.kv.namespace.get({\n    name: \"some_namespace\",\n});"
           },
           {
             "lang": "Rust",
@@ -3451,7 +3451,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.rateLimit.limit(\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        tokens: 1,\n        config: {\n            capacity: 1,\n            refillAmount: 1,\n            refillInterval: Temporal.Duration.from({ seconds: 30 }),\n        },\n    },\n);"
+            "source": "const response = await diom.rateLimit.limit({\n    namespace: \"some_namespace\",\n    key: \"some_key\",\n    tokens: 1,\n    config: {\n        capacity: 1,\n        refillAmount: 1,\n        refillInterval: Temporal.Duration.from({ seconds: 30 }),\n    },\n});"
           },
           {
             "lang": "Rust",
@@ -3540,7 +3540,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.rateLimit.getRemaining(\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        config: {\n            capacity: 1,\n            refillAmount: 1,\n            refillInterval: Temporal.Duration.from({ seconds: 30 }),\n        },\n    },\n);"
+            "source": "const response = await diom.rateLimit.getRemaining({\n    namespace: \"some_namespace\",\n    key: \"some_key\",\n    config: {\n        capacity: 1,\n        refillAmount: 1,\n        refillInterval: Temporal.Duration.from({ seconds: 30 }),\n    },\n});"
           },
           {
             "lang": "Rust",
@@ -3629,7 +3629,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.rateLimit.reset(\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        config: {\n            capacity: 1,\n            refillAmount: 1,\n            refillInterval: Temporal.Duration.from({ seconds: 30 }),\n        },\n    },\n);"
+            "source": "const response = await diom.rateLimit.reset({\n    namespace: \"some_namespace\",\n    key: \"some_key\",\n    config: {\n        capacity: 1,\n        refillAmount: 1,\n        refillInterval: Temporal.Duration.from({ seconds: 30 }),\n    },\n});"
           },
           {
             "lang": "Rust",
@@ -3718,7 +3718,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.rateLimit.namespace.configure(\n    {\n        name: \"some_namespace\",\n    },\n);"
+            "source": "const response = await diom.rateLimit.namespace.configure({\n    name: \"some_namespace\",\n});"
           },
           {
             "lang": "Rust",
@@ -3807,7 +3807,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.rateLimit.namespace.get(\n    {\n        name: \"some_namespace\",\n    },\n);"
+            "source": "const response = await diom.rateLimit.namespace.get({\n    name: \"some_namespace\",\n});"
           },
           {
             "lang": "Rust",
@@ -4163,7 +4163,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.idempotency.namespace.configure(\n    {\n        name: \"some_namespace\",\n    },\n);"
+            "source": "const response = await diom.idempotency.namespace.configure({\n    name: \"some_namespace\",\n});"
           },
           {
             "lang": "Rust",
@@ -4252,7 +4252,7 @@
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.idempotency.namespace.get(\n    {\n        name: \"some_namespace\",\n    },\n);"
+            "source": "const response = await diom.idempotency.namespace.get({\n    name: \"some_namespace\",\n});"
           },
           {
             "lang": "Rust",
