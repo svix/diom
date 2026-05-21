@@ -79,9 +79,9 @@ jobs:
     runs-on: ubuntu-24.04
     environment: diom-staging-deploy
     steps:
-      - name: Dispatch deploy to diom-staging
+      - name: Dispatch deploy to diom-deployments
         run: |
-          gh api repos/svix/diom-staging/dispatches --method POST --input - <<EOF
+          gh api repos/svix/diom-deployments/dispatches --method POST --input - <<EOF
           {"event_type":"deploy-staging","client_payload":{"chart_version":"0.0.0-${GITHUB_SHA}","image_tag":"sha-${GITHUB_SHA}"}}
           EOF
         env:
