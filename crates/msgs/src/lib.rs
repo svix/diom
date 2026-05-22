@@ -1,15 +1,15 @@
-use diom_core::types::UnixTimestampMs;
-use opentelemetry::metrics::Meter;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use diom_core::Monotime;
+use dashmap::DashMap;
+use diom_core::{Monotime, types::UnixTimestampMs};
 use diom_error::{Error, Result, ResultExt};
-use diom_id::NamespaceId;
+use diom_id::{NamespaceId, TopicId};
 use diom_namespace::{Namespace, entities::MsgsConfig};
 use diom_operations::BackgroundResult;
 use fjall::KeyspaceCreateOptions;
+use opentelemetry::metrics::Meter;
 
-use entities::{ConsumerGroup, Partition, TopicName};
+use entities::{ConsumerGroup, Offset, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
 use storage::{
     MsgRow, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow,
@@ -39,6 +39,8 @@ pub struct State {
     pub(crate) msg_table: fjall::Keyspace,
     pub(crate) metrics: metrics::MsgMetrics,
     pub(crate) topic_publish_notifier: TopicPublishNotifier,
+    /// Caches the highest offset within a topic/partition.
+    hwm_cache: Arc<DashMap<(TopicId, Partition), Offset>>,
 }
 
 impl State {
@@ -61,7 +63,26 @@ impl State {
             msg_table,
             metrics: metrics::MsgMetrics::new(meter),
             topic_publish_notifier,
+            hwm_cache: Arc::new(DashMap::new()),
         })
+    }
+
+    /// Returns the next offset to assign for a partition.
+    ///
+    /// Checks the in-memory cache first. On a miss, falls through to disk
+    /// (backward scan, then persisted HWM row) and populates the cache.
+    pub(crate) fn next_offset(&self, topic_id: TopicId, partition: Partition) -> Result<Offset> {
+        if let Some(cached) = self.hwm_cache.get(&(topic_id, partition)) {
+            return Ok(*cached);
+        }
+        let offset = MsgRow::next_offset(&self.msg_table, topic_id, partition)?;
+        self.hwm_cache.insert((topic_id, partition), offset);
+        Ok(offset)
+    }
+
+    /// Updates the cached high-water mark after a successful write.
+    pub(crate) fn set_hwm(&self, topic_id: TopicId, partition: Partition, next_offset: Offset) {
+        self.hwm_cache.insert((topic_id, partition), next_offset);
     }
 }
 
@@ -186,6 +207,11 @@ impl AllNodesWorker {
     }
 
     async fn worker_loop(&self) -> BackgroundResult<()> {
+        // Periodically clear the cache, to prevent it from growing unbounded.
+        // There's potentially a more complex scheme we can do, but this seemed
+        // the most straightforward for now.
+        self.state.hwm_cache.clear();
+
         let mut tasks = tokio::task::JoinSet::new();
         tasks.spawn_blocking({
             let state = self.state.clone();

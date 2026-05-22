@@ -78,7 +78,7 @@ impl StreamSeekOperation {
                 let offset = match &self.target {
                     SeekTarget::Position(SeekPosition::Earliest) => 0,
                     SeekTarget::Position(SeekPosition::Latest) => {
-                        MsgRow::next_offset(&state.msg_table, topic_row.id, partition)?
+                        state.next_offset(topic_row.id, partition)?
                     }
                     SeekTarget::Offset(o) => *o,
                     SeekTarget::Timestamp(ts) => MsgRow::first_offset_at_or_after(

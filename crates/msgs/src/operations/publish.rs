@@ -129,7 +129,7 @@ impl PublishOperation {
 
             let results = write_msg_batch(
                 &mut batch,
-                &state.msg_table,
+                &state,
                 &self.topic,
                 topic_row.id,
                 msgs_by_partition,
@@ -137,6 +137,12 @@ impl PublishOperation {
             )?;
 
             batch.commit().map_err(Error::from)?;
+
+            // We call this *after* commit(), in case commit fails, we
+            // don't want invalid cache entries.
+            for published in &results {
+                state.set_hwm(topic_row.id, published.topic.partition, published.offset);
+            }
 
             let msg_count: u64 = results
                 .iter()
@@ -206,7 +212,7 @@ fn group_msgs_by_partition(
 
 fn write_msg_batch(
     batch: &mut OwnedWriteBatch,
-    msg_table: &fjall::Keyspace,
+    state: &State,
     topic_name: &TopicName,
     topic_id: TopicId,
     msgs_by_partition: BTreeMap<Partition, Vec<MsgIn>>,
@@ -216,7 +222,7 @@ fn write_msg_batch(
 
     for (partition, msgs) in msgs_by_partition {
         let topic = TopicPartition::new(topic_name.clone(), partition);
-        let mut offset = MsgRow::next_offset(msg_table, topic_id, partition)?;
+        let mut offset = state.next_offset(topic_id, partition)?;
         let start_offset = offset;
 
         for msg in msgs {
@@ -230,7 +236,7 @@ fn write_msg_batch(
                 scheduled_at,
             };
             batch.insert_row(
-                msg_table,
+                &state.msg_table,
                 MsgKey {
                     topic_id,
                     partition,
@@ -243,7 +249,7 @@ fn write_msg_batch(
         }
 
         batch.insert_row(
-            msg_table,
+            &state.msg_table,
             HighWaterMarkKey {
                 topic_id,
                 partition,

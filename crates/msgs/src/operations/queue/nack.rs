@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, TopicName},
+    entities::{ConsumerGroup, MsgId, Offset, Partition, TopicName},
     storage::{
         HighWaterMarkKey, HighWaterMarkRow, MsgKey, MsgRow, QueueConfigKey, QueueConfigRow,
         QueueLeaseKey, QueueLeaseRow, TopicKey, TopicRow,
@@ -81,6 +81,7 @@ impl QueueNackOperation {
             let mut batch = state.db.batch();
             let mut retried_count: u64 = 0;
             let mut dlq_count: u64 = 0;
+            let mut dlq_hwm = None;
 
             for msg_id in &self.msg_ids {
                 let existing = QueueLeaseRow::fetch(
@@ -114,7 +115,7 @@ impl QueueNackOperation {
                     retried_count += 1;
                 } else if let Some(dlq_topic) = config.as_ref().and_then(|c| c.dlq_topic.as_ref()) {
                     // Retries exhausted, forward to DLQ topic
-                    forward_to_dlq(
+                    dlq_hwm = Some(forward_to_dlq(
                         &state,
                         &mut batch,
                         self.namespace_id,
@@ -125,7 +126,7 @@ impl QueueNackOperation {
                         now,
                         self.dlq_topic_id_random_bytes,
                         expiry_cutoff,
-                    )?;
+                    )?);
                     dlq_count += 1;
                 } else {
                     // No config or no DLQ topic — immediate DLQ
@@ -145,6 +146,12 @@ impl QueueNackOperation {
 
             batch.commit().map_err(Error::from)?;
 
+            // Have to do this AFTER the commit(), in case commit() fails, we
+            // don't want invalid cache entries.
+            if let Some((topic_id, partition, next_offset)) = dlq_hwm {
+                state.set_hwm(topic_id, partition, next_offset);
+            }
+
             state.metrics.record_queue_nacked(
                 &self.topic,
                 &self.consumer_group,
@@ -159,6 +166,9 @@ impl QueueNackOperation {
 }
 
 /// Copies a message to the DLQ topic and acks the original.
+///
+/// Returns the next offset after the DLQ write, for the caller to apply to
+/// the HWM cache after the batch is committed.
 #[allow(clippy::too_many_arguments)]
 fn forward_to_dlq(
     state: &State,
@@ -171,7 +181,7 @@ fn forward_to_dlq(
     now: UnixTimestampMs,
     dlq_topic_id_random_bytes: UuidV7RandomBytes,
     expiry_cutoff: UnixTimestampMs,
-) -> Result<()> {
+) -> Result<(TopicId, Partition, Offset)> {
     let original = MsgRow::fetch_by_offset(
         &state.msg_table,
         source_topic_id,
@@ -192,7 +202,7 @@ fn forward_to_dlq(
 
     // Route deterministically: use source partition clamped to DLQ partition count
     let dlq_partition = msg_id.partition % dlq_topic_row.partitions;
-    let dlq_offset = MsgRow::next_offset(&state.msg_table, dlq_topic_row.id, dlq_partition)?;
+    let dlq_offset = state.next_offset(dlq_topic_row.id, dlq_partition)?;
 
     batch.insert_row(
         &state.msg_table,
@@ -230,7 +240,7 @@ fn forward_to_dlq(
         consumer_group,
     )?;
 
-    Ok(())
+    Ok((dlq_topic_row.id, dlq_partition, dlq_offset + 1))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
