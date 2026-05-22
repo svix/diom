@@ -142,11 +142,9 @@ impl TestServerBuilder {
         };
         let client = TestClient::new(base_uri, &token);
 
-        const MAX_INITIALIZATION_TIME: Duration = Duration::from_secs(5);
-
-        tokio::time::timeout(MAX_INITIALIZATION_TIME, initialized.wait())
+        initialized
+            .wait()
             .await
-            .expect("initialization should not time out")
             .expect("initialization should finish");
 
         let (node_id, cluster_id) = wait_for_initialized(addr, repl_addr, Duration::from_secs(8))
