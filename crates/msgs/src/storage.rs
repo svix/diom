@@ -11,14 +11,21 @@ use serde::{Deserialize, Serialize};
 
 use crate::entities::{ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, TopicName};
 
+/// Prefixes for rows stored in the `metadata_tables` keyspace.
 #[repr(u8)]
-enum RowType {
+enum MetadataPrefix {
     Topic = 0,
     StreamLease = 1,
-    Msg = 2,
     QueueLease = 3,
     QueueConfig = 4,
     Idempotency = 5,
+}
+
+/// Prefixes for rows stored in the `msg_table` keyspace.
+#[repr(u8)]
+enum MsgPrefix {
+    Msg = 2,
+    HighWaterMark = 0,
 }
 
 #[derive(Serialize, Deserialize, PersistableValue)]
@@ -29,11 +36,11 @@ pub(crate) struct TopicRow {
 }
 
 impl TableRow for TopicRow {
-    const ROW_TYPE: u8 = RowType::Topic as u8;
+    const ROW_TYPE: u8 = MetadataPrefix::Topic as u8;
 }
 
 #[derive(FjallKey)]
-#[table_key(prefix = RowType::Topic)]
+#[table_key(prefix = MetadataPrefix::Topic)]
 pub(crate) struct TopicKey {
     #[key(0)]
     pub(crate) namespace_id: NamespaceId,
@@ -107,11 +114,11 @@ impl StreamLeaseRow {
 }
 
 impl TableRow for StreamLeaseRow {
-    const ROW_TYPE: u8 = RowType::StreamLease as u8;
+    const ROW_TYPE: u8 = MetadataPrefix::StreamLease as u8;
 }
 
 #[derive(FjallKey)]
-#[table_key(prefix = RowType::StreamLease)]
+#[table_key(prefix = MetadataPrefix::StreamLease)]
 pub(crate) struct StreamLeaseKey {
     #[key(0)]
     pub(crate) topic_id: TopicId,
@@ -212,11 +219,11 @@ impl QueueLeaseRow {
 }
 
 impl TableRow for QueueLeaseRow {
-    const ROW_TYPE: u8 = RowType::QueueLease as u8;
+    const ROW_TYPE: u8 = MetadataPrefix::QueueLease as u8;
 }
 
 #[derive(FjallKey)]
-#[table_key(prefix = RowType::QueueLease)]
+#[table_key(prefix = MetadataPrefix::QueueLease)]
 pub(crate) struct QueueLeaseKey {
     #[key(0)]
     pub(crate) topic_id: TopicId,
@@ -236,11 +243,11 @@ pub(crate) struct QueueConfigRow {
 }
 
 impl TableRow for QueueConfigRow {
-    const ROW_TYPE: u8 = RowType::QueueConfig as u8;
+    const ROW_TYPE: u8 = MetadataPrefix::QueueConfig as u8;
 }
 
 #[derive(FjallKey)]
-#[table_key(prefix = RowType::QueueConfig)]
+#[table_key(prefix = MetadataPrefix::QueueConfig)]
 pub(crate) struct QueueConfigKey {
     #[key(0)]
     pub(crate) topic_id: TopicId,
@@ -249,7 +256,7 @@ pub(crate) struct QueueConfigKey {
 }
 
 #[derive(FjallKey)]
-#[table_key(prefix = RowType::Msg)]
+#[table_key(prefix = MsgPrefix::Msg)]
 pub(crate) struct MsgKey {
     #[key(0)]
     pub(crate) topic_id: TopicId,
@@ -270,6 +277,11 @@ pub(crate) struct MsgRow {
 }
 
 impl MsgRow {
+    /// Returns the next offset to assign for a partition.
+    ///
+    /// Checks the message table first (backward scan for the last message).
+    /// When the partition is empty (e.g. after retention cleanup), falls back
+    /// to the persisted high-water mark.
     #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn next_offset(
         keyspace: &impl fjall_utils::ReadableKeyspace,
@@ -284,7 +296,13 @@ impl MsgRow {
                 let offset = MsgKey::extract_offset(&key).expect("valid MsgKey in msg table");
                 Ok(offset + 1)
             }
-            None => Ok(0),
+            None => {
+                let hwm = HighWaterMarkRow::fetch(
+                    keyspace,
+                    HighWaterMarkKey::build_key(&topic_id, &partition),
+                )?;
+                Ok(hwm.map(|h| h.next_offset).unwrap_or(0))
+            }
         }
     }
 
@@ -395,7 +413,7 @@ impl MsgRow {
 }
 
 impl TableRow for MsgRow {
-    const ROW_TYPE: u8 = RowType::Msg as u8;
+    const ROW_TYPE: u8 = MsgPrefix::Msg as u8;
 }
 
 const CLEANUP_BATCH_SIZE: usize = 1_000;
@@ -458,16 +476,38 @@ pub(crate) struct IdempotencyRow {
 }
 
 impl TableRow for IdempotencyRow {
-    const ROW_TYPE: u8 = RowType::Idempotency as u8;
+    const ROW_TYPE: u8 = MetadataPrefix::Idempotency as u8;
 }
 
 #[derive(FjallKey)]
-#[table_key(prefix = RowType::Idempotency)]
+#[table_key(prefix = MetadataPrefix::Idempotency)]
 pub(crate) struct IdempotencyKey {
     #[key(0)]
     pub(crate) namespace_id: NamespaceId,
     #[key(1)]
     pub(crate) key: MsgsIdempotencyKey,
+}
+
+/// Persists the high-water mark (next offset to assign) for a partition.
+///
+/// Survives message deletion so that offsets remain monotonically increasing
+/// even after all messages in a partition have been removed by retention cleanup.
+#[derive(Clone, Serialize, Deserialize, PersistableValue)]
+pub(crate) struct HighWaterMarkRow {
+    pub next_offset: Offset,
+}
+
+impl TableRow for HighWaterMarkRow {
+    const ROW_TYPE: u8 = MsgPrefix::HighWaterMark as u8;
+}
+
+#[derive(FjallKey)]
+#[table_key(prefix = MsgPrefix::HighWaterMark)]
+pub(crate) struct HighWaterMarkKey {
+    #[key(0)]
+    pub(crate) topic_id: TopicId,
+    #[key(1)]
+    pub(crate) partition: Partition,
 }
 
 #[cfg(test)]

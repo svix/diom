@@ -19,7 +19,10 @@ use crate::{
         MsgIn, MsgsIdempotencyKey, Offset, Partition, TopicIn, TopicName, TopicPartition,
         partition_for_key,
     },
-    storage::{IdempotencyKey, IdempotencyRow, MsgKey, MsgRow, TopicKey, TopicRow},
+    storage::{
+        HighWaterMarkKey, HighWaterMarkRow, IdempotencyKey, IdempotencyRow, MsgKey, MsgRow,
+        TopicKey, TopicRow,
+    },
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
@@ -238,6 +241,17 @@ fn write_msg_batch(
             )?;
             offset += 1;
         }
+
+        batch.insert_row(
+            msg_table,
+            HighWaterMarkKey {
+                topic_id,
+                partition,
+            },
+            &HighWaterMarkRow {
+                next_offset: offset,
+            },
+        )?;
 
         results.push(PublishedTopic {
             start_offset,

@@ -12,8 +12,8 @@ use crate::{
     State,
     entities::{ConsumerGroup, MsgId, TopicName},
     storage::{
-        MsgKey, MsgRow, QueueConfigKey, QueueConfigRow, QueueLeaseKey, QueueLeaseRow, TopicKey,
-        TopicRow,
+        HighWaterMarkKey, HighWaterMarkRow, MsgKey, MsgRow, QueueConfigKey, QueueConfigRow,
+        QueueLeaseKey, QueueLeaseRow, TopicKey, TopicRow,
     },
 };
 
@@ -207,6 +207,17 @@ fn forward_to_dlq(
             headers: original.headers,
             timestamp: original.timestamp,
             scheduled_at: None,
+        },
+    )?;
+
+    batch.insert_row(
+        &state.msg_table,
+        HighWaterMarkKey {
+            topic_id: dlq_topic_row.id,
+            partition: dlq_partition,
+        },
+        &HighWaterMarkRow {
+            next_offset: dlq_offset + 1,
         },
     )?;
 
