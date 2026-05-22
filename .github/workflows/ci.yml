@@ -112,6 +112,7 @@ jobs:
           check_retries: true
           job_summary: true
           detailed_summary: true
+          verbose_summary: false
           fail_on_parse_error: true
           include_time_in_summary: true
           group_suite: true
