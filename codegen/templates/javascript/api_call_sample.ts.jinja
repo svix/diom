@@ -12,26 +12,28 @@
     {{ resource.name | to_upper_camel_case }}.{{ resource.values[0] | to_upper_camel_case }}
 {%- elif resource.kind == "integer_enum" -%}
     {{ resource.name | to_upper_camel_case }}.{{ resource.variants[0][0] | to_upper_camel_case }}
-{%- elif resource.fields | length == 0 and resource.kind == "struct" -%}
-    {}
 {%- else -%}
-{
-    {%- for field in resource.fields %}
-        {%- set field_val = field_example(field) %}
+    {%- set non_positional_fields = resource.fields | selectattr("positional", "false") %}
+    {%- if resource.fields | length == 0 and resource.kind == "struct" -%}
+        {}
+    {%- else -%}
+    {
+        {%- for field in resource.fields | selectattr("positional", "false") %}
+            {%- set field_val = field_example(field) %}
     {{ field_name(field) }}: {{ field_example(field) }},
-    {%- endfor %}
-    {%- if resource.kind == "struct_enum" %}
-    {%- set variant = resource.variants[1] %}
-    {%- set variant_val %}
-        {%- if variant.schema_ref is defined -%}
-            {{ render_example_resource(variant.inner) }}
-        {% endif -%}
-    {% endset -%}
+        {%- endfor %}
+        {%- if resource.kind == "struct_enum" %}
+            {%- set variant = resource.variants[1] %}
+            {%- set variant_val %}
+                {%- if variant.schema_ref is defined -%}
+                    {{ render_example_resource(variant.inner) }}
+                {% endif -%}
+            {% endset -%}
     {{ resource.discriminator_field | to_lower_camel_case }}: "{{ variant.name }}",
     {{ resource.content_field | to_lower_camel_case }}: {{ variant_val }}
-
-    {%- endif %}
+        {%- endif %}
 }
+    {%- endif %}
 {%- endif %}
 
 {%- endmacro -%}

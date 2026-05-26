@@ -2661,12 +2661,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Cache.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    CacheSetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Value: []uint8{},\n        Ttl: diom.DurationMs(30000),\n    },\n)"
+            "source": "response, err := diom.Cache.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    CacheSetIn{\n        Namespace: new(\"some_namespace\"),\n        Ttl: diom.DurationMs(30000),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.cache.set(\n    \"some_key\",\n    [],\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        value: [],\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+            "source": "const response = await diom.cache.set(\n    \"some_key\",\n    [],\n    {\n        namespace: \"some_namespace\",\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -2755,12 +2755,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Cache.Get(\n    ctx,\n    \"some_key\",\n    CacheGetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
+            "source": "response, err := diom.Cache.Get(\n    ctx,\n    \"some_key\",\n    CacheGetIn{\n        Namespace: new(\"some_namespace\"),\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.cache.get(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        consistency: Consistency.Strong,\n    },\n);"
+            "source": "const response = await diom.cache.get(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        consistency: Consistency.Strong,\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -3037,12 +3037,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Cache.Delete(\n    ctx,\n    \"some_key\",\n    CacheDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n    },\n)"
+            "source": "response, err := diom.Cache.Delete(\n    ctx,\n    \"some_key\",\n    CacheDeleteIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.cache.delete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n    },\n);"
+            "source": "const response = await diom.cache.delete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -3131,12 +3131,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Kv.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    KvSetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Value: []uint8{},\n        Ttl: new(diom.DurationMs(30000)),\n        Behavior: new(OPERATIONBEHAVIOR_UPSERT),\n        Version: new(uint64(1)),\n    },\n)"
+            "source": "response, err := diom.Kv.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    KvSetIn{\n        Namespace: new(\"some_namespace\"),\n        Ttl: new(diom.DurationMs(30000)),\n        Behavior: new(OPERATIONBEHAVIOR_UPSERT),\n        Version: new(uint64(1)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.kv.set(\n    \"some_key\",\n    [],\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        value: [],\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n        behavior: OperationBehavior.Upsert,\n        version: 1,\n    },\n);"
+            "source": "const response = await diom.kv.set(\n    \"some_key\",\n    [],\n    {\n        namespace: \"some_namespace\",\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n        behavior: OperationBehavior.Upsert,\n        version: 1,\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -3225,12 +3225,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Kv.Get(\n    ctx,\n    \"some_key\",\n    KvGetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
+            "source": "response, err := diom.Kv.Get(\n    ctx,\n    \"some_key\",\n    KvGetIn{\n        Namespace: new(\"some_namespace\"),\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.kv.get(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        consistency: Consistency.Strong,\n    },\n);"
+            "source": "const response = await diom.kv.get(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        consistency: Consistency.Strong,\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -3507,12 +3507,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Kv.Delete(\n    ctx,\n    \"some_key\",\n    KvDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Version: new(uint64(1)),\n    },\n)"
+            "source": "response, err := diom.Kv.Delete(\n    ctx,\n    \"some_key\",\n    KvDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Version: new(uint64(1)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.kv.delete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        version: 1,\n    },\n);"
+            "source": "const response = await diom.kv.delete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        version: 1,\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -4071,12 +4071,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Idempotency.Start(\n    ctx,\n    \"some_key\",\n    IdempotencyStartIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        LockPeriod: diom.DurationMs(30000),\n    },\n)"
+            "source": "response, err := diom.Idempotency.Start(\n    ctx,\n    \"some_key\",\n    IdempotencyStartIn{\n        Namespace: new(\"some_namespace\"),\n        LockPeriod: diom.DurationMs(30000),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.idempotency.start(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        lockPeriod: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+            "source": "const response = await diom.idempotency.start(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        lockPeriod: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -4165,12 +4165,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Idempotency.Complete(\n    ctx,\n    \"some_key\",\n    IdempotencyCompleteIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Response: []uint8{},\n        Context: nil,\n        Ttl: diom.DurationMs(30000),\n    },\n)"
+            "source": "response, err := diom.Idempotency.Complete(\n    ctx,\n    \"some_key\",\n    IdempotencyCompleteIn{\n        Namespace: new(\"some_namespace\"),\n        Response: []uint8{},\n        Context: nil,\n        Ttl: diom.DurationMs(30000),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.idempotency.complete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n        response: [],\n        context: {},\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+            "source": "const response = await diom.idempotency.complete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        response: [],\n        context: {},\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -4259,12 +4259,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Idempotency.Abort(\n    ctx,\n    \"some_key\",\n    IdempotencyAbortIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n    },\n)"
+            "source": "response, err := diom.Idempotency.Abort(\n    ctx,\n    \"some_key\",\n    IdempotencyAbortIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.idempotency.abort(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        key: \"some_key\",\n    },\n);"
+            "source": "const response = await diom.idempotency.abort(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -4541,12 +4541,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Namespace.Configure(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceConfigureIn{\n        Name: \"some_namespace\",\n        Retention: new(Retention{\n            Period: new(diom.DurationMs(30000)),\n        }),\n    },\n)"
+            "source": "response, err := diom.Msgs.Namespace.Configure(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceConfigureIn{\n        Retention: new(Retention{\n            Period: new(diom.DurationMs(30000)),\n        }),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.namespace.configure(\n    \"some_namespace\",\n    {\n        name: \"some_namespace\",\n        retention: {\n            period: Temporal.Duration.from({ seconds: 30 }),\n        },\n    },\n);"
+            "source": "const response = await diom.msgs.namespace.configure(\n    \"some_namespace\",\n    {\n        retention: {\n            period: Temporal.Duration.from({ seconds: 30 }),\n        },\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -4635,12 +4635,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Namespace.Get(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceGetIn{\n        Name: \"some_namespace\",\n    },\n)"
+            "source": "response, err := diom.Msgs.Namespace.Get(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceGetIn{\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.namespace.get(\n    \"some_namespace\",\n    {\n        name: \"some_namespace\",\n    },\n);"
+            "source": "const response = await diom.msgs.namespace.get(\n    \"some_namespace\",\n    {\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -4729,12 +4729,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Publish(\n    ctx,\n    \"some_topic_name\",\n    MsgPublishIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        Msgs: []MsgIn{},\n        IdempotencyKey: new(\"my_idempotency_key\"),\n    },\n)"
+            "source": "response, err := diom.Msgs.Publish(\n    ctx,\n    \"some_topic_name\",\n    MsgPublishIn{\n        Namespace: new(\"some_namespace\"),\n        Msgs: []MsgIn{},\n        IdempotencyKey: new(\"my_idempotency_key\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.publish(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        msgs: [],\n        idempotencyKey: \"my_idempotency_key\",\n    },\n);"
+            "source": "const response = await diom.msgs.publish(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        msgs: [],\n        idempotencyKey: \"my_idempotency_key\",\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -4823,12 +4823,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Stream.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        DefaultStartingPosition: new(SEEKPOSITION_EARLIEST),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
+            "source": "response, err := diom.Msgs.Stream.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        DefaultStartingPosition: new(SEEKPOSITION_EARLIEST),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.stream.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n        batchSize: 1,\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n        defaultStartingPosition: SeekPosition.Earliest,\n        batchWait: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+            "source": "const response = await diom.msgs.stream.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        batchSize: 1,\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n        defaultStartingPosition: SeekPosition.Earliest,\n        batchWait: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -4917,12 +4917,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Stream.Commit(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCommitIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name~0\",\n        ConsumerGroup: \"some_consumer_group\",\n        Offset: uint64(1),\n    },\n)"
+            "source": "response, err := diom.Msgs.Stream.Commit(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCommitIn{\n        Namespace: new(\"some_namespace\"),\n        Offset: uint64(1),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.stream.commit(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name~0\",\n        consumerGroup: \"some_consumer_group\",\n        offset: 1,\n    },\n);"
+            "source": "const response = await diom.msgs.stream.commit(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        offset: 1,\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -5011,12 +5011,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Stream.Seek(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamSeekIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        Offset: new(uint64(1)),\n        Position: new(SEEKPOSITION_EARLIEST),\n        Timestamp: new(diom.Timestamp(time.Date(2026, 04, 20, 12, 0, 0, 0, time.UTC))),\n    },\n)"
+            "source": "response, err := diom.Msgs.Stream.Seek(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamSeekIn{\n        Namespace: new(\"some_namespace\"),\n        Offset: new(uint64(1)),\n        Position: new(SEEKPOSITION_EARLIEST),\n        Timestamp: new(diom.Timestamp(time.Date(2026, 04, 20, 12, 0, 0, 0, time.UTC))),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.stream.seek(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n        offset: 1,\n        position: SeekPosition.Earliest,\n        timestamp: new Date(\"2026-04-20 12:00:00Z\"),\n    },\n);"
+            "source": "const response = await diom.msgs.stream.seek(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        offset: 1,\n        position: SeekPosition.Earliest,\n        timestamp: new Date(\"2026-04-20 12:00:00Z\"),\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -5105,12 +5105,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Stream.CancelLease(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCancelLeaseIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name~0\",\n        ConsumerGroup: \"some_consumer_group\",\n    },\n)"
+            "source": "response, err := diom.Msgs.Stream.CancelLease(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCancelLeaseIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.stream.cancelLease(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name~0\",\n        consumerGroup: \"some_consumer_group\",\n    },\n);"
+            "source": "const response = await diom.msgs.stream.cancelLease(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -5199,12 +5199,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.queue.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n        batchSize: 1,\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n        batchWait: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+            "source": "const response = await diom.msgs.queue.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        batchSize: 1,\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n        batchWait: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -5293,12 +5293,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.Ack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueAckIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        MsgIds: []string{},\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.Ack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueAckIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.queue.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n        msgIds: [],\n    },\n);"
+            "source": "const response = await diom.msgs.queue.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        msgIds: [],\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -5387,12 +5387,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.ExtendLease(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueExtendLeaseIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        MsgIds: []string{},\n        LeaseDuration: new(diom.DurationMs(30000)),\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.ExtendLease(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueExtendLeaseIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n        LeaseDuration: new(diom.DurationMs(30000)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.queue.extendLease(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n        msgIds: [],\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+            "source": "const response = await diom.msgs.queue.extendLease(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        msgIds: [],\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -5481,12 +5481,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.Configure(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        RetrySchedule: []uint64{},\n        DlqTopic: new(\"some_topic_name\"),\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.Configure(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        RetrySchedule: []uint64{},\n        DlqTopic: new(\"some_topic_name\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.queue.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n        retrySchedule: [],\n        dlqTopic: \"some_topic_name\",\n    },\n);"
+            "source": "const response = await diom.msgs.queue.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        retrySchedule: [],\n        dlqTopic: \"some_topic_name\",\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -5575,12 +5575,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.Nack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueNackIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        MsgIds: []string{},\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.Nack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueNackIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.queue.nack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n        msgIds: [],\n    },\n);"
+            "source": "const response = await diom.msgs.queue.nack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        msgIds: [],\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -5669,12 +5669,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.RedriveDlq(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueRedriveDlqIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.RedriveDlq(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueRedriveDlqIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.queue.redriveDlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        consumerGroup: \"some_consumer_group\",\n    },\n);"
+            "source": "const response = await diom.msgs.queue.redriveDlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n    },\n);"
           },
           {
             "lang": "Rust",
@@ -5763,12 +5763,12 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Topic.Configure(\n    ctx,\n    \"some_topic_name\",\n    MsgTopicConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        Partitions: uint16(1),\n    },\n)"
+            "source": "response, err := diom.Msgs.Topic.Configure(\n    ctx,\n    \"some_topic_name\",\n    MsgTopicConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Partitions: uint16(1),\n    },\n)"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.topic.configure(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        topic: \"some_topic_name\",\n        partitions: 1,\n    },\n);"
+            "source": "const response = await diom.msgs.topic.configure(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        partitions: 1,\n    },\n);"
           },
           {
             "lang": "Rust",
