@@ -15,13 +15,7 @@
 {{ resource.name | to_upper_camel_case }}{
 {%- for field in resource.fields | selectattr("deprecated", "false") %}
     {% set field_val = field_example(field) | trim -%}
-    {% if resource.name is endingwith "Patch" and field.nullable -%}
-        {% if field.type.is_json_object() and field_val == "nil" -%}
-            {% set field_val %}NewUnsetNullable[map[string]any](){% endset -%}
-        {% else -%}
-            {% set field_val %}NewNullable({{ field_val }}){% endset -%}
-        {% endif -%}
-    {% elif not field.required and not (field.type.is_set() or field.type.is_list() or field.type.is_map()) and field_val != "nil" -%}
+    {% if not field.required and not (field.type.is_set() or field.type.is_list() or field.type.is_map()) and field_val != "nil" -%}
         {%- set field_val %}new({{ field_val }}){% endset -%}
     {% elif not field.required and field.type.is_map() and field_val != "nil" -%}
         {%- set field_val %}&{{ field_val }}{% endset -%}
