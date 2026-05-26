@@ -49,6 +49,7 @@ pub(crate) fn add_to_spec(openapi: &mut openapi::OpenApi) -> anyhow::Result<()> 
 fn load_templates() -> anyhow::Result<CodesampleTemplates> {
     const TEMPLATES: &[(&str, &str, CodegenLanguage)] = &[
         ("go", "Go", CodegenLanguage::Go),
+        ("java", "Java", CodegenLanguage::Java),
         ("javascript", "JavaScript", CodegenLanguage::TypeScript),
         ("rust", "Rust", CodegenLanguage::Rust),
     ];
