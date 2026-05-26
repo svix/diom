@@ -1,15 +1,15 @@
-use diom_core::types::UnixTimestampMs;
-use opentelemetry::metrics::Meter;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use diom_core::Monotime;
+use dashmap::DashMap;
+use diom_core::{Monotime, types::UnixTimestampMs};
 use diom_error::{Error, Result, ResultExt};
-use diom_id::NamespaceId;
+use diom_id::{NamespaceId, TopicId};
 use diom_namespace::{Namespace, entities::MsgsConfig};
 use diom_operations::BackgroundResult;
 use fjall::KeyspaceCreateOptions;
+use opentelemetry::metrics::Meter;
 
-use entities::{ConsumerGroup, Partition, TopicName};
+use entities::{ConsumerGroup, Offset, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
 use storage::{
     MsgRow, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow,
@@ -39,6 +39,8 @@ pub struct State {
     pub(crate) msg_table: fjall::Keyspace,
     pub(crate) metrics: metrics::MsgMetrics,
     pub(crate) topic_publish_notifier: TopicPublishNotifier,
+    /// Caches the highest offset within a topic/partition.
+    hwm_cache: Arc<DashMap<(TopicId, Partition), Offset>>,
 }
 
 impl State {
@@ -61,7 +63,26 @@ impl State {
             msg_table,
             metrics: metrics::MsgMetrics::new(meter),
             topic_publish_notifier,
+            hwm_cache: Arc::new(DashMap::new()),
         })
+    }
+
+    /// Returns the next offset to assign for a partition.
+    ///
+    /// Checks the in-memory cache first. On a miss, falls through to disk
+    /// (backward scan, then persisted HWM row) and populates the cache.
+    pub(crate) fn next_offset(&self, topic_id: TopicId, partition: Partition) -> Result<Offset> {
+        if let Some(cached) = self.hwm_cache.get(&(topic_id, partition)) {
+            return Ok(*cached);
+        }
+        let offset = MsgRow::next_offset(&self.msg_table, topic_id, partition)?;
+        self.hwm_cache.insert((topic_id, partition), offset);
+        Ok(offset)
+    }
+
+    /// Updates the cached high-water mark after a successful write.
+    pub(crate) fn set_hwm(&self, topic_id: TopicId, partition: Partition, next_offset: Offset) {
+        self.hwm_cache.insert((topic_id, partition), next_offset);
     }
 }
 
@@ -186,6 +207,11 @@ impl AllNodesWorker {
     }
 
     async fn worker_loop(&self) -> BackgroundResult<()> {
+        // Periodically clear the cache, to prevent it from growing unbounded.
+        // There's potentially a more complex scheme we can do, but this seemed
+        // the most straightforward for now.
+        self.state.hwm_cache.clear();
+
         let mut tasks = tokio::task::JoinSet::new();
         tasks.spawn_blocking({
             let state = self.state.clone();
@@ -212,7 +238,7 @@ impl AllNodesWorker {
 
 /// Iterates all namespaces with a retention period and deletes expired messages.
 #[tracing::instrument(skip_all, fields(total_deleted))]
-fn delete_expired_messages(
+pub fn delete_expired_messages(
     state: &State,
     namespace_state: &diom_namespace::State,
     now: UnixTimestampMs,
@@ -277,12 +303,14 @@ mod delete_expired_tests {
     use diom_core::types::DurationMs;
     use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
     use diom_namespace::{entities::NamespaceName, operations::create_namespace::CreateNamespace};
+    use diom_operations::OpContext;
     use fjall_utils::{Databases, WriteBatchExt};
     use opentelemetry::metrics::MeterProvider as _;
 
     use super::*;
     use crate::{
-        entities::{Partition, TopicName},
+        entities::{MsgIn, Partition, TopicIn, TopicName},
+        operations::{MsgsRaftState, PublishOperation, PublishResponseData, Response},
         storage::{MsgKey, MsgRow, TopicKey, TopicRow},
     };
 
@@ -397,6 +425,37 @@ mod delete_expired_tests {
                 .prefix(MsgKey::prefix_partition(&topic_id, &partition))
                 .count()
         }
+
+        async fn publish(
+            &self,
+            namespace_id: NamespaceId,
+            topic: &str,
+            msgs: Vec<MsgIn>,
+            now: UnixTimestampMs,
+        ) -> PublishResponseData {
+            let op = PublishOperation::new(
+                namespace_id,
+                TopicIn::TopicName(TopicName::new(topic.to_owned()).unwrap()),
+                msgs,
+                None,
+            )
+            .unwrap();
+            let raft_state = MsgsRaftState {
+                msgs: &self.state,
+                namespace: &self.namespace_state,
+            };
+            let ctx = OpContext {
+                timestamp: now,
+                log_index: 0,
+                term: 0,
+            };
+            let op: operations::MsgsOperation = op.into();
+            let response = op.apply(raft_state, &ctx).await;
+            match response {
+                Response::Publish(r) => r.0.unwrap(),
+                _ => panic!("unexpected response variant"),
+            }
+        }
     }
 
     fn ts(millis: i64) -> UnixTimestampMs {
@@ -482,5 +541,51 @@ mod delete_expired_tests {
 
         assert_eq!(fixture.msg_count(topic_expiring, p), 0);
         assert_eq!(fixture.msg_count(topic_permanent, p), 1);
+    }
+
+    #[tokio::test]
+    async fn offsets_are_monotonic_after_full_partition_deletion() {
+        let fixture = Fixture::new();
+        let retention = DurationMs::from_secs(10);
+        let ns_id = fixture
+            .create_namespace("ns", Some(retention), ts(1_000))
+            .await;
+
+        fn msg(value: &[u8]) -> MsgIn {
+            MsgIn {
+                value: value.into(),
+                headers: HashMap::new(),
+                key: None,
+                delay: None,
+            }
+        }
+
+        // Publish first batch at t=1000
+        let batch1 = fixture
+            .publish(
+                ns_id,
+                "topic",
+                vec![msg(b"a"), msg(b"b"), msg(b"c")],
+                ts(1_000),
+            )
+            .await;
+        assert_eq!(batch1.topics.len(), 1);
+        let batch1_start = batch1.topics[0].start_offset;
+        let batch1_end = batch1.topics[0].offset;
+        assert_eq!(batch1_start, 0);
+        assert_eq!(batch1_end, 3);
+
+        // Delete all messages (now = t=20_000, retention = 10s, cutoff = t=10_000)
+        delete_expired_messages(&fixture.state, &fixture.namespace_state, ts(20_000)).unwrap();
+
+        // Publish second batch — offsets must continue from 3, not reset to 0
+        let batch2 = fixture
+            .publish(ns_id, "topic", vec![msg(b"d"), msg(b"e")], ts(20_000))
+            .await;
+        assert_eq!(batch2.topics.len(), 1);
+        let batch2_start = batch2.topics[0].start_offset;
+        let batch2_end = batch2.topics[0].offset;
+        assert_eq!(batch2_start, 3, "offsets must not reset after deletion");
+        assert_eq!(batch2_end, 5);
     }
 }

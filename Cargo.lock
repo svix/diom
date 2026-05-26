@@ -1787,6 +1787,7 @@ dependencies = [
 name = "diom-msgs"
 version = "0.2.4"
 dependencies = [
+ "dashmap",
  "diom-core",
  "diom-error",
  "diom-id",

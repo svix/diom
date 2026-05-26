@@ -114,11 +114,9 @@ impl StreamReceiveOperation {
                         let mut lease = StreamLeaseRow::new()?;
                         lease.offset = match self.default_starting_position {
                             SeekPosition::Earliest => 0,
-                            SeekPosition::Latest => MsgRow::next_offset(
-                                &state.msg_table,
-                                topic_row.id,
-                                topic.partition,
-                            )?,
+                            SeekPosition::Latest => {
+                                state.next_offset(topic_row.id, topic.partition)?
+                            }
                         };
                         (lease, true)
                     }
