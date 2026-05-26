@@ -11,10 +11,6 @@ db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "deny"
 ignore = [
-    # can't upgrade to hickory 0.26 until https://github.com/seanmonstar/reqwest/pull/3014 is landed
-    # on reqwest and all of our deps are updated to the new reqwest version
-    "RUSTSEC-2026-0118",
-    "RUSTSEC-2026-0119",
 ]
 
 [licenses]
