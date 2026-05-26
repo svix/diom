@@ -2661,7 +2661,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Cache.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    CacheSetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Value: []uint8{},\n        Ttl: diom.DurationMs(30000),\n    },\n)"
+            "source": "response, err := diom.Cache.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    CacheSetIn{\n        Namespace: new(\"some_namespace\"),\n        Ttl: diom.DurationMs(30000),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -2755,7 +2755,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Cache.Get(\n    ctx,\n    \"some_key\",\n    CacheGetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
+            "source": "response, err := diom.Cache.Get(\n    ctx,\n    \"some_key\",\n    CacheGetIn{\n        Namespace: new(\"some_namespace\"),\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -3037,7 +3037,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Cache.Delete(\n    ctx,\n    \"some_key\",\n    CacheDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n    },\n)"
+            "source": "response, err := diom.Cache.Delete(\n    ctx,\n    \"some_key\",\n    CacheDeleteIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -3131,7 +3131,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Kv.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    KvSetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Value: []uint8{},\n        Ttl: new(diom.DurationMs(30000)),\n        Behavior: new(OPERATIONBEHAVIOR_UPSERT),\n        Version: new(uint64(1)),\n    },\n)"
+            "source": "response, err := diom.Kv.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    KvSetIn{\n        Namespace: new(\"some_namespace\"),\n        Ttl: new(diom.DurationMs(30000)),\n        Behavior: new(OPERATIONBEHAVIOR_UPSERT),\n        Version: new(uint64(1)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -3225,7 +3225,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Kv.Get(\n    ctx,\n    \"some_key\",\n    KvGetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
+            "source": "response, err := diom.Kv.Get(\n    ctx,\n    \"some_key\",\n    KvGetIn{\n        Namespace: new(\"some_namespace\"),\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -3507,7 +3507,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Kv.Delete(\n    ctx,\n    \"some_key\",\n    KvDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Version: new(uint64(1)),\n    },\n)"
+            "source": "response, err := diom.Kv.Delete(\n    ctx,\n    \"some_key\",\n    KvDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Version: new(uint64(1)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -4071,7 +4071,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Idempotency.Start(\n    ctx,\n    \"some_key\",\n    IdempotencyStartIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        LockPeriod: diom.DurationMs(30000),\n    },\n)"
+            "source": "response, err := diom.Idempotency.Start(\n    ctx,\n    \"some_key\",\n    IdempotencyStartIn{\n        Namespace: new(\"some_namespace\"),\n        LockPeriod: diom.DurationMs(30000),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -4165,7 +4165,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Idempotency.Complete(\n    ctx,\n    \"some_key\",\n    IdempotencyCompleteIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Response: []uint8{},\n        Context: nil,\n        Ttl: diom.DurationMs(30000),\n    },\n)"
+            "source": "response, err := diom.Idempotency.Complete(\n    ctx,\n    \"some_key\",\n    IdempotencyCompleteIn{\n        Namespace: new(\"some_namespace\"),\n        Response: []uint8{},\n        Context: nil,\n        Ttl: diom.DurationMs(30000),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -4259,7 +4259,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Idempotency.Abort(\n    ctx,\n    \"some_key\",\n    IdempotencyAbortIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n    },\n)"
+            "source": "response, err := diom.Idempotency.Abort(\n    ctx,\n    \"some_key\",\n    IdempotencyAbortIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -4541,7 +4541,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Namespace.Configure(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceConfigureIn{\n        Name: \"some_namespace\",\n        Retention: new(Retention{\n            Period: new(diom.DurationMs(30000)),\n        }),\n    },\n)"
+            "source": "response, err := diom.Msgs.Namespace.Configure(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceConfigureIn{\n        Retention: new(Retention{\n            Period: new(diom.DurationMs(30000)),\n        }),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -4635,7 +4635,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Namespace.Get(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceGetIn{\n        Name: \"some_namespace\",\n    },\n)"
+            "source": "response, err := diom.Msgs.Namespace.Get(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceGetIn{\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -4729,7 +4729,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Publish(\n    ctx,\n    \"some_topic_name\",\n    MsgPublishIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        Msgs: []MsgIn{},\n        IdempotencyKey: new(\"my_idempotency_key\"),\n    },\n)"
+            "source": "response, err := diom.Msgs.Publish(\n    ctx,\n    \"some_topic_name\",\n    MsgPublishIn{\n        Namespace: new(\"some_namespace\"),\n        Msgs: []MsgIn{},\n        IdempotencyKey: new(\"my_idempotency_key\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -4823,7 +4823,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Stream.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        DefaultStartingPosition: new(SEEKPOSITION_EARLIEST),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
+            "source": "response, err := diom.Msgs.Stream.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        DefaultStartingPosition: new(SEEKPOSITION_EARLIEST),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -4917,7 +4917,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Stream.Commit(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCommitIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name~0\",\n        ConsumerGroup: \"some_consumer_group\",\n        Offset: uint64(1),\n    },\n)"
+            "source": "response, err := diom.Msgs.Stream.Commit(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCommitIn{\n        Namespace: new(\"some_namespace\"),\n        Offset: uint64(1),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -5011,7 +5011,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Stream.Seek(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamSeekIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        Offset: new(uint64(1)),\n        Position: new(SEEKPOSITION_EARLIEST),\n        Timestamp: new(diom.Timestamp(time.Date(2026, 04, 20, 12, 0, 0, 0, time.UTC))),\n    },\n)"
+            "source": "response, err := diom.Msgs.Stream.Seek(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamSeekIn{\n        Namespace: new(\"some_namespace\"),\n        Offset: new(uint64(1)),\n        Position: new(SEEKPOSITION_EARLIEST),\n        Timestamp: new(diom.Timestamp(time.Date(2026, 04, 20, 12, 0, 0, 0, time.UTC))),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -5105,7 +5105,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Stream.CancelLease(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCancelLeaseIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name~0\",\n        ConsumerGroup: \"some_consumer_group\",\n    },\n)"
+            "source": "response, err := diom.Msgs.Stream.CancelLease(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCancelLeaseIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -5199,7 +5199,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -5293,7 +5293,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.Ack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueAckIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        MsgIds: []string{},\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.Ack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueAckIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -5387,7 +5387,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.ExtendLease(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueExtendLeaseIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        MsgIds: []string{},\n        LeaseDuration: new(diom.DurationMs(30000)),\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.ExtendLease(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueExtendLeaseIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n        LeaseDuration: new(diom.DurationMs(30000)),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -5481,7 +5481,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.Configure(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        RetrySchedule: []uint64{},\n        DlqTopic: new(\"some_topic_name\"),\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.Configure(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        RetrySchedule: []uint64{},\n        DlqTopic: new(\"some_topic_name\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -5575,7 +5575,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.Nack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueNackIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        MsgIds: []string{},\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.Nack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueNackIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -5669,7 +5669,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Queue.RedriveDlq(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueRedriveDlqIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n    },\n)"
+            "source": "response, err := diom.Msgs.Queue.RedriveDlq(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueRedriveDlqIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
           },
           {
             "lang": "TypeScript",
@@ -5763,7 +5763,7 @@
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Topic.Configure(\n    ctx,\n    \"some_topic_name\",\n    MsgTopicConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        Partitions: uint16(1),\n    },\n)"
+            "source": "response, err := diom.Msgs.Topic.Configure(\n    ctx,\n    \"some_topic_name\",\n    MsgTopicConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Partitions: uint16(1),\n    },\n)"
           },
           {
             "lang": "TypeScript",

@@ -13,7 +13,7 @@
     {{ resource.name | to_upper_snake_case | replace("_", "") }}_{{ resource.variants[0][0] | to_upper_snake_case }}
 {%- else -%}
 {{ resource.name | to_upper_camel_case }}{
-{%- for field in resource.fields | selectattr("deprecated", "false") %}
+{%- for field in resource.fields | selectattr("positional", "false") %}
     {% set field_val = field_example(field) | trim -%}
     {% if not field.required and not (field.type.is_set() or field.type.is_list() or field.type.is_map()) and field_val != "nil" -%}
         {%- set field_val %}new({{ field_val }}){% endset -%}
