@@ -77,6 +77,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cluster-admin status"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.ClusterAdmin.Status(ctx)"
@@ -175,6 +180,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cluster-admin initialize '{}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -275,6 +285,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cluster-admin remove-node '{\n    \"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.ClusterAdmin.RemoveNode(\n    ctx,\n    ClusterRemoveNodeIn{\n        NodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n    },\n)"
@@ -373,6 +388,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cluster-admin force-snapshot '{}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -473,6 +493,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cluster-admin force-election '{}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.ClusterAdmin.ForceElection(\n    ctx,\n    ClusterForceElectionIn{\n    },\n)"
@@ -571,6 +596,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-token create '{\n    \"name\": \"some token name\",\n    \"role\": \"some token role\",\n    \"expiry_ms\": 30000,\n    \"enabled\": true\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -671,6 +701,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-token expire '{\n    \"id\": \"key_06etngr201xwv7qj08mt4cs03w\",\n    \"expiry_ms\": 30000\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Admin.AuthToken.Expire(\n    ctx,\n    AdminAuthTokenExpireIn{\n        Id: \"key_06etngr201xwv7qj08mt4cs03w\",\n        Expiry: new(diom.DurationMs(30000)),\n    },\n)"
@@ -769,6 +804,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-token rotate '{\n    \"id\": \"key_06etngr201xwv7qj08mt4cs03w\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -869,6 +909,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-token delete '{\n    \"id\": \"key_06etngr201xwv7qj08mt4cs03w\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Admin.AuthToken.Delete(\n    ctx,\n    AdminAuthTokenDeleteIn{\n        Id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    },\n)"
@@ -967,6 +1012,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-token list '{\n    \"limit\": 1,\n    \"iterator\": \"key_06etngr201xwv7qj08mt4cs03w\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -1067,6 +1117,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-token update '{\n    \"id\": \"key_06etngr201xwv7qj08mt4cs03w\",\n    \"name\": \"some token name\",\n    \"expiry_ms\": 30000,\n    \"enabled\": true\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Admin.AuthToken.Update(\n    ctx,\n    AdminAuthTokenUpdateIn{\n        Id: \"key_06etngr201xwv7qj08mt4cs03w\",\n        Name: new(\"some token name\"),\n        Expiry: new(diom.DurationMs(30000)),\n        Enabled: new(true),\n    },\n)"
@@ -1165,6 +1220,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-token whoami '{}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -1265,6 +1325,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-role configure '{\n    \"id\": \"some_role_id\",\n    \"description\": \"role description…\",\n    \"rules\": [],\n    \"policies\": [],\n    \"context\": \n            {}\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Admin.AuthRole.Configure(\n    ctx,\n    AdminRoleConfigureIn{\n        Id: \"some_role_id\",\n        Description: \"role description…\",\n        Rules: []AccessRule{},\n        Policies: []string{},\n        Context: nil,\n    },\n)"
@@ -1363,6 +1428,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-role delete '{\n    \"id\": \"some_role_id\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -1463,6 +1533,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-role get '{\n    \"id\": \"some_role_id\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Admin.AuthRole.Get(\n    ctx,\n    AdminRoleGetIn{\n        Id: \"some_role_id\",\n    },\n)"
@@ -1561,6 +1636,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-role list '{\n    \"limit\": 1,\n    \"iterator\": \"some_role_id\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -1661,6 +1741,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-policy configure '{\n    \"id\": \"some_access_policy\",\n    \"description\": \"policy description…\",\n    \"rules\": []\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Admin.AuthPolicy.Configure(\n    ctx,\n    AdminAccessPolicyConfigureIn{\n        Id: \"some_access_policy\",\n        Description: \"policy description…\",\n        Rules: []AccessRule{},\n    },\n)"
@@ -1759,6 +1844,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-policy delete '{\n    \"id\": \"some_access_policy\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -1859,6 +1949,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-policy get '{\n    \"id\": \"some_access_policy\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Admin.AuthPolicy.Get(\n    ctx,\n    AdminAccessPolicyGetIn{\n        Id: \"some_access_policy\",\n    },\n)"
@@ -1957,6 +2052,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin auth-policy list '{\n    \"limit\": 1,\n    \"iterator\": \"some_access_policy\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -2759,6 +2859,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cache set \"some_key\" [] '{\n    \"namespace\": \"some_namespace\",\n    \"ttl_ms\": 30000\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Cache.Set(\n    ctx,\n    \"some_key\",\n    []uint8{},\n    CacheSetIn{\n        Namespace: new(\"some_namespace\"),\n        Ttl: diom.DurationMs(30000),\n    },\n)"
@@ -2857,6 +2962,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cache get \"some_key\" '{\n    \"namespace\": \"some_namespace\",\n    \"consistency\": \"strong\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -2957,6 +3067,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cache namespace configure '{\n    \"name\": \"some_namespace\",\n    \"eviction_policy\": \"no-eviction\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Cache.Namespace.Configure(\n    ctx,\n    CacheConfigureNamespaceIn{\n        Name: \"some_namespace\",\n        EvictionPolicy: new(EVICTIONPOLICY_NO_EVICTION),\n    },\n)"
@@ -3055,6 +3170,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cache namespace get '{\n    \"name\": \"some_namespace\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -3155,6 +3275,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cache delete \"some_key\" '{\n    \"namespace\": \"some_namespace\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Cache.Delete(\n    ctx,\n    \"some_key\",\n    CacheDeleteIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
@@ -3253,6 +3378,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom kv set \"some_key\" [] '{\n    \"namespace\": \"some_namespace\",\n    \"ttl_ms\": 30000,\n    \"behavior\": \"upsert\",\n    \"version\": 1\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -3353,6 +3483,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom kv get \"some_key\" '{\n    \"namespace\": \"some_namespace\",\n    \"consistency\": \"strong\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Kv.Get(\n    ctx,\n    \"some_key\",\n    KvGetIn{\n        Namespace: new(\"some_namespace\"),\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
@@ -3451,6 +3586,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom kv namespace configure '{\n    \"name\": \"some_namespace\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -3551,6 +3691,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom kv namespace get '{\n    \"name\": \"some_namespace\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Kv.Namespace.Get(\n    ctx,\n    KvGetNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
@@ -3649,6 +3794,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom kv delete \"some_key\" '{\n    \"namespace\": \"some_namespace\",\n    \"version\": 1\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -3749,6 +3899,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom rate-limit limit '{\n    \"namespace\": \"some_namespace\",\n    \"key\": \"some_key\",\n    \"tokens\": 1,\n    \"config\": {\n        \"capacity\": 1,\n        \"refill_amount\": 1,\n        \"refill_interval_ms\": 30000\n    }\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.RateLimit.Limit(\n    ctx,\n    RateLimitCheckIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Tokens: new(uint64(1)),\n        Config: RateLimitConfig{\n            Capacity: uint64(1),\n            RefillAmount: uint64(1),\n            RefillInterval: new(diom.DurationMs(30000)),\n        },\n    },\n)"
@@ -3847,6 +4002,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom rate-limit get-remaining '{\n    \"namespace\": \"some_namespace\",\n    \"key\": \"some_key\",\n    \"config\": {\n        \"capacity\": 1,\n        \"refill_amount\": 1,\n        \"refill_interval_ms\": 30000\n    }\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -3947,6 +4107,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom rate-limit reset '{\n    \"namespace\": \"some_namespace\",\n    \"key\": \"some_key\",\n    \"config\": {\n        \"capacity\": 1,\n        \"refill_amount\": 1,\n        \"refill_interval_ms\": 30000\n    }\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.RateLimit.Reset(\n    ctx,\n    RateLimitResetIn{\n        Namespace: new(\"some_namespace\"),\n        Key: \"some_key\",\n        Config: RateLimitConfig{\n            Capacity: uint64(1),\n            RefillAmount: uint64(1),\n            RefillInterval: new(diom.DurationMs(30000)),\n        },\n    },\n)"
@@ -4045,6 +4210,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom rate-limit namespace configure '{\n    \"name\": \"some_namespace\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -4145,6 +4315,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom rate-limit namespace get '{\n    \"name\": \"some_namespace\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.RateLimit.Namespace.Get(\n    ctx,\n    RateLimitGetNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
@@ -4243,6 +4418,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom idempotency start \"some_key\" '{\n    \"namespace\": \"some_namespace\",\n    \"lock_period_ms\": 30000\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -4343,6 +4523,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom idempotency complete \"some_key\" '{\n    \"namespace\": \"some_namespace\",\n    \"response\": [],\n    \"context\": \n            {},\n    \"ttl_ms\": 30000\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Idempotency.Complete(\n    ctx,\n    \"some_key\",\n    IdempotencyCompleteIn{\n        Namespace: new(\"some_namespace\"),\n        Response: []uint8{},\n        Context: nil,\n        Ttl: diom.DurationMs(30000),\n    },\n)"
@@ -4441,6 +4626,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom idempotency abort \"some_key\" '{\n    \"namespace\": \"some_namespace\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -4541,6 +4731,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom idempotency namespace configure '{\n    \"name\": \"some_namespace\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Idempotency.Namespace.Configure(\n    ctx,\n    IdempotencyConfigureNamespaceIn{\n        Name: \"some_namespace\",\n    },\n)"
@@ -4639,6 +4834,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom idempotency namespace get '{\n    \"name\": \"some_namespace\"\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -4739,6 +4939,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs namespace configure \"some_namespace\" '{\n    \"retention\": {\n        \"period_ms\": 30000\n    }\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Msgs.Namespace.Configure(\n    ctx,\n    \"some_namespace\",\n    MsgNamespaceConfigureIn{\n        Retention: new(Retention{\n            Period: new(diom.DurationMs(30000)),\n        }),\n    },\n)"
@@ -4837,6 +5042,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs namespace get \"some_namespace\" '{}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -4937,6 +5147,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs publish \"some_topic_name\" '{\n    \"namespace\": \"some_namespace\",\n    \"msgs\": [],\n    \"idempotency_key\": \"my_idempotency_key\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Msgs.Publish(\n    ctx,\n    \"some_topic_name\",\n    MsgPublishIn{\n        Namespace: new(\"some_namespace\"),\n        Msgs: []MsgIn{},\n        IdempotencyKey: new(\"my_idempotency_key\"),\n    },\n)"
@@ -5035,6 +5250,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs stream receive \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"batch_size\": 1,\n    \"lease_duration_ms\": 30000,\n    \"default_starting_position\": \"earliest\",\n    \"batch_wait_ms\": 30000\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -5135,6 +5355,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs stream commit \"some_topic_name~0\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"offset\": 1\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Msgs.Stream.Commit(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCommitIn{\n        Namespace: new(\"some_namespace\"),\n        Offset: uint64(1),\n    },\n)"
@@ -5233,6 +5458,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs stream seek \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"offset\": 1,\n    \"position\": \"earliest\",\n    \"timestamp\": 1776686400000\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -5333,6 +5563,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs stream cancel-lease \"some_topic_name~0\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Msgs.Stream.CancelLease(\n    ctx,\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCancelLeaseIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
@@ -5431,6 +5666,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs queue receive \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"batch_size\": 1,\n    \"lease_duration_ms\": 30000,\n    \"batch_wait_ms\": 30000\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -5531,6 +5771,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs queue ack \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"msg_ids\": []\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Msgs.Queue.Ack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueAckIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n    },\n)"
@@ -5629,6 +5874,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs queue extend-lease \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"msg_ids\": [],\n    \"lease_duration_ms\": 30000\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -5729,6 +5979,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs queue configure \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"retry_schedule\": [],\n    \"dlq_topic\": \"some_topic_name\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Msgs.Queue.Configure(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        RetrySchedule: []uint64{},\n        DlqTopic: new(\"some_topic_name\"),\n    },\n)"
@@ -5827,6 +6082,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs queue nack \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"msg_ids\": []\n}'"
+          },
           {
             "lang": "Go",
             "label": "Go",
@@ -5927,6 +6187,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs queue redrive-dlq \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\"\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Msgs.Queue.RedriveDlq(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueRedriveDlqIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
@@ -6026,6 +6291,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs topic configure \"some_topic_name\" '{\n    \"namespace\": \"some_namespace\",\n    \"partitions\": 1\n}'"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Msgs.Topic.Configure(\n    ctx,\n    \"some_topic_name\",\n    MsgTopicConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Partitions: uint16(1),\n    },\n)"
@@ -6115,6 +6385,11 @@
         ],
         "x-codeSamples": [
           {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom health ping"
+          },
+          {
             "lang": "Go",
             "label": "Go",
             "source": "response, err := diom.Health.Ping(ctx)"
@@ -6196,6 +6471,11 @@
           }
         ],
         "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom health error"
+          },
           {
             "lang": "Go",
             "label": "Go",

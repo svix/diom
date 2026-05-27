@@ -15,7 +15,7 @@
     {%- set fields_inner %}
 
     {%- for field in rendered_fields %}
-    "{{ field.name | to_lower_camel_case }}": {{ field_example(field) }},
+    "{{ field.name }}": {{ field_example(field) }},
     {%- endfor -%}
     {%- if resource.kind == "struct_enum" -%}
     {%- set variant = resource.variants[1] -%}
@@ -24,14 +24,14 @@
             {{ render_example_resource(variant.inner) }}
         {%- endif -%}
     {%- endset -%}
-    "{{ resource.discriminator_field | to_lower_camel_case }}": "{{ variant.name }}",
-    "{{ resource.content_field | to_lower_camel_case  }}": {{ variant_val }}
+    "{{ resource.discriminator_field }}": "{{ variant.name }}",
+    "{{ resource.content_field  }}": {{ variant_val }}
     {%- endif -%}
 
     {%- endset -%}
-'{
+{
     {{- fields_inner | strip_trailing_comma }}
-}'
+}
     {%- endif %}
 {%- endif -%}
 
@@ -78,7 +78,7 @@
         {%- else -%}
         []
         {%- endif -%}
-    {%- elif field.type.is_bool() %}
+    {%- elif field.type.is_bool() -%}
         true
     {%- else -%}
         {{ panic("missing example def for field") }}
@@ -87,10 +87,10 @@
 
 {# output starts here -#}
 diom {% for resource_name in resource_parents -%}{{ resource_name | to_kebab_case }} {% endfor %}
-    {{- operation.name | to_lower_camel_case }}
+    {{- operation.name | to_kebab_case }}
     {%- if operation.request_body_schema_name is defined %}
     {%- set body_schema = api.types[operation.request_body_schema_name] %}
     {%- set positional_fields = body_schema.fields | selectattr("positional") %}
     {%- for field in positional_fields %} {{ field_example(field) }} {%- endfor %}
-    {{- " " }} {{- render_example_resource(req_body_ty) }}
+    {#- #} '{{ render_example_resource(req_body_ty) }}'
     {%- endif %}
