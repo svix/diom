@@ -40,7 +40,7 @@ jobs:
         rust: [stable, beta]
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: diom-server-binary
           path: /tmp
@@ -69,7 +69,7 @@ jobs:
         python-version: ['3.12', '3.13']
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: diom-server-binary
           path: /tmp
@@ -95,7 +95,7 @@ jobs:
         node-version: ['20', '22']
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: diom-server-binary
           path: /tmp
@@ -121,7 +121,7 @@ jobs:
         go-version: ['1.22', '1.23']
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: diom-server-binary
           path: /tmp
@@ -147,7 +147,7 @@ jobs:
         java-version: ['8', '11', '17', '21']
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: diom-server-binary
           path: /tmp
