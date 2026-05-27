@@ -52,6 +52,7 @@ fn load_templates() -> anyhow::Result<CodesampleTemplates> {
         ("go", "Go", CodegenLanguage::Go),
         ("java", "Java", CodegenLanguage::Java),
         ("javascript", "JavaScript", CodegenLanguage::TypeScript),
+        ("python", "Python", CodegenLanguage::Python),
         ("rust", "Rust", CodegenLanguage::Rust),
     ];
 
