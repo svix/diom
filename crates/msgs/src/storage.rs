@@ -470,6 +470,116 @@ pub(crate) fn delete_expired_partition(
     Ok(deleted)
 }
 
+/// Returns the offset of the earliest message in a partition, or `None` if the partition is empty.
+#[tracing::instrument(skip_all, level = "debug")]
+pub(crate) fn earliest_offset(
+    msg_table: &impl fjall_utils::ReadableKeyspace,
+    topic_id: TopicId,
+    partition: Partition,
+) -> Result<Option<Offset>> {
+    let prefix = MsgKey::prefix_partition(&topic_id, &partition);
+    match msg_table.prefix(prefix).next() {
+        Some(kv) => {
+            let key = kv.key()?;
+            let offset = MsgKey::extract_offset(&key)
+                .map_err(|e| diom_error::Error::internal(e.to_string()))?;
+            Ok(Some(offset))
+        }
+        None => Ok(None),
+    }
+}
+
+/// Deletes QueueLeaseRows for a partition whose offset is below `earliest_offset`.
+#[tracing::instrument(skip_all, level = "debug")]
+pub(crate) fn delete_stale_queue_leases(
+    db: &fjall::Database,
+    metadata_tables: &fjall::Keyspace,
+    topic_id: TopicId,
+    partition: Partition,
+    earliest_offset: Offset,
+) -> Result<usize> {
+    let prefix = QueueLeaseKey::prefix_partition(&topic_id, &partition);
+    let mut deleted = 0;
+
+    loop {
+        let mut keys = Vec::with_capacity(CLEANUP_BATCH_SIZE);
+
+        for entry in metadata_tables.prefix(&prefix) {
+            let k = entry.key()?;
+            let offset = QueueLeaseKey::extract_offset(&k)
+                .map_err(|e| diom_error::Error::internal(e.to_string()))?;
+            if offset >= earliest_offset {
+                break;
+            }
+            keys.push(k);
+            if keys.len() >= CLEANUP_BATCH_SIZE {
+                break;
+            }
+        }
+
+        if keys.is_empty() {
+            break;
+        }
+
+        let batch_len = keys.len();
+        let mut batch = db.batch();
+        for key in keys {
+            batch.remove(metadata_tables, key);
+        }
+        batch.commit().map_err(diom_error::Error::from)?;
+        deleted += batch_len;
+
+        if batch_len < CLEANUP_BATCH_SIZE {
+            break;
+        }
+    }
+
+    Ok(deleted)
+}
+
+/// Deletes StreamLeaseRows for consumer groups on fully-empty partitions.
+///
+/// A stream lease is only considered stale when its partition has no messages
+/// remaining (all deleted by retention) and a HWM exists proving messages
+/// once existed. This avoids deleting leases for groups that are still
+/// actively consuming from partitions with retained messages.
+#[tracing::instrument(skip_all, level = "debug")]
+pub(crate) fn delete_stale_stream_leases(
+    metadata_tables: &fjall::Keyspace,
+    msg_table: &impl fjall_utils::ReadableKeyspace,
+    topic_id: TopicId,
+) -> Result<usize> {
+    let prefix = StreamLeaseKey::prefix_topic_id(&topic_id);
+    let mut deleted = 0;
+
+    for entry in metadata_tables.prefix(prefix) {
+        let (key, val) = entry.into_inner()?;
+        let partition = StreamLeaseKey::extract_partition(&key)
+            .map_err(|e| diom_error::Error::internal(e.to_string()))?;
+        let lease = StreamLeaseRow::from_fjall_value(val)?;
+
+        // Only delete if partition is completely empty
+        if earliest_offset(msg_table, topic_id, partition)?.is_some() {
+            continue;
+        }
+
+        // Partition is empty — use HWM as cutoff. If no HWM either,
+        // this is a truly empty partition that never had messages, skip.
+        let hwm = HighWaterMarkRow::fetch(
+            msg_table,
+            HighWaterMarkKey::build_key(&topic_id, &partition),
+        )?;
+        let Some(h) = hwm else { continue };
+
+        if lease.offset < h.next_offset {
+            metadata_tables.remove(key)?;
+            deleted += 1;
+        }
+    }
+
+    Ok(deleted)
+}
+
 #[derive(Clone, Serialize, Deserialize, PersistableValue)]
 pub(crate) struct IdempotencyRow {
     pub expiry: UnixTimestampMs,

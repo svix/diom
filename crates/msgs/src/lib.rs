@@ -13,7 +13,8 @@ use entities::{ConsumerGroup, Offset, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
 use storage::{
     MsgRow, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow,
-    delete_expired_partition,
+    delete_expired_partition, delete_stale_queue_leases, delete_stale_stream_leases,
+    earliest_offset,
 };
 
 use crate::metrics::{record_end_offsets, record_topic_lag_metrics};
@@ -259,15 +260,30 @@ pub fn delete_expired_messages(
             let topic_row = TopicRow::from_fjall_value(val)?;
 
             for partition in topic_row.partitions() {
+                let partition = partition?;
                 let deleted = delete_expired_partition(
                     &state.db,
                     &state.msg_table,
                     topic_row.id,
-                    partition?,
+                    partition,
                     cutoff,
                 )?;
                 total_deleted += deleted;
+
+                if deleted > 0 {
+                    let cutoff_offset = earliest_offset(&state.msg_table, topic_row.id, partition)?
+                        .unwrap_or(u64::MAX);
+                    delete_stale_queue_leases(
+                        &state.db,
+                        &state.metadata_tables,
+                        topic_row.id,
+                        partition,
+                        cutoff_offset,
+                    )?;
+                }
             }
+
+            delete_stale_stream_leases(&state.metadata_tables, &state.msg_table, topic_row.id)?;
         }
     }
 
@@ -308,10 +324,17 @@ mod delete_expired_tests {
     use opentelemetry::metrics::MeterProvider as _;
 
     use super::*;
+    use std::num::NonZeroU16;
+
     use crate::{
-        entities::{MsgIn, Partition, TopicIn, TopicName},
-        operations::{MsgsRaftState, PublishOperation, PublishResponseData, Response},
-        storage::{MsgKey, MsgRow, TopicKey, TopicRow},
+        entities::{
+            ConsumerGroup, MsgIn, Partition, SeekPosition, TopicIn, TopicName, TopicPartition,
+        },
+        operations::{
+            MsgsRaftState, PublishOperation, PublishResponseData, QueueReceiveOperation, Response,
+            StreamReceiveOperation,
+        },
+        storage::{MsgKey, MsgRow, QueueLeaseKey, StreamLeaseKey, TopicKey, TopicRow},
     };
 
     struct Fixture {
@@ -587,5 +610,282 @@ mod delete_expired_tests {
         let batch2_end = batch2.topics[0].offset;
         assert_eq!(batch2_start, 3, "offsets must not reset after deletion");
         assert_eq!(batch2_end, 5);
+    }
+
+    impl Fixture {
+        async fn queue_receive(
+            &self,
+            namespace_id: NamespaceId,
+            topic: &str,
+            consumer_group: &str,
+            retention: Option<DurationMs>,
+            now: UnixTimestampMs,
+        ) {
+            let op = QueueReceiveOperation::new(
+                namespace_id,
+                TopicIn::TopicName(TopicName::new(topic.to_owned()).unwrap()),
+                ConsumerGroup::try_from(consumer_group).unwrap(),
+                NonZeroU16::new(10).unwrap(),
+                DurationMs::from_secs(30),
+                retention,
+            )
+            .unwrap();
+            let raft_state = MsgsRaftState {
+                msgs: &self.state,
+                namespace: &self.namespace_state,
+            };
+            let ctx = OpContext {
+                timestamp: now,
+                log_index: 0,
+                term: 0,
+            };
+            let op: operations::MsgsOperation = op.into();
+            let _ = op.apply(raft_state, &ctx).await;
+        }
+
+        async fn stream_receive(
+            &self,
+            namespace_id: NamespaceId,
+            topic: &str,
+            consumer_group: &str,
+            retention: Option<DurationMs>,
+            now: UnixTimestampMs,
+        ) {
+            let op = StreamReceiveOperation::new(
+                namespace_id,
+                TopicIn::TopicName(TopicName::new(topic.to_owned()).unwrap()),
+                ConsumerGroup::try_from(consumer_group).unwrap(),
+                NonZeroU16::new(10).unwrap(),
+                DurationMs::from_secs(30),
+                SeekPosition::Earliest,
+                retention,
+            )
+            .unwrap();
+            let raft_state = MsgsRaftState {
+                msgs: &self.state,
+                namespace: &self.namespace_state,
+            };
+            let ctx = OpContext {
+                timestamp: now,
+                log_index: 0,
+                term: 0,
+            };
+            let op: operations::MsgsOperation = op.into();
+            let _ = op.apply(raft_state, &ctx).await;
+        }
+
+        fn queue_lease_count(&self, topic_id: TopicId, partition: Partition) -> usize {
+            self.state
+                .metadata_tables
+                .prefix(QueueLeaseKey::prefix_partition(&topic_id, &partition))
+                .count()
+        }
+
+        fn stream_lease_count(&self, topic_id: TopicId) -> usize {
+            self.state
+                .metadata_tables
+                .prefix(StreamLeaseKey::prefix_topic_id(&topic_id))
+                .count()
+        }
+    }
+
+    #[tokio::test]
+    async fn stale_leases_cleaned_up_after_retention() {
+        let fixture = Fixture::new();
+        let retention = DurationMs::from_secs(10);
+        let ns_id = fixture
+            .create_namespace("ns-leases", Some(retention), ts(1_000))
+            .await;
+
+        fn msg(value: &[u8]) -> MsgIn {
+            MsgIn {
+                value: value.into(),
+                headers: HashMap::new(),
+                key: None,
+                delay: None,
+            }
+        }
+
+        // Publish messages at t=1000
+        fixture
+            .publish(
+                ns_id,
+                "topic",
+                vec![msg(b"a"), msg(b"b"), msg(b"c")],
+                ts(1_000),
+            )
+            .await;
+        let topic_id = TopicRow::fetch(
+            &fixture.state.metadata_tables,
+            TopicKey::build_key(&ns_id, &TopicName::new("topic".to_owned()).unwrap()),
+        )
+        .unwrap()
+        .unwrap()
+        .id;
+        let p = Partition::ZERO;
+
+        // Consume via queue (creates QueueLeaseRows) and stream (creates StreamLeaseRow)
+        fixture
+            .queue_receive(ns_id, "topic", "queue-cg", Some(retention), ts(1_000))
+            .await;
+        fixture
+            .stream_receive(ns_id, "topic", "stream-cg", Some(retention), ts(1_000))
+            .await;
+
+        // Verify leases exist (both queue and stream operations create StreamLeaseRows)
+        assert!(
+            fixture.queue_lease_count(topic_id, p) > 0,
+            "queue leases should exist"
+        );
+        assert!(
+            fixture.stream_lease_count(topic_id) > 0,
+            "stream leases should exist"
+        );
+
+        // Delete all messages and clean up leases (now = t=20_000, cutoff = t=10_000)
+        delete_expired_messages(&fixture.state, &fixture.namespace_state, ts(20_000)).unwrap();
+
+        // Verify stale leases were cleaned up
+        assert_eq!(
+            fixture.queue_lease_count(topic_id, p),
+            0,
+            "stale queue leases should be deleted"
+        );
+        assert_eq!(
+            fixture.stream_lease_count(topic_id),
+            0,
+            "stale stream lease should be deleted"
+        );
+    }
+
+    impl Fixture {
+        async fn publish_to_partition(
+            &self,
+            namespace_id: NamespaceId,
+            topic: &str,
+            partition: Partition,
+            msgs: Vec<MsgIn>,
+            now: UnixTimestampMs,
+        ) -> PublishResponseData {
+            let tp = TopicPartition::new(TopicName::new(topic.to_owned()).unwrap(), partition);
+            let op = PublishOperation::new(namespace_id, TopicIn::TopicPartition(tp), msgs, None)
+                .unwrap();
+            let raft_state = MsgsRaftState {
+                msgs: &self.state,
+                namespace: &self.namespace_state,
+            };
+            let ctx = OpContext {
+                timestamp: now,
+                log_index: 0,
+                term: 0,
+            };
+            let op: operations::MsgsOperation = op.into();
+            let response = op.apply(raft_state, &ctx).await;
+            match response {
+                Response::Publish(r) => r.0.unwrap(),
+                _ => panic!("unexpected response variant"),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn lease_cleanup_only_affects_stale_partitions() {
+        let fixture = Fixture::new();
+        let retention = DurationMs::from_secs(10);
+        let ns_id = fixture
+            .create_namespace("ns-partial", Some(retention), ts(1_000))
+            .await;
+
+        // Create a 2-partition topic
+        let topic_id = fixture.create_topic(ns_id, "multi", 2, ts(1_000));
+        let p0 = Partition::ZERO;
+        let p1 = Partition::ONE;
+
+        fn msg(value: &[u8]) -> MsgIn {
+            MsgIn {
+                value: value.into(),
+                headers: HashMap::new(),
+                key: None,
+                delay: None,
+            }
+        }
+
+        // Publish messages to both partitions at t=1000
+        fixture
+            .publish_to_partition(ns_id, "multi", p0, vec![msg(b"a0"), msg(b"b0")], ts(1_000))
+            .await;
+        fixture
+            .publish_to_partition(ns_id, "multi", p1, vec![msg(b"a1"), msg(b"b1")], ts(1_000))
+            .await;
+
+        // Consume from both partitions at t=2_000 (all messages are within retention)
+        fixture
+            .queue_receive(ns_id, "multi", "cg", Some(retention), ts(2_000))
+            .await;
+
+        // Verify leases exist on both partitions
+        assert!(
+            fixture.queue_lease_count(topic_id, p0) > 0,
+            "p0 queue leases should exist"
+        );
+        assert!(
+            fixture.queue_lease_count(topic_id, p1) > 0,
+            "p1 queue leases should exist"
+        );
+        assert!(
+            fixture.stream_lease_count(topic_id) > 0,
+            "stream leases should exist"
+        );
+
+        // Publish fresh messages to p1 only, so p1 stays alive after retention
+        fixture
+            .publish_to_partition(ns_id, "multi", p1, vec![msg(b"c1")], ts(15_000))
+            .await;
+
+        // Consume again — picks up the fresh p1 message, creating a queue lease at offset 2
+        fixture
+            .queue_receive(ns_id, "multi", "cg", Some(retention), ts(15_000))
+            .await;
+
+        let p1_leases_before = fixture.queue_lease_count(topic_id, p1);
+        assert!(
+            p1_leases_before > 0,
+            "p1 should have queue leases for fresh messages"
+        );
+
+        // Run retention at t=20_000 (cutoff = t=10_000).
+        // p0: all messages expire. p1: old messages expire, fresh one survives.
+        delete_expired_messages(&fixture.state, &fixture.namespace_state, ts(20_000)).unwrap();
+
+        // p0: all messages deleted, all leases should be cleaned up
+        assert_eq!(
+            fixture.msg_count(topic_id, p0),
+            0,
+            "p0 messages should be deleted"
+        );
+        assert_eq!(
+            fixture.queue_lease_count(topic_id, p0),
+            0,
+            "p0 stale queue leases should be deleted"
+        );
+
+        // p1: fresh message survives, queue leases for it must be preserved
+        assert_eq!(
+            fixture.msg_count(topic_id, p1),
+            1,
+            "p1 fresh message should survive"
+        );
+        assert!(
+            fixture.queue_lease_count(topic_id, p1) > 0,
+            "p1 queue leases for surviving messages must be preserved"
+        );
+
+        // Stream lease for p0 should be deleted (cursor behind retention),
+        // but p1's stream lease should be preserved (cursor is at the fresh message)
+        assert_eq!(
+            fixture.stream_lease_count(topic_id),
+            1,
+            "only p0's stream lease should be deleted, p1's must be preserved"
+        );
     }
 }
