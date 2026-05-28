@@ -97,6 +97,11 @@
             "source": "const response = await diom.clusterAdmin.status();"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cluster_admin.status();"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.cluster_admin()\n    .status()\n    .await?;"
@@ -199,6 +204,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.clusterAdmin.initialize({});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cluster_admin.initialize(\n    ClusterInitializeIn(),\n);"
           },
           {
             "lang": "Rust",
@@ -305,6 +315,11 @@
             "source": "const response = await diom.clusterAdmin.removeNode({\n    nodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cluster_admin.remove_node(\n    ClusterRemoveNodeIn(\n        node_id = \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.cluster_admin()\n    .remove_node(\n        ClusterRemoveNodeIn::new(\"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\".to_owned()),\n    )\n    .await?;"
@@ -407,6 +422,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.clusterAdmin.forceSnapshot({});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cluster_admin.force_snapshot(\n    ClusterForceSnapshotIn(),\n);"
           },
           {
             "lang": "Rust",
@@ -513,6 +533,11 @@
             "source": "const response = await diom.clusterAdmin.forceElection({});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cluster_admin.force_election(\n    ClusterForceElectionIn(),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.cluster_admin()\n    .force_election(\n        ClusterForceElectionIn::new(),\n    )\n    .await?;"
@@ -615,6 +640,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authToken.create({\n    name: \"some token name\",\n    role: \"some token role\",\n    expiry: Temporal.Duration.from({ seconds: 30 }),\n    enabled: true,\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_token.create(\n    AdminAuthTokenCreateIn(\n        name = \"some token name\",\n        role = \"some token role\",\n        expiry_ms = timedelta(seconds=30),\n        enabled = True,\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -721,6 +751,11 @@
             "source": "const response = await diom.admin.authToken.expire({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    expiry: Temporal.Duration.from({ seconds: 30 }),\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_token.expire(\n    AdminAuthTokenExpireIn(\n        id = \"key_06etngr201xwv7qj08mt4cs03w\",\n        expiry_ms = timedelta(seconds=30),\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.admin()\n    .auth_token()\n    .expire(\n        AdminAuthTokenExpireIn::new(\"key_06etngr201xwv7qj08mt4cs03w\".to_owned())\n            .with_expiry(Duration::from_secs(30)),\n    )\n    .await?;"
@@ -823,6 +858,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authToken.rotate({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_token.rotate(\n    AdminAuthTokenRotateIn(\n        id = \"key_06etngr201xwv7qj08mt4cs03w\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -929,6 +969,11 @@
             "source": "const response = await diom.admin.authToken.delete({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_token.delete(\n    AdminAuthTokenDeleteIn(\n        id = \"key_06etngr201xwv7qj08mt4cs03w\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.admin()\n    .auth_token()\n    .delete(\n        AdminAuthTokenDeleteIn::new(\"key_06etngr201xwv7qj08mt4cs03w\".to_owned()),\n    )\n    .await?;"
@@ -1031,6 +1076,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authToken.list({\n    limit: 1,\n    iterator: \"key_06etngr201xwv7qj08mt4cs03w\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_token.list(\n    AdminAuthTokenListIn(\n        limit = 1,\n        iterator = \"key_06etngr201xwv7qj08mt4cs03w\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -1137,6 +1187,11 @@
             "source": "const response = await diom.admin.authToken.update({\n    id: \"key_06etngr201xwv7qj08mt4cs03w\",\n    name: \"some token name\",\n    expiry: Temporal.Duration.from({ seconds: 30 }),\n    enabled: true,\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_token.update(\n    AdminAuthTokenUpdateIn(\n        id = \"key_06etngr201xwv7qj08mt4cs03w\",\n        name = \"some token name\",\n        expiry_ms = timedelta(seconds=30),\n        enabled = True,\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.admin()\n    .auth_token()\n    .update(\n        AdminAuthTokenUpdateIn::new(\"key_06etngr201xwv7qj08mt4cs03w\".to_owned())\n            .with_name(\"some token name\".to_owned())\n            .with_expiry(Duration::from_secs(30))\n            .with_enabled(true),\n    )\n    .await?;"
@@ -1239,6 +1294,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authToken.whoami({});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_token.whoami(\n    AdminAuthTokenWhoamiIn(),\n);"
           },
           {
             "lang": "Rust",
@@ -1345,6 +1405,11 @@
             "source": "const response = await diom.admin.authRole.configure({\n    id: \"some_role_id\",\n    description: \"role description…\",\n    rules: [],\n    policies: [],\n    context: {},\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_role.configure(\n    AdminRoleConfigureIn(\n        id = \"some_role_id\",\n        description = \"role description…\",\n        rules = [],\n        policies = [],\n        context = \n                {},\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.admin()\n    .auth_role()\n    .configure(\n        AdminRoleConfigureIn::new(\n            \"some_role_id\".to_owned(),\n            \"role description…\".to_owned(),\n        )\n            .with_rules(vec![])\n            .with_policies(vec![])\n            .with_context(HashMap::new()),\n    )\n    .await?;"
@@ -1447,6 +1512,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authRole.delete({\n    id: \"some_role_id\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_role.delete(\n    AdminRoleDeleteIn(\n        id = \"some_role_id\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -1553,6 +1623,11 @@
             "source": "const response = await diom.admin.authRole.get({\n    id: \"some_role_id\",\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_role.get(\n    AdminRoleGetIn(\n        id = \"some_role_id\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.admin()\n    .auth_role()\n    .get(\n        AdminRoleGetIn::new(\"some_role_id\".to_owned()),\n    )\n    .await?;"
@@ -1655,6 +1730,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authRole.list({\n    limit: 1,\n    iterator: \"some_role_id\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_role.list(\n    AdminRoleListIn(\n        limit = 1,\n        iterator = \"some_role_id\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -1761,6 +1841,11 @@
             "source": "const response = await diom.admin.authPolicy.configure({\n    id: \"some_access_policy\",\n    description: \"policy description…\",\n    rules: [],\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_policy.configure(\n    AdminAccessPolicyConfigureIn(\n        id = \"some_access_policy\",\n        description = \"policy description…\",\n        rules = [],\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.admin()\n    .auth_policy()\n    .configure(\n        AdminAccessPolicyConfigureIn::new(\n            \"some_access_policy\".to_owned(),\n            \"policy description…\".to_owned(),\n        )\n            .with_rules(vec![]),\n    )\n    .await?;"
@@ -1863,6 +1948,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authPolicy.delete({\n    id: \"some_access_policy\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_policy.delete(\n    AdminAccessPolicyDeleteIn(\n        id = \"some_access_policy\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -1969,6 +2059,11 @@
             "source": "const response = await diom.admin.authPolicy.get({\n    id: \"some_access_policy\",\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_policy.get(\n    AdminAccessPolicyGetIn(\n        id = \"some_access_policy\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.admin()\n    .auth_policy()\n    .get(\n        AdminAccessPolicyGetIn::new(\"some_access_policy\".to_owned()),\n    )\n    .await?;"
@@ -2071,6 +2166,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.admin.authPolicy.list({\n    limit: 1,\n    iterator: \"some_access_policy\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.auth_policy.list(\n    AdminAccessPolicyListIn(\n        limit = 1,\n        iterator = \"some_access_policy\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -2879,6 +2979,11 @@
             "source": "const response = await diom.cache.set(\n    \"some_key\",\n    [],\n    {\n        namespace: \"some_namespace\",\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cache.set(\n    \"some_key\",\n    [],\n    CacheSetIn(\n        namespace = \"some_namespace\",\n        ttl_ms = timedelta(seconds=30),\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.cache()\n    .set(\n        \"some_key\".to_owned(),\n        vec![],\n        CacheSetIn::new(Duration::from_secs(30))\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -2981,6 +3086,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.cache.get(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        consistency: Consistency.Strong,\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cache.get(\n    \"some_key\",\n    CacheGetIn(\n        namespace = \"some_namespace\",\n        consistency = Consistency.STRONG,\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -3087,6 +3197,11 @@
             "source": "const response = await diom.cache.namespace.configure({\n    name: \"some_namespace\",\n    evictionPolicy: EvictionPolicy.NoEviction,\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cache.namespace.configure(\n    CacheConfigureNamespaceIn(\n        name = \"some_namespace\",\n        eviction_policy = EvictionPolicy.NO_EVICTION,\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.cache()\n    .namespace()\n    .configure(\n        CacheConfigureNamespaceIn::new(\"some_namespace\".to_owned())\n            .with_eviction_policy(EvictionPolicy::NoEviction),\n    )\n    .await?;"
@@ -3189,6 +3304,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.cache.namespace.get({\n    name: \"some_namespace\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cache.namespace.get(\n    CacheGetNamespaceIn(\n        name = \"some_namespace\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -3295,6 +3415,11 @@
             "source": "const response = await diom.cache.delete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cache.delete(\n    \"some_key\",\n    CacheDeleteIn(\n        namespace = \"some_namespace\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.cache()\n    .delete(\n        \"some_key\".to_owned(),\n        CacheDeleteIn::new()\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -3397,6 +3522,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.kv.set(\n    \"some_key\",\n    [],\n    {\n        namespace: \"some_namespace\",\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n        behavior: OperationBehavior.Upsert,\n        version: 1,\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.kv.set(\n    \"some_key\",\n    [],\n    KvSetIn(\n        namespace = \"some_namespace\",\n        ttl_ms = timedelta(seconds=30),\n        behavior = OperationBehavior.UPSERT,\n        version = 1,\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -3503,6 +3633,11 @@
             "source": "const response = await diom.kv.get(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        consistency: Consistency.Strong,\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.kv.get(\n    \"some_key\",\n    KvGetIn(\n        namespace = \"some_namespace\",\n        consistency = Consistency.STRONG,\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.kv()\n    .get(\n        \"some_key\".to_owned(),\n        KvGetIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_consistency(Consistency::Strong),\n    )\n    .await?;"
@@ -3605,6 +3740,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.kv.namespace.configure({\n    name: \"some_namespace\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.kv.namespace.configure(\n    KvConfigureNamespaceIn(\n        name = \"some_namespace\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -3711,6 +3851,11 @@
             "source": "const response = await diom.kv.namespace.get({\n    name: \"some_namespace\",\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.kv.namespace.get(\n    KvGetNamespaceIn(\n        name = \"some_namespace\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.kv()\n    .namespace()\n    .get(\n        KvGetNamespaceIn::new(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -3813,6 +3958,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.kv.delete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        version: 1,\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.kv.delete(\n    \"some_key\",\n    KvDeleteIn(\n        namespace = \"some_namespace\",\n        version = 1,\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -3919,6 +4069,11 @@
             "source": "const response = await diom.rateLimit.limit({\n    namespace: \"some_namespace\",\n    key: \"some_key\",\n    tokens: 1,\n    config: {\n        capacity: 1,\n        refillAmount: 1,\n        refillInterval: Temporal.Duration.from({ seconds: 30 }),\n    },\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.rate_limit.limit(\n    RateLimitCheckIn(\n        namespace = \"some_namespace\",\n        key = \"some_key\",\n        tokens = 1,\n        config = RateLimitConfig(\n            capacity = 1,\n            refill_amount = 1,\n            refill_interval_ms = timedelta(seconds=30),\n        ),\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.rate_limit()\n    .limit(\n        RateLimitCheckIn::new(\n            \"some_key\".to_owned(),\n            RateLimitConfig::new(\n                1,\n                1,\n            )\n                .with_refill_interval(Duration::from_secs(30)),\n        )\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_tokens(1),\n    )\n    .await?;"
@@ -4021,6 +4176,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.rateLimit.getRemaining({\n    namespace: \"some_namespace\",\n    key: \"some_key\",\n    config: {\n        capacity: 1,\n        refillAmount: 1,\n        refillInterval: Temporal.Duration.from({ seconds: 30 }),\n    },\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.rate_limit.get_remaining(\n    RateLimitGetRemainingIn(\n        namespace = \"some_namespace\",\n        key = \"some_key\",\n        config = RateLimitConfig(\n            capacity = 1,\n            refill_amount = 1,\n            refill_interval_ms = timedelta(seconds=30),\n        ),\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -4127,6 +4287,11 @@
             "source": "const response = await diom.rateLimit.reset({\n    namespace: \"some_namespace\",\n    key: \"some_key\",\n    config: {\n        capacity: 1,\n        refillAmount: 1,\n        refillInterval: Temporal.Duration.from({ seconds: 30 }),\n    },\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.rate_limit.reset(\n    RateLimitResetIn(\n        namespace = \"some_namespace\",\n        key = \"some_key\",\n        config = RateLimitConfig(\n            capacity = 1,\n            refill_amount = 1,\n            refill_interval_ms = timedelta(seconds=30),\n        ),\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.rate_limit()\n    .reset(\n        RateLimitResetIn::new(\n            \"some_key\".to_owned(),\n            RateLimitConfig::new(\n                1,\n                1,\n            )\n                .with_refill_interval(Duration::from_secs(30)),\n        )\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -4229,6 +4394,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.rateLimit.namespace.configure({\n    name: \"some_namespace\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.rate_limit.namespace.configure(\n    RateLimitConfigureNamespaceIn(\n        name = \"some_namespace\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -4335,6 +4505,11 @@
             "source": "const response = await diom.rateLimit.namespace.get({\n    name: \"some_namespace\",\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.rate_limit.namespace.get(\n    RateLimitGetNamespaceIn(\n        name = \"some_namespace\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.rate_limit()\n    .namespace()\n    .get(\n        RateLimitGetNamespaceIn::new(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -4437,6 +4612,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.idempotency.start(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        lockPeriod: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.idempotency.start(\n    \"some_key\",\n    IdempotencyStartIn(\n        namespace = \"some_namespace\",\n        lock_period_ms = timedelta(seconds=30),\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -4543,6 +4723,11 @@
             "source": "const response = await diom.idempotency.complete(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n        response: [],\n        context: {},\n        ttl: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.idempotency.complete(\n    \"some_key\",\n    IdempotencyCompleteIn(\n        namespace = \"some_namespace\",\n        response = [],\n        context = \n                {},\n        ttl_ms = timedelta(seconds=30),\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.idempotency()\n    .complete(\n        \"some_key\".to_owned(),\n        IdempotencyCompleteIn::new(\n            vec![],\n            Duration::from_secs(30),\n        )\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_context(HashMap::new()),\n    )\n    .await?;"
@@ -4645,6 +4830,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.idempotency.abort(\n    \"some_key\",\n    {\n        namespace: \"some_namespace\",\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.idempotency.abort(\n    \"some_key\",\n    IdempotencyAbortIn(\n        namespace = \"some_namespace\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -4751,6 +4941,11 @@
             "source": "const response = await diom.idempotency.namespace.configure({\n    name: \"some_namespace\",\n});"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.idempotency.namespace.configure(\n    IdempotencyConfigureNamespaceIn(\n        name = \"some_namespace\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.idempotency()\n    .namespace()\n    .configure(\n        IdempotencyConfigureNamespaceIn::new(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -4853,6 +5048,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.idempotency.namespace.get({\n    name: \"some_namespace\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.idempotency.namespace.get(\n    IdempotencyGetNamespaceIn(\n        name = \"some_namespace\",\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -4959,6 +5159,11 @@
             "source": "const response = await diom.msgs.namespace.configure(\n    \"some_namespace\",\n    {\n        retention: {\n            period: Temporal.Duration.from({ seconds: 30 }),\n        },\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.namespace.configure(\n    \"some_namespace\",\n    MsgNamespaceConfigureIn(\n        retention = Retention(\n            period_ms = timedelta(seconds=30),\n        ),\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.msgs()\n    .namespace()\n    .configure(\n        \"some_namespace\".to_owned(),\n        MsgNamespaceConfigureIn::new()\n            .with_retention(Retention::new()\n                .with_period(Duration::from_secs(30))),\n    )\n    .await?;"
@@ -5061,6 +5266,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.namespace.get(\n    \"some_namespace\",\n    {\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.namespace.get(\n    \"some_namespace\",\n    MsgNamespaceGetIn(),\n);"
           },
           {
             "lang": "Rust",
@@ -5167,6 +5377,11 @@
             "source": "const response = await diom.msgs.publish(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        msgs: [],\n        idempotencyKey: \"my_idempotency_key\",\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.publish(\n    \"some_topic_name\",\n    MsgPublishIn(\n        namespace = \"some_namespace\",\n        msgs = [],\n        idempotency_key = \"my_idempotency_key\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.msgs()\n    .publish(\n        \"some_topic_name\".to_owned(),\n        MsgPublishIn::new(vec![])\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_idempotency_key(\"my_idempotency_key\".to_owned()),\n    )\n    .await?;"
@@ -5269,6 +5484,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.stream.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        batchSize: 1,\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n        defaultStartingPosition: SeekPosition.Earliest,\n        batchWait: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.stream.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamReceiveIn(\n        namespace = \"some_namespace\",\n        batch_size = 1,\n        lease_duration_ms = timedelta(seconds=30),\n        default_starting_position = SeekPosition.EARLIEST,\n        batch_wait_ms = timedelta(seconds=30),\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -5375,6 +5595,11 @@
             "source": "const response = await diom.msgs.stream.commit(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        offset: 1,\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.stream.commit(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCommitIn(\n        namespace = \"some_namespace\",\n        offset = 1,\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.msgs()\n    .stream()\n    .commit(\n        \"some_topic_name~0\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgStreamCommitIn::new(1)\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -5477,6 +5702,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.stream.seek(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        offset: 1,\n        position: SeekPosition.Earliest,\n        timestamp: new Date(\"2026-04-20 12:00:00Z\"),\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.stream.seek(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgStreamSeekIn(\n        namespace = \"some_namespace\",\n        offset = 1,\n        position = SeekPosition.EARLIEST,\n        timestamp = datetime.fromisoformat(\"2026-04-20 12:00:00Z\"),\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -5583,6 +5813,11 @@
             "source": "const response = await diom.msgs.stream.cancelLease(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.stream.cancel_lease(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    MsgStreamCancelLeaseIn(\n        namespace = \"some_namespace\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.msgs()\n    .stream()\n    .cancel_lease(\n        \"some_topic_name~0\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgStreamCancelLeaseIn::new()\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -5685,6 +5920,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.queue.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        batchSize: 1,\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n        batchWait: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.queue.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueReceiveIn(\n        namespace = \"some_namespace\",\n        batch_size = 1,\n        lease_duration_ms = timedelta(seconds=30),\n        batch_wait_ms = timedelta(seconds=30),\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -5791,6 +6031,11 @@
             "source": "const response = await diom.msgs.queue.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        msgIds: [],\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.queue.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueAckIn(\n        namespace = \"some_namespace\",\n        msg_ids = [],\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.msgs()\n    .queue()\n    .ack(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgQueueAckIn::new(vec![])\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -5893,6 +6138,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.queue.extendLease(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        msgIds: [],\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.queue.extend_lease(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueExtendLeaseIn(\n        namespace = \"some_namespace\",\n        msg_ids = [],\n        lease_duration_ms = timedelta(seconds=30),\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -5999,6 +6249,11 @@
             "source": "const response = await diom.msgs.queue.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        retrySchedule: [],\n        dlqTopic: \"some_topic_name\",\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.queue.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueConfigureIn(\n        namespace = \"some_namespace\",\n        retry_schedule = [],\n        dlq_topic = \"some_topic_name\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.msgs()\n    .queue()\n    .configure(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgQueueConfigureIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_retry_schedule(vec![])\n            .with_dlq_topic(\"some_topic_name\".to_owned()),\n    )\n    .await?;"
@@ -6101,6 +6356,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "const response = await diom.msgs.queue.nack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        msgIds: [],\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.queue.nack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueNackIn(\n        namespace = \"some_namespace\",\n        msg_ids = [],\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -6207,6 +6467,11 @@
             "source": "const response = await diom.msgs.queue.redriveDlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.queue.redrive_dlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgQueueRedriveDlqIn(\n        namespace = \"some_namespace\",\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.msgs()\n    .queue()\n    .redrive_dlq(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgQueueRedriveDlqIn::new()\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -6311,6 +6576,11 @@
             "source": "const response = await diom.msgs.topic.configure(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        partitions: 1,\n    },\n);"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.topic.configure(\n    \"some_topic_name\",\n    MsgTopicConfigureIn(\n        namespace = \"some_namespace\",\n        partitions = 1,\n    ),\n);"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.msgs()\n    .topic()\n    .configure(\n        \"some_topic_name\".to_owned(),\n        MsgTopicConfigureIn::new(1)\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
@@ -6405,6 +6675,11 @@
             "source": "const response = await diom.health.ping();"
           },
           {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.health.ping();"
+          },
+          {
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.health()\n    .ping()\n    .await?;"
@@ -6490,6 +6765,11 @@
             "lang": "TypeScript",
             "label": "JavaScript",
             "source": "await diom.health.error();"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "diom.health.error();"
           },
           {
             "lang": "Rust",
