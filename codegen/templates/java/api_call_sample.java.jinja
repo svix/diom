@@ -16,8 +16,7 @@
     {%- set non_positional_fields = resource.fields | selectattr("positional", "false") -%}
 new {{ resource.name | to_upper_camel_case }}()
     {% for field in non_positional_fields -%}
-        {% set field_val = field_example(field) | trim -%}
-        .{{ field.name | to_lower_camel_case }}({{ field_val }})
+        .{{ field.name | to_lower_camel_case }}({{ field_example(field) | trim }})
     {% endfor -%}
 
     {%- if resource.kind == "struct_enum" -%}

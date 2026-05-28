@@ -19,7 +19,6 @@
     {%- else -%}
     {
         {%- for field in resource.fields | selectattr("positional", "false") %}
-            {%- set field_val = field_example(field) %}
     {{ field_name(field) }}: {{ field_example(field) }},
         {%- endfor %}
         {%- if resource.kind == "struct_enum" %}
