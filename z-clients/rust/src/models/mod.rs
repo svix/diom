@@ -52,6 +52,7 @@ mod cluster_remove_node_out;
 mod cluster_status_out;
 mod consistency;
 mod eviction_policy;
+mod get_metrics_out;
 mod idempotency_abort_in;
 mod idempotency_abort_out;
 mod idempotency_complete_in;
@@ -76,6 +77,8 @@ mod kv_set_out;
 mod list_response_admin_access_policy_out;
 mod list_response_admin_auth_token_out;
 mod list_response_admin_role_out;
+mod metric_out;
+mod metric_type;
 mod msg_in;
 mod msg_namespace_configure_in;
 mod msg_namespace_configure_out;
@@ -163,8 +166,9 @@ pub use self::{
     cluster_initialize_in::ClusterInitializeIn, cluster_initialize_out::ClusterInitializeOut,
     cluster_remove_node_in::ClusterRemoveNodeIn, cluster_remove_node_out::ClusterRemoveNodeOut,
     cluster_status_out::ClusterStatusOut, consistency::Consistency,
-    eviction_policy::EvictionPolicy, idempotency_abort_in::IdempotencyAbortIn,
-    idempotency_abort_out::IdempotencyAbortOut, idempotency_complete_in::IdempotencyCompleteIn,
+    eviction_policy::EvictionPolicy, get_metrics_out::GetMetricsOut,
+    idempotency_abort_in::IdempotencyAbortIn, idempotency_abort_out::IdempotencyAbortOut,
+    idempotency_complete_in::IdempotencyCompleteIn,
     idempotency_complete_out::IdempotencyCompleteOut, idempotency_completed::IdempotencyCompleted,
     idempotency_configure_namespace_in::IdempotencyConfigureNamespaceIn,
     idempotency_configure_namespace_out::IdempotencyConfigureNamespaceOut,
@@ -177,8 +181,8 @@ pub use self::{
     kv_get_namespace_out::KvGetNamespaceOut, kv_get_out::KvGetOut, kv_set_in::KvSetIn,
     kv_set_out::KvSetOut, list_response_admin_access_policy_out::ListResponseAdminAccessPolicyOut,
     list_response_admin_auth_token_out::ListResponseAdminAuthTokenOut,
-    list_response_admin_role_out::ListResponseAdminRoleOut, msg_in::MsgIn,
-    msg_namespace_configure_in::MsgNamespaceConfigureIn,
+    list_response_admin_role_out::ListResponseAdminRoleOut, metric_out::MetricOut,
+    metric_type::MetricType, msg_in::MsgIn, msg_namespace_configure_in::MsgNamespaceConfigureIn,
     msg_namespace_configure_out::MsgNamespaceConfigureOut, msg_namespace_get_in::MsgNamespaceGetIn,
     msg_namespace_get_out::MsgNamespaceGetOut, msg_publish_in::MsgPublishIn,
     msg_publish_out::MsgPublishOut, msg_publish_out_topic::MsgPublishOutTopic,

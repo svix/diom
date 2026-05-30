@@ -2180,6 +2180,105 @@
         ]
       }
     },
+    "/api/v1.admin.metrics.get": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get Metrics",
+        "description": "Dump the current metrics (which would otherwise be sent to the OTLP metrics receiver)",
+        "operationId": "v1.admin.metrics.get",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMetricsOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom admin metrics get"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Admin.Metrics.Get(ctx)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getAdmin.getMetrics.get();"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.admin.metrics.get();"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.admin.metrics.get();"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.admin()\n    .metrics()\n    .get()\n    .await?;"
+          }
+        ]
+      }
+    },
     "/api/v1.auth-token.create": {
       "post": {
         "tags": [
@@ -8294,6 +8393,20 @@
           "no-eviction"
         ]
       },
+      "GetMetricsOut": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricOut"
+            }
+          }
+        },
+        "required": [
+          "metrics"
+        ]
+      },
       "IdempotencyAbortIn": {
         "type": "object",
         "properties": {
@@ -8951,6 +9064,62 @@
         "required": [
           "data",
           "done"
+        ]
+      },
+      "MetricOut": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "Label for this series",
+            "type": "string"
+          },
+          "description": {
+            "description": "Human-readable description of this series",
+            "type": "string"
+          },
+          "attributes": {
+            "description": "Key/Value pairs attached to this sequence",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "value": {
+            "description": "Most recent data point for this series\n\nAll points (u64, i64, and f64) are squished into an f64, be careful\nof inexactness for values above 2**53.",
+            "type": "number",
+            "format": "double"
+          },
+          "metric_type": {
+            "description": "Type of this metric\n\nHistograms are not currently exported through this API, and can\nonly be accessed through OTLP.",
+            "$ref": "#/components/schemas/MetricType"
+          },
+          "timestamp": {
+            "description": "Timestamp this metric was collected",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
+          },
+          "unit": {
+            "description": "Optional unit, following UCUM unit conventions if possible\n\nSee https://ucum.org/ for details",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "label",
+          "description",
+          "attributes",
+          "value",
+          "metric_type",
+          "timestamp"
+        ]
+      },
+      "MetricType": {
+        "type": "string",
+        "enum": [
+          "counter",
+          "gauge"
         ]
       },
       "MsgIn": {

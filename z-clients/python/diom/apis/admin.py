@@ -13,6 +13,10 @@ from .admin_auth_token import (
     AdminAuthToken,
     AdminAuthTokenAsync,
 )
+from .admin_metrics import (
+    AdminMetrics,
+    AdminMetricsAsync,
+)
 
 
 class AdminAsync(ApiBase):
@@ -28,6 +32,10 @@ class AdminAsync(ApiBase):
     def auth_token(self) -> AdminAuthTokenAsync:
         return AdminAuthTokenAsync(self._client)
 
+    @property
+    def metrics(self) -> AdminMetricsAsync:
+        return AdminMetricsAsync(self._client)
+
 
 class Admin(ApiBase):
     @property
@@ -41,3 +49,7 @@ class Admin(ApiBase):
     @property
     def auth_token(self) -> AdminAuthToken:
         return AdminAuthToken(self._client)
+
+    @property
+    def metrics(self) -> AdminMetrics:
+        return AdminMetrics(self._client)

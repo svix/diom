@@ -1,7 +1,10 @@
 use std::time::Duration;
 
 use bytes::Bytes;
-use diom_backend::cfg::{ConfigurationInner, OpenTelemetryProtocol, build_fmt_layer};
+use diom_backend::{
+    cfg::{ConfigurationInner, OpenTelemetryProtocol, build_fmt_layer},
+    metrics::MostRecentMetricStore,
+};
 use diom_core::INSTANCE_ID;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::{WithExportConfig, WithHttpConfig};
@@ -122,59 +125,71 @@ pub(crate) fn setup_tracing(
     (dispatch.into(), otel_tracer_provider)
 }
 
-pub(crate) fn setup_metrics(cfg: &ConfigurationInner) {
-    if let Some(addr) = cfg
+pub(crate) fn setup_metrics(cfg: &ConfigurationInner) -> MostRecentMetricStore {
+    let reader = cfg
         .opentelemetry
         .metrics_address
         .as_ref()
         .or(cfg.opentelemetry.address.as_ref())
-    {
-        let exporter = if matches!(
-            cfg.opentelemetry.metrics_protocol,
-            OpenTelemetryProtocol::Http
-        ) {
-            tracing::debug!("sending http otel metrics to {addr}");
+        .map(|addr| {
+            let exporter = if matches!(
+                cfg.opentelemetry.metrics_protocol,
+                OpenTelemetryProtocol::Http
+            ) {
+                tracing::debug!("sending http otel metrics to {addr}");
 
-            opentelemetry_otlp::MetricExporter::builder()
-                .with_http()
-                .with_endpoint(addr)
-                .with_http_client(OtelReqwestClient::from(reqwest::Client::new()))
+                opentelemetry_otlp::MetricExporter::builder()
+                    .with_http()
+                    .with_endpoint(addr)
+                    .with_http_client(OtelReqwestClient::from(reqwest::Client::new()))
+                    .build()
+                    .unwrap()
+            } else {
+                tracing::debug!("sending grpc otel metrics to {addr}");
+
+                opentelemetry_otlp::MetricExporter::builder()
+                    .with_tonic()
+                    .with_endpoint(addr)
+                    .with_temporality(opentelemetry_sdk::metrics::Temporality::Delta)
+                    .build()
+                    .unwrap()
+            };
+
+            PeriodicReader::builder(exporter, runtime::Tokio)
+                .with_interval(cfg.opentelemetry.metrics_period.into())
                 .build()
-                .unwrap()
-        } else {
-            tracing::debug!("sending grpc otel metrics to {addr}");
+        });
 
-            opentelemetry_otlp::MetricExporter::builder()
-                .with_tonic()
-                .with_endpoint(addr)
-                .with_temporality(opentelemetry_sdk::metrics::Temporality::Delta)
-                .build()
-                .unwrap()
-        };
+    let most_recent_store = MostRecentMetricStore::new();
+    let most_recent_reader = PeriodicReader::builder(most_recent_store.clone(), runtime::Tokio)
+        .with_interval(cfg.opentelemetry.metrics_period.into())
+        .build();
 
-        let reader = PeriodicReader::builder(exporter, runtime::Tokio)
-            .with_interval(cfg.opentelemetry.metrics_period.into())
-            .build();
+    let mut provider_builder = SdkMeterProvider::builder().with_reader(most_recent_reader);
 
-        let provider = SdkMeterProvider::builder()
-            .with_reader(reader)
-            .with_resource(
-                opentelemetry_sdk::Resource::builder()
-                    .with_service_name(cfg.opentelemetry.service_name.clone())
-                    .with_attribute(opentelemetry::KeyValue::new(
-                        "instance_id",
-                        INSTANCE_ID.as_str(),
-                    ))
-                    .with_attribute(opentelemetry::KeyValue::new(
-                        "service.version",
-                        option_env!("GITHUB_SHA").unwrap_or("unknown"),
-                    ))
-                    .build(),
-            )
-            .build();
+    if let Some(reader) = reader {
+        provider_builder = provider_builder.with_reader(reader);
+    }
 
-        opentelemetry::global::set_meter_provider(provider);
-    };
+    let provider = provider_builder
+        .with_resource(
+            opentelemetry_sdk::Resource::builder()
+                .with_service_name(cfg.opentelemetry.service_name.clone())
+                .with_attribute(opentelemetry::KeyValue::new(
+                    "instance_id",
+                    INSTANCE_ID.as_str(),
+                ))
+                .with_attribute(opentelemetry::KeyValue::new(
+                    "service.version",
+                    option_env!("GITHUB_SHA").unwrap_or("unknown"),
+                ))
+                .build(),
+        )
+        .build();
+
+    opentelemetry::global::set_meter_provider(provider);
+
+    most_recent_store
 }
 
 #[derive(Debug, Default)]

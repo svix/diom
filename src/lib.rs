@@ -13,6 +13,7 @@ pub mod core;
 mod serve;
 pub use diom_error as error;
 mod app_state;
+pub mod metrics;
 pub mod openapi;
 mod utils;
 pub mod v1;

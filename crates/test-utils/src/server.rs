@@ -131,8 +131,15 @@ impl TestServerBuilder {
             let time = time.clone();
             let initialized = initialized.clone();
             async move {
-                run_with_listeners(cfg, Some(listener), Some(repl_listener), time, initialized)
-                    .await;
+                run_with_listeners(
+                    cfg,
+                    Some(listener),
+                    Some(repl_listener),
+                    time,
+                    initialized,
+                    None,
+                )
+                .await;
             }
         });
 

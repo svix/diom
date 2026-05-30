@@ -11,6 +11,7 @@ use serde::{Serialize, de::DeserializeOwned};
 use crate::{
     cfg::Configuration,
     core::{auth::FifoCache, jwt::JwtVerifier},
+    metrics::MostRecentMetricStore,
 };
 
 #[derive(Clone)]
@@ -34,10 +35,17 @@ pub struct AppState {
     pub(crate) time: Monotime,
 
     pub(crate) topic_publish_notifier: TopicPublishNotifier,
+
+    pub(crate) metrics: Option<MostRecentMetricStore>,
 }
 
 impl AppState {
-    pub(crate) fn new(cfg: Configuration, time: Monotime, internal_client: InternalClient) -> Self {
+    pub(crate) fn new(
+        cfg: Configuration,
+        time: Monotime,
+        internal_client: InternalClient,
+        metrics: Option<MostRecentMetricStore>,
+    ) -> Self {
         let persistent_db = cfg
             .persistent_db
             .database(time.clone(), "persistent")
@@ -77,6 +85,7 @@ impl AppState {
             jwt_verifier,
             time,
             topic_publish_notifier: TopicPublishNotifier::new(),
+            metrics,
         }
     }
 

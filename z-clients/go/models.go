@@ -56,6 +56,7 @@ type (
 	ClusterStatusOut                 = diom_models.ClusterStatusOut
 	Consistency                      = diom_models.Consistency
 	EvictionPolicy                   = diom_models.EvictionPolicy
+	GetMetricsOut                    = diom_models.GetMetricsOut
 	IdempotencyAbortIn               = diom_models.IdempotencyAbortIn
 	IdempotencyAbortOut              = diom_models.IdempotencyAbortOut
 	IdempotencyCompleteIn            = diom_models.IdempotencyCompleteIn
@@ -80,6 +81,8 @@ type (
 	ListResponseAdminAccessPolicyOut = diom_models.ListResponseAdminAccessPolicyOut
 	ListResponseAdminAuthTokenOut    = diom_models.ListResponseAdminAuthTokenOut
 	ListResponseAdminRoleOut         = diom_models.ListResponseAdminRoleOut
+	MetricOut                        = diom_models.MetricOut
+	MetricType                       = diom_models.MetricType
 	MsgIn                            = diom_models.MsgIn
 	MsgNamespaceConfigureIn          = diom_models.MsgNamespaceConfigureIn
 	MsgNamespaceConfigureOut         = diom_models.MsgNamespaceConfigureOut
