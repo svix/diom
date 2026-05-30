@@ -5,7 +5,7 @@
 # Using https://github.com/LukeMathWalker/cargo-chef for better layer caching
 
 # Base image for planner and build - keep in sync with root Dockerfile
-FROM docker.io/rust:1.95-slim-trixie AS chef
+FROM docker.io/rust:1.96-slim-trixie AS chef
 RUN cargo install cargo-chef
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 # Build environment
 FROM chef AS build
 
-ENV __BUST_DOCKER_BUILD_CACHE=2026-05-18
+ARG __BUST_DOCKER_BUILD_CACHE=2026-05-29
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     #!/bin/bash
     set -euxo pipefail
@@ -51,7 +51,7 @@ ARG RELEASE_VERSION
 RUN cargo build --release -p diom-operator --bin diom-operator --frozen
 
 # Production
-FROM docker.io/debian:trixie-slim AS prod
+FROM docker.io/debian:trixie-20260518-slim AS prod
 
 RUN <<EOF
     #!/bin/bash
@@ -61,7 +61,7 @@ RUN <<EOF
     chown -R appuser: /home/appuser
 EOF
 
-ENV __BUST_DOCKER_BUILD_CACHE=2026-05-18
+ARG __BUST_DOCKER_BUILD_CACHE=2026-05-29
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     #!/bin/bash
     set -euxo pipefail
@@ -71,19 +71,6 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
         ca-certificates=20250419 \
         --no-install-recommends
     update-ca-certificates
-EOF
-
-# Temporary: pin patched versions of CVE-2026-4437, CVE-2026-4046, CVE-2026-4878 until upstream image rebuilds
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
-    #!/bin/bash
-    set -euxo pipefail
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update -q
-    apt-get install -y \
-        libc-bin=2.41-12+deb13u3 \
-        libc6=2.41-12+deb13u3 \
-        libcap2=1:2.75-10+deb13u1+b1 \
-        --no-install-recommends
 EOF
 
 USER appuser
