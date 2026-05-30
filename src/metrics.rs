@@ -6,7 +6,7 @@ use parking_lot::Mutex;
 use schemars::JsonSchema;
 use serde::Serialize;
 use std::{
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::{BTreeMap, BTreeSet},
     hash::Hasher,
     sync::Arc,
 };
@@ -15,24 +15,34 @@ use std::{
 struct InternHandle(usize);
 
 #[derive(Default)]
+/// Simple string interner
+///
+/// Replace your long-lived strings with Copy-able InternHandles
 struct StringStore {
-    values: Vec<String>,
-    map: HashMap<String, InternHandle>,
+    inner: indexmap::IndexSet<String>,
 }
 
 impl StringStore {
-    fn intern(&mut self, s: &str) -> InternHandle {
-        if let Some(handle) = self.map.get(s) {
-            return *handle;
-        }
-        let id = InternHandle(self.values.len());
-        self.values.push(s.to_owned());
-        self.map.insert(s.to_owned(), id);
-        id
+    /// Intern the given string
+    ///
+    /// If it's already stored inside this structure, return a handle
+    /// to the existing record; otherwise, allocate a new owned record
+    /// and return a handle to it
+    fn intern<S>(&mut self, s: S) -> InternHandle
+    where
+        S: Into<String> + AsRef<str>,
+    {
+        let index = if let Some(index) = self.inner.get_index_of(s.as_ref()) {
+            index
+        } else {
+            self.inner.insert_full(s.into()).0
+        };
+        InternHandle(index)
     }
 
+    /// Turn an InternHandle back into a str
     fn redeem(&self, handle: InternHandle) -> Option<&str> {
-        self.values.get(handle.0).map(|s| s.as_str())
+        self.inner.get_index(handle.0).map(|s| s.as_str())
     }
 }
 
@@ -81,13 +91,10 @@ impl<'a> SerializableAttributeList<'a> {
         let key_values = rv
             .iter()
             .filter_map(|(k, v)| {
-                if let Some(key) = ss.redeem(*k)
-                    && let Some(value) = ss.redeem(*v)
-                {
+                ss.redeem(*k).and_then(|key| {
+                    let value = ss.redeem(*v)?;
                     Some((key, value))
-                } else {
-                    None
-                }
+                })
             })
             .collect();
         Self(key_values)
@@ -119,7 +126,7 @@ impl Metric {
         let mut hasher = std::hash::DefaultHasher::new();
         hasher.write_usize(self.name.0);
         hasher.write_usize(self.resources.len());
-        for (k, v) in self.resources.iter() {
+        for (k, v) in &self.resources {
             hasher.write_usize(k.0);
             hasher.write_usize(v.0);
         }
@@ -190,7 +197,7 @@ impl<'a> DataPointVisitor<'a> {
         let mut resources = self.scope_attributes.to_owned();
         resources.extend(point_attributes.map(|attribute| {
             let key = self.strings.intern(attribute.key.as_str());
-            let value = self.strings.intern(&attribute.value.as_str());
+            let value = self.strings.intern(attribute.value.as_str());
             (key, value)
         }));
         let unit = if self.raw.unit().is_empty() {
@@ -216,6 +223,7 @@ impl<'a> DataPointVisitor<'a> {
         T: Into<MetricDatum> + Copy + 'static,
     {
         let Ok(time) = gauge.time().try_into() else {
+            tracing::warn!(timestamp = ?gauge.time(), "wildly unusual timestamp in gauge");
             return;
         };
         for data_point in gauge.data_points() {
@@ -233,6 +241,7 @@ impl<'a> DataPointVisitor<'a> {
         T: Into<MetricDatum> + Copy + 'static,
     {
         let Ok(time) = sum.time().try_into() else {
+            tracing::warn!(timestamp = ?sum.time(), "wildly unusual timestamp in counter");
             return;
         };
         for data_point in sum.data_points() {
@@ -278,7 +287,7 @@ impl MostRecentMetricStoreInner {
                     return None;
                 }
                 let key = self.strings.intern(key);
-                let value = self.strings.intern(&value.as_str());
+                let value = self.strings.intern(value.as_str());
                 Some((key, value))
             })
             .collect::<BTreeSet<_>>();
@@ -290,7 +299,7 @@ impl MostRecentMetricStoreInner {
                     return None;
                 }
                 let key = self.strings.intern(key);
-                let value = self.strings.intern(&attribute.value.as_str());
+                let value = self.strings.intern(attribute.value.as_str());
                 Some((key, value))
             }));
             for metric in item.metrics() {
@@ -306,22 +315,14 @@ impl MostRecentMetricStoreInner {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct MostRecentMetricStore {
     inner: Arc<Mutex<MostRecentMetricStoreInner>>,
 }
 
-impl Default for MostRecentMetricStore {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl MostRecentMetricStore {
     pub fn new() -> Self {
-        Self {
-            inner: Arc::new(Mutex::new(MostRecentMetricStoreInner::default())),
-        }
+        Self::default()
     }
 
     /// Access a shallow copy of the current metrics that has all of the interned
@@ -368,5 +369,26 @@ impl PushMetricExporter for MostRecentMetricStore {
 
     fn force_flush(&self) -> opentelemetry_sdk::error::OTelSdkResult {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::borrow::Cow;
+
+    use super::StringStore;
+
+    #[test]
+    fn test_string_store() {
+        let mut ss = StringStore::default();
+
+        let handle1 = ss.intern("foo1");
+        let handle2 = ss.intern("foo2");
+        assert_eq!(handle1, ss.intern("foo1"));
+        assert_eq!(handle1, ss.intern(String::from("foo1")));
+        assert_eq!(handle1, ss.intern(Cow::Borrowed("foo1")));
+        assert_ne!(handle1, handle2);
+        assert_eq!(ss.redeem(handle1), Some("foo1"));
+        assert_eq!(ss.redeem(handle2), Some("foo2"));
     }
 }

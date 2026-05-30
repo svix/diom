@@ -126,43 +126,39 @@ pub(crate) fn setup_tracing(
 }
 
 pub(crate) fn setup_metrics(cfg: &ConfigurationInner) -> MostRecentMetricStore {
-    let reader = if let Some(addr) = cfg
+    let reader = cfg
         .opentelemetry
         .metrics_address
         .as_ref()
         .or(cfg.opentelemetry.address.as_ref())
-    {
-        let exporter = if matches!(
-            cfg.opentelemetry.metrics_protocol,
-            OpenTelemetryProtocol::Http
-        ) {
-            tracing::debug!("sending http otel metrics to {addr}");
+        .map(|addr| {
+            let exporter = if matches!(
+                cfg.opentelemetry.metrics_protocol,
+                OpenTelemetryProtocol::Http
+            ) {
+                tracing::debug!("sending http otel metrics to {addr}");
 
-            opentelemetry_otlp::MetricExporter::builder()
-                .with_http()
-                .with_endpoint(addr)
-                .with_http_client(OtelReqwestClient::from(reqwest::Client::new()))
-                .build()
-                .unwrap()
-        } else {
-            tracing::debug!("sending grpc otel metrics to {addr}");
+                opentelemetry_otlp::MetricExporter::builder()
+                    .with_http()
+                    .with_endpoint(addr)
+                    .with_http_client(OtelReqwestClient::from(reqwest::Client::new()))
+                    .build()
+                    .unwrap()
+            } else {
+                tracing::debug!("sending grpc otel metrics to {addr}");
 
-            opentelemetry_otlp::MetricExporter::builder()
-                .with_tonic()
-                .with_endpoint(addr)
-                .with_temporality(opentelemetry_sdk::metrics::Temporality::Delta)
-                .build()
-                .unwrap()
-        };
+                opentelemetry_otlp::MetricExporter::builder()
+                    .with_tonic()
+                    .with_endpoint(addr)
+                    .with_temporality(opentelemetry_sdk::metrics::Temporality::Delta)
+                    .build()
+                    .unwrap()
+            };
 
-        Some(
             PeriodicReader::builder(exporter, runtime::Tokio)
                 .with_interval(cfg.opentelemetry.metrics_period.into())
-                .build(),
-        )
-    } else {
-        None
-    };
+                .build()
+        });
 
     let most_recent_store = MostRecentMetricStore::new();
     let most_recent_reader = PeriodicReader::builder(most_recent_store.clone(), runtime::Tokio)
@@ -172,7 +168,7 @@ pub(crate) fn setup_metrics(cfg: &ConfigurationInner) -> MostRecentMetricStore {
     let mut provider_builder = SdkMeterProvider::builder().with_reader(most_recent_reader);
 
     if let Some(reader) = reader {
-        provider_builder = provider_builder.with_reader(reader)
+        provider_builder = provider_builder.with_reader(reader);
     }
 
     let provider = provider_builder

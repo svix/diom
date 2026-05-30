@@ -72,7 +72,7 @@ impl GetMetricsOut {
 #[aide_annotate(op_id = "v1.admin.metrics.get")]
 /// Dump the current metrics (which would otherwise be sent to the OTLP metrics receiver)
 async fn get_metrics(State(state): State<AppState>) -> Result<MsgPackOrJson<GetMetricsOut>> {
-    let metrics = if let Some(metrics) = state.metrics.as_ref() {
+    let metrics = if let Some(metrics) = &state.metrics {
         metrics.serialize_with(GetMetricsOut::from_serialized)
     } else {
         GetMetricsOut {
