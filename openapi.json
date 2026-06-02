@@ -198,7 +198,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getClusterAdmin.initialize(\n    new ClusterInitializeIn()\n        \n);"
+            "source": "var response = diom.getClusterAdmin.initialize(\n    new ClusterInitializeIn()\n);"
           },
           {
             "lang": "TypeScript",
@@ -307,7 +307,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getClusterAdmin.removeNode(\n    new ClusterRemoveNodeIn()\n        .nodeId(\"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\")\n        \n);"
+            "source": "var response = diom.getClusterAdmin.removeNode(\n    new ClusterRemoveNodeIn()\n        .nodeId(\"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -416,7 +416,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getClusterAdmin.forceSnapshot(\n    new ClusterForceSnapshotIn()\n        \n);"
+            "source": "var response = diom.getClusterAdmin.forceSnapshot(\n    new ClusterForceSnapshotIn()\n);"
           },
           {
             "lang": "TypeScript",
@@ -525,7 +525,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getClusterAdmin.forceElection(\n    new ClusterForceElectionIn()\n        \n);"
+            "source": "var response = diom.getClusterAdmin.forceElection(\n    new ClusterForceElectionIn()\n);"
           },
           {
             "lang": "TypeScript",
@@ -634,7 +634,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthToken.create(\n    new AdminAuthTokenCreateIn()\n        .name(\"some token name\")\n        .role(\"some token role\")\n        .expiryMs(Duration.ofSeconds(30))\n        .enabled(true)\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthToken.create(\n    new AdminAuthTokenCreateIn()\n        .name(\"some token name\")\n        .role(\"some token role\")\n        .expiryMs(Duration.ofSeconds(30))\n        .enabled(\n            true)\n);"
           },
           {
             "lang": "TypeScript",
@@ -743,7 +743,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthToken.expire(\n    new AdminAuthTokenExpireIn()\n        .id(\"key_06etngr201xwv7qj08mt4cs03w\")\n        .expiryMs(Duration.ofSeconds(30))\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthToken.expire(\n    new AdminAuthTokenExpireIn()\n        .id(\"key_06etngr201xwv7qj08mt4cs03w\")\n        .expiryMs(Duration.ofSeconds(30))\n);"
           },
           {
             "lang": "TypeScript",
@@ -852,7 +852,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthToken.rotate(\n    new AdminAuthTokenRotateIn()\n        .id(\"key_06etngr201xwv7qj08mt4cs03w\")\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthToken.rotate(\n    new AdminAuthTokenRotateIn()\n        .id(\"key_06etngr201xwv7qj08mt4cs03w\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -961,7 +961,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthToken.delete(\n    new AdminAuthTokenDeleteIn()\n        .id(\"key_06etngr201xwv7qj08mt4cs03w\")\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthToken.delete(\n    new AdminAuthTokenDeleteIn()\n        .id(\"key_06etngr201xwv7qj08mt4cs03w\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -1070,7 +1070,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthToken.list(\n    new AdminAuthTokenListIn()\n        .limit(1L)\n        .iterator(\"key_06etngr201xwv7qj08mt4cs03w\")\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthToken.list(\n    new AdminAuthTokenListIn()\n        .limit(1L)\n        .iterator(\"key_06etngr201xwv7qj08mt4cs03w\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -1179,7 +1179,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthToken.update(\n    new AdminAuthTokenUpdateIn()\n        .id(\"key_06etngr201xwv7qj08mt4cs03w\")\n        .name(\"some token name\")\n        .expiryMs(Duration.ofSeconds(30))\n        .enabled(true)\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthToken.update(\n    new AdminAuthTokenUpdateIn()\n        .id(\"key_06etngr201xwv7qj08mt4cs03w\")\n        .name(\"some token name\")\n        .expiryMs(Duration.ofSeconds(30))\n        .enabled(\n            true)\n);"
           },
           {
             "lang": "TypeScript",
@@ -1288,7 +1288,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthToken.whoami(\n    new AdminAuthTokenWhoamiIn()\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthToken.whoami(\n    new AdminAuthTokenWhoamiIn()\n);"
           },
           {
             "lang": "TypeScript",
@@ -1387,7 +1387,7 @@
           {
             "lang": "Shell",
             "label": "CLI",
-            "source": "diom admin auth-role configure '{\n    \"id\": \"some_role_id\",\n    \"description\": \"role description…\",\n    \"rules\": [],\n    \"policies\": [],\n    \"context\": \n            {}\n}'"
+            "source": "diom admin auth-role configure '{\n    \"id\": \"some_role_id\",\n    \"description\": \"role description…\",\n    \"rules\": [],\n    \"policies\": [],\n    \"context\": {}\n}'"
           },
           {
             "lang": "Go",
@@ -1397,7 +1397,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthRole.configure(\n    new AdminRoleConfigureIn()\n        .id(\"some_role_id\")\n        .description(\"role description…\")\n        .rules(List.of())\n        .policies(List.of())\n        .context(Map.of())\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthRole.configure(\n    new AdminRoleConfigureIn()\n        .id(\"some_role_id\")\n        .description(\"role description…\")\n        .rules(List.of())\n        .policies(List.of())\n        .context(Map.of())\n);"
           },
           {
             "lang": "TypeScript",
@@ -1407,7 +1407,7 @@
           {
             "lang": "Python",
             "label": "Python",
-            "source": "response = diom.admin.auth_role.configure(\n    AdminRoleConfigureIn(\n        id = \"some_role_id\",\n        description = \"role description…\",\n        rules = [],\n        policies = [],\n        context = \n                {},\n    ),\n);"
+            "source": "response = diom.admin.auth_role.configure(\n    AdminRoleConfigureIn(\n        id = \"some_role_id\",\n        description = \"role description…\",\n        rules = [],\n        policies = [],\n        context = {},\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -1506,7 +1506,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthRole.delete(\n    new AdminRoleDeleteIn()\n        .id(\"some_role_id\")\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthRole.delete(\n    new AdminRoleDeleteIn()\n        .id(\"some_role_id\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -1615,7 +1615,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthRole.get(\n    new AdminRoleGetIn()\n        .id(\"some_role_id\")\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthRole.get(\n    new AdminRoleGetIn()\n        .id(\"some_role_id\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -1724,7 +1724,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthRole.list(\n    new AdminRoleListIn()\n        .limit(1L)\n        .iterator(\"some_role_id\")\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthRole.list(\n    new AdminRoleListIn()\n        .limit(1L)\n        .iterator(\"some_role_id\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -1833,7 +1833,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthPolicy.configure(\n    new AdminAccessPolicyConfigureIn()\n        .id(\"some_access_policy\")\n        .description(\"policy description…\")\n        .rules(List.of())\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthPolicy.configure(\n    new AdminAccessPolicyConfigureIn()\n        .id(\"some_access_policy\")\n        .description(\"policy description…\")\n        .rules(List.of())\n);"
           },
           {
             "lang": "TypeScript",
@@ -1942,7 +1942,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthPolicy.delete(\n    new AdminAccessPolicyDeleteIn()\n        .id(\"some_access_policy\")\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthPolicy.delete(\n    new AdminAccessPolicyDeleteIn()\n        .id(\"some_access_policy\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -2051,7 +2051,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthPolicy.get(\n    new AdminAccessPolicyGetIn()\n        .id(\"some_access_policy\")\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthPolicy.get(\n    new AdminAccessPolicyGetIn()\n        .id(\"some_access_policy\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -2160,7 +2160,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getAdmin.getAuthPolicy.list(\n    new AdminAccessPolicyListIn()\n        .limit(1L)\n        .iterator(\"some_access_policy\")\n        \n);"
+            "source": "var response = diom.getAdmin.getAuthPolicy.list(\n    new AdminAccessPolicyListIn()\n        .limit(1L)\n        .iterator(\"some_access_policy\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -3070,7 +3070,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getCache.set(\n    \"some_key\",\n    List.of(),\n    new CacheSetIn()\n        .namespace(\"some_namespace\")\n        .ttlMs(Duration.ofSeconds(30))\n        \n);"
+            "source": "var response = diom.getCache.set(\n    \"some_key\",\n    List.of(),\n    new CacheSetIn()\n        .namespace(\"some_namespace\")\n        .ttlMs(Duration.ofSeconds(30))\n);"
           },
           {
             "lang": "TypeScript",
@@ -3179,7 +3179,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getCache.get(\n    \"some_key\",\n    new CacheGetIn()\n        .namespace(\"some_namespace\")\n        .consistency(Consistency.Strong)\n        \n);"
+            "source": "var response = diom.getCache.get(\n    \"some_key\",\n    new CacheGetIn()\n        .namespace(\"some_namespace\")\n        .consistency(\n            Consistency.Strong\n        )\n);"
           },
           {
             "lang": "TypeScript",
@@ -3288,7 +3288,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getCache.getNamespace.configure(\n    new CacheConfigureNamespaceIn()\n        .name(\"some_namespace\")\n        .evictionPolicy(EvictionPolicy.NoEviction)\n        \n);"
+            "source": "var response = diom.getCache.getNamespace.configure(\n    new CacheConfigureNamespaceIn()\n        .name(\"some_namespace\")\n        .evictionPolicy(\n            EvictionPolicy.NoEviction\n        )\n);"
           },
           {
             "lang": "TypeScript",
@@ -3397,7 +3397,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getCache.getNamespace.get(\n    new CacheGetNamespaceIn()\n        .name(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getCache.getNamespace.get(\n    new CacheGetNamespaceIn()\n        .name(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -3506,7 +3506,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getCache.delete(\n    \"some_key\",\n    new CacheDeleteIn()\n        .namespace(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getCache.delete(\n    \"some_key\",\n    new CacheDeleteIn()\n        .namespace(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -3615,7 +3615,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getKv.set(\n    \"some_key\",\n    List.of(),\n    new KvSetIn()\n        .namespace(\"some_namespace\")\n        .ttlMs(Duration.ofSeconds(30))\n        .behavior(OperationBehavior.Upsert)\n        .version(1L)\n        \n);"
+            "source": "var response = diom.getKv.set(\n    \"some_key\",\n    List.of(),\n    new KvSetIn()\n        .namespace(\"some_namespace\")\n        .ttlMs(Duration.ofSeconds(30))\n        .behavior(\n            OperationBehavior.Upsert\n        )\n        .version(1L)\n);"
           },
           {
             "lang": "TypeScript",
@@ -3724,7 +3724,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getKv.get(\n    \"some_key\",\n    new KvGetIn()\n        .namespace(\"some_namespace\")\n        .consistency(Consistency.Strong)\n        \n);"
+            "source": "var response = diom.getKv.get(\n    \"some_key\",\n    new KvGetIn()\n        .namespace(\"some_namespace\")\n        .consistency(\n            Consistency.Strong\n        )\n);"
           },
           {
             "lang": "TypeScript",
@@ -3833,7 +3833,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getKv.getNamespace.configure(\n    new KvConfigureNamespaceIn()\n        .name(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getKv.getNamespace.configure(\n    new KvConfigureNamespaceIn()\n        .name(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -3942,7 +3942,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getKv.getNamespace.get(\n    new KvGetNamespaceIn()\n        .name(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getKv.getNamespace.get(\n    new KvGetNamespaceIn()\n        .name(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -4051,7 +4051,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getKv.delete(\n    \"some_key\",\n    new KvDeleteIn()\n        .namespace(\"some_namespace\")\n        .version(1L)\n        \n);"
+            "source": "var response = diom.getKv.delete(\n    \"some_key\",\n    new KvDeleteIn()\n        .namespace(\"some_namespace\")\n        .version(1L)\n);"
           },
           {
             "lang": "TypeScript",
@@ -4160,7 +4160,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getRateLimit.limit(\n    new RateLimitCheckIn()\n        .namespace(\"some_namespace\")\n        .key(\"some_key\")\n        .tokens(1L)\n        .config(new RateLimitConfig()\n        .capacity(1L)\n        .refillAmount(1L)\n        .refillIntervalMs(Duration.ofSeconds(30)))\n        \n);"
+            "source": "var response = diom.getRateLimit.limit(\n    new RateLimitCheckIn()\n        .namespace(\"some_namespace\")\n        .key(\"some_key\")\n        .tokens(1L)\n        .config(\n            new RateLimitConfig()\n                .capacity(1L)\n                .refillAmount(1L)\n                .refillIntervalMs(Duration.ofSeconds(30))\n        )\n);"
           },
           {
             "lang": "TypeScript",
@@ -4269,7 +4269,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getRateLimit.getRemaining(\n    new RateLimitGetRemainingIn()\n        .namespace(\"some_namespace\")\n        .key(\"some_key\")\n        .config(new RateLimitConfig()\n        .capacity(1L)\n        .refillAmount(1L)\n        .refillIntervalMs(Duration.ofSeconds(30)))\n        \n);"
+            "source": "var response = diom.getRateLimit.getRemaining(\n    new RateLimitGetRemainingIn()\n        .namespace(\"some_namespace\")\n        .key(\"some_key\")\n        .config(\n            new RateLimitConfig()\n                .capacity(1L)\n                .refillAmount(1L)\n                .refillIntervalMs(Duration.ofSeconds(30))\n        )\n);"
           },
           {
             "lang": "TypeScript",
@@ -4378,7 +4378,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getRateLimit.reset(\n    new RateLimitResetIn()\n        .namespace(\"some_namespace\")\n        .key(\"some_key\")\n        .config(new RateLimitConfig()\n        .capacity(1L)\n        .refillAmount(1L)\n        .refillIntervalMs(Duration.ofSeconds(30)))\n        \n);"
+            "source": "var response = diom.getRateLimit.reset(\n    new RateLimitResetIn()\n        .namespace(\"some_namespace\")\n        .key(\"some_key\")\n        .config(\n            new RateLimitConfig()\n                .capacity(1L)\n                .refillAmount(1L)\n                .refillIntervalMs(Duration.ofSeconds(30))\n        )\n);"
           },
           {
             "lang": "TypeScript",
@@ -4487,7 +4487,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getRateLimit.getNamespace.configure(\n    new RateLimitConfigureNamespaceIn()\n        .name(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getRateLimit.getNamespace.configure(\n    new RateLimitConfigureNamespaceIn()\n        .name(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -4596,7 +4596,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getRateLimit.getNamespace.get(\n    new RateLimitGetNamespaceIn()\n        .name(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getRateLimit.getNamespace.get(\n    new RateLimitGetNamespaceIn()\n        .name(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -4705,7 +4705,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getIdempotency.start(\n    \"some_key\",\n    new IdempotencyStartIn()\n        .namespace(\"some_namespace\")\n        .lockPeriodMs(Duration.ofSeconds(30))\n        \n);"
+            "source": "var response = diom.getIdempotency.start(\n    \"some_key\",\n    new IdempotencyStartIn()\n        .namespace(\"some_namespace\")\n        .lockPeriodMs(Duration.ofSeconds(30))\n);"
           },
           {
             "lang": "TypeScript",
@@ -4804,7 +4804,7 @@
           {
             "lang": "Shell",
             "label": "CLI",
-            "source": "diom idempotency complete \"some_key\" '{\n    \"namespace\": \"some_namespace\",\n    \"response\": [],\n    \"context\": \n            {},\n    \"ttl_ms\": 30000\n}'"
+            "source": "diom idempotency complete \"some_key\" '{\n    \"namespace\": \"some_namespace\",\n    \"response\": [],\n    \"context\": {},\n    \"ttl_ms\": 30000\n}'"
           },
           {
             "lang": "Go",
@@ -4814,7 +4814,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getIdempotency.complete(\n    \"some_key\",\n    new IdempotencyCompleteIn()\n        .namespace(\"some_namespace\")\n        .response(List.of())\n        .context(Map.of())\n        .ttlMs(Duration.ofSeconds(30))\n        \n);"
+            "source": "var response = diom.getIdempotency.complete(\n    \"some_key\",\n    new IdempotencyCompleteIn()\n        .namespace(\"some_namespace\")\n        .response(List.of())\n        .context(Map.of())\n        .ttlMs(Duration.ofSeconds(30))\n);"
           },
           {
             "lang": "TypeScript",
@@ -4824,7 +4824,7 @@
           {
             "lang": "Python",
             "label": "Python",
-            "source": "response = diom.idempotency.complete(\n    \"some_key\",\n    IdempotencyCompleteIn(\n        namespace = \"some_namespace\",\n        response = [],\n        context = \n                {},\n        ttl_ms = timedelta(seconds=30),\n    ),\n);"
+            "source": "response = diom.idempotency.complete(\n    \"some_key\",\n    IdempotencyCompleteIn(\n        namespace = \"some_namespace\",\n        response = [],\n        context = {},\n        ttl_ms = timedelta(seconds=30),\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -4923,7 +4923,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getIdempotency.abort(\n    \"some_key\",\n    new IdempotencyAbortIn()\n        .namespace(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getIdempotency.abort(\n    \"some_key\",\n    new IdempotencyAbortIn()\n        .namespace(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -5032,7 +5032,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getIdempotency.getNamespace.configure(\n    new IdempotencyConfigureNamespaceIn()\n        .name(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getIdempotency.getNamespace.configure(\n    new IdempotencyConfigureNamespaceIn()\n        .name(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -5141,7 +5141,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getIdempotency.getNamespace.get(\n    new IdempotencyGetNamespaceIn()\n        .name(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getIdempotency.getNamespace.get(\n    new IdempotencyGetNamespaceIn()\n        .name(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -5250,7 +5250,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getNamespace.configure(\n    \"some_namespace\",\n    new MsgNamespaceConfigureIn()\n        .retention(new Retention()\n        .periodMs(Duration.ofSeconds(30)))\n        \n);"
+            "source": "var response = diom.getMsgs.getNamespace.configure(\n    \"some_namespace\",\n    new MsgNamespaceConfigureIn()\n        .retention(\n            new Retention()\n                .periodMs(Duration.ofSeconds(30))\n        )\n);"
           },
           {
             "lang": "TypeScript",
@@ -5359,7 +5359,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getNamespace.get(\n    \"some_namespace\",\n    new MsgNamespaceGetIn()\n        \n);"
+            "source": "var response = diom.getMsgs.getNamespace.get(\n    \"some_namespace\",\n    new MsgNamespaceGetIn()\n);"
           },
           {
             "lang": "TypeScript",
@@ -5468,7 +5468,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.publish(\n    \"some_topic_name\",\n    new MsgPublishIn()\n        .namespace(\"some_namespace\")\n        .msgs(List.of())\n        .idempotencyKey(\"my_idempotency_key\")\n        \n);"
+            "source": "var response = diom.getMsgs.publish(\n    \"some_topic_name\",\n    new MsgPublishIn()\n        .namespace(\"some_namespace\")\n        .msgs(List.of())\n        .idempotencyKey(\"my_idempotency_key\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -5577,7 +5577,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getStream.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgStreamReceiveIn()\n        .namespace(\"some_namespace\")\n        .batchSize(1)\n        .leaseDurationMs(Duration.ofSeconds(30))\n        .defaultStartingPosition(SeekPosition.Earliest)\n        .batchWaitMs(Duration.ofSeconds(30))\n        \n);"
+            "source": "var response = diom.getMsgs.getStream.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgStreamReceiveIn()\n        .namespace(\"some_namespace\")\n        .batchSize(1)\n        .leaseDurationMs(Duration.ofSeconds(30))\n        .defaultStartingPosition(\n            SeekPosition.Earliest\n        )\n        .batchWaitMs(Duration.ofSeconds(30))\n);"
           },
           {
             "lang": "TypeScript",
@@ -5686,7 +5686,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getStream.commit(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    new MsgStreamCommitIn()\n        .namespace(\"some_namespace\")\n        .offset(1L)\n        \n);"
+            "source": "var response = diom.getMsgs.getStream.commit(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    new MsgStreamCommitIn()\n        .namespace(\"some_namespace\")\n        .offset(1L)\n);"
           },
           {
             "lang": "TypeScript",
@@ -5795,7 +5795,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getStream.seek(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgStreamSeekIn()\n        .namespace(\"some_namespace\")\n        .offset(1L)\n        .position(SeekPosition.Earliest)\n        .timestamp(Instant.parse(\"2026-04-20 12:00:00Z\"))\n        \n);"
+            "source": "var response = diom.getMsgs.getStream.seek(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgStreamSeekIn()\n        .namespace(\"some_namespace\")\n        .offset(1L)\n        .position(\n            SeekPosition.Earliest\n        )\n        .timestamp(Instant.parse(\"2026-04-20 12:00:00Z\"))\n);"
           },
           {
             "lang": "TypeScript",
@@ -5904,7 +5904,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getStream.cancelLease(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    new MsgStreamCancelLeaseIn()\n        .namespace(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getMsgs.getStream.cancelLease(\n    \"some_topic_name~0\",\n    \"some_consumer_group\",\n    new MsgStreamCancelLeaseIn()\n        .namespace(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -6013,7 +6013,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getQueue.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueReceiveIn()\n        .namespace(\"some_namespace\")\n        .batchSize(1)\n        .leaseDurationMs(Duration.ofSeconds(30))\n        .batchWaitMs(Duration.ofSeconds(30))\n        \n);"
+            "source": "var response = diom.getMsgs.getQueue.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueReceiveIn()\n        .namespace(\"some_namespace\")\n        .batchSize(1)\n        .leaseDurationMs(Duration.ofSeconds(30))\n        .batchWaitMs(Duration.ofSeconds(30))\n);"
           },
           {
             "lang": "TypeScript",
@@ -6122,7 +6122,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getQueue.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueAckIn()\n        .namespace(\"some_namespace\")\n        .msgIds(List.of())\n        \n);"
+            "source": "var response = diom.getMsgs.getQueue.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueAckIn()\n        .namespace(\"some_namespace\")\n        .msgIds(List.of())\n);"
           },
           {
             "lang": "TypeScript",
@@ -6231,7 +6231,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getQueue.extendLease(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueExtendLeaseIn()\n        .namespace(\"some_namespace\")\n        .msgIds(List.of())\n        .leaseDurationMs(Duration.ofSeconds(30))\n        \n);"
+            "source": "var response = diom.getMsgs.getQueue.extendLease(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueExtendLeaseIn()\n        .namespace(\"some_namespace\")\n        .msgIds(List.of())\n        .leaseDurationMs(Duration.ofSeconds(30))\n);"
           },
           {
             "lang": "TypeScript",
@@ -6340,7 +6340,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getQueue.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueConfigureIn()\n        .namespace(\"some_namespace\")\n        .retrySchedule(List.of())\n        .dlqTopic(\"some_topic_name\")\n        \n);"
+            "source": "var response = diom.getMsgs.getQueue.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueConfigureIn()\n        .namespace(\"some_namespace\")\n        .retrySchedule(List.of())\n        .dlqTopic(\"some_topic_name\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -6449,7 +6449,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getQueue.nack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueNackIn()\n        .namespace(\"some_namespace\")\n        .msgIds(List.of())\n        \n);"
+            "source": "var response = diom.getMsgs.getQueue.nack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueNackIn()\n        .namespace(\"some_namespace\")\n        .msgIds(List.of())\n);"
           },
           {
             "lang": "TypeScript",
@@ -6558,7 +6558,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getQueue.redriveDlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueRedriveDlqIn()\n        .namespace(\"some_namespace\")\n        \n);"
+            "source": "var response = diom.getMsgs.getQueue.redriveDlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgQueueRedriveDlqIn()\n        .namespace(\"some_namespace\")\n);"
           },
           {
             "lang": "TypeScript",
@@ -6667,7 +6667,7 @@
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getTopic.configure(\n    \"some_topic_name\",\n    new MsgTopicConfigureIn()\n        .namespace(\"some_namespace\")\n        .partitions(1)\n        \n);"
+            "source": "var response = diom.getMsgs.getTopic.configure(\n    \"some_topic_name\",\n    new MsgTopicConfigureIn()\n        .namespace(\"some_namespace\")\n        .partitions(1)\n);"
           },
           {
             "lang": "TypeScript",
