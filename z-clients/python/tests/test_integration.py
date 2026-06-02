@@ -17,14 +17,12 @@ SERVER_URL = os.environ.get("DIOM_SERVER_URL")
 
 
 @pytest.fixture
-def diom_credentials(is_ci) -> (str, str):
-    print(TOKEN)
-    print(SERVER_URL)
+def diom_credentials(is_ci) -> tuple[str, str]:
     if TOKEN is None or SERVER_URL is None:
         if is_ci:
             raise RuntimeError("$DIOM_TOKEN and $DIOM_SERVER_URL must be set")
         else:
-            pytest.skip(
+            return pytest.skip(
                 "Integration tests require $DIOM_TOKEN and $DIOM_SERVER_URL to be set"
             )
     return (TOKEN, SERVER_URL)
