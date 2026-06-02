@@ -15,16 +15,16 @@
 {%- else -%}
     {%- set non_positional_fields = resource.fields | selectattr("positional", "false") -%}
 new {{ resource.name | to_upper_camel_case }}()
-    {% for field in non_positional_fields -%}
-        .{{ field.name | to_lower_camel_case }}({{ field_example(field) | trim }})
-    {% endfor -%}
+    {%- for field in non_positional_fields %}
+    .{{ field.name | to_lower_camel_case }}({{ field_example(field) }})
+    {%- endfor %}
 
     {%- if resource.kind == "struct_enum" -%}
         {%- set variant = resource.variants[1] -%}
         {%- set variant_val -%}
             new {{ resource.name | to_upper_camel_case }}{{ resource.content_field | to_upper_camel_case }}.{{ variant.name | to_upper_camel_case }}(
                 {%- if variant.schema_ref is defined -%}
-                    {{ render_example_resource(variant.inner) | trim }}
+                    {{ render_example_resource(variant.inner) | indent(4) }}
                 {%- endif -%}
             )
         {%- endset -%}
@@ -74,9 +74,9 @@ new {{ resource.name | to_upper_camel_case }}()
         {%- else -%}
             1{{ int_suffix }}
         {%- endif -%}
-    {%- elif field.type.is_schema_ref() -%}
-        {{ render_example_resource(field.type.inner_schema_ref_ty()) }}
-    {%- elif field.type.is_set() or field.type.is_list() %}
+    {%- elif field.type.is_schema_ref() %}
+        {{ render_example_resource(field.type.inner_schema_ref_ty()) | indent(8) }}
+    {% elif field.type.is_set() or field.type.is_list() %}
         {%- set list_keyword %}{% if field.type.is_set() -%}Set{% else -%}List{% endif -%}{% endset -%}
         {%- if field.example is defined -%}
         {{ list_keyword }}.of(

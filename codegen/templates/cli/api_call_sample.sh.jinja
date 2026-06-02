@@ -51,7 +51,7 @@
     {%- elif field.type.is_map() -%}
         {%- if field.example is defined -%}
             {{ field.example }}
-        {%- else %}
+        {%- else -%}
             {}
         {%- endif %}
     {%- elif field.type.is_json_object() -%}
