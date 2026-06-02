@@ -12,23 +12,32 @@ from diom.models import (
     KvGetIn,
 )
 
-TOKEN = os.environ["DIOM_TOKEN"]
-SERVER_URL = os.environ["DIOM_SERVER_URL"]
-
-pytestmark = pytest.mark.skipif(
-    os.environ.get("DIOM_INTEGRATION") != "1",
-    reason="Set DIOM_INTEGRATION=1 to run integration tests",
-)
+TOKEN = os.environ.get("DIOM_TOKEN")
+SERVER_URL = os.environ.get("DIOM_SERVER_URL")
 
 
 @pytest.fixture
-def client() -> Diom:
-    return Diom(TOKEN, DiomOptions(server_url=SERVER_URL))
+def diom_credentials(is_ci) -> (str, str):
+    print(TOKEN)
+    print(SERVER_URL)
+    if TOKEN is None or SERVER_URL is None:
+        if is_ci:
+            raise RuntimeError("$DIOM_TOKEN and $DIOM_SERVER_URL must be set")
+        else:
+            pytest.skip(
+                "Integration tests require $DIOM_TOKEN and $DIOM_SERVER_URL to be set"
+            )
+    return (TOKEN, SERVER_URL)
 
 
 @pytest.fixture
-def async_client() -> DiomAsync:
-    return DiomAsync(TOKEN, DiomOptions(server_url=SERVER_URL))
+def client(diom_credentials) -> Diom:
+    return Diom(diom_credentials[0], DiomOptions(server_url=diom_credentials[1]))
+
+
+@pytest.fixture
+def async_client(diom_credentials) -> DiomAsync:
+    return DiomAsync(diom_credentials[0], DiomOptions(server_url=diom_credentials[1]))
 
 
 # --- Sync tests ---

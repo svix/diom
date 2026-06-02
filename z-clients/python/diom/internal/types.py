@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Annotated
+
 from pydantic import PlainSerializer, PlainValidator
 
 
@@ -15,7 +16,7 @@ def _validate_duration_ms(v: object) -> timedelta:
 
 
 def _serialize_duration_ms(td: timedelta) -> int:
-    return td.seconds * 1000 + int(round(td.microseconds / 1000))
+    return td.seconds * 1000 + round(td.microseconds / 1000)
 
 
 TimeDeltaMs = Annotated[
@@ -37,7 +38,7 @@ def _validate_unix_timestamp_ms(v: object) -> datetime:
 
 
 def _serialize_unix_timestamp_ms(dt: datetime) -> int:
-    return int(round(dt.timestamp() * 1000))
+    return round(dt.timestamp() * 1000)
 
 
 UnixTimestampMs = Annotated[

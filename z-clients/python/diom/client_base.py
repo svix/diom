@@ -1,4 +1,4 @@
-from .internal.http_client import AuthenticatedHttpClient, DEFAULT_SERVER_URL
+from .internal.http_client import DEFAULT_SERVER_URL, AuthenticatedHttpClient
 from .options import DiomOptions
 
 
