@@ -1,18 +1,21 @@
 import asyncio
-import random
 import logging
+import random
 import time
 import typing as t
-import msgpack
 import uuid
+
 import httpx
+import msgpack
 from pydantic import BaseModel
 
 from .errors import ConnError, ErrorBody, OtherError, raise_diom_error
 from .http_client import AuthenticatedHttpClient
 
-
 APPLICATION_MSGPACK = "application/msgpack"
+
+
+ResponseType = t.TypeVar("ResponseType", bound="BaseModel")
 
 
 class ApiBase:
@@ -52,9 +55,9 @@ class ApiBase:
         method: str,
         path: str,
         *,
-        header_params: t.Optional[t.Dict[str, str]],
-        body: t.Optional[t.Any],
-    ) -> t.Dict[str, t.Any]:
+        header_params: dict[str, str] | None,
+        body: t.Any,
+    ) -> dict[str, t.Any]:
         url = f"{self._client.base_url}{path}"
 
         headers: t.Dict[str, str] = {
@@ -85,15 +88,15 @@ class ApiBase:
 
         return httpx_kwargs
 
-    async def _request_asyncio[T: BaseModel](
+    async def _request_asyncio(
         self,
         method: str,
         path: str,
         *,
-        header_params: t.Optional[t.Dict[str, str]] = None,
-        body: t.Optional[t.Any] = None,
-        response_type: type[T],
-    ) -> T:
+        header_params: t.Dict[str, str] | None = None,
+        body: t.Any | None = None,
+        response_type: type[ResponseType],
+    ) -> ResponseType:
         op_id = op_id_from_path(path)
         response = await self._request_asyncio_inner(
             method, path, op_id, header_params, body
@@ -105,8 +108,8 @@ class ApiBase:
         method: str,
         path: str,
         *,
-        header_params: t.Optional[t.Dict[str, str]] = None,
-        body: t.Optional[t.Any] = None,
+        header_params: t.Dict[str, str] | None = None,
+        body: t.Any | None = None,
     ) -> None:
         op_id = op_id_from_path(path)
         response = await self._request_asyncio_inner(
@@ -114,15 +117,15 @@ class ApiBase:
         )
         check_response(response, op_id)
 
-    def _request_sync[T: BaseModel](
+    def _request_sync(
         self,
         method: str,
         path: str,
         *,
-        header_params: t.Optional[t.Dict[str, str]] = None,
-        body: t.Optional[t.Any] = None,
-        response_type: type[T],
-    ) -> T:
+        header_params: t.Dict[str, str] | None = None,
+        body: t.Any | None = None,
+        response_type: type[ResponseType],
+    ) -> ResponseType:
         op_id = op_id_from_path(path)
         response = self._request_sync_inner(method, path, op_id, header_params, body)
         return parse_response(response, response_type, op_id)
@@ -132,8 +135,8 @@ class ApiBase:
         method: str,
         path: str,
         *,
-        header_params: t.Optional[t.Dict[str, str]] = None,
-        body: t.Optional[t.Any] = None,
+        header_params: t.Dict[str, str] | None = None,
+        body: t.Any | None = None,
     ) -> None:
         op_id = op_id_from_path(path)
         response = self._request_sync_inner(method, path, op_id, header_params, body)
@@ -144,8 +147,8 @@ class ApiBase:
         method: str,
         path: str,
         op_id: str,
-        header_params: t.Optional[t.Dict[str, str]] = None,
-        body: t.Optional[t.Any] = None,
+        header_params: t.Dict[str, str] | None = None,
+        body: t.Any | None = None,
     ) -> httpx.Response:
         try:
             httpx_kwargs = self._get_httpx_kwargs(
@@ -180,8 +183,8 @@ class ApiBase:
         method: str,
         path: str,
         op_id: str,
-        header_params: t.Optional[t.Dict[str, str]] = None,
-        body: t.Optional[t.Any] = None,
+        header_params: t.Dict[str, str] | None = None,
+        body: t.Any | None = None,
     ) -> httpx.Response:
         try:
             httpx_kwargs = self._get_httpx_kwargs(
@@ -237,20 +240,20 @@ def check_response(response: httpx.Response, op_id: str) -> None:
         raise_diom_error(error_body, op_id)
 
 
-def parse_response[T: BaseModel](
+def parse_response(
     response: httpx.Response,
-    response_type: type[T],
+    response_type: type[ResponseType],
     op_id: str,
-) -> T:
+) -> ResponseType:
     check_response(response, op_id)
     return _parse_response(response, response_type, op_id)
 
 
-def _parse_response[T: BaseModel](
+def _parse_response(
     response: httpx.Response,
-    response_type: type[T],
+    response_type: type[ResponseType],
     op_id: str,
-) -> T:
+) -> ResponseType:
     try:
         return response_type.model_validate(
             decode_response_body(response, op_id),

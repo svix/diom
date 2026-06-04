@@ -21,6 +21,8 @@ You can find general usage documentation at <https://diom.svix.com/docs>.
 pip install diom
 ```
 
+This library supports all [supported versions](https://devguide.python.org/versions/) of Python.
+
 ## Usage
 Please refer to [the documentation](https://diom.svix.com) for more usage instructions.
 
@@ -30,13 +32,14 @@ First checkout the [core README](../../README.md#developing) for details on how 
 
 ## Requirements
 
- - python >= 3.12
+ - python >= 3.10
 
 ## Installing dependencies
 
+We recommend using [uv](https://github.com/astral-sh/uv) for working on this library itself.
+
 ```sh
-python -m venv .venv
-pip install -e ".[dev]"
+uv sync
 ```
 
 ## Contributing
@@ -44,7 +47,7 @@ pip install -e ".[dev]"
 Before opening a PR be sure to format your code!
 
 ```sh
-ruff format
+uv run ruff format
 ```
 
 ## Running Tests
@@ -52,5 +55,7 @@ ruff format
 Simply run:
 
 ```sh
-pytest
+uv run pytest
 ```
+
+If you want to run integration tests, you'll need to start the Diom server and set the `$DIOM_TOKEN` and `$DIOM_SERVER_URL` environment variables accordingly.

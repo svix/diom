@@ -1,4 +1,3 @@
-from typing import List
 from dataclasses import dataclass, field
 
 
@@ -16,7 +15,7 @@ class DiomOptions:
 
     Defaults to [] (no automatic retries)
     """
-    retry_schedule: List[float] = field(default_factory=lambda: [])
+    retry_schedule: list[float] = field(default_factory=lambda: [])
 
     """
     The maximum amount of time in seconds a request can take.

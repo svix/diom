@@ -2,17 +2,40 @@
 name = "diom"
 version = "0.2.4"
 description = "Diom Python client library"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [
     { name = "Svix Inc", email = "oss@svix.com" },
 ]
-keywords = ["diom"]
+readme = "README.md"
+keywords = [
+    "svix",
+    "diom"
+]
 dependencies = [
     "attrs>=25.4.0,<26.0.0",
     "httpx[http2]>=0.28.1,<0.29.0",
     "msgpack>=1.1.2,<2.0.0",
     "pydantic>=2.12.5,<3.0.0",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development",
+    "Typing :: Typed",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
 [tool.pyrefly]
@@ -23,6 +46,18 @@ project-includes = [
 [project.urls]
 Homepage = "https://diom.svix.com"
 Repository = "https://github.com/svix/diom"
+Issues = "https://github.com/svix/diom/issues"
+Changelog = "https://github.com/svix/diom/blob/main/ChangeLog.md"
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.setuptools.package-data]
+"diom" = ["py.typed"]
+
+[tool.hatch.build]
+exclude = [".gitignore", "tests/*", "uv.lock", ".python-version"]
 
 [dependency-groups]
 dev = [
@@ -30,4 +65,34 @@ dev = [
     "pytest>=9.0.3",
     "pytest-asyncio>=0.25.0",
     "ruff>=0.15.5",
+    # TODO: set up `ty` once https://github.com/astral-sh/ty/issues/1438 is done
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # isort
+    "I",
+    # ruff
+    "RUF",
+]
+ignore = [
+    # ignore things that require codegen changes
+    "UP006", # Use `dict` instead of `t.Dict` for type annotation
+    "RUF022", # __all__ is not sorted
+]
+
+[tool.ruff.lint.per-file-ignores]
+# ignore line length and import sorting in generated code
+"diom/__init__.py" = ["I001", "E501"]
+"diom/apis/**.py" = ["I001", "E501"]
+"diom/models/**.py" = ["I001", "E501"]
