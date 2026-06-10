@@ -6,7 +6,7 @@
 
 # Base image for planner and build - keep in sync with .github/workflows/server-ci.yml
 FROM docker.io/rust:1.96-slim-trixie AS chef
-RUN cargo install cargo-chef
+RUN cargo install --locked cargo-chef@0.1.77
 WORKDIR /app
 
 # Build plan environment
@@ -17,7 +17,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 # Build environment
 FROM chef AS build-base
 
-ARG __BUST_DOCKER_BUILD_CACHE=2026-05-29
+ARG __BUST_DOCKER_BUILD_CACHE=2026-06-10
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     #!/bin/bash
     set -euxo pipefail
@@ -67,7 +67,7 @@ RUN cargo build --release --package diom-cli --bin diom --frozen
 # shared base image with dependencies
 FROM docker.io/debian:trixie-20260518-slim AS base
 
-ARG __BUST_DOCKER_BUILD_CACHE=2026-05-18
+ARG __BUST_DOCKER_BUILD_CACHE=2026-06-10
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     #!/bin/bash
     set -euxo pipefail
