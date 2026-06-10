@@ -28,7 +28,7 @@ jobs:
           path: ./cache
           key: ${{ runner.os }}-benchmark
       - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@f4c8b6b6887e53d3f07a8f026d9d75157713386b # v1
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1
         with:
           tool: 'cargo'
           output-file-path: ./benchmarks/output.txt
