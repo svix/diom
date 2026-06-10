@@ -6,7 +6,7 @@
 
 # Base image for planner and build - keep in sync with root Dockerfile
 FROM docker.io/rust:1.96-slim-trixie AS chef
-RUN cargo install cargo-chef
+RUN cargo install --locked cargo-chef@0.1.77
 WORKDIR /app
 
 # Build plan environment
@@ -17,7 +17,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 # Build environment
 FROM chef AS build
 
-ARG __BUST_DOCKER_BUILD_CACHE=2026-05-29
+ARG __BUST_DOCKER_BUILD_CACHE=2026-06-10
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     #!/bin/bash
     set -euxo pipefail
@@ -61,7 +61,7 @@ RUN <<EOF
     chown -R appuser: /home/appuser
 EOF
 
-ARG __BUST_DOCKER_BUILD_CACHE=2026-05-29
+ARG __BUST_DOCKER_BUILD_CACHE=2026-06-10
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     #!/bin/bash
     set -euxo pipefail
