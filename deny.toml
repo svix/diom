@@ -11,6 +11,8 @@ db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "deny"
 ignore = [
+    # can't do anything about this until validator stops using proc-macro-error2
+    "RUSTSEC-2026-0173"
 ]
 
 [licenses]
