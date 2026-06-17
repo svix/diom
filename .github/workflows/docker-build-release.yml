@@ -40,7 +40,7 @@ permissions:
 
 jobs:
   build:
-    uses: docker/github-builder/.github/workflows/build.yml@c2782c55efa56a01b9c30021db8f5ec3993228a3 # v1.8.0
+    uses: docker/github-builder/.github/workflows/build.yml@5f637c833aa76bc99372a1dc9a6f8bcd8056fb85 # v1.12.0
     permissions:
       contents: read # to fetch the repository content
       id-token: write # for signing attestation(s) with GitHub OIDC Token
@@ -76,7 +76,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Install regctl
-        uses: iarekylew00t/regctl-installer@6be4e3e933f847cc1ef6dbbaf97f3366eb283799 # v4.0.12
+        uses: iarekylew00t/regctl-installer@f08765843d75de953f263abf420bfda224f242ac # v4.0.13
       - name: Log in to GHCR
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
@@ -91,7 +91,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Recompute meta tags
         id: meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
           images: ${{ inputs.image_repo }}
           sep-tags: " "
