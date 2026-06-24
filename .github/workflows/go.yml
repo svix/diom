@@ -12,5 +12,5 @@ jobs:
       run:
         working-directory: z-clients/go
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: go build
