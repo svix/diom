@@ -20,7 +20,7 @@ jobs:
       server_image_tag: ${{ steps.versions.outputs.server_image_tag }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Read versions from values.yaml
         id: versions
         run: |
