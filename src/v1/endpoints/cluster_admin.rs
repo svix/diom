@@ -121,7 +121,7 @@ async fn cluster_status(
         .raft
         .with_raft_state(move |s| {
             let this_node_state = s.server_state.into();
-            let committed = s.committed().copied();
+            let committed = s.local_committed().copied();
             let members = s.membership_state.effective().membership();
             let voters = members.voter_ids().collect::<BTreeSet<NodeId>>();
             let learners = members.voter_ids().collect::<BTreeSet<NodeId>>();
@@ -362,7 +362,7 @@ async fn cluster_force_election(
 ) -> Result<MsgPackOrJson<ClusterForceElectionOut>> {
     let previous_leader_id = repl.raft.current_leader().await;
 
-    repl.raft.trigger().elect().await.or_internal_error()?;
+    repl.raft.trigger().elect(true).await.or_internal_error()?;
 
     let new_leader_id = repl.raft.current_leader().await;
 

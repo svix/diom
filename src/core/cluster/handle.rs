@@ -462,7 +462,7 @@ impl RaftState {
         let (has_cluster, server_state) = self
             .raft
             .with_raft_state(move |s| {
-                let has_committed_ids = s.committed().is_some();
+                let has_committed_ids = s.local_committed().is_some();
                 let has_nodes = s.membership_state.effective().nodes().count() > 0;
                 let self_in_nodes = s.membership_state.effective().get_node(&node_id).is_some();
                 let valid_state =
