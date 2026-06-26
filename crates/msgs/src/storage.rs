@@ -9,7 +9,10 @@ use diom_error::{OptionExt, Result};
 use fjall_utils::{FjallKey, TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, TopicName};
+use crate::entities::{
+    ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, SvixPollerListItem, TopicName,
+    obfuscate_token,
+};
 
 /// Prefixes for rows stored in the `metadata_tables` keyspace.
 #[repr(u8)]
@@ -19,6 +22,7 @@ enum MetadataPrefix {
     QueueLease = 3,
     QueueConfig = 4,
     Idempotency = 5,
+    SvixPoller = 6,
 }
 
 /// Prefixes for rows stored in the `msg_table` keyspace.
@@ -618,6 +622,81 @@ pub(crate) struct HighWaterMarkKey {
     pub(crate) topic_id: TopicId,
     #[key(1)]
     pub(crate) partition: Partition,
+}
+
+// --- Svix Poller configuration ---
+
+#[derive(Clone, Serialize, Deserialize, PersistableValue)]
+pub(crate) struct SvixPollerRow {
+    // Technically redundant with the TopicId, but saving the name
+    // let's us avoid a costly lookup of the name in the background worker.
+    pub topic: TopicName,
+    pub token: String,
+}
+
+impl TableRow for SvixPollerRow {
+    const ROW_TYPE: u8 = MetadataPrefix::SvixPoller as u8;
+}
+
+#[derive(FjallKey)]
+#[table_key(prefix = MetadataPrefix::SvixPoller)]
+pub(crate) struct SvixPollerKey {
+    #[key(0)]
+    pub(crate) namespace_id: NamespaceId,
+    #[key(1)]
+    pub(crate) topic_id: TopicId,
+    #[key(2)]
+    pub(crate) poller_id: String,
+}
+
+impl SvixPollerKey {
+    /// The consumer id used when polling and committing against the Svix
+    /// Autoconfig endpoint for this poller.
+    ///
+    /// IMPORTANT: changes to may break extant autoconfig integrations, since the
+    /// consumer group is how svix tracks state positions.
+    pub(crate) fn consumer_id(&self) -> String {
+        format!("diom_{}", self.poller_id)
+    }
+}
+
+/// Lists Svix poller configurations for a topic, ordered by poller id.
+///
+/// Returns up to `limit` items whose poller id sorts after `iterator`
+/// (exclusive). An unknown topic yields an empty list. Result tokens are
+/// obfuscated so the stored secret is never returned in full.
+#[tracing::instrument(skip(metadata_tables))]
+pub fn list_svix_pollers(
+    metadata_tables: &impl fjall_utils::ReadableKeyspace,
+    namespace_id: NamespaceId,
+    topic: &TopicName,
+    limit: usize,
+    iterator: Option<&str>,
+) -> Result<Vec<SvixPollerListItem>> {
+    let Some(topic_row) =
+        TopicRow::fetch(metadata_tables, TopicKey::build_key(&namespace_id, topic))?
+    else {
+        return Ok(Vec::new());
+    };
+
+    let prefix = SvixPollerKey::prefix_topic_id(&namespace_id, &topic_row.id);
+    let iterator = iterator.map(|poller_id| {
+        SvixPollerKey::build_key(&namespace_id, &topic_row.id, poller_id).to_vec()
+    });
+
+    SvixPollerRow::list_range(metadata_tables, &prefix, iterator, limit)?
+        .into_iter()
+        .map(|(key, row)| {
+            let poller_id = SvixPollerKey::extract_poller_id(&key)
+                .map_err(|e| diom_error::Error::internal(e.to_string()))?
+                .to_owned();
+            Ok(SvixPollerListItem {
+                topic: row.topic,
+                poller_id,
+                token: obfuscate_token(&row.token),
+            })
+        })
+        .collect()
 }
 
 #[cfg(test)]

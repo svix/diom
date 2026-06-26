@@ -8,6 +8,7 @@ pub mod instrumented_mutex;
 mod monotime;
 pub mod persistable_value;
 pub mod shutdown;
+pub mod svix_client;
 pub mod task;
 pub mod tokio_nursery;
 pub mod types;

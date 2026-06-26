@@ -2,7 +2,7 @@ use std::{
     fmt,
     io::ErrorKind,
     net::SocketAddr,
-    num::NonZeroU16,
+    num::{NonZeroU16, NonZeroUsize},
     path::{Path, PathBuf},
     str::FromStr,
     sync::Arc,
@@ -596,6 +596,23 @@ pub struct ConfigurationInner {
         default = "defaults::background_cleanup_interval"
     )]
     pub background_cleanup_interval: NonZeroDurationMs,
+
+    /// Maximum number of Svix Ingest pollers that can run concurrently.
+    ///
+    /// Larger values allow for faster processing (if the number of svix pollers exceeds svix_poller_max_concurrency),
+    /// at the expense of memory/disk.
+    #[serde(default = "defaults::svix_poller_max_concurrency")]
+    pub svix_poller_max_concurrency: NonZeroUsize,
+
+    /// Maximum time a single poller task may spend running before being killed/restarted.
+    ///
+    /// If the number of pollers exceeds `svix_poller_max_concurrency`, then shorter durations will
+    /// enable better fairness for all configured pollers. Longer durations will generally be more performant.
+    #[serde(
+        rename = "svix_poller_max_task_duration_ms",
+        default = "defaults::svix_poller_max_task_duration"
+    )]
+    pub svix_poller_max_task_duration: NonZeroDurationMs,
 
     /// How to persist data to the actual underlying database
     ///

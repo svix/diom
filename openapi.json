@@ -6687,6 +6687,333 @@
         ]
       }
     },
+    "/api/v1.msgs.svix-poller.create": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Svix Poller Create",
+        "description": "Create a Svix poller configuration for a topic.",
+        "operationId": "v1.msgs.svix-poller.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SvixPollerCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SvixPollerCreateOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs svix-poller create '{\n    \"namespace\": \"some_namespace\",\n    \"topic\": \"some_topic_name\",\n    \"poller_id\": \"sample string\",\n    \"token\": \"sample string\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.SvixPoller.Create(\n    ctx,\n    SvixPollerCreateIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        PollerId: \"sample string\",\n        Token: \"sample string\",\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getSvixPoller.create(\n    new SvixPollerCreateIn()\n        .namespace(\"some_namespace\")\n        .topic(\"some_topic_name\")\n        .pollerId(\"sample string\")\n        .token(\"sample string\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.svixPoller.create({\n    namespace: \"some_namespace\",\n    topic: \"some_topic_name\",\n    pollerId: \"sample string\",\n    token: \"sample string\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.svix_poller.create(\n    SvixPollerCreateIn(\n        namespace = \"some_namespace\",\n        topic = \"some_topic_name\",\n        poller_id = \"sample string\",\n        token = \"sample string\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .svix_poller()\n    .create(\n        SvixPollerCreateIn::new(\n            \"some_topic_name\".to_owned(),\n            \"sample string\".to_owned(),\n            \"sample string\".to_owned(),\n        )\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.msgs.svix-poller.delete": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Svix Poller Delete",
+        "description": "Delete a Svix poller configuration.",
+        "operationId": "v1.msgs.svix-poller.delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SvixPollerDeleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SvixPollerDeleteOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs svix-poller delete '{\n    \"namespace\": \"some_namespace\",\n    \"topic\": \"some_topic_name\",\n    \"poller_id\": \"sample string\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.SvixPoller.Delete(\n    ctx,\n    SvixPollerDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        PollerId: \"sample string\",\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getSvixPoller.delete(\n    new SvixPollerDeleteIn()\n        .namespace(\"some_namespace\")\n        .topic(\"some_topic_name\")\n        .pollerId(\"sample string\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.svixPoller.delete({\n    namespace: \"some_namespace\",\n    topic: \"some_topic_name\",\n    pollerId: \"sample string\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.svix_poller.delete(\n    SvixPollerDeleteIn(\n        namespace = \"some_namespace\",\n        topic = \"some_topic_name\",\n        poller_id = \"sample string\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .svix_poller()\n    .delete(\n        SvixPollerDeleteIn::new(\n            \"some_topic_name\".to_owned(),\n            \"sample string\".to_owned(),\n        )\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.msgs.svix-poller.list": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Svix Poller List",
+        "description": "List Svix poller configurations for a topic.",
+        "operationId": "v1.msgs.svix-poller.list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SvixPollerListIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponseSvixPollerOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs svix-poller list \"some_topic_name\" '{\n    \"namespace\": \"some_namespace\",\n    \"limit\": 1,\n    \"iterator\": \"sample string\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.SvixPoller.List(\n    ctx,\n    \"some_topic_name\",\n    SvixPollerListIn{\n        Namespace: new(\"some_namespace\"),\n        Limit: new(uint64(1)),\n        Iterator: new(\"sample string\"),\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getSvixPoller.list(\n    \"some_topic_name\",\n    new SvixPollerListIn()\n        .namespace(\"some_namespace\")\n        .limit(1L)\n        .iterator(\"sample string\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.svixPoller.list(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        limit: 1,\n        iterator: \"sample string\",\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.svix_poller.list(\n    \"some_topic_name\",\n    SvixPollerListIn(\n        namespace = \"some_namespace\",\n        limit = 1,\n        iterator = \"sample string\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .svix_poller()\n    .list(\n        \"some_topic_name\".to_owned(),\n        SvixPollerListIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_limit(1)\n            .with_iterator(\"sample string\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
     "/api/v1.health.ping": {
       "get": {
         "tags": [
@@ -9066,6 +9393,32 @@
           "done"
         ]
       },
+      "ListResponseSvixPollerOut": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SvixPollerOut"
+            }
+          },
+          "iterator": {
+            "type": "string",
+            "nullable": true
+          },
+          "prev_iterator": {
+            "type": "string",
+            "nullable": true
+          },
+          "done": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data",
+          "done"
+        ]
+      },
       "MetricOut": {
         "type": "object",
         "properties": {
@@ -10312,6 +10665,157 @@
           "value",
           "headers",
           "timestamp"
+        ]
+      },
+      "SvixPollerCreateIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "description": "The topic that polled webhooks will be written too. If the topic does not exist,\na new topic will be created automatically.",
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "poller_id": {
+            "description": "A user chosen unique identifier for the Poller.",
+            "type": "string"
+          },
+          "token": {
+            "description": "The AutoConfig token generated by Svix.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic",
+          "poller_id",
+          "token"
+        ]
+      },
+      "SvixPollerCreateOut": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "poller_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic",
+          "poller_id"
+        ]
+      },
+      "SvixPollerDeleteIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "poller_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic",
+          "poller_id"
+        ]
+      },
+      "SvixPollerDeleteOut": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "poller_id": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "topic",
+          "poller_id",
+          "success"
+        ]
+      },
+      "SvixPollerListIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "limit": {
+            "description": "Limit the number of returned items",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "maximum": 250,
+            "default": 50
+          },
+          "iterator": {
+            "description": "The iterator returned from a prior invocation",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "topic"
+        ],
+        "x-positional": [
+          "topic"
+        ]
+      },
+      "SvixPollerOut": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "poller_id": {
+            "type": "string"
+          },
+          "token": {
+            "description": "The autoconfig token, obfuscated (e.g. `auto_v1_eyJh...fQ==`).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic",
+          "poller_id",
+          "token"
         ]
       }
     }

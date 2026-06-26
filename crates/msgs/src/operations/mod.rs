@@ -2,9 +2,12 @@ mod configure_namespace;
 mod publish;
 mod queue;
 mod stream;
+mod svix_poller;
 mod topic_configure;
 
-pub use self::{configure_namespace::*, publish::*, queue::*, stream::*, topic_configure::*};
+pub use self::{
+    configure_namespace::*, publish::*, queue::*, stream::*, svix_poller::*, topic_configure::*,
+};
 
 use crate::State;
 
@@ -30,6 +33,8 @@ raft_module_operations!(
         StreamCommit(StreamCommitOperation) -> StreamCommitResponseData,
         StreamReceive(StreamReceiveOperation) -> StreamReceiveResponseData,
         StreamSeek(StreamSeekOperation) -> StreamSeekResponseData,
+        SvixPollerCreate(SvixPollerCreateOperation) -> SvixPollerCreateResponseData,
+        SvixPollerDelete(SvixPollerDeleteOperation) -> SvixPollerDeleteResponseData,
         TopicConfigure(TopicConfigureOperation) -> TopicConfigureResponseData,
     },
     state = MsgsRaftState<'_>,
@@ -50,6 +55,8 @@ impl MsgsOperation {
             MsgsOperation::StreamCommit(op) => op.topic.to_string(),
             MsgsOperation::StreamReceive(op) => op.topic.to_string(),
             MsgsOperation::StreamSeek(op) => op.topic.to_string(),
+            MsgsOperation::SvixPollerCreate(op) => op.topic.to_string(),
+            MsgsOperation::SvixPollerDelete(op) => op.topic.to_string(),
             MsgsOperation::TopicConfigure(op) => op.topic.to_string(),
         }
     }
