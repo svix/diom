@@ -65,7 +65,7 @@ ARG RELEASE_VERSION
 RUN cargo build --release --package diom-cli --bin diom --frozen
 
 # shared base image with dependencies
-FROM docker.io/debian:trixie-20260518-slim AS base
+FROM docker.io/debian:trixie-20260623-slim AS base
 
 ARG __BUST_DOCKER_BUILD_CACHE=2026-06-10
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
