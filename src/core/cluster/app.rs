@@ -209,7 +209,7 @@ async fn discover(
     let cluster = raft_state
         .raft
         .with_raft_state(move |state| DiscoverClusterResponse {
-            last_committed_log_id: state.committed().copied(),
+            last_committed_log_id: state.local_committed().copied(),
             cluster_name,
             state: state.server_state,
             cluster_id,
@@ -292,7 +292,7 @@ async fn last_id(Extension(state): Extension<RaftState>) -> impl IntoResponse {
     state
         .raft
         .with_raft_state(move |s| LastIdResponse {
-            last_committed_log_id: s.committed().copied(),
+            last_committed_log_id: s.local_committed().copied(),
         })
         .await
         .pipe(rpc_response)
@@ -310,7 +310,7 @@ async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
         .with_raft_state(move |s| {
             let response = HealthResponse {
                 node_id: me,
-                last_committed_log_index: s.committed().map(|l| l.index),
+                last_committed_log_index: s.local_committed().map(|l| l.index),
                 server_state: s.server_state,
                 cluster_id,
                 leader,

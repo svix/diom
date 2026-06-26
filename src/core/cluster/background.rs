@@ -347,7 +347,7 @@ pub(super) async fn run_background_jobs_on_all_nodes(
     let mut last_snapshot_time = std::time::Instant::now();
     let mut last_snapshot_index = handle
         .raft
-        .with_raft_state(|st| st.committed().copied())
+        .with_raft_state(|st| st.local_committed().copied())
         .await?;
     let mut ticker = tokio::time::interval(Duration::from_secs(60));
     let shutdown = crate::shutting_down_token();
@@ -366,7 +366,7 @@ pub(super) async fn run_background_jobs_on_all_nodes(
         };
         let (committed, state) = handle
             .raft
-            .with_raft_state(|st| (st.committed().copied(), st.server_state))
+            .with_raft_state(|st| (st.local_committed().copied(), st.server_state))
             .await?;
 
         let delta = match (committed, last_snapshot_index) {
