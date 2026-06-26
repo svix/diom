@@ -195,7 +195,7 @@ maplit = "1"
 mimalloc = { version = "0.1.48", features = ["v3"] }
 mime = "0.3"
 openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "fecc6dc607c19cb9247f35849288725514cb4675" }
-openraft = { version = "=0.10.0-alpha.24", default-features = false, features = ["tracing-log", "anyhow", "serde", "tokio-rt"] }
+openraft = { version = "=0.10.0-alpha.25", default-features = false, features = ["tracing-log", "anyhow", "serde", "tokio-rt"] }
 opentelemetry = { version = "0.32.0", features = ["metrics"] }
 opentelemetry-http = "0.32.0"
 opentelemetry-otlp = { version = "0.32.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto"] }
