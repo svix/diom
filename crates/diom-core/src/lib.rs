@@ -11,7 +11,9 @@ pub mod shutdown;
 pub mod task;
 pub mod types;
 
-pub static INSTANCE_ID: LazyLock<String> = LazyLock::new(|| uuid::Uuid::new_v4().to_string());
+// The instance of a single run of this application
+pub static INSTANCE_ID: LazyLock<String> =
+    LazyLock::new(|| uuid::Uuid::new_v4().simple().to_string());
 
 pub use self::monotime::Monotime;
 

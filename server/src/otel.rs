@@ -6,7 +6,7 @@ use diom_backend::{
     metrics::MostRecentMetricStore,
 };
 use diom_core::INSTANCE_ID;
-use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
+use opentelemetry::{InstrumentationScope, KeyValue, trace::TracerProvider as _};
 use opentelemetry_otlp::{WithExportConfig, WithHttpConfig};
 use opentelemetry_sdk::{
     metrics::{SdkMeterProvider, periodic_reader_with_async_runtime::PeriodicReader},
@@ -17,6 +17,25 @@ use opentelemetry_sdk::{
     },
 };
 use tracing_subscriber::{Layer as _, layer::SubscriberExt as _};
+
+fn build_resource(cfg: &ConfigurationInner) -> opentelemetry_sdk::Resource {
+    let mut builder = opentelemetry_sdk::Resource::builder()
+        .with_service_name(cfg.opentelemetry.service_name.clone())
+        .with_attribute(KeyValue::new("diom.instance.id", INSTANCE_ID.as_str()))
+        .with_attribute(KeyValue::new(
+            "service.version",
+            option_env!("GITHUB_SHA").unwrap_or("unknown"),
+        ))
+        .with_attribute(KeyValue::new("diom.cluster.name", cfg.cluster.name.clone()));
+    // these are set by the kubernetes operator
+    if let Ok(pod_name) = std::env::var("POD_NAME") {
+        builder = builder.with_attribute(KeyValue::new("k8s.pod.name", pod_name));
+    }
+    if let Ok(pod_namespace) = std::env::var("POD_NAMESPACE") {
+        builder = builder.with_attribute(KeyValue::new("k8s.namespace.name", pod_namespace));
+    }
+    builder.build()
+}
 
 pub(crate) fn setup_tracing(
     cfg: &ConfigurationInner,
@@ -71,19 +90,7 @@ pub(crate) fn setup_tracing(
                     .unwrap_or(Sampler::AlwaysOn),
             )
             .with_span_processor(batch_span_processor)
-            .with_resource(
-                opentelemetry_sdk::Resource::builder()
-                    .with_service_name(cfg.opentelemetry.service_name.clone())
-                    .with_attribute(opentelemetry::KeyValue::new(
-                        "instance_id",
-                        INSTANCE_ID.as_str(),
-                    ))
-                    .with_attribute(opentelemetry::KeyValue::new(
-                        "service.version",
-                        option_env!("GITHUB_SHA").unwrap_or("unknown"),
-                    ))
-                    .build(),
-            )
+            .with_resource(build_resource(cfg))
             .build();
 
         // Based on the private `build_batch_with_exporter` method from opentelemetry-otlp
@@ -165,27 +172,15 @@ pub(crate) fn setup_metrics(cfg: &ConfigurationInner) -> MostRecentMetricStore {
         .with_interval(cfg.opentelemetry.metrics_period.into())
         .build();
 
-    let mut provider_builder = SdkMeterProvider::builder().with_reader(most_recent_reader);
+    let mut provider_builder = SdkMeterProvider::builder()
+        .with_resource(build_resource(cfg))
+        .with_reader(most_recent_reader);
 
     if let Some(reader) = reader {
         provider_builder = provider_builder.with_reader(reader);
     }
 
-    let provider = provider_builder
-        .with_resource(
-            opentelemetry_sdk::Resource::builder()
-                .with_service_name(cfg.opentelemetry.service_name.clone())
-                .with_attribute(opentelemetry::KeyValue::new(
-                    "instance_id",
-                    INSTANCE_ID.as_str(),
-                ))
-                .with_attribute(opentelemetry::KeyValue::new(
-                    "service.version",
-                    option_env!("GITHUB_SHA").unwrap_or("unknown"),
-                ))
-                .build(),
-        )
-        .build();
+    let provider = provider_builder.build();
 
     opentelemetry::global::set_meter_provider(provider);
 
