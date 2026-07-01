@@ -76,7 +76,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Install regctl
-        uses: iarekylew00t/regctl-installer@f08765843d75de953f263abf420bfda224f242ac # v4.0.13
+        uses: iarekylew00t/regctl-installer@70686e10f8f949b24d6158e898a89cf21c3ac59c # v4.0.14
       - name: Log in to GHCR
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:

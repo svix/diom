@@ -12,7 +12,7 @@ jobs:
         working-directory: ./benchmarks
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@67ef31d5b988238dd797d409d6f9574278e20537 # master
+      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
         with:
           toolchain: '1.96'
       - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
@@ -23,7 +23,7 @@ jobs:
         # to stderr:
         run: cargo criterion --output-format bencher 2>&1 | tee output.txt
       - name: Download previous benchmark data
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ./cache
           key: ${{ runner.os }}-benchmark
