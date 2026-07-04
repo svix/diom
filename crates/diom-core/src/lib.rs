@@ -9,6 +9,7 @@ mod monotime;
 pub mod persistable_value;
 pub mod shutdown;
 pub mod task;
+pub mod tokio_nursery;
 pub mod types;
 
 // The instance of a single run of this application

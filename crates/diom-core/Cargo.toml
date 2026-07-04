@@ -18,13 +18,14 @@ serde.workspace = true
 serde_bytes.workspace = true
 serde_json.workspace = true
 tap.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["sync"] }
 tokio-util.workspace = true
 tracing.workspace = true
 uuid.workspace = true
 validator.workspace = true
 
 [dev-dependencies]
+tokio = { workspace = true, features = ["macros"] }
 tracing-test.workspace = true
 
 [lints]
