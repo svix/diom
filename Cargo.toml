@@ -280,6 +280,7 @@ verbose_file_reads = "warn"
 # disabled default lints
 enum_variant_names = "allow"
 new_without_default = "allow"
+result_large_err = "allow" # otherwise every axum::response::Result fails
 
 [profile.dev]
 debug = 0
