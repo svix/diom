@@ -288,6 +288,7 @@ impl NetworkClient {
         Ok(last_committed_log_id)
     }
 
+    #[allow(clippy::result_large_err)]
     #[tracing::instrument(skip_all)]
     pub(super) async fn install_snapshot(
         &mut self,
