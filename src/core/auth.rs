@@ -41,6 +41,7 @@ fn constant_time_eq(a: &str, b: &str) -> bool {
         == 0
 }
 
+#[allow(clippy::result_large_err)]
 pub async fn authorization(
     state: State<AppState>,
     mut request: Request,
@@ -75,6 +76,7 @@ pub async fn authorization(
 ///
 /// <https://docs.rs/axum/latest/axum/middleware/index.html#passing-state-from-middleware-to-handlers>
 #[tracing::instrument(name = "authorization", skip_all, level = "trace")]
+#[allow(clippy::result_large_err)]
 async fn authorization_inner(
     State(state): State<AppState>,
     request: &mut Request,
