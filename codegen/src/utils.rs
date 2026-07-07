@@ -52,7 +52,7 @@ pub(crate) fn generate_outputs(api: &Api, directories: &[OutputDirectory]) -> an
 
         for &template in output_dir.templates {
             let tpl_name = format!("codegen/templates/{template}");
-            openapi_codegen::generate(api, tpl_name, output_dir.path.into(), true)?;
+            openapi_codegen::generate(api, tpl_name, output_dir.path.into(), None, true)?;
         }
     }
 
