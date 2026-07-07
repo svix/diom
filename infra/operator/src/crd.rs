@@ -6,7 +6,7 @@ use k8s_openapi::{
         Affinity, EmptyDirVolumeSource, EnvVar, EnvVarSource, HTTPGetAction, Probe,
         ResourceRequirements, SecretKeySelector, Toleration, TopologySpreadConstraint,
     },
-    apimachinery::pkg::api::resource::Quantity,
+    apimachinery::pkg::{api::resource::Quantity, apis::meta::v1::Condition},
 };
 use kube::CustomResource;
 use schemars::JsonSchema;
@@ -35,8 +35,8 @@ fn default_replicas() -> i32 {
     status = "DiomClusterStatus",
     shortname = "cc",
     printcolumn = r#"{"name":"Replicas","type":"integer","jsonPath":".spec.replicas"}"#,
-    printcolumn = r#"{"name":"Phase","type":"string","jsonPath":".status.phase"}"#,
-    printcolumn = r#"{"name":"Ready","type":"integer","jsonPath":".status.readyReplicas"}"#
+    printcolumn = r#"{"name":"Ready","type":"integer","jsonPath":".status.readyReplicas"}"#,
+    printcolumn = r#"{"name":"Status","type":"string","jsonPath":".status.conditions[?(@.type=='Ready')].reason"}"#
 )]
 pub struct DiomClusterSpec {
     /// Cluster/replication configuration.
@@ -381,18 +381,13 @@ impl ProbeSpec {
 #[serde(rename_all = "camelCase")]
 pub struct DiomClusterStatus {
     #[serde(default)]
-    pub phase: Phase,
+    pub ready_replicas: i32,
 
     #[serde(default)]
-    pub ready_replicas: i32,
-}
+    pub observed_generation: i64,
 
-#[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema, PartialEq)]
-pub enum Phase {
-    #[default]
-    Initializing,
-    Running,
-    Degraded,
+    #[serde(default)]
+    pub conditions: Vec<Condition>,
 }
 
 /// Source for the admin token.

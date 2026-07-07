@@ -43,7 +43,9 @@ async fn test_basic_creation() -> TestResult {
     run_with_retries(async || {
         let cluster = env.cluster_api().get(env.name()).await?;
         let cluster_json = serde_json::to_value(&cluster).unwrap();
-        anyhow::ensure!(cluster_json["status"]["phase"] == "Running");
+        let conditions = cluster_json["status"]["conditions"].assert_array();
+        let ready = conditions.iter().find(|c| c["type"] == "Ready");
+        anyhow::ensure!(ready.is_some_and(|c| c["status"] == "True" && c["reason"] == "Running"));
         Ok(())
     })
     .await?;
@@ -58,11 +60,25 @@ async fn test_replica_update() -> TestResult {
     // No PDB at 1 replica.
     assert!(env.pdb_api().get(env.name()).await.is_err());
 
-    let mut cluster = env.cluster_api().get(env.name()).await?;
-    cluster.spec.diom.replicas = 3;
-    env.cluster_api()
-        .replace(env.name(), &PostParams::default(), &cluster)
-        .await?;
+    let initial_generation = env
+        .cluster_api()
+        .get(env.name())
+        .await?
+        .metadata
+        .generation
+        .unwrap();
+
+    let updated_generation = run_with_retries(async || {
+        let mut cluster = env.cluster_api().get(env.name()).await?;
+        cluster.spec.diom.replicas = 3;
+        let cluster = env
+            .cluster_api()
+            .replace(env.name(), &PostParams::default(), &cluster)
+            .await?;
+        Ok(cluster.metadata.generation.unwrap())
+    })
+    .await?;
+    assert_eq!(updated_generation, initial_generation + 1);
 
     run_with_retries(async || {
         let sts = env.sts_api().get(env.name()).await?;
@@ -74,6 +90,14 @@ async fn test_replica_update() -> TestResult {
     run_with_retries(async || {
         let pdb = env.pdb_api().get(env.name()).await?;
         anyhow::ensure!(pdb.spec.as_ref().unwrap().min_available == Some(IntOrString::Int(2)));
+        Ok(())
+    })
+    .await?;
+
+    run_with_retries(async || {
+        let cluster = env.cluster_api().get(env.name()).await?;
+        let status = cluster.status.ok_or_else(|| anyhow::anyhow!("no status"))?;
+        anyhow::ensure!(status.observed_generation == updated_generation);
         Ok(())
     })
     .await?;
@@ -98,7 +122,11 @@ async fn test_degraded_on_bad_image() -> TestResult {
         async || {
             let cluster = env.cluster_api().get(env.name()).await?;
             let cluster_json = serde_json::to_value(&cluster).unwrap();
-            anyhow::ensure!(cluster_json["status"]["phase"] == "Degraded");
+            let conditions = cluster_json["status"]["conditions"].assert_array();
+            let ready = conditions.iter().find(|c| c["type"] == "Ready");
+            anyhow::ensure!(
+                ready.is_some_and(|c| c["status"] == "False" && c["reason"] == "Degraded")
+            );
             Ok(())
         },
         Duration::from_secs(60),
@@ -184,6 +212,41 @@ async fn test_storage_resize() -> TestResult {
         anyhow::ensure!(size == "20M");
         Ok(())
     })
+    .await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_stalled_on_invalid_storage_spec() -> TestResult {
+    let env = TestContextBuilder::new()
+        .stall_threshold(Duration::from_secs(1))
+        .build()
+        .await;
+
+    env.wait_for_ready_pods(1).await?;
+
+    let mut cluster = env.cluster_api().get(env.name()).await?;
+    cluster.spec.diom.storage.persistent.size = Quantity("not-a-quantity".to_string());
+    env.cluster_api()
+        .replace(env.name(), &PostParams::default(), &cluster)
+        .await?;
+
+    run_with_timeout(
+        async || {
+            let cluster = env.cluster_api().get(env.name()).await?;
+            let cluster_json = serde_json::to_value(&cluster).unwrap();
+            let conditions = cluster_json["status"]["conditions"].assert_array();
+            let stalled = conditions.iter().find(|c| c["type"] == "Stalled");
+            anyhow::ensure!(stalled.is_some_and(|c| c["status"] == "True"));
+            let ready = conditions.iter().find(|c| c["type"] == "Ready");
+            anyhow::ensure!(
+                ready.is_some_and(|c| c["status"] == "False" && c["reason"] == "Failed")
+            );
+            Ok(())
+        },
+        Duration::from_secs(30),
+    )
     .await?;
 
     Ok(())

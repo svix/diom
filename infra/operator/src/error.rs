@@ -11,8 +11,11 @@ pub(crate) enum Error {
     #[error("Timeout: {0}")]
     Timeout(String),
 
-    #[error("Storage error: {0}")]
-    Storage(String),
+    #[error("Invalid storage size: {0}")]
+    InvalidStorageSize(String),
+
+    #[error("Unexpected PVC storage state: {0}")]
+    PvcStorageState(String),
 }
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;

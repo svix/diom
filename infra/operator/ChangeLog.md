@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased Changes
+* **Breaking** Replace `status.phase` with `status.conditions` and add `status.observedGeneration`
 
 ## Version 0.2.1
 * Add default crypto provider

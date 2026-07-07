@@ -135,6 +135,7 @@ pub(crate) struct TestContextBuilder {
     replicas: i32,
     image: String,
     storage_size: String,
+    stall_threshold: Duration,
     #[allow(clippy::disallowed_types)]
     extra_spec: serde_json::Map<String, serde_json::Value>,
 }
@@ -145,6 +146,7 @@ impl Default for TestContextBuilder {
             replicas: 1,
             image: E2E_IMAGE.to_string(),
             storage_size: "10M".to_string(),
+            stall_threshold: diom_operator::reconciler::STALL_THRESHOLD,
             extra_spec: serde_json::Map::new(),
         }
     }
@@ -168,6 +170,11 @@ impl TestContextBuilder {
 
     pub(crate) fn storage_size(mut self, size: impl Into<String>) -> Self {
         self.storage_size = size.into();
+        self
+    }
+
+    pub(crate) fn stall_threshold(mut self, threshold: Duration) -> Self {
+        self.stall_threshold = threshold;
         self
     }
 
@@ -256,7 +263,11 @@ impl TestContextBuilder {
 
         let _handle = tokio::spawn({
             let client = client.clone();
-            async move { diom_operator::run_with_requeue(client, Duration::from_secs(2)).await }
+            let stall_threshold = self.stall_threshold;
+            async move {
+                diom_operator::run_with_config(client, Duration::from_secs(2), stall_threshold)
+                    .await
+            }
         });
 
         let cluster_api: Api<DiomCluster> = Api::namespaced(client.clone(), "default");
