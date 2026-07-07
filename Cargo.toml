@@ -194,7 +194,7 @@ kube_quantity = "0.9.0"
 maplit = "1"
 mimalloc = { version = "0.1.48", features = ["v3"] }
 mime = "0.3"
-openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "fecc6dc607c19cb9247f35849288725514cb4675" }
+openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "23994cce27a8806d907044ebcc0446dfc8d6796e" }
 openraft = { version = "=0.10.0-alpha.25", default-features = false, features = ["tracing-log", "anyhow", "serde", "tokio-rt"] }
 opentelemetry = { version = "0.32.0", features = ["metrics"] }
 opentelemetry-http = "0.32.0"

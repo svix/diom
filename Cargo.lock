@@ -3726,7 +3726,7 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 [[package]]
 name = "openapi-codegen"
 version = "0.1.0"
-source = "git+https://github.com/svix/openapi-codegen?rev=fecc6dc607c19cb9247f35849288725514cb4675#fecc6dc607c19cb9247f35849288725514cb4675"
+source = "git+https://github.com/svix/openapi-codegen?rev=23994cce27a8806d907044ebcc0446dfc8d6796e#23994cce27a8806d907044ebcc0446dfc8d6796e"
 dependencies = [
  "aide",
  "anyhow",
@@ -3735,7 +3735,7 @@ dependencies = [
  "fs-err",
  "heck",
  "indexmap",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "minijinja",
  "ron",
  "schemars",

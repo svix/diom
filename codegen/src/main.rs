@@ -48,7 +48,7 @@ fn main() -> anyhow::Result<ExitCode> {
 
     let webhooks = get_webhooks(&openapi);
     let paths = openapi.paths.context("spec must not be empty")?;
-    let components = &mut openapi.components.unwrap_or_default();
+    let components = openapi.components.unwrap_or_default();
 
     let api = Api::new(
         paths,
