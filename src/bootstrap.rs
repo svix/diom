@@ -317,12 +317,14 @@ fn load_commands(
 async fn wait_for_up(config: &AppConfig, raft_state: &RaftState) -> anyhow::Result<()> {
     let shutdown = crate::shutting_down_token();
     let value = if let Some(time) = config.bootstrap_max_wait_time {
+        tracing::debug!(max_wait_time=?time, "waiting for node to come up before bootstrapping...");
         shutdown
             .run_until_cancelled(tokio::time::timeout(time.into(), raft_state.wait_for_up()))
             .await
             .transpose()
             .context("waiting for node to be up for bootstrapping")?
     } else {
+        tracing::debug!("waiting indefinitely for node to come up before bootstrapping...");
         shutdown.run_until_cancelled(raft_state.wait_for_up()).await
     }
     .ok_or_else(|| anyhow::anyhow!("node shut down before bootstrapping finished"))?;
