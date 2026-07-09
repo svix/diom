@@ -17,34 +17,34 @@ repos:
       - id: check-json
         exclude: "(tsconfig|foo).json$"
   - repo: https://github.com/google/yamlfmt
-    rev: v0.20.0
+    rev: 21ca5323a9c87ee37a434e0ca908efc0a89daa07 # frozen: v0.21.0
     hooks:
       - id: yamlfmt
         exclude: "^infra/helm"
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.7
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # frozen: v1.7.12
     hooks:
       - id: actionlint
   - repo: https://github.com/crate-ci/typos
-    rev: v1.45.0
+    rev: bee27e3a4fd1ea2111cf90ab89cd076c870fce14 # frozen: v1.48.0
     hooks:
       - id: typos
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.13.1-1
+    rev: 05c1426671b9237fb5e1444dd63aa5731bec0dfb # frozen: v3.13.1-1
     hooks:
       - id: shfmt
         exclude: z-clients/java/gradlew
         args: ["--write", "-i", "4", "-ci"]
   - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.11.0
+    rev: 99470f5e12208ff0fb17ab81c3c494f7620a1d8d # frozen: v0.11.0
     hooks:
       - id: shellcheck
   - repo: https://github.com/hyland/github-actions-ensure-sha-pinned-actions
-    rev: 22ca7a8cf33e873ba1d6fbcd2b71fa0ec5006b17 # v1.1.0
+    rev: 7957efb76aba0eec7580a9c0392d3e5bec381359 # frozen: v2.0.1
     hooks:
       - id: gha-sha-convert
         args: ["--allowlist", "actions/*"]
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: f805888065fdb6162e1f800e50bb9460cbd223d6 # v0.37.2
+    rev: 6b63472e72e1a91ed8a2f6d483790dfb644fa1d3 # frozen: 0.37.4
     hooks:
       - id: check-dependabot
