@@ -7,10 +7,7 @@ use k8s_openapi::{
     },
     apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition,
 };
-use kube::{
-    Api, Client, CustomResourceExt,
-    api::{ListParams, PostParams},
-};
+use kube::{Api, Client, CustomResourceExt, api::PostParams};
 use std::{
     process::Command,
     sync::{
@@ -98,37 +95,30 @@ impl TestContext {
         run_with_retries(async || Ok(self.sts_api().get(self.name()).await?)).await
     }
 
-    pub(crate) async fn wait_for_ready_pods(&self, expected: i32) -> anyhow::Result<()> {
-        self.wait_for_ready_pods_timeout(expected, Duration::from_secs(60))
+    pub(crate) async fn wait_for_cluster_ready(&self) -> anyhow::Result<DiomCluster> {
+        self.wait_for_cluster_ready_timeout(Duration::from_secs(60))
             .await
     }
 
-    pub(crate) async fn wait_for_ready_pods_timeout(
+    pub(crate) async fn wait_for_cluster_ready_timeout(
         &self,
-        expected: i32,
         timeout: Duration,
-    ) -> anyhow::Result<()> {
-        let lp = ListParams::default().labels(&format!("diom.svix.com/cluster={}", self.name()));
+    ) -> anyhow::Result<DiomCluster> {
         run_with_timeout(
             async || {
-                let pods = self.pod_api().list(&lp).await?;
-                let ready = pods.items.iter().filter(|p| pod_is_ready(p)).count() as i32;
-                anyhow::ensure!(ready >= expected, "{ready}/{expected} pods ready");
-                Ok(())
+                let cluster = self.cluster_api().get(self.name()).await?;
+                let status = cluster
+                    .status
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("no status"))?;
+                let ready = status.conditions.iter().find(|c| c.type_ == "Ready");
+                anyhow::ensure!(ready.is_some_and(|c| c.status == "True" && c.reason == "Running"));
+                Ok(cluster)
             },
             timeout,
         )
         .await
     }
-}
-
-fn pod_is_ready(pod: &Pod) -> bool {
-    pod.status
-        .as_ref()
-        .and_then(|s| s.conditions.as_deref())
-        .unwrap_or(&[])
-        .iter()
-        .any(|c| c.type_ == "Ready" && c.status == "True")
 }
 
 pub(crate) struct TestContextBuilder {
