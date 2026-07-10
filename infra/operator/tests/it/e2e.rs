@@ -38,7 +38,7 @@ async fn test_basic_creation() -> TestResult {
         uid
     ));
 
-    env.wait_for_ready_pods(1).await?;
+    env.wait_for_cluster_ready().await?;
 
     run_with_retries(async || {
         let cluster = env.cluster_api().get(env.name()).await?;
@@ -109,10 +109,9 @@ async fn test_replica_update() -> TestResult {
 async fn test_degraded_on_bad_image() -> TestResult {
     let env = TestContextBuilder::new().replicas(3).build().await;
 
-    env.wait_for_ready_pods_timeout(3, Duration::from_secs(180))
+    let mut cluster = env
+        .wait_for_cluster_ready_timeout(Duration::from_secs(180))
         .await?;
-
-    let mut cluster = env.cluster_api().get(env.name()).await?;
     cluster.spec.image = format!("{}:nonexistent", crate::common::E2E_IMAGE);
     env.cluster_api()
         .replace(env.name(), &PostParams::default(), &cluster)
@@ -224,9 +223,7 @@ async fn test_stalled_on_invalid_storage_spec() -> TestResult {
         .build()
         .await;
 
-    env.wait_for_ready_pods(1).await?;
-
-    let mut cluster = env.cluster_api().get(env.name()).await?;
+    let mut cluster = env.wait_for_cluster_ready().await?;
     cluster.spec.diom.storage.persistent.size = Quantity("not-a-quantity".to_string());
     env.cluster_api()
         .replace(env.name(), &PostParams::default(), &cluster)
