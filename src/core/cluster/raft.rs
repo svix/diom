@@ -100,6 +100,9 @@ impl RaftStateWatcher {
 
     pub(crate) fn record_first_applied_log(&self) {
         let mut inner = self.inner.write();
+        if !inner.has_applied_log {
+            tracing::debug!("first raft log applied to node");
+        }
         inner.has_applied_log = true;
         inner.recompute_ready();
     }
@@ -110,7 +113,11 @@ impl RaftStateWatcher {
             let inner_h = Arc::clone(&inner_h);
             async move {
                 let mut guard = inner_h.write();
-                guard.leader = Some((new_leader_id.node_id, new_leader_id.term));
+                let new_leader = Some((new_leader_id.node_id, new_leader_id.term));
+                if new_leader != guard.leader {
+                    tracing::debug!(node_id=?new_leader_id.node_id, term=?new_leader_id.term, "leader has changed");
+                }
+                guard.leader = new_leader;
                 guard.recompute_ready();
             }
         });
@@ -123,6 +130,7 @@ impl RaftStateWatcher {
             .unwrap_or(false);
         let mut guard = self.inner.write();
         guard.handle = Some(handle);
+        tracing::debug!(is_single_node, "connected to raft state log");
         guard.is_single_node = is_single_node;
         guard.recompute_ready();
     }
