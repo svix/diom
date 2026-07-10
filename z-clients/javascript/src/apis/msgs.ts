@@ -11,6 +11,7 @@ import {
 import { MsgsNamespace } from './msgsNamespace';
 import { MsgsQueue } from './msgsQueue';
 import { MsgsStream } from './msgsStream';
+import { MsgsSvixPoller } from './msgsSvixPoller';
 import { MsgsTopic } from './msgsTopic';
 import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
@@ -27,6 +28,10 @@ export class Msgs {
 
     public get stream() {
         return new MsgsStream(this.requestCtx);
+    }
+
+    public get svix_poller() {
+        return new MsgsSvixPoller(this.requestCtx);
     }
 
     public get topic() {

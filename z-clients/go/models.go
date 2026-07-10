@@ -81,6 +81,7 @@ type (
 	ListResponseAdminAccessPolicyOut = diom_models.ListResponseAdminAccessPolicyOut
 	ListResponseAdminAuthTokenOut    = diom_models.ListResponseAdminAuthTokenOut
 	ListResponseAdminRoleOut         = diom_models.ListResponseAdminRoleOut
+	ListResponseSvixPollerOut        = diom_models.ListResponseSvixPollerOut
 	MetricOut                        = diom_models.MetricOut
 	MetricType                       = diom_models.MetricType
 	MsgIn                            = diom_models.MsgIn
@@ -132,4 +133,10 @@ type (
 	SeekPosition                     = diom_models.SeekPosition
 	ServerState                      = diom_models.ServerState
 	StreamMsgOut                     = diom_models.StreamMsgOut
+	SvixPollerCreateIn               = diom_models.SvixPollerCreateIn
+	SvixPollerCreateOut              = diom_models.SvixPollerCreateOut
+	SvixPollerDeleteIn               = diom_models.SvixPollerDeleteIn
+	SvixPollerDeleteOut              = diom_models.SvixPollerDeleteOut
+	SvixPollerListIn                 = diom_models.SvixPollerListIn
+	SvixPollerOut                    = diom_models.SvixPollerOut
 )

@@ -17,6 +17,10 @@ from .msgs_stream import (
     MsgsStream,
     MsgsStreamAsync,
 )
+from .msgs_svix_poller import (
+    MsgsSvixPoller,
+    MsgsSvixPollerAsync,
+)
 from .msgs_topic import (
     MsgsTopic,
     MsgsTopicAsync,
@@ -37,6 +41,10 @@ class MsgsAsync(ApiBase):
     @property
     def stream(self) -> MsgsStreamAsync:
         return MsgsStreamAsync(self._client)
+
+    @property
+    def svix_poller(self) -> MsgsSvixPollerAsync:
+        return MsgsSvixPollerAsync(self._client)
 
     @property
     def topic(self) -> MsgsTopicAsync:
@@ -75,6 +83,10 @@ class Msgs(ApiBase):
     @property
     def stream(self) -> MsgsStream:
         return MsgsStream(self._client)
+
+    @property
+    def svix_poller(self) -> MsgsSvixPoller:
+        return MsgsSvixPoller(self._client)
 
     @property
     def topic(self) -> MsgsTopic:

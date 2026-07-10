@@ -33,6 +33,10 @@ public class Msgs {
         return new MsgsStream(this.client);
     }
 
+    public MsgsSvixPoller svixPoller() {
+        return new MsgsSvixPoller(this.client);
+    }
+
     public MsgsTopic topic() {
         return new MsgsTopic(this.client);
     }

@@ -16,6 +16,7 @@ from .msgs import Msgs, MsgsAsync
 from .msgs_namespace import MsgsNamespace, MsgsNamespaceAsync
 from .msgs_queue import MsgsQueue, MsgsQueueAsync
 from .msgs_stream import MsgsStream, MsgsStreamAsync
+from .msgs_svix_poller import MsgsSvixPoller, MsgsSvixPollerAsync
 from .msgs_topic import MsgsTopic, MsgsTopicAsync
 from .rate_limit import RateLimit, RateLimitAsync
 from .rate_limit_namespace import RateLimitNamespace, RateLimitNamespaceAsync
@@ -56,6 +57,8 @@ __all__ = [
     "MsgsQueueAsync",
     "MsgsStream",
     "MsgsStreamAsync",
+    "MsgsSvixPoller",
+    "MsgsSvixPollerAsync",
     "MsgsTopic",
     "MsgsTopicAsync",
     "RateLimit",

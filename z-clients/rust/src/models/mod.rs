@@ -77,6 +77,7 @@ mod kv_set_out;
 mod list_response_admin_access_policy_out;
 mod list_response_admin_auth_token_out;
 mod list_response_admin_role_out;
+mod list_response_svix_poller_out;
 mod metric_out;
 mod metric_type;
 mod msg_in;
@@ -128,6 +129,12 @@ mod retention;
 mod seek_position;
 mod server_state;
 mod stream_msg_out;
+mod svix_poller_create_in;
+mod svix_poller_create_out;
+mod svix_poller_delete_in;
+mod svix_poller_delete_out;
+mod svix_poller_list_in;
+mod svix_poller_out;
 
 pub use self::{
     access_rule::AccessRule, access_rule_effect::AccessRuleEffect,
@@ -181,7 +188,8 @@ pub use self::{
     kv_get_namespace_out::KvGetNamespaceOut, kv_get_out::KvGetOut, kv_set_in::KvSetIn,
     kv_set_out::KvSetOut, list_response_admin_access_policy_out::ListResponseAdminAccessPolicyOut,
     list_response_admin_auth_token_out::ListResponseAdminAuthTokenOut,
-    list_response_admin_role_out::ListResponseAdminRoleOut, metric_out::MetricOut,
+    list_response_admin_role_out::ListResponseAdminRoleOut,
+    list_response_svix_poller_out::ListResponseSvixPollerOut, metric_out::MetricOut,
     metric_type::MetricType, msg_in::MsgIn, msg_namespace_configure_in::MsgNamespaceConfigureIn,
     msg_namespace_configure_out::MsgNamespaceConfigureOut, msg_namespace_get_in::MsgNamespaceGetIn,
     msg_namespace_get_out::MsgNamespaceGetOut, msg_publish_in::MsgPublishIn,
@@ -210,6 +218,9 @@ pub use self::{
     rate_limit_get_remaining_out::RateLimitGetRemainingOut, rate_limit_reset_in::RateLimitResetIn,
     rate_limit_reset_out::RateLimitResetOut, retention::Retention, seek_position::SeekPosition,
     server_state::ServerState, stream_msg_out::StreamMsgOut,
+    svix_poller_create_in::SvixPollerCreateIn, svix_poller_create_out::SvixPollerCreateOut,
+    svix_poller_delete_in::SvixPollerDeleteIn, svix_poller_delete_out::SvixPollerDeleteOut,
+    svix_poller_list_in::SvixPollerListIn, svix_poller_out::SvixPollerOut,
 };
 
 pub(crate) use self::{
@@ -223,5 +234,5 @@ pub(crate) use self::{
     msg_queue_receive_in::MsgQueueReceiveIn_, msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn_,
     msg_stream_cancel_lease_in::MsgStreamCancelLeaseIn_, msg_stream_commit_in::MsgStreamCommitIn_,
     msg_stream_receive_in::MsgStreamReceiveIn_, msg_stream_seek_in::MsgStreamSeekIn_,
-    msg_topic_configure_in::MsgTopicConfigureIn_,
+    msg_topic_configure_in::MsgTopicConfigureIn_, svix_poller_list_in::SvixPollerListIn_,
 };

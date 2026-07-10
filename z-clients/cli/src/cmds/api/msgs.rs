@@ -5,7 +5,7 @@ use diom::DiomClient;
 #[allow(unused)]
 use crate::prelude::*;
 
-use super::{MsgsNamespaceArgs, MsgsQueueArgs, MsgsStreamArgs, MsgsTopicArgs};
+use super::{MsgsNamespaceArgs, MsgsQueueArgs, MsgsStreamArgs, MsgsSvixPollerArgs, MsgsTopicArgs};
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct MsgsArgs {
@@ -19,6 +19,7 @@ pub enum MsgsCommands {
     Namespace(MsgsNamespaceArgs),
     Queue(MsgsQueueArgs),
     Stream(MsgsStreamArgs),
+    SvixPoller(MsgsSvixPollerArgs),
     Topic(MsgsTopicArgs),
     /// Publishes messages to a topic within a namespace.
     #[command(help_template = concat!(
@@ -54,6 +55,9 @@ impl MsgsCommands {
                 args.command.exec(client).await?;
             }
             Self::Stream(args) => {
+                args.command.exec(client).await?;
+            }
+            Self::SvixPoller(args) => {
                 args.command.exec(client).await?;
             }
             Self::Topic(args) => {
