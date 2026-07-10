@@ -78,7 +78,7 @@ async fn reconcile_volume(
 
         let desired_size: ParsedQuantity = desired_size
             .try_into()
-            .map_err(|e: ParseQuantityError| Error::Storage(e.to_string()))?;
+            .map_err(|e: ParseQuantityError| Error::InvalidStorageSize(e.to_string()))?;
         let current_size = pvc_requested_size(&pvc)?;
 
         if desired_size <= current_size {
@@ -166,9 +166,9 @@ fn pvc_requested_size(pvc: &PersistentVolumeClaim) -> Result<ParsedQuantity> {
         .as_ref()
         .and_then(|s| s.resources.as_ref()?.requests.as_ref()?.get("storage"))
         .cloned()
-        .ok_or_else(|| Error::Storage("Storage not found".to_owned()))?
+        .ok_or_else(|| Error::PvcStorageState("Storage not found".to_owned()))?
         .try_into()
-        .map_err(|e: ParseQuantityError| Error::Storage(e.to_string()))
+        .map_err(|e: ParseQuantityError| Error::PvcStorageState(e.to_string()))
 }
 
 pub(crate) fn pvc_name(volume_name: &str, cluster_name: &str, ordinal: i32) -> String {
