@@ -14,9 +14,7 @@ import (
 
 
 type {{ resource_type_name }} struct {
-	{% if resource.operations | length > 0 or resource.subresources | length > 0 -%}
 	client *diom_proto.HttpClient
-	{%- endif %}
 }
 
 func New{{ resource_type_name }}(client *diom_proto.HttpClient) {{ resource_type_name }} {
