@@ -1,5 +1,5 @@
 // this file is @generated
-use super::{MsgsNamespace, MsgsQueue, MsgsStream, MsgsTopic};
+use super::{MsgsNamespace, MsgsQueue, MsgsStream, MsgsSvixPoller, MsgsTopic};
 use crate::{Configuration, error::Result, models::*};
 
 pub struct Msgs<'a> {
@@ -21,6 +21,10 @@ impl<'a> Msgs<'a> {
 
     pub fn stream(&self) -> MsgsStream<'a> {
         MsgsStream::new(self.cfg)
+    }
+
+    pub fn svix_poller(&self) -> MsgsSvixPoller<'a> {
+        MsgsSvixPoller::new(self.cfg)
     }
 
     pub fn topic(&self) -> MsgsTopic<'a> {

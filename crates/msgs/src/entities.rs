@@ -425,6 +425,35 @@ pub struct QueueMsgOut {
     pub scheduled_at: Option<UnixTimestampMs>,
 }
 
+/// A Svix poller configuration as returned by a list query.
+///
+/// The autoconfig `token` is obfuscated (e.g. `auto_v1_eyJh...fQ==`) so the
+/// secret is never returned in full, to let callers recognize
+/// which credential is configured.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SvixPollerListItem {
+    pub topic: TopicName,
+    pub poller_id: String,
+    pub token: String,
+}
+
+/// Obfuscates a secret token for display, keeping only a short prefix and
+/// suffix so callers can recognize it without recovering the secret, e.g.
+/// `auto_v1_eyJh...fQ==`. Tokens too short to partially reveal are fully masked.
+pub(crate) fn obfuscate_token(token: &str) -> String {
+    const PREFIX_LEN: usize = 12;
+    const SUFFIX_LEN: usize = 4;
+
+    let chars: Vec<char> = token.chars().collect();
+    if chars.len() <= PREFIX_LEN + SUFFIX_LEN {
+        return "...".to_owned();
+    }
+
+    let prefix: String = chars[..PREFIX_LEN].iter().collect();
+    let suffix: String = chars[chars.len() - SUFFIX_LEN..].iter().collect();
+    format!("{prefix}...{suffix}")
+}
+
 #[derive(
     Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue,
 )]

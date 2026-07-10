@@ -24,8 +24,10 @@ pub mod entities;
 pub mod metrics;
 pub mod operations;
 pub(crate) mod storage;
+pub mod svix_poller;
 mod topic_publish_notifier;
 
+pub use storage::list_svix_pollers;
 pub use topic_publish_notifier::*;
 
 pub const MSG_KEYSPACE: &str = "mod_msgs";
@@ -313,10 +315,10 @@ impl diom_operations::workers::BackgroundWorker for AllNodesWorker {
 }
 
 #[cfg(test)]
-mod delete_expired_tests {
-    use std::collections::HashMap;
+pub(crate) mod test_fixture {
+    use std::{collections::HashMap, num::NonZeroU16};
 
-    use diom_core::types::DurationMs;
+    use diom_core::types::{DurationMs, UnixTimestampMs};
     use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
     use diom_namespace::{entities::NamespaceName, operations::create_namespace::CreateNamespace};
     use diom_operations::OpContext;
@@ -324,8 +326,6 @@ mod delete_expired_tests {
     use opentelemetry::metrics::MeterProvider as _;
 
     use super::*;
-    use std::num::NonZeroU16;
-
     use crate::{
         entities::{
             ConsumerGroup, MsgIn, Partition, SeekPosition, TopicIn, TopicName, TopicPartition,
@@ -337,14 +337,18 @@ mod delete_expired_tests {
         storage::{MsgKey, MsgRow, QueueLeaseKey, StreamLeaseKey, TopicKey, TopicRow},
     };
 
-    struct Fixture {
-        _workdir: tempfile::TempDir,
-        state: State,
-        namespace_state: diom_namespace::State,
+    pub(crate) fn ts(millis: i64) -> UnixTimestampMs {
+        UnixTimestampMs::try_from_millisecond(millis).unwrap()
+    }
+
+    pub(crate) struct Fixture {
+        pub _workdir: tempfile::TempDir,
+        pub state: State,
+        pub namespace_state: diom_namespace::State,
     }
 
     impl Fixture {
-        fn new() -> Self {
+        pub(crate) fn new() -> Self {
             let workdir = tempfile::tempdir().unwrap();
             let persistent = fjall::Database::builder(workdir.path().join("persistent"))
                 .temporary(true)
@@ -365,7 +369,7 @@ mod delete_expired_tests {
             }
         }
 
-        async fn create_namespace(
+        pub(crate) async fn create_namespace(
             &self,
             name: &str,
             retention: Option<DurationMs>,
@@ -389,7 +393,7 @@ mod delete_expired_tests {
                 .id
         }
 
-        fn create_topic(
+        pub(crate) fn create_topic(
             &self,
             namespace_id: NamespaceId,
             topic_name: &str,
@@ -414,7 +418,7 @@ mod delete_expired_tests {
             topic_row.id
         }
 
-        fn insert_msg(
+        pub(crate) fn insert_msg(
             &self,
             topic_id: TopicId,
             partition: Partition,
@@ -442,14 +446,14 @@ mod delete_expired_tests {
             batch.commit().unwrap();
         }
 
-        fn msg_count(&self, topic_id: TopicId, partition: Partition) -> usize {
+        pub(crate) fn msg_count(&self, topic_id: TopicId, partition: Partition) -> usize {
             self.state
                 .msg_table
                 .prefix(MsgKey::prefix_partition(&topic_id, &partition))
                 .count()
         }
 
-        async fn publish(
+        pub(crate) async fn publish(
             &self,
             namespace_id: NamespaceId,
             topic: &str,
@@ -479,11 +483,127 @@ mod delete_expired_tests {
                 _ => panic!("unexpected response variant"),
             }
         }
-    }
 
-    fn ts(millis: i64) -> UnixTimestampMs {
-        UnixTimestampMs::try_from_millisecond(millis).unwrap()
+        pub(crate) async fn publish_to_partition(
+            &self,
+            namespace_id: NamespaceId,
+            topic: &str,
+            partition: Partition,
+            msgs: Vec<MsgIn>,
+            now: UnixTimestampMs,
+        ) -> PublishResponseData {
+            let tp = TopicPartition::new(TopicName::new(topic.to_owned()).unwrap(), partition);
+            let op = PublishOperation::new(namespace_id, TopicIn::TopicPartition(tp), msgs, None)
+                .unwrap();
+            let raft_state = MsgsRaftState {
+                msgs: &self.state,
+                namespace: &self.namespace_state,
+            };
+            let ctx = OpContext {
+                timestamp: now,
+                log_index: 0,
+                term: 0,
+            };
+            let op: operations::MsgsOperation = op.into();
+            let response = op.apply(raft_state, &ctx).await;
+            match response {
+                Response::Publish(r) => r.0.unwrap(),
+                _ => panic!("unexpected response variant"),
+            }
+        }
+
+        pub(crate) async fn queue_receive(
+            &self,
+            namespace_id: NamespaceId,
+            topic: &str,
+            consumer_group: &str,
+            retention: Option<DurationMs>,
+            now: UnixTimestampMs,
+        ) {
+            let op = QueueReceiveOperation::new(
+                namespace_id,
+                TopicIn::TopicName(TopicName::new(topic.to_owned()).unwrap()),
+                ConsumerGroup::try_from(consumer_group).unwrap(),
+                NonZeroU16::new(10).unwrap(),
+                DurationMs::from_secs(30),
+                retention,
+            )
+            .unwrap();
+            let raft_state = MsgsRaftState {
+                msgs: &self.state,
+                namespace: &self.namespace_state,
+            };
+            let ctx = OpContext {
+                timestamp: now,
+                log_index: 0,
+                term: 0,
+            };
+            let op: operations::MsgsOperation = op.into();
+            let _ = op.apply(raft_state, &ctx).await;
+        }
+
+        pub(crate) async fn stream_receive(
+            &self,
+            namespace_id: NamespaceId,
+            topic: &str,
+            consumer_group: &str,
+            retention: Option<DurationMs>,
+            now: UnixTimestampMs,
+        ) {
+            let op = StreamReceiveOperation::new(
+                namespace_id,
+                TopicIn::TopicName(TopicName::new(topic.to_owned()).unwrap()),
+                ConsumerGroup::try_from(consumer_group).unwrap(),
+                NonZeroU16::new(10).unwrap(),
+                DurationMs::from_secs(30),
+                SeekPosition::Earliest,
+                retention,
+            )
+            .unwrap();
+            let raft_state = MsgsRaftState {
+                msgs: &self.state,
+                namespace: &self.namespace_state,
+            };
+            let ctx = OpContext {
+                timestamp: now,
+                log_index: 0,
+                term: 0,
+            };
+            let op: operations::MsgsOperation = op.into();
+            let _ = op.apply(raft_state, &ctx).await;
+        }
+
+        pub(crate) fn queue_lease_count(&self, topic_id: TopicId, partition: Partition) -> usize {
+            self.state
+                .metadata_tables
+                .prefix(QueueLeaseKey::prefix_partition(&topic_id, &partition))
+                .count()
+        }
+
+        pub(crate) fn stream_lease_count(&self, topic_id: TopicId) -> usize {
+            self.state
+                .metadata_tables
+                .prefix(StreamLeaseKey::prefix_topic_id(&topic_id))
+                .count()
+        }
     }
+}
+
+#[cfg(test)]
+mod delete_expired_tests {
+    use std::collections::HashMap;
+
+    use diom_core::types::DurationMs;
+
+    use super::{
+        test_fixture::{Fixture, ts},
+        *,
+    };
+
+    use crate::{
+        entities::{MsgIn, Partition, TopicName},
+        storage::{TopicKey, TopicRow},
+    };
 
     #[tokio::test]
     async fn deletes_expired_messages_across_partitions() {
@@ -612,83 +732,6 @@ mod delete_expired_tests {
         assert_eq!(batch2_end, 5);
     }
 
-    impl Fixture {
-        async fn queue_receive(
-            &self,
-            namespace_id: NamespaceId,
-            topic: &str,
-            consumer_group: &str,
-            retention: Option<DurationMs>,
-            now: UnixTimestampMs,
-        ) {
-            let op = QueueReceiveOperation::new(
-                namespace_id,
-                TopicIn::TopicName(TopicName::new(topic.to_owned()).unwrap()),
-                ConsumerGroup::try_from(consumer_group).unwrap(),
-                NonZeroU16::new(10).unwrap(),
-                DurationMs::from_secs(30),
-                retention,
-            )
-            .unwrap();
-            let raft_state = MsgsRaftState {
-                msgs: &self.state,
-                namespace: &self.namespace_state,
-            };
-            let ctx = OpContext {
-                timestamp: now,
-                log_index: 0,
-                term: 0,
-            };
-            let op: operations::MsgsOperation = op.into();
-            let _ = op.apply(raft_state, &ctx).await;
-        }
-
-        async fn stream_receive(
-            &self,
-            namespace_id: NamespaceId,
-            topic: &str,
-            consumer_group: &str,
-            retention: Option<DurationMs>,
-            now: UnixTimestampMs,
-        ) {
-            let op = StreamReceiveOperation::new(
-                namespace_id,
-                TopicIn::TopicName(TopicName::new(topic.to_owned()).unwrap()),
-                ConsumerGroup::try_from(consumer_group).unwrap(),
-                NonZeroU16::new(10).unwrap(),
-                DurationMs::from_secs(30),
-                SeekPosition::Earliest,
-                retention,
-            )
-            .unwrap();
-            let raft_state = MsgsRaftState {
-                msgs: &self.state,
-                namespace: &self.namespace_state,
-            };
-            let ctx = OpContext {
-                timestamp: now,
-                log_index: 0,
-                term: 0,
-            };
-            let op: operations::MsgsOperation = op.into();
-            let _ = op.apply(raft_state, &ctx).await;
-        }
-
-        fn queue_lease_count(&self, topic_id: TopicId, partition: Partition) -> usize {
-            self.state
-                .metadata_tables
-                .prefix(QueueLeaseKey::prefix_partition(&topic_id, &partition))
-                .count()
-        }
-
-        fn stream_lease_count(&self, topic_id: TopicId) -> usize {
-            self.state
-                .metadata_tables
-                .prefix(StreamLeaseKey::prefix_topic_id(&topic_id))
-                .count()
-        }
-    }
-
     #[tokio::test]
     async fn stale_leases_cleaned_up_after_retention() {
         let fixture = Fixture::new();
@@ -756,36 +799,6 @@ mod delete_expired_tests {
             0,
             "stale stream lease should be deleted"
         );
-    }
-
-    impl Fixture {
-        async fn publish_to_partition(
-            &self,
-            namespace_id: NamespaceId,
-            topic: &str,
-            partition: Partition,
-            msgs: Vec<MsgIn>,
-            now: UnixTimestampMs,
-        ) -> PublishResponseData {
-            let tp = TopicPartition::new(TopicName::new(topic.to_owned()).unwrap(), partition);
-            let op = PublishOperation::new(namespace_id, TopicIn::TopicPartition(tp), msgs, None)
-                .unwrap();
-            let raft_state = MsgsRaftState {
-                msgs: &self.state,
-                namespace: &self.namespace_state,
-            };
-            let ctx = OpContext {
-                timestamp: now,
-                log_index: 0,
-                term: 0,
-            };
-            let op: operations::MsgsOperation = op.into();
-            let response = op.apply(raft_state, &ctx).await;
-            match response {
-                Response::Publish(r) => r.0.unwrap(),
-                _ => panic!("unexpected response variant"),
-            }
-        }
     }
 
     #[tokio::test]

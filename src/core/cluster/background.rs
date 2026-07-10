@@ -133,6 +133,18 @@ impl BackgroundJobRunner {
             cfg.background_cleanup_interval.into(),
             handle.clone(),
         ));
+        self.spawn_job(diom_msgs::svix_poller::LeaderWorker::<
+            diom_core::svix_client::RealSvixAutoConfigClient,
+            _,
+        >::new(
+            handle.state_machine.msgs_store().await,
+            cfg.background_cleanup_interval.into(),
+            handle.clone(),
+            diom_msgs::svix_poller::SvixPollerConfig {
+                max_concurrent_pollers: cfg.svix_poller_max_concurrency,
+                max_task_duration: cfg.svix_poller_max_task_duration.into(),
+            },
+        ));
         tracing::trace!("leader-only background jobs started");
         self.spawned = true;
     }

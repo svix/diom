@@ -26,6 +26,9 @@ func (msgs Msgs) Queue() MsgsQueue {
 func (msgs Msgs) Stream() MsgsStream {
 	return NewMsgsStream(msgs.client)
 }
+func (msgs Msgs) SvixPoller() MsgsSvixPoller {
+	return NewMsgsSvixPoller(msgs.client)
+}
 func (msgs Msgs) Topic() MsgsTopic {
 	return NewMsgsTopic(msgs.client)
 }

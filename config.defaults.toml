@@ -40,6 +40,18 @@ log_format = "default"
 # The log level to run the service with. Supported: info, debug, trace
 log_level = "info"
 
+# Maximum number of Svix Ingest pollers that can run concurrently.
+#
+# Larger values allow for faster processing (if the number of svix pollers exceeds svix_poller_max_concurrency),
+# at the expense of memory/disk.
+svix_poller_max_concurrency = 32
+
+# Maximum time a single poller task may spend running before being killed/restarted.
+#
+# If the number of pollers exceeds `svix_poller_max_concurrency`, then shorter durations will
+# enable better fairness for all configured pollers. Longer durations will generally be more performant.
+svix_poller_max_task_duration_ms = 5000
+
 # How to persist data to the actual underlying database
 #
 # This is similar to the `cluster.log_sync` options, but applies to the actual

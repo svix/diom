@@ -5,4 +5,5 @@ mod retention;
 mod scheduled;
 mod stream_receive;
 mod stream_seek;
+mod svix_poller;
 mod topic_configure;

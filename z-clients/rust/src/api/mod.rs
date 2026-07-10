@@ -18,6 +18,7 @@ mod msgs;
 mod msgs_namespace;
 mod msgs_queue;
 mod msgs_stream;
+mod msgs_svix_poller;
 mod msgs_topic;
 mod rate_limit;
 mod rate_limit_namespace;
@@ -28,8 +29,8 @@ pub use self::{
     cache_namespace::CacheNamespace, cluster_admin::ClusterAdmin, health::Health,
     idempotency::Idempotency, idempotency_namespace::IdempotencyNamespace, kv::Kv,
     kv_namespace::KvNamespace, msgs::Msgs, msgs_namespace::MsgsNamespace, msgs_queue::MsgsQueue,
-    msgs_stream::MsgsStream, msgs_topic::MsgsTopic, rate_limit::RateLimit,
-    rate_limit_namespace::RateLimitNamespace,
+    msgs_stream::MsgsStream, msgs_svix_poller::MsgsSvixPoller, msgs_topic::MsgsTopic,
+    rate_limit::RateLimit, rate_limit_namespace::RateLimitNamespace,
 };
 
 impl DiomClient {

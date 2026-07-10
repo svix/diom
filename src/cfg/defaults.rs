@@ -1,4 +1,7 @@
-use std::net::{Ipv6Addr, SocketAddr};
+use std::{
+    net::{Ipv6Addr, SocketAddr},
+    num::NonZeroUsize,
+};
 
 use diom_core::types::{DurationMs, NonZeroDurationMs};
 
@@ -108,6 +111,14 @@ pub(super) fn cluster_replication_lag_threshold() -> u64 {
 
 pub(super) const fn background_cleanup_interval() -> NonZeroDurationMs {
     NonZeroDurationMs::from_secs(10).unwrap()
+}
+
+pub(super) const fn svix_poller_max_concurrency() -> NonZeroUsize {
+    NonZeroUsize::new(32).unwrap()
+}
+
+pub(super) const fn svix_poller_max_task_duration() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(5).unwrap()
 }
 
 pub(super) fn default_database_size() -> MemorySize {
