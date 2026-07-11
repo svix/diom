@@ -37,12 +37,12 @@ pub fn print_json_output<T>(val: &T) -> Result<()>
 where
     T: Serialize,
 {
-    let mut output = Vec::new();
+    let mut stdout = std::io::stdout().lock();
     let mut serializer =
-        serde_json::Serializer::with_formatter(&mut output, PrettyFormatter::default());
-    val.serialize(&mut serializer)?;
-    let s = String::from_utf8(output).expect("JSON is always valid utf-8");
-
-    println!("{s}");
-    Ok(())
+        serde_json::Serializer::with_formatter(&mut stdout, PrettyFormatter::default());
+    match val.serialize(&mut serializer) {
+        Ok(_) => Ok(()),
+        Err(e) if matches!(e.io_error_kind(), Some(std::io::ErrorKind::BrokenPipe)) => Ok(()),
+        Err(e) => Err(e.into()),
+    }
 }
