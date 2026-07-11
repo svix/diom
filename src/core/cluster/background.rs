@@ -195,12 +195,18 @@ pub(super) async fn run_background_jobs_on_leader(
 
     let my_node_id = handle.node_id;
 
-    tracing::trace!("initializing cluster leader change watcher");
+    tracing::debug!("initializing cluster leader change watcher");
 
     let mut watcher = handle
         .raft
-        .on_cluster_leader_change(move |_, (leader_id, _)| {
+        .on_cluster_leader_change(move |prev, (leader_id, _)| {
             let tx = watch_tx.clone();
+            let old_leader_id = prev.map(|x| x.0.node_id);
+            tracing::debug!(
+                ?old_leader_id,
+                new_leader_id = ?leader_id.node_id,
+                "cluster leader changed"
+            );
             let message = if leader_id.node_id == my_node_id {
                 BackgroundJobLeaderMessage::StartBeingLeader
             } else {
@@ -213,7 +219,7 @@ pub(super) async fn run_background_jobs_on_leader(
             }
         });
 
-    tracing::trace!("checking for immediate leadership changes");
+    tracing::debug!("checking for immediate leadership changes");
 
     // we might miss the first transition if it happens before our watch is started,
     // so once the watcher is registered, check once by hand
@@ -234,13 +240,12 @@ pub(super) async fn run_background_jobs_on_leader(
         })
         .await?;
 
-    tracing::trace!("starting loop waiting to become leader");
+    tracing::debug!("starting loop waiting to become leader");
 
     while !shutdown.is_cancelled() {
-        tracing::trace!("boop");
         tokio::select! {
             message = rx.recv() => {
-                tracing::trace!(?my_node_id, ?message, "receive message in leader background process");
+                tracing::debug!(?my_node_id, ?message, "receive message in leader background process");
                 match message {
                     Some(BackgroundJobLeaderMessage::StartBeingLeader) => {
                         runner.spawn_all(cfg.clone(), handle.clone()).await;
@@ -282,11 +287,11 @@ pub(super) async fn run_background_jobs_on_leader(
             }
         }
     }
-    tracing::trace!("shutting down leader-change watcher");
+    tracing::debug!("shutting down leader-change watcher");
     watcher.close().await;
-    tracing::trace!("shutting down any remaining background jobs");
+    tracing::debug!("shutting down any remaining background jobs");
     runner.stop_all().await?;
-    tracing::trace!("and we're outta here");
+    tracing::debug!("and we're outta here");
     Ok(())
 }
 
