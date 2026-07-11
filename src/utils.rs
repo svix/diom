@@ -59,7 +59,8 @@ pub(crate) async fn fail_until_bootstrapped(
     next: middleware::Next,
 ) -> axum::response::Response {
     let is_admin_route = path.as_str().starts_with("/api/v1.admin.cluster.")
-        || path.as_str() == "/api/v1.health.ping";
+        || path.as_str() == "/api/v1.health.ping"
+        || path.as_str() == "/api/v1.admin.metrics.get";
     if !(is_admin_route || bootstrapped.load(Ordering::Relaxed)) {
         return Error::not_ready("this node has not yet finished bootstrapping").into_response();
     }
