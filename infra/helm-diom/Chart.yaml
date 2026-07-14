@@ -2,7 +2,7 @@ apiVersion: v2
 name: diom
 description: Helm chart for Diom clusters
 type: application
-version: 0.1.1
+version: 0.2.0
 
 dependencies:
   - name: crds

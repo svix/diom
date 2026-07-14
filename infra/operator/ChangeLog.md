@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased Changes
+
+## Version 0.3.0
 * **Breaking** Replace `status.phase` with `status.conditions` and add `status.observedGeneration`
 
 ## Version 0.2.1
