@@ -65,9 +65,9 @@ ARG RELEASE_VERSION
 RUN cargo build --release --package diom-cli --bin diom --frozen
 
 # shared base image with dependencies
-FROM docker.io/debian:trixie-20260623-slim AS base
+FROM docker.io/debian:trixie-20260713-slim AS base
 
-ARG __BUST_DOCKER_BUILD_CACHE=2026-06-10
+ARG __BUST_DOCKER_BUILD_CACHE=2026-07-13
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     #!/bin/bash
     set -euxo pipefail
@@ -97,6 +97,15 @@ WORKDIR /home/appuser
 
 COPY --chown=root:root --chmod=755 --from=build-cli /app/target/release/diom /usr/local/bin/diom
 
+LABEL org.opencontainers.image.authors="support@svix.com" \
+      org.opencontainers.image.url="https://diom.svix.com" \
+      org.opencontainers.image.documentation="https://diom.svix.com/docs" \
+      org.opencontainers.image.description="The Diom backend components platform, CLI component" \
+      org.opencontainers.image.title="diom cli" \
+      org.opencontainers.image.vendor="Svix" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.base.name="docker.io/debian:trixie"
+
 ENTRYPOINT ["/usr/local/bin/diom"]
 
 # Production
@@ -122,5 +131,14 @@ EXPOSE 8624/tcp
 EXPOSE 8625/tcp
 
 COPY --chown=root:root --chmod=755 --from=build-server /app/target/release/diom-server /usr/local/bin/diom-server
+
+LABEL org.opencontainers.image.authors="support@svix.com" \
+      org.opencontainers.image.url="https://diom.svix.com" \
+      org.opencontainers.image.documentation="https://diom.svix.com/docs" \
+      org.opencontainers.image.description="The Diom backend components platform, server component" \
+      org.opencontainers.image.title="diom server" \
+      org.opencontainers.image.vendor="Svix" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.base.name="docker.io/debian:trixie"
 
 ENTRYPOINT ["/usr/local/bin/diom-server"]

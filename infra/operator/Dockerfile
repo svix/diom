@@ -51,7 +51,7 @@ ARG RELEASE_VERSION
 RUN cargo build --release -p diom-operator --bin diom-operator --frozen
 
 # Production
-FROM docker.io/debian:trixie-20260623-slim AS prod
+FROM docker.io/debian:trixie-20260713-slim AS prod
 
 RUN <<EOF
     #!/bin/bash
@@ -77,5 +77,14 @@ USER appuser
 WORKDIR /home/appuser
 
 COPY --chown=root:root --chmod=755 --from=build /app/target/release/diom-operator /usr/local/bin/diom-operator
+
+LABEL org.opencontainers.image.authors="support@svix.com" \
+      org.opencontainers.image.url="https://diom.svix.com" \
+      org.opencontainers.image.documentation="https://diom.svix.com/docs" \
+      org.opencontainers.image.description="The Diom backend components platform, kubernetes operator component" \
+      org.opencontainers.image.title="diom operator" \
+      org.opencontainers.image.vendor="Svix" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.base.name="docker.io/debian:trixie"
 
 ENTRYPOINT ["/usr/local/bin/diom-operator"]
