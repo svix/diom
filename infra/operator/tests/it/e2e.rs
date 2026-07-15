@@ -191,12 +191,17 @@ async fn test_spec_env_var_mapping() -> TestResult {
 #[tokio::test]
 async fn test_storage_resize() -> TestResult {
     let env = TestContextBuilder::new().build().await;
+    env.wait_for_cluster_ready().await?;
 
-    let mut cluster = env.cluster_api().get(env.name()).await?;
-    cluster.spec.diom.storage.persistent.size = Quantity("20M".to_string());
-    env.cluster_api()
-        .replace(env.name(), &PostParams::default(), &cluster)
-        .await?;
+    run_with_retries(async || {
+        let mut cluster = env.cluster_api().get(env.name()).await?;
+        cluster.spec.diom.storage.persistent.size = Quantity("20M".to_string());
+        env.cluster_api()
+            .replace(env.name(), &PostParams::default(), &cluster)
+            .await?;
+        Ok(())
+    })
+    .await?;
 
     run_with_many_retries(async || {
         let sts = env.sts_api().get(env.name()).await?;
