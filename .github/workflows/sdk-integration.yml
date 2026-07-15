@@ -75,7 +75,7 @@ jobs:
           path: /tmp
       - name: Start Diom server
         run: scripts/start-diom-server.sh /tmp/diom-server
-      - uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run Python SDK integration tests
@@ -101,7 +101,7 @@ jobs:
           path: /tmp
       - name: Start Diom server
         run: scripts/start-diom-server.sh /tmp/diom-server
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6.4.0
         with:
           node-version: ${{ matrix.node-version }}
       - name: Run JavaScript SDK integration tests
@@ -153,7 +153,7 @@ jobs:
           path: /tmp
       - name: Start Diom server
         run: scripts/start-diom-server.sh /tmp/diom-server
-      - uses: actions/setup-java@v5.4.0
+      - uses: actions/setup-java@v5.5.0
         with:
           distribution: temurin
           java-version: ${{ matrix.java-version }}
