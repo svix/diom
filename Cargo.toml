@@ -19,8 +19,6 @@ ignored = [
 # FIXME: Make this actually effective by switching from using schemars'
 #        derive directly to using our own wrapper (like webhooks-private)
 openapi = []
-# This causes the replication layer to periodically dump stats to stdout
-raft-runtime-stats = ["openraft/runtime-stats"]
 # this enables console_subscriber / tokio-console
 tokio-console = []
 default = []
