@@ -1710,6 +1710,7 @@ dependencies = [
  "jiff",
  "mimalloc",
  "rand 0.10.2",
+ "rust-executable-metadata",
  "rustls",
  "serde",
  "serde_json",
@@ -1962,6 +1963,7 @@ dependencies = [
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk",
  "reqwest",
+ "rust-executable-metadata",
  "tokio",
  "tracing",
  "tracing-log",
@@ -4986,6 +4988,15 @@ dependencies = [
  "serde_derive",
  "typeid",
  "unicode-ident",
+]
+
+[[package]]
+name = "rust-executable-metadata"
+version = "0.1.0"
+source = "git+https://github.com/svix/rust-executable-metadata?rev=7a32435fbdab53f33e6abab9c1ab500afef0a7a8#7a32435fbdab53f33e6abab9c1ab500afef0a7a8"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

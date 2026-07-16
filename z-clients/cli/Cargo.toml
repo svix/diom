@@ -23,6 +23,9 @@ ignored = [
     "idna_adapter",
 ]
 
+[build-dependencies]
+rust-executable-metadata.workspace = true
+
 [[bin]]
 name = "diom"
 path = "src/main.rs"

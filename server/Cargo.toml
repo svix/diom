@@ -9,6 +9,9 @@ publish = false
 [package.metadata.dist]
 dist = false
 
+[build-dependencies]
+rust-executable-metadata.workspace = true
+
 [features]
 tokio-console = ["dep:console-subscriber"]
 
