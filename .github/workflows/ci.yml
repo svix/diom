@@ -19,8 +19,9 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  CARGO_BUILD_WARNINGS: deny
   # Keep this in sync with Dockerfile
-  ci_toolchain_rust: '1.96.1'
+  ci_toolchain_rust: '1.97.1'
 
 jobs:
   check-fmt:
@@ -61,7 +62,7 @@ jobs:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - run: cargo clippy --workspace --all-features --all-targets -- -Dwarnings
+      - run: cargo clippy --workspace --all-features --all-targets
   prek:
     name: Validate prek
     runs-on: ubuntu-24.04

@@ -5,7 +5,7 @@
 # Using https://github.com/LukeMathWalker/cargo-chef for better layer caching
 
 # Base image for planner and build - keep in sync with .github/workflows/server-ci.yml
-FROM docker.io/rust:1.96.1-slim-trixie AS chef
+FROM docker.io/rust:1.97.1-slim-trixie AS chef
 RUN cargo install --locked cargo-chef@0.1.77
 RUN cargo install --locked cargo-sbom@0.10.0
 WORKDIR /app

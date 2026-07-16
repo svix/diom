@@ -247,29 +247,6 @@ pub async fn initialize_raft(
         metrics: metrics.clone(),
         state_watcher,
     };
-
-    #[cfg(feature = "raft-runtime-stats")]
-    tokio::spawn({
-        let handle = handle.clone();
-        async move {
-            let mut interval = tokio::time::interval(std::time::Duration::from_secs(1));
-            let shutdown = diom_core::shutdown::shutting_down_token();
-            while shutdown
-                .run_until_cancelled(interval.tick())
-                .await
-                .is_some()
-            {
-                let stats = match handle.raft.runtime_stats().await {
-                    Ok(s) => s,
-                    Err(err) => {
-                        tracing::warn!(?err, "unable to get runtime stats");
-                        continue;
-                    }
-                };
-                println!("{}", stats.display().human_readable());
-            }
-        }
-    });
     tokio::spawn({
         let handle = handle.clone();
         let cfg = cfg.clone();
