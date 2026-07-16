@@ -6,11 +6,11 @@ repository.workspace = true
 edition = "2024"
 publish = false
 
-[package.metadata.dist]
-dist = false
-
 [build-dependencies]
 rust-executable-metadata.workspace = true
+
+[package.metadata.dist]
+dist = false
 
 [features]
 tokio-console = ["dep:console-subscriber"]
