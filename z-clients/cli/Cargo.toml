@@ -8,6 +8,9 @@ edition = "2024"
 description = "CLI for interacting with the Diom components platform"
 homepage = "https://diom.com"
 
+[build-dependencies]
+rust-executable-metadata.workspace = true
+
 [package.metadata.dist]
 dist = true
 npm-package = "diom-cli"

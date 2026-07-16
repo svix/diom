@@ -7,6 +7,7 @@
 # Base image for planner and build - keep in sync with .github/workflows/server-ci.yml
 FROM docker.io/rust:1.96.1-slim-trixie AS chef
 RUN cargo install --locked cargo-chef@0.1.77
+RUN cargo install --locked cargo-sbom@0.10.0
 WORKDIR /app
 
 # Build plan environment
@@ -50,6 +51,7 @@ ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
 RUN cargo build --release --package diom-server --bin diom-server --features diom-backend/openapi --frozen
+RUN cargo sbom --cargo-package diom-server > /app/diom-server.spdx
 
 FROM build-base AS build-cli
 
@@ -63,6 +65,7 @@ ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
 RUN cargo build --release --package diom-cli --bin diom --frozen
+RUN cargo sbom --cargo-package diom-cli > /app/diom-cli.spdx
 
 # shared base image with dependencies
 FROM docker.io/debian:trixie-20260713-slim AS base
@@ -87,6 +90,7 @@ RUN <<EOF
     chown -R appuser: /app
     mkdir -p /home/appuser
     chown -R appuser: /home/appuser
+    mkdir -p /usr/local/share
 EOF
 
 # CLI Production
@@ -96,12 +100,14 @@ USER appuser
 WORKDIR /home/appuser
 
 COPY --chown=root:root --chmod=755 --from=build-cli /app/target/release/diom /usr/local/bin/diom
+COPY --chown=root:root --chmod=644 --from=build-cli /app/diom-cli.spdx /diom-cli.spdx
+
 
 LABEL org.opencontainers.image.authors="support@svix.com" \
       org.opencontainers.image.url="https://diom.svix.com" \
       org.opencontainers.image.documentation="https://diom.svix.com/docs" \
       org.opencontainers.image.description="The Diom backend components platform, CLI component" \
-      org.opencontainers.image.title="diom cli" \
+      org.opencontainers.image.title="diom-cli" \
       org.opencontainers.image.vendor="Svix" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.base.name="docker.io/debian:trixie"
@@ -131,12 +137,13 @@ EXPOSE 8624/tcp
 EXPOSE 8625/tcp
 
 COPY --chown=root:root --chmod=755 --from=build-server /app/target/release/diom-server /usr/local/bin/diom-server
+COPY --chown=root:root --chmod=644 --from=build-server /app/diom-server.spdx /diom-server.spdx
 
 LABEL org.opencontainers.image.authors="support@svix.com" \
       org.opencontainers.image.url="https://diom.svix.com" \
       org.opencontainers.image.documentation="https://diom.svix.com/docs" \
       org.opencontainers.image.description="The Diom backend components platform, server component" \
-      org.opencontainers.image.title="diom server" \
+      org.opencontainers.image.title="diom-server" \
       org.opencontainers.image.vendor="Svix" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.base.name="docker.io/debian:trixie"

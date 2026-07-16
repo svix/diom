@@ -212,6 +212,7 @@ regex = "1.5.5"
 reqwest = { version = "0.13.3", default-features = false, features = ["json", "rustls", "hickory-dns", "stream", "http2"] }
 rmp-serde = "1.3.1"
 rmpv = "1.3.1"
+rust-executable-metadata = { git = "https://github.com/svix/rust-executable-metadata", rev = "7a32435fbdab53f33e6abab9c1ab500afef0a7a8" }
 rustls = "0.23.31"
 schemars = { version = "1.2.0", features = ["uuid1"] }
 serde = { version = "1.0.184", features = ["derive", "rc"] }

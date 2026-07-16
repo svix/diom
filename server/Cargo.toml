@@ -6,6 +6,9 @@ repository.workspace = true
 edition = "2024"
 publish = false
 
+[build-dependencies]
+rust-executable-metadata.workspace = true
+
 [package.metadata.dist]
 dist = false
 
