@@ -76,6 +76,7 @@ jobs:
   release-to-dockerhub:
     environment: release
     needs: [build]
+    if: ${{ inputs.dry_run != true }}
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
