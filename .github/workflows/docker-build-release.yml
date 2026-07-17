@@ -52,6 +52,7 @@ jobs:
       context: ${{ inputs.context }}
       target: ${{ inputs.target }}
       push: ${{ inputs.dry_run != true }}
+      sign: "false"
       platforms: linux/amd64,linux/arm64
       meta-images: ${{ inputs.staging_image_repo }}
       cache: true
