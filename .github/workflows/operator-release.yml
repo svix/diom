@@ -37,6 +37,7 @@ jobs:
           echo "=== DRY RUN ==="
           echo "Would release operator: ${{ steps.version.outputs.version }}"
           echo "Would push Docker image: svix/diom-operator:${{ steps.version.outputs.version }}"
+          echo "Would push tag: operator-${{ steps.version.outputs.version }}"
 
   docker-build:
     needs: operator-release
@@ -49,3 +50,22 @@ jobs:
       dry_run: ${{ inputs.dry_run }}
       cache-scope: docker-release-operator
     secrets: inherit
+
+  tag:
+    needs: [operator-release, docker-build]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Create and push tag
+        run: |
+          TAG="operator-${{ needs.operator-release.outputs.version }}"
+          if [[ "$TAG" == "operator-" ]]; then
+            echo >&2 "Invalid tag name"
+            exit 1
+          fi
+          git tag "$TAG" "${{ github.sha }}"
+          git push origin tag "$TAG"

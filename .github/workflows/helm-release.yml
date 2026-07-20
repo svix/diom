@@ -18,6 +18,7 @@ jobs:
     outputs:
       operator_image_tag: ${{ steps.versions.outputs.operator_image_tag }}
       server_image_tag: ${{ steps.versions.outputs.server_image_tag }}
+      chart_version: ${{ steps.versions.outputs.chart_version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -26,9 +27,12 @@ jobs:
         run: |
           OPERATOR_TAG=$(yq '.operator.image.tag' infra/helm-diom/values.yaml)
           SERVER_TAG=$(yq '.cluster.image.tag' infra/helm-diom/values.yaml)
+          CHART_VERSION=$(yq '.version' infra/helm-diom/Chart.yaml)
           echo "Releasing helm chart with:"
+          echo "  chart version:      ${CHART_VERSION}"
           echo "  operator image tag: ${OPERATOR_TAG}"
           echo "  server image tag:   ${SERVER_TAG}"
+          echo "chart_version=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
 
   publish:
     needs: read-versions
@@ -41,3 +45,22 @@ jobs:
     permissions:
       contents: read
       packages: write
+
+  tag:
+    needs: [read-versions, publish]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Create and push tag
+        run: |
+          TAG="helm-v${{ needs.read-versions.outputs.chart_version }}"
+          if [[ "$TAG" == "helm-v" ]]; then
+            echo >&2 "Invalid tag name"
+            exit 1
+          fi
+          git tag "$TAG" "${{ github.sha }}"
+          git push origin tag "$TAG"
