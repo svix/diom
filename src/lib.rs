@@ -55,10 +55,10 @@ fn test_setup() {
 }
 
 mod docs {
-    use aide::{axum::ApiRouter, openapi::OpenApi};
+    use aide::axum::ApiRouter;
     use axum::{response::Redirect, routing::get};
 
-    pub(crate) fn router(_docs: OpenApi) -> ApiRouter {
+    pub(crate) fn router() -> ApiRouter {
         cfg_select! {
             // For debug builds, read docs.html and openapi.json from disk on every request
             // so we don't have to rebuild when they change
@@ -84,6 +84,5 @@ mod docs {
             .route("/", get(|| async { Redirect::temporary("/docs") }))
             .route_service("/docs", docs_route)
             .route_service("/api/v1/openapi.json", openapi_json_route)
-            .with_state(_docs)
     }
 }

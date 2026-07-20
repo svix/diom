@@ -136,9 +136,8 @@ pub async fn run_with_listeners(
     ));
 
     openapi::postprocess_spec(&mut openapi);
-    let docs_router = docs::router(openapi);
-    let router = api_router.merge(docs_router);
-    let svc = router
+    let svc = api_router
+        .merge(docs::router())
         .layer((
             trace_layer(),
             CatchPanicLayer::custom(handle_panic),
