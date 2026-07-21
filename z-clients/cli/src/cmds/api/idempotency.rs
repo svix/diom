@@ -29,7 +29,7 @@ pub enum IdempotencyCommands {
     #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
-  \"lock_period_ms\": 60000
+  \"lock_period_ms\": 60000 // How long to hold the lock on start before releasing it.
 }\n\nExample response:
 {
 }\n")]
@@ -49,9 +49,9 @@ pub enum IdempotencyCommands {
     #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
-  \"response\": \"...\",
-  \"context\": {\"key\": \"...\"},
-  \"ttl_ms\": 60000
+  \"response\": \"...\", // The response to cache
+  \"context\": {\"key\": \"...\"}, // Optional metadata to store alongside the response
+  \"ttl_ms\": 60000 // How long to keep the idempotency response for.
 }\n\nExample response:
 {
 }\n")]

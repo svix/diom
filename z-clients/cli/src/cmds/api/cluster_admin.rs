@@ -26,14 +26,14 @@ pub enum ClusterAdminCommands {
         ))]
     #[command(after_help = "Example response:
 {
-  \"cluster_id\": \"...\",
-  \"cluster_name\": \"...\",
-  \"this_node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",
-  \"this_node_state\": \"leader\",
-  \"this_node_last_committed_timestamp\": 1234567890123,
-  \"this_node_last_snapshot_id\": \"...\",
-  \"this_node_last_purged_log_index\": 123,
-  \"nodes\": [{\"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\", \"address\": \"...\", \"state\": \"leader\", \"last_committed_log_index\": 123, \"last_committed_term\": 123}]
+  \"cluster_id\": \"...\", // The unique ID of this cluster.
+  \"cluster_name\": \"...\", // The name of this cluster (as defined in the config)
+  \"this_node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\", // The unique ID of the node servicing this request
+  \"this_node_state\": \"leader\", // The cluster state of the node servicing this request
+  \"this_node_last_committed_timestamp\": 1234567890123, // The timestamp of the last transaction committed on this node
+  \"this_node_last_snapshot_id\": \"...\", // The last snapshot taken on this node
+  \"this_node_last_purged_log_index\": 123, // The last-purged log on this node
+  \"nodes\": [{\"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\", \"address\": \"...\", \"state\": \"leader\", \"last_committed_log_index\": 123, \"last_committed_term\": 123}] // A list of all nodes known to be in the cluster
 }\n")]
     Status {},
     /// Initialize this node as the leader of a new cluster
@@ -92,9 +92,9 @@ pub enum ClusterAdminCommands {
 {
 }\n\nExample response:
 {
-  \"snapshot_time\": 1234567890123,
-  \"snapshot_log_index\": 123,
-  \"snapshot_id\": \"...\"
+  \"snapshot_time\": 1234567890123, // The wall-clock time at which the snapshot was initiated
+  \"snapshot_log_index\": 123, // The log index at which the snapshot was initiated
+  \"snapshot_id\": \"...\" // If this is `null`, the snapshot is still building in the background
 }\n")]
     ForceSnapshot {
         cluster_force_snapshot_in:

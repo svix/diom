@@ -33,7 +33,7 @@ pub enum MsgsQueueCommands {
   \"namespace\": \"some_namespace\",
   \"batch_size\": 123,
   \"lease_duration_ms\": 60000,
-  \"batch_wait_ms\": 60000
+  \"batch_wait_ms\": 60000 // Maximum time (in milliseconds) to wait for messages before returning.
 }\n\nExample response:
 {
   \"msgs\": [{\"msg_id\": \"...\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]

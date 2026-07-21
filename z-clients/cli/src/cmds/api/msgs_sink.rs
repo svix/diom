@@ -27,10 +27,10 @@ pub enum MsgsSinkCommands {
     #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
-  \"topic\": \"some_topic_name\",
-  \"consumer_group\": \"some_consumer_group\",
-  \"default_starting_position\": \"earliest\",
-  \"max_in_flight\": 123,
+  \"topic\": \"some_topic_name\", // The topic whose messages are forwarded to the sink. Created automatically if it does not exist.
+  \"consumer_group\": \"some_consumer_group\", // The consumer group that identifies the sink and tracks its progress through the topic.
+  \"default_starting_position\": \"earliest\", // Where a freshly-created sink starts consuming the topic. Defaults to `earliest`.
+  \"max_in_flight\": 123, // At most how many concurrent requests will be sent to the Sink.
   \"config\": {\"...\": \"...\"}
 }\n\nExample response:
 {
@@ -75,8 +75,8 @@ pub enum MsgsSinkCommands {
     #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
-  \"limit\": 123,
-  \"iterator\": \"...\"
+  \"limit\": 123, // Limit the number of returned items
+  \"iterator\": \"...\" // The iterator returned from a prior invocation
 }\n\nExample response:
 {
   \"data\": [{\"topic\": \"some_topic_name\", \"consumer_group\": \"some_consumer_group\", \"default_starting_position\": \"earliest\", \"max_in_flight\": 123, \"config\": {\"...\": \"...\"}}],
