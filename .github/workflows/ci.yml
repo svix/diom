@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
         with:
           toolchain: nightly
           components: rustfmt
@@ -39,10 +39,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - uses: taiki-e/install-action@43aecc8d72668fbcfe75c31400bc4f890f1c5853 # v2.83.2
+      - uses: taiki-e/install-action@07b4745e0c39a41822af610387492e3e53aa222b # v2.83.4
         with:
           tool: cargo-sort
-      - uses: taiki-e/install-action@43aecc8d72668fbcfe75c31400bc4f890f1c5853 # v2.83.2
+      - uses: taiki-e/install-action@07b4745e0c39a41822af610387492e3e53aa222b # v2.83.4
         with:
           tool: cargo-machete
       - run: cargo sort --check --no-format --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Use beta toolchain for a middle ground between effective caching and the latest lints
-      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
         with:
           toolchain: beta
           components: clippy
@@ -69,7 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
-      - uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d # v2.0.5
+      - uses: j178/prek-action@5337cb91e0fa35a7ff31b9ca345126d8bbbcdf16 # v2.0.6
   test:
     name: Test
     runs-on: ubicloud-standard-4-ubuntu-2404
@@ -78,14 +78,14 @@ jobs:
       DIOM_LOG_LEVEL: debug
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
           components: llvm-tools-preview
-      - uses: taiki-e/install-action@43aecc8d72668fbcfe75c31400bc4f890f1c5853 # v2.83.2
+      - uses: taiki-e/install-action@07b4745e0c39a41822af610387492e3e53aa222b # v2.83.4
         with:
           tool: cargo-llvm-cov
-      - uses: taiki-e/install-action@43aecc8d72668fbcfe75c31400bc4f890f1c5853 # v2.83.2
+      - uses: taiki-e/install-action@07b4745e0c39a41822af610387492e3e53aa222b # v2.83.4
         with:
           tool: cargo-nextest
       - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
@@ -144,7 +144,7 @@ jobs:
     runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
           components: rustfmt
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
       - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
@@ -216,7 +216,7 @@ jobs:
       DIOM_LOG_LEVEL: debug
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
         with:
           toolchain: stable
       - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
@@ -229,6 +229,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - uses: EmbarkStudios/cargo-deny-action@bb137d7af7e4fb67e5f82a49c4fce4fad40782fe # v2.0.20
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
         with:
           manifest-path: Cargo.toml
