@@ -5,6 +5,7 @@ use opentelemetry::{
     KeyValue, Value,
     metrics::{Counter, Gauge, Histogram, Meter},
 };
+use tokio::runtime::RuntimeMetrics;
 
 use super::cluster::NodeId;
 
@@ -688,5 +689,161 @@ impl ClusterNetworkMetrics {
         ];
         self.requests.add(1, dims);
         self.request_latency.record(duration.as_micros() as _, dims);
+    }
+}
+
+/// Number of poll-time histogram buckets reported per worker, from the slowest end.
+const NUM_REPORTED_POLL_HISTOGRAM_BUCKETS: usize = 10;
+
+const QUEUE_DEPTH_REPORT_THRESHOLD: u64 = 2;
+
+/// Previous poll-time histogram bucket values, kept so each collection can report
+/// the per-interval difference of the runtime's monotonic bucket counters.
+///
+/// Must be sized with [`RuntimeMetricsContext::new`] to match the runtime's worker
+/// count; there is deliberately no `Default`, as an empty context would panic.
+pub struct RuntimeMetricsContext {
+    previous_poll_histogram_bucket_values: Vec<[u64; NUM_REPORTED_POLL_HISTOGRAM_BUCKETS]>,
+}
+
+impl RuntimeMetricsContext {
+    pub fn new(num_workers: usize) -> Self {
+        Self {
+            previous_poll_histogram_bucket_values: vec![
+                [0; NUM_REPORTED_POLL_HISTOGRAM_BUCKETS];
+                num_workers
+            ],
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct TokioMetrics {
+    alive_tasks: Gauge<u64>,
+    global_queue_depth: Gauge<u64>,
+    active_blocking_threads: Gauge<u64>,
+    blocking_queue_depth: Gauge<u64>,
+    poll_histogram: Gauge<u64>,
+    worker_local_queue_depth: Gauge<u64>,
+    node_id_kv: KeyValue,
+}
+
+impl TokioMetrics {
+    pub fn new(meter: &Meter, node_id: NodeId) -> Self {
+        Self {
+            alive_tasks: meter
+                .u64_gauge("diom.tokio.alive_tasks")
+                .with_description("Number of alive tasks in the runtime")
+                .build(),
+            global_queue_depth: meter
+                .u64_gauge("diom.tokio.global_queue_depth")
+                .with_description("Number of tasks in the runtime's global queue")
+                .build(),
+            active_blocking_threads: meter
+                .u64_gauge("diom.tokio.active_blocking_threads")
+                .with_description("Number of blocking threads currently running a task")
+                .build(),
+            blocking_queue_depth: meter
+                .u64_gauge("diom.tokio.blocking_queue_depth")
+                .with_description("Number of tasks queued to run on a blocking thread")
+                .build(),
+            poll_histogram: meter
+                .u64_gauge("diom.tokio.poll_histogram")
+                .with_description("Per-interval task poll-time histogram bucket counts")
+                .build(),
+            worker_local_queue_depth: meter
+                .u64_gauge("diom.tokio.worker.local_queue_depth")
+                .with_description("Number of tasks in a worker's local queue")
+                .build(),
+            node_id_kv: node_id.into(),
+        }
+    }
+
+    pub fn record(&self, metrics: &RuntimeMetrics, ctx: &mut RuntimeMetricsContext) {
+        let node = std::slice::from_ref(&self.node_id_kv);
+
+        let alive_tasks = metrics.num_alive_tasks() as u64;
+        if alive_tasks != 0 {
+            self.alive_tasks.record(alive_tasks, node);
+        }
+
+        let global_queue_depth = metrics.global_queue_depth() as u64;
+        if global_queue_depth > QUEUE_DEPTH_REPORT_THRESHOLD {
+            self.global_queue_depth.record(global_queue_depth, node);
+        }
+
+        // saturating: the two counters are independent atomics, so a reader can
+        // briefly observe more idle threads than total during pool teardown.
+        let active_blocking_threads = metrics
+            .num_blocking_threads()
+            .saturating_sub(metrics.num_idle_blocking_threads())
+            as u64;
+        if active_blocking_threads > QUEUE_DEPTH_REPORT_THRESHOLD {
+            self.active_blocking_threads
+                .record(active_blocking_threads, node);
+        }
+
+        let blocking_queue_depth = metrics.blocking_queue_depth() as u64;
+        if blocking_queue_depth > QUEUE_DEPTH_REPORT_THRESHOLD {
+            self.blocking_queue_depth.record(blocking_queue_depth, node);
+        }
+
+        self.record_poll_histogram(metrics, ctx);
+
+        for worker in 0..metrics.num_workers() {
+            let local_queue_depth = metrics.worker_local_queue_depth(worker) as u64;
+            if local_queue_depth > QUEUE_DEPTH_REPORT_THRESHOLD {
+                self.worker_local_queue_depth.record(
+                    local_queue_depth,
+                    &[
+                        self.node_id_kv.clone(),
+                        KeyValue::new("worker_id", worker as i64),
+                    ],
+                );
+            }
+        }
+    }
+
+    fn record_poll_histogram(&self, metrics: &RuntimeMetrics, ctx: &mut RuntimeMetricsContext) {
+        // Only populated when the runtime is built with the poll-time histogram
+        // enabled; skipped otherwise (e.g. the test harness).
+        if !metrics.poll_time_histogram_enabled() {
+            return;
+        }
+
+        let total_buckets = metrics.poll_time_histogram_num_buckets();
+        let first_reported_bucket =
+            total_buckets.saturating_sub(NUM_REPORTED_POLL_HISTOGRAM_BUCKETS);
+
+        for worker in 0..metrics.num_workers() {
+            let prev_values = &mut ctx.previous_poll_histogram_bucket_values[worker];
+
+            for (bucket, prev) in prev_values.iter_mut().enumerate() {
+                let underlying_bucket = first_reported_bucket + bucket;
+                if underlying_bucket >= total_buckets {
+                    break;
+                }
+
+                let bucket_range = metrics.poll_time_histogram_bucket_range(underlying_bucket);
+                let full_count =
+                    metrics.poll_time_histogram_bucket_count(worker, underlying_bucket);
+
+                let count = full_count - *prev;
+                *prev = full_count;
+
+                // Skip zero counts to keep metric cardinality and billing down.
+                if count != 0 {
+                    self.poll_histogram.record(
+                        count,
+                        &[
+                            self.node_id_kv.clone(),
+                            KeyValue::new("bucket_start_us", bucket_range.start.as_micros() as i64),
+                            KeyValue::new("bucket_end_us", bucket_range.end.as_micros() as i64),
+                            KeyValue::new("worker_id", worker as i64),
+                        ],
+                    );
+                }
+            }
+        }
     }
 }
