@@ -20,14 +20,16 @@ use diom_msgs::{
     MsgsNamespace,
     entities::{
         ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, QueueMsgOut, Retention, SeekPosition,
-        StreamMsgOut, SvixPollerListItem, TopicIn, TopicName, TopicPartition,
+        SinkListItem, SinkSettings, StreamMsgOut, SvixPollerListItem, TopicIn, TopicName,
+        TopicPartition,
     },
     operations::{
         ConfigureNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
         QueueExtendLeaseOperation, QueueNackOperation, QueueReceiveOperation,
-        QueueRedriveDlqOperation, SeekTarget, StreamCancelLeaseOperation, StreamCommitOperation,
-        StreamReceiveOperation, StreamSeekOperation, SvixPollerCreateOperation,
-        SvixPollerDeleteOperation, TopicConfigureOperation,
+        QueueRedriveDlqOperation, SeekTarget, SinkConfigureOperation, SinkDeleteOperation,
+        StreamCancelLeaseOperation, StreamCommitOperation, StreamReceiveOperation,
+        StreamSeekOperation, SvixPollerCreateOperation, SvixPollerDeleteOperation,
+        TopicConfigureOperation,
     },
 };
 use diom_namespace::entities::NamespaceName;
@@ -1029,6 +1031,178 @@ async fn svix_poller_list(
     Ok(MsgPackOrJson(ListResponse::create(items, limit, iterator)))
 }
 
+// ---------------------------------------------------------------------------
+// sink
+
+#[derive(Clone, Debug, Deserialize, JsonSchema)]
+pub struct SinkConfigureIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    /// The topic whose messages are forwarded to the sink. Created automatically if it does not
+    /// exist.
+    pub topic: TopicName,
+    /// The consumer group that identifies the sink and tracks its progress through the topic.
+    pub consumer_group: ConsumerGroup,
+    #[serde(flatten)]
+    pub settings: SinkSettings,
+}
+
+impl RequestInput for SinkConfigureIn {
+    fn access_metadata(&self) -> AccessMetadata<'_> {
+        msgs_metadata(self.namespace.as_ref(), &self.topic, "sink.configure")
+    }
+}
+
+#[derive(Clone, Debug, Serialize, JsonSchema)]
+pub struct SinkConfigureOut {
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+}
+
+#[derive(Clone, Debug, Deserialize, JsonSchema)]
+pub struct SinkDeleteIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+}
+
+impl RequestInput for SinkDeleteIn {
+    fn access_metadata(&self) -> AccessMetadata<'_> {
+        msgs_metadata(self.namespace.as_ref(), &self.topic, "sink.delete")
+    }
+}
+
+#[derive(Clone, Debug, Serialize, JsonSchema)]
+pub struct SinkDeleteOut {
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    pub success: bool,
+}
+
+/// Create or update a sink for a topic. Overwrites any existing sink with the same id.
+#[aide_annotate(op_id = "v1.msgs.sink.configure")]
+async fn sink_configure(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<SinkConfigureIn>,
+) -> Result<MsgPackOrJson<SinkConfigureOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let operation =
+        SinkConfigureOperation::new(namespace.id, data.topic, data.consumer_group, data.settings);
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(SinkConfigureOut {
+        topic: response.topic,
+        consumer_group: response.consumer_group,
+    }))
+}
+
+/// Delete a sink.
+#[aide_annotate(op_id = "v1.msgs.sink.delete")]
+async fn sink_delete(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<SinkDeleteIn>,
+) -> Result<MsgPackOrJson<SinkDeleteOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let operation = SinkDeleteOperation::new(namespace.id, data.topic, data.consumer_group);
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(SinkDeleteOut {
+        topic: response.topic,
+        consumer_group: response.consumer_group,
+        success: response.success,
+    }))
+}
+
+#[derive(Clone, Deserialize, Serialize, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic"]))]
+pub struct SinkListIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicName,
+    #[serde(flatten)]
+    pub pagination: Pagination<String>,
+}
+
+impl RequestInput for SinkListIn {
+    fn access_metadata(&self) -> AccessMetadata<'_> {
+        msgs_metadata(self.namespace.as_ref(), &self.topic, "sink.list")
+    }
+}
+
+#[derive(Clone, Debug, Serialize, JsonSchema)]
+pub struct SinkOut {
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    #[serde(flatten)]
+    pub settings: SinkSettings,
+}
+
+impl ListResponseItem for SinkOut {
+    fn id(&self) -> String {
+        self.consumer_group.to_string()
+    }
+}
+
+impl From<SinkListItem> for SinkOut {
+    fn from(item: SinkListItem) -> Self {
+        Self {
+            topic: item.topic,
+            consumer_group: item.consumer_group,
+            settings: item.settings,
+        }
+    }
+}
+
+/// List sink configurations for a topic.
+#[aide_annotate(op_id = "v1.msgs.sink.list")]
+async fn sink_list(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<SinkListIn>,
+) -> Result<MsgPackOrJson<ListResponse<SinkOut>>> {
+    repl.wait_linearizable().await.or_internal_error()?;
+
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
+    let metadata_ks = ro_db
+        .keyspace(diom_msgs::METADATA_KEYSPACE)
+        .or_internal_error()?;
+
+    let limit: usize = data.pagination.limit.into();
+    let iterator = data.pagination.iterator;
+    let ns_id = namespace.id;
+    let topic = data.topic;
+
+    // Fetch `limit + 1` so `ListResponse::create` can detect whether more pages exist.
+    let items = {
+        let iterator = iterator.clone();
+        diom_core::task::spawn_blocking_in_current_span(move || {
+            diom_msgs::list_sinks(&metadata_ks, ns_id, &topic, limit + 1, iterator.as_deref())
+        })
+        .await
+        .or_internal_error()??
+    };
+
+    let items = items.into_iter().map(SinkOut::from).collect();
+
+    Ok(MsgPackOrJson(ListResponse::create(items, limit, iterator)))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Msgs");
 
@@ -1112,6 +1286,21 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             svix_poller_list_path,
             post_with(svix_poller_list, svix_poller_list_operation),
+            &tag,
+        )
+        .api_route_with(
+            sink_configure_path,
+            post_with(sink_configure, sink_configure_operation),
+            &tag,
+        )
+        .api_route_with(
+            sink_delete_path,
+            post_with(sink_delete, sink_delete_operation),
+            &tag,
+        )
+        .api_route_with(
+            sink_list_path,
+            post_with(sink_list, sink_list_operation),
             &tag,
         )
 }

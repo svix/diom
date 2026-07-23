@@ -3,6 +3,7 @@ mod publish;
 mod queue;
 mod retention;
 mod scheduled;
+mod sink;
 mod stream_receive;
 mod stream_seek;
 mod svix_poller;

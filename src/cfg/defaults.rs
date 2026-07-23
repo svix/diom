@@ -121,6 +121,14 @@ pub(super) const fn svix_poller_max_task_duration() -> NonZeroDurationMs {
     NonZeroDurationMs::from_secs(5).unwrap()
 }
 
+pub(super) const fn sink_max_concurrency() -> NonZeroUsize {
+    NonZeroUsize::new(32).unwrap()
+}
+
+pub(super) const fn sink_max_task_duration() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(5).unwrap()
+}
+
 pub(super) fn default_database_size() -> MemorySize {
     MemorySize::Percent(20)
 }

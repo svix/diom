@@ -345,6 +345,8 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         background_cleanup_interval: NonZeroDurationMs::from_secs(10).unwrap(),
         svix_poller_max_concurrency: 32.try_into().unwrap(),
         svix_poller_max_task_duration: NonZeroDurationMs::from_secs(5).unwrap(),
+        sink_max_concurrency: 32.try_into().unwrap(),
+        sink_max_task_duration: NonZeroDurationMs::from_secs(5).unwrap(),
         bootstrap_cfg: None,
         bootstrap_cfg_paths: vec![],
         bootstrap_cfg_path: None,

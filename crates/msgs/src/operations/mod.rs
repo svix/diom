@@ -1,12 +1,14 @@
 mod configure_namespace;
 mod publish;
 mod queue;
+mod sink;
 mod stream;
 mod svix_poller;
 mod topic_configure;
 
 pub use self::{
-    configure_namespace::*, publish::*, queue::*, stream::*, svix_poller::*, topic_configure::*,
+    configure_namespace::*, publish::*, queue::*, sink::*, stream::*, svix_poller::*,
+    topic_configure::*,
 };
 
 use crate::State;
@@ -29,6 +31,8 @@ raft_module_operations!(
         QueueNack(QueueNackOperation) -> QueueNackResponseData,
         QueueReceive(QueueReceiveOperation) -> QueueReceiveResponseData,
         QueueRedriveDlq(QueueRedriveDlqOperation) -> QueueRedriveDlqResponseData,
+        SinkConfigure(SinkConfigureOperation) -> SinkConfigureResponseData,
+        SinkDelete(SinkDeleteOperation) -> SinkDeleteResponseData,
         StreamCancelLease(StreamCancelLeaseOperation) -> StreamCancelLeaseResponseData,
         StreamCommit(StreamCommitOperation) -> StreamCommitResponseData,
         StreamReceive(StreamReceiveOperation) -> StreamReceiveResponseData,
@@ -51,6 +55,8 @@ impl MsgsOperation {
             MsgsOperation::QueueNack(op) => op.topic.to_string(),
             MsgsOperation::QueueReceive(op) => op.topic.to_string(),
             MsgsOperation::QueueRedriveDlq(op) => op.topic.to_string(),
+            MsgsOperation::SinkConfigure(op) => op.topic.to_string(),
+            MsgsOperation::SinkDelete(op) => op.topic.to_string(),
             MsgsOperation::StreamCancelLease(op) => op.topic.to_string(),
             MsgsOperation::StreamCommit(op) => op.topic.to_string(),
             MsgsOperation::StreamReceive(op) => op.topic.to_string(),

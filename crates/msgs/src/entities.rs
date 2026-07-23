@@ -1,13 +1,14 @@
 use std::{
     collections::HashMap,
     fmt,
-    num::NonZeroU64,
+    num::{NonZeroU32, NonZeroU64},
     ops::{self, Deref},
     str::FromStr,
 };
 
 use diom_core::{
     PersistableValue,
+    template_str::Template,
     types::{ByteString, DurationMs, UnixTimestampMs},
 };
 use diom_error::Error;
@@ -462,6 +463,139 @@ pub enum SeekPosition {
     Earliest,
     #[default]
     Latest,
+}
+
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum HttpMethod {
+    #[default]
+    Post,
+    Put,
+    Patch,
+}
+
+/// Configuration for a sink attached to a topic. New sink kinds can be added as variants without
+/// breaking existing configs.
+///
+/// In the formats used by the public API (json/msgpack) this is internally tagged (e.g. `{"type": "http", ...}`)
+/// This doesn't work for the non self-describing formats we use in raft, we so have to manually
+/// externally tag it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum SinkConfig {
+    Http(HttpSinkConfig),
+}
+
+impl PersistableValue for SinkConfig {}
+
+#[derive(Serialize, JsonSchema)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
+#[schemars(rename = "SinkConfig")]
+enum SinkConfigTaggedRef<'a> {
+    Http(&'a HttpSinkConfig),
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
+enum SinkConfigTagged {
+    Http(HttpSinkConfig),
+}
+
+// Externally-tagged mirror used for non-self-describing formats
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
+enum SinkConfigUntaggedRef<'a> {
+    Http(&'a HttpSinkConfig),
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum SinkConfigUntagged {
+    Http(HttpSinkConfig),
+}
+
+impl Serialize for SinkConfig {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let SinkConfig::Http(http) = self;
+        if serializer.is_human_readable() {
+            SinkConfigTaggedRef::Http(http).serialize(serializer)
+        } else {
+            SinkConfigUntaggedRef::Http(http).serialize(serializer)
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for SinkConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        if deserializer.is_human_readable() {
+            Ok(match SinkConfigTagged::deserialize(deserializer)? {
+                SinkConfigTagged::Http(http) => SinkConfig::Http(http),
+            })
+        } else {
+            Ok(match SinkConfigUntagged::deserialize(deserializer)? {
+                SinkConfigUntagged::Http(http) => SinkConfig::Http(http),
+            })
+        }
+    }
+}
+
+impl JsonSchema for SinkConfig {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        SinkConfigTaggedRef::schema_name()
+    }
+
+    fn schema_id() -> std::borrow::Cow<'static, str> {
+        SinkConfigTaggedRef::schema_id()
+    }
+
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        SinkConfigTaggedRef::json_schema(generator)
+    }
+}
+
+/// Configuration for an HTTP sink. The `url`, `headers`, and `body` are templates rendered
+/// per-message (see [`diom_core::template_str`]).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue)]
+pub struct HttpSinkConfig {
+    /// Destination URL.
+    pub url: Template,
+    #[serde(default)]
+    pub method: HttpMethod,
+    #[serde(default)]
+    pub headers: HashMap<Template, Template>,
+    /// Templated request body. When absent, the raw message value bytes are sent unchanged.
+    #[serde(default)]
+    pub body: Option<Template>,
+}
+
+fn default_sink_starting_position() -> SeekPosition {
+    SeekPosition::Earliest
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue)]
+pub struct SinkSettings {
+    /// Where a freshly-created sink starts consuming the topic. Defaults to `earliest`.
+    #[serde(default = "default_sink_starting_position")]
+    pub default_starting_position: SeekPosition,
+    /// At most how many concurrent requests will be sent to the Sink.
+    #[serde(default)]
+    pub max_in_flight: Option<NonZeroU32>,
+    pub config: SinkConfig,
+}
+
+/// A single sink configuration, as returned by list endpoints.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SinkListItem {
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    pub settings: SinkSettings,
 }
 
 /// A validated consumer group identifier.
