@@ -301,10 +301,10 @@ pub struct ClusterConfiguration {
     )]
     pub election_timeout_max: NonZeroDurationMs,
 
-    /// The minimum time to let an election run for.
+    /// The hard timeout for sending a snapshot
     ///
-    /// This should be set to at least 5x the RTT of your farthest-apart nodes
-    /// and must not be less than `cluster_election_timeout_max`.
+    /// This should be at least twice as long as it takes to send the entire copy of your
+    /// database.
     #[serde(
         rename = "send_snapshot_ms",
         default = "defaults::cluster_send_snapshot_timeout"
