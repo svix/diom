@@ -2,6 +2,10 @@ set quiet
 
 HERE := justfile_directory()
 
+# The first recipe runs when you invoke `just` without args.
+_default:
+    just --list --justfile {{ justfile() }}
+
 # run all lints
 [group('lint')]
 lint: clippy machete fmt sort vacuum-openapi vacuum-operator-openapi audit
@@ -50,7 +54,7 @@ vacuum-openapi:
 # run `vacuum` to check operator CRD openapi schema
 [group('lint')]
 vacuum-operator-openapi:
-    {{HERE}}/scripts/vacuum-operator-openapi.sh
+    {{ HERE }}/scripts/vacuum-operator-openapi.sh
 
 # run `vacuum` to check openapi, showing the details of any failures/warnings
 [group('lint')]
