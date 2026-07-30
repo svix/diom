@@ -29,7 +29,7 @@ The diom server accepts the following environment variables:
 | `$DIOM_CLUSTER_REPLICATION_REQUEST_TIMEOUT_MS` | Timeout for replication requests.<br/><br/>This should be set to approximately 2X the RTT of your farthest-apart nodes. |
 | `$DIOM_CLUSTER_SECRET` | Shared secret for intra-cluster communications.<br/><br/>This must be the same on all nodes. |
 | `$DIOM_CLUSTER_SEED_NODES` | Other nodes that we should attempt to join a cluster with at boot time. |
-| `$DIOM_CLUSTER_SEND_SNAPSHOT_TIMEOUT_MS` | The minimum time to let an election run for.<br/><br/>This should be set to at least 5x the RTT of your farthest-apart nodes and must not be less than `cluster_election_timeout_max`. |
+| `$DIOM_CLUSTER_SEND_SNAPSHOT_TIMEOUT_MS` | The hard timeout for sending a snapshot<br/><br/>This should be at least twice as long as it takes to send the entire copy of your database. |
 | `$DIOM_CLUSTER_SNAPSHOT_AFTER_TIME_MS` | Trigger a background snapshot after this many milliseconds. |
 | `$DIOM_CLUSTER_SNAPSHOT_AFTER_WRITES` | Trigger a background snapshot after this many writes. |
 | `$DIOM_CLUSTER_SNAPSHOT_PATH` | Location to store snapshots.<br/><br/>This volume must have at least as much space as the persistent DB path and ephemeral DB path combined. Defaults to a subdirectory under the persistent DB path if not passed. |

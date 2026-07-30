@@ -189,11 +189,11 @@ replication_request_timeout_ms = 5000
 # Other nodes that we should attempt to join a cluster with at boot time.
 seed_nodes = []
 
-# The minimum time to let an election run for.
+# The hard timeout for sending a snapshot
 #
-# This should be set to at least 5x the RTT of your farthest-apart nodes
-# and must not be less than `cluster_election_timeout_max`.
-send_snapshot_ms = 30000
+# This should be at least twice as long as it takes to send the entire copy of your
+# database.
+send_snapshot_ms = 300000
 
 # Trigger a background snapshot after this many milliseconds.
 snapshot_after_ms = 900000

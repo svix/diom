@@ -102,7 +102,7 @@ pub(super) const fn cluster_log_sync_interval_duration() -> NonZeroDurationMs {
 }
 
 pub(super) const fn cluster_send_snapshot_timeout() -> NonZeroDurationMs {
-    NonZeroDurationMs::from_secs(30).unwrap()
+    NonZeroDurationMs::from_secs(300).unwrap()
 }
 
 pub(super) fn cluster_replication_lag_threshold() -> u64 {
