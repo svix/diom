@@ -29,9 +29,7 @@ use crate::{
     core::{
         self,
         cluster::RaftState,
-        metrics::{
-            ConnectionMetrics, ConnectionType, RequestMetrics, RuntimeMetricsContext, TokioMetrics,
-        },
+        metrics::{ConnectionMetrics, ConnectionType, RequestMetrics, spawn_tokio_metrics},
         otel_spans::trace_layer,
     },
     docs,
@@ -85,7 +83,7 @@ pub async fn run_with_listeners(
             .expect("failed to initialize cluster");
     let node_id = raft_state.node_id;
 
-    spawn_tokio_metrics(TokioMetrics::new(&app_state.meter, node_id));
+    spawn_tokio_metrics(&app_state.meter, node_id);
 
     let request_metrics = RequestMetrics::new(&app_state.meter, node_id);
 
@@ -222,23 +220,6 @@ pub async fn run_with_listeners(
         .persist(fjall::PersistMode::SyncAll)
         .expect("failed to fsync ephemeral db at shutdown");
     tracing::info!("shutdown complete");
-}
-
-/// Spawn a background task that periodically reports Tokio runtime metrics.
-fn spawn_tokio_metrics(metrics: TokioMetrics) {
-    let handle = tokio::runtime::Handle::current();
-    let num_workers = handle.metrics().num_workers();
-    let shutdown = shutting_down_token();
-
-    tokio::spawn(async move {
-        let runtime_metrics = handle.metrics();
-        let mut ctx = RuntimeMetricsContext::new(num_workers);
-        let mut ticker = tokio::time::interval(Duration::from_secs(10));
-
-        while shutdown.run_until_cancelled(ticker.tick()).await.is_some() {
-            metrics.record(&runtime_metrics, &mut ctx);
-        }
-    });
 }
 
 async fn run_interserver(
