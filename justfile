@@ -101,8 +101,8 @@ codegen:
 
 # Dump out config.defaults.toml and ENVIRONMENT_VARIABLES.md
 default-config:
-    env -i PATH="$PATH" TERM="$TERM" COLORTERM="$COLORTERM" cargo run -- --skip-dot-env write-config config.defaults.toml
-    cargo run -- describe-environment-variables ENVIRONMENT_VARIABLES.md
+    ./scripts/clear-diom-env.sh cargo run -- --skip-dot-env write-config config.defaults.toml
+    ./scripts/clear-diom-env.sh cargo run -- describe-environment-variables ENVIRONMENT_VARIABLES.md
 
 # Run all the test commands
 test-all: test test-sdks
