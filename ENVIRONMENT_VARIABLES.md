@@ -57,6 +57,8 @@ The diom server accepts the following environment variables:
 | `$DIOM_PERSISTENT_DB_FILENAME` | Filename under the directory specified in `path`. |
 | `$DIOM_PERSISTENT_DB_PATH` | Directory in which this database is stored |
 | `$DIOM_PERSISTENT_DB_WORKER_THREADS` | Number of worker threads<br/><br/>If not passed, defaults to min(# CPU cores, 4) |
+| `$DIOM_SINK_MAX_CONCURRENCY` | Maximum number of topic sinks that can be drained concurrently.<br/><br/>Larger values allow for faster forwarding (when the number of sinks exceeds `sink_max_concurrency`), at the expense of memory/CPU. |
+| `$DIOM_SINK_MAX_TASK_DURATION_MS` | Maximum time a single sink drain task may run before yielding to others.<br/><br/>When the number of sinks exceeds `sink_max_concurrency`, shorter durations improve fairness across sinks; longer durations are generally more throughput-efficient. |
 | `$DIOM_SVIX_POLLER_MAX_CONCURRENCY` | Maximum number of Svix Ingest pollers that can run concurrently.<br/><br/>Larger values allow for faster processing (if the number of svix pollers exceeds svix_poller_max_concurrency), at the expense of memory/disk. |
 | `$DIOM_SVIX_POLLER_MAX_TASK_DURATION_MS` | Maximum time a single poller task may spend running before being killed/restarted.<br/><br/>If the number of pollers exceeds `svix_poller_max_concurrency`, then shorter durations will enable better fairness for all configured pollers. Longer durations will generally be more performant. |
 | `$DIOM_SYNC_MODE` | How to persist data to the actual underlying database<br/><br/>This is similar to the `cluster.log_sync` options, but applies to the actual primary data as opposed to the log, and is applied at every batch commit from the underlying replication system. |

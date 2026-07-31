@@ -10,6 +10,7 @@ import {
 } from '../models/msgPublishOut';
 import { MsgsNamespace } from './msgsNamespace';
 import { MsgsQueue } from './msgsQueue';
+import { MsgsSink } from './msgsSink';
 import { MsgsStream } from './msgsStream';
 import { MsgsSvixPoller } from './msgsSvixPoller';
 import { MsgsTopic } from './msgsTopic';
@@ -24,6 +25,10 @@ export class Msgs {
 
     public get queue() {
         return new MsgsQueue(this.requestCtx);
+    }
+
+    public get sink() {
+        return new MsgsSink(this.requestCtx);
     }
 
     public get stream() {

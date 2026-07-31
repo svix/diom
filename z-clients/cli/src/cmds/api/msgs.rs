@@ -5,7 +5,10 @@ use diom::DiomClient;
 #[allow(unused)]
 use crate::prelude::*;
 
-use super::{MsgsNamespaceArgs, MsgsQueueArgs, MsgsStreamArgs, MsgsSvixPollerArgs, MsgsTopicArgs};
+use super::{
+    MsgsNamespaceArgs, MsgsQueueArgs, MsgsSinkArgs, MsgsStreamArgs, MsgsSvixPollerArgs,
+    MsgsTopicArgs,
+};
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct MsgsArgs {
@@ -18,6 +21,7 @@ pub struct MsgsArgs {
 pub enum MsgsCommands {
     Namespace(MsgsNamespaceArgs),
     Queue(MsgsQueueArgs),
+    Sink(MsgsSinkArgs),
     Stream(MsgsStreamArgs),
     SvixPoller(MsgsSvixPollerArgs),
     Topic(MsgsTopicArgs),
@@ -52,6 +56,9 @@ impl MsgsCommands {
                 args.command.exec(client).await?;
             }
             Self::Queue(args) => {
+                args.command.exec(client).await?;
+            }
+            Self::Sink(args) => {
                 args.command.exec(client).await?;
             }
             Self::Stream(args) => {

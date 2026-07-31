@@ -29,6 +29,10 @@ public class Msgs {
         return new MsgsQueue(this.client);
     }
 
+    public MsgsSink sink() {
+        return new MsgsSink(this.client);
+    }
+
     public MsgsStream stream() {
         return new MsgsStream(this.client);
     }

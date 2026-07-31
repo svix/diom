@@ -1,5 +1,5 @@
 // this file is @generated
-use super::{MsgsNamespace, MsgsQueue, MsgsStream, MsgsSvixPoller, MsgsTopic};
+use super::{MsgsNamespace, MsgsQueue, MsgsSink, MsgsStream, MsgsSvixPoller, MsgsTopic};
 use crate::{Configuration, error::Result, models::*};
 
 pub struct Msgs<'a> {
@@ -17,6 +17,10 @@ impl<'a> Msgs<'a> {
 
     pub fn queue(&self) -> MsgsQueue<'a> {
         MsgsQueue::new(self.cfg)
+    }
+
+    pub fn sink(&self) -> MsgsSink<'a> {
+        MsgsSink::new(self.cfg)
     }
 
     pub fn stream(&self) -> MsgsStream<'a> {

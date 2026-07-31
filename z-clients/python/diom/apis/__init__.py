@@ -15,6 +15,7 @@ from .kv_namespace import KvNamespace, KvNamespaceAsync
 from .msgs import Msgs, MsgsAsync
 from .msgs_namespace import MsgsNamespace, MsgsNamespaceAsync
 from .msgs_queue import MsgsQueue, MsgsQueueAsync
+from .msgs_sink import MsgsSink, MsgsSinkAsync
 from .msgs_stream import MsgsStream, MsgsStreamAsync
 from .msgs_svix_poller import MsgsSvixPoller, MsgsSvixPollerAsync
 from .msgs_topic import MsgsTopic, MsgsTopicAsync
@@ -55,6 +56,8 @@ __all__ = [
     "MsgsNamespaceAsync",
     "MsgsQueue",
     "MsgsQueueAsync",
+    "MsgsSink",
+    "MsgsSinkAsync",
     "MsgsStream",
     "MsgsStreamAsync",
     "MsgsSvixPoller",

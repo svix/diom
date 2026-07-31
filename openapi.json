@@ -7014,6 +7014,333 @@
         ]
       }
     },
+    "/api/v1.msgs.sink.configure": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Sink Configure",
+        "description": "Create or update a sink for a topic. Overwrites any existing sink with the same id.",
+        "operationId": "v1.msgs.sink.configure",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SinkConfigureIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SinkConfigureOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs sink configure '{\n    \"namespace\": \"some_namespace\",\n    \"topic\": \"some_topic_name\",\n    \"consumer_group\": \"some_consumer_group\",\n    \"default_starting_position\": \"earliest\",\n    \"max_in_flight\": 1,\n    \"config\": {\"type\": \"http\",\n        \"data\": {\n        \"url\": \"My name is ${name}!\",\n        \"method\": \"post\",\n        \"headers\": {},\n        \"body\": \"My name is ${name}!\"\n    }\n    }\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Sink.Configure(\n    ctx,\n    SinkConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        DefaultStartingPosition: new(SEEKPOSITION_EARLIEST),\n        MaxInFlight: new(uint32(1)),\n        Config: SinkConfig{\n        Data: (HttpSinkConfig{\n            Url: \"My name is ${name}!\",\n            Method: new(HTTPMETHOD_POST),\n            Headers: nil,\n            Body: new(\"My name is ${name}!\"),\n        }),\n        Type: \"http\",\n        },\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getSink.configure(\n    new SinkConfigureIn()\n        .namespace(\"some_namespace\")\n        .topic(\"some_topic_name\")\n        .consumerGroup(\"some_consumer_group\")\n        .defaultStartingPosition(\n            SeekPosition.Earliest\n        )\n        .maxInFlight(1)\n        .config(\n            new SinkConfig().data(new SinkConfigData.Http(new HttpSinkConfig()\n                    .url(\"My name is ${name}!\")\n                    .method(\n                        HttpMethod.Post\n                    )\n                    .headers(Map.of())\n                    .body(\"My name is ${name}!\")))\n        )\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.sink.configure({\n    namespace: \"some_namespace\",\n    topic: \"some_topic_name\",\n    consumerGroup: \"some_consumer_group\",\n    defaultStartingPosition: SeekPosition.Earliest,\n    maxInFlight: 1,\n    config: {type: \"http\",\n        data: {\n        url: \"My name is ${name}!\",\n        method: HttpMethod.Post,\n        headers: {},\n        body: \"My name is ${name}!\",\n    }\n                    \n    },\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.sink.configure(\n    SinkConfigureIn(\n        namespace = \"some_namespace\",\n        topic = \"some_topic_name\",\n        consumer_group = \"some_consumer_group\",\n        default_starting_position = SeekPosition.EARLIEST,\n        max_in_flight = 1,\n        config = SinkConfig(\n            type = \"http\",\n            data = HttpSinkConfig(\n            url = \"My name is ${name}!\",\n            method = HttpMethod.POST,\n            headers = {},\n            body = \"My name is ${name}!\",\n        )\n\n        ),\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .sink()\n    .configure(\n        SinkConfigureIn::new(\n            \"some_topic_name\".to_owned(),\n            \"some_consumer_group\".to_owned(),\n            SinkConfig::new(),\n        )\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_default_starting_position(SeekPosition::Earliest)\n            .with_max_in_flight(1),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.msgs.sink.delete": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Sink Delete",
+        "description": "Delete a sink.",
+        "operationId": "v1.msgs.sink.delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SinkDeleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SinkDeleteOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs sink delete '{\n    \"namespace\": \"some_namespace\",\n    \"topic\": \"some_topic_name\",\n    \"consumer_group\": \"some_consumer_group\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Sink.Delete(\n    ctx,\n    SinkDeleteIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getSink.delete(\n    new SinkDeleteIn()\n        .namespace(\"some_namespace\")\n        .topic(\"some_topic_name\")\n        .consumerGroup(\"some_consumer_group\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.sink.delete({\n    namespace: \"some_namespace\",\n    topic: \"some_topic_name\",\n    consumerGroup: \"some_consumer_group\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.sink.delete(\n    SinkDeleteIn(\n        namespace = \"some_namespace\",\n        topic = \"some_topic_name\",\n        consumer_group = \"some_consumer_group\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .sink()\n    .delete(\n        SinkDeleteIn::new(\n            \"some_topic_name\".to_owned(),\n            \"some_consumer_group\".to_owned(),\n        )\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.msgs.sink.list": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Sink List",
+        "description": "List sink configurations for a topic.",
+        "operationId": "v1.msgs.sink.list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SinkListIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponseSinkOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs sink list \"some_topic_name\" '{\n    \"namespace\": \"some_namespace\",\n    \"limit\": 1,\n    \"iterator\": \"sample string\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Sink.List(\n    ctx,\n    \"some_topic_name\",\n    SinkListIn{\n        Namespace: new(\"some_namespace\"),\n        Limit: new(uint64(1)),\n        Iterator: new(\"sample string\"),\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getSink.list(\n    \"some_topic_name\",\n    new SinkListIn()\n        .namespace(\"some_namespace\")\n        .limit(1L)\n        .iterator(\"sample string\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.sink.list(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        limit: 1,\n        iterator: \"sample string\",\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.sink.list(\n    \"some_topic_name\",\n    SinkListIn(\n        namespace = \"some_namespace\",\n        limit = 1,\n        iterator = \"sample string\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .sink()\n    .list(\n        \"some_topic_name\".to_owned(),\n        SinkListIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_limit(1)\n            .with_iterator(\"sample string\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
     "/api/v1.health.ping": {
       "get": {
         "tags": [
@@ -8734,6 +9061,47 @@
           "metrics"
         ]
       },
+      "HttpMethod": {
+        "type": "string",
+        "enum": [
+          "post",
+          "put",
+          "patch"
+        ]
+      },
+      "HttpSinkConfig": {
+        "description": "Configuration for an HTTP sink. The `url`, `headers`, and `body` are templates rendered\nper-message (see [`diom_core::template_str`]).",
+        "type": "object",
+        "properties": {
+          "url": {
+            "description": "Destination URL.",
+            "type": "string",
+            "example": "My name is ${name}!"
+          },
+          "method": {
+            "default": "post",
+            "$ref": "#/components/schemas/HttpMethod"
+          },
+          "headers": {
+            "type": "object",
+            "default": {},
+            "additionalProperties": {
+              "type": "string",
+              "example": "My name is ${name}!"
+            }
+          },
+          "body": {
+            "description": "Templated request body. When absent, the raw message value bytes are sent unchanged.",
+            "type": "string",
+            "example": "My name is ${name}!",
+            "default": null,
+            "nullable": true
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
       "IdempotencyAbortIn": {
         "type": "object",
         "properties": {
@@ -9374,6 +9742,32 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AuthTokenOut"
+            }
+          },
+          "iterator": {
+            "type": "string",
+            "nullable": true
+          },
+          "prev_iterator": {
+            "type": "string",
+            "nullable": true
+          },
+          "done": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data",
+          "done"
+        ]
+      },
+      "ListResponseSinkOut": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SinkOut"
             }
           },
           "iterator": {
@@ -10616,6 +11010,208 @@
           "candidate",
           "shutdown",
           "unknown"
+        ]
+      },
+      "SinkConfig": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "http"
+                ]
+              },
+              "data": {
+                "$ref": "#/components/schemas/HttpSinkConfig"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ]
+          }
+        ]
+      },
+      "SinkConfigureIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "description": "The topic whose messages are forwarded to the sink. Created automatically if it does not\nexist.",
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "description": "The consumer group that identifies the sink and tracks its progress through the topic.",
+            "type": "string",
+            "example": "some_consumer_group"
+          },
+          "default_starting_position": {
+            "description": "Where a freshly-created sink starts consuming the topic. Defaults to `earliest`.",
+            "default": "earliest",
+            "$ref": "#/components/schemas/SeekPosition"
+          },
+          "max_in_flight": {
+            "description": "At most how many concurrent requests will be sent to the Sink.",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 1,
+            "default": null,
+            "nullable": true
+          },
+          "config": {
+            "$ref": "#/components/schemas/SinkConfig"
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "config"
+        ]
+      },
+      "SinkConfigureOut": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "SinkDeleteIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "SinkDeleteOut": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "success"
+        ]
+      },
+      "SinkListIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "limit": {
+            "description": "Limit the number of returned items",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "maximum": 250,
+            "default": 50
+          },
+          "iterator": {
+            "description": "The iterator returned from a prior invocation",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "topic"
+        ],
+        "x-positional": [
+          "topic"
+        ]
+      },
+      "SinkOut": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          },
+          "default_starting_position": {
+            "description": "Where a freshly-created sink starts consuming the topic. Defaults to `earliest`.",
+            "default": "earliest",
+            "$ref": "#/components/schemas/SeekPosition"
+          },
+          "max_in_flight": {
+            "description": "At most how many concurrent requests will be sent to the Sink.",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 1,
+            "default": null,
+            "nullable": true
+          },
+          "config": {
+            "$ref": "#/components/schemas/SinkConfig"
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "config"
         ]
       },
       "StreamMsgOut": {

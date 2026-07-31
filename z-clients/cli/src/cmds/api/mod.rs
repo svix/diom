@@ -15,6 +15,7 @@ mod kv_namespace;
 mod msgs;
 mod msgs_namespace;
 mod msgs_queue;
+mod msgs_sink;
 mod msgs_stream;
 mod msgs_svix_poller;
 mod msgs_topic;
@@ -27,7 +28,7 @@ pub(crate) use self::{
     cache_namespace::CacheNamespaceArgs, cluster_admin::ClusterAdminArgs, health::HealthArgs,
     idempotency::IdempotencyArgs, idempotency_namespace::IdempotencyNamespaceArgs, kv::KvArgs,
     kv_namespace::KvNamespaceArgs, msgs::MsgsArgs, msgs_namespace::MsgsNamespaceArgs,
-    msgs_queue::MsgsQueueArgs, msgs_stream::MsgsStreamArgs, msgs_svix_poller::MsgsSvixPollerArgs,
-    msgs_topic::MsgsTopicArgs, rate_limit::RateLimitArgs,
+    msgs_queue::MsgsQueueArgs, msgs_sink::MsgsSinkArgs, msgs_stream::MsgsStreamArgs,
+    msgs_svix_poller::MsgsSvixPollerArgs, msgs_topic::MsgsTopicArgs, rate_limit::RateLimitArgs,
     rate_limit_namespace::RateLimitNamespaceArgs,
 };

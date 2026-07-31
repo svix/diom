@@ -1,0 +1,147 @@
+// this file is @generated
+package com.svix.diom.models;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.diom.DurationMsSerializer;
+import com.svix.diom.DurationMsDeserializer;
+import com.svix.diom.UnixTimestampMsSerializer;
+import com.svix.diom.UnixTimestampMsDeserializer;
+import com.svix.diom.Utils;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Map;
+import java.util.Set;
+import java.util.List;
+import java.util.Optional;
+import java.util.HashMap;
+import java.time.OffsetDateTime;
+import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.net.URI;
+import java.util.Objects;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+@ToString
+@EqualsAndHashCode
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
+public class ListResponseSinkOut {
+    @JsonProperty private List<SinkOut> data;
+    @JsonProperty private String iterator;
+    @JsonProperty("prev_iterator") private String prevIterator;
+    @JsonProperty private Boolean done;
+    public ListResponseSinkOut() {}
+
+    public ListResponseSinkOut data(List<SinkOut> data) {
+        this.data = data;
+        return this;
+    }
+
+    public ListResponseSinkOut addDataItem(SinkOut dataItem) {
+        if (this.data == null) {
+            this.data = new ArrayList<>();
+        }
+        this.data.add(dataItem);
+        return this;
+    }
+    /**
+    * Get data
+    *
+     * @return data
+     */
+    @javax.annotation.Nonnull
+    public List<SinkOut> getData() {
+        return data;
+    }
+
+    public void setData(List<SinkOut> data) {
+        this.data = data;
+    }
+
+    public ListResponseSinkOut iterator(String iterator) {
+        this.iterator = iterator;
+        return this;
+    }
+
+    /**
+    * Get iterator
+    *
+     * @return iterator
+     */
+    @javax.annotation.Nullable
+    public String getIterator() {
+        return iterator;
+    }
+
+    public void setIterator(String iterator) {
+        this.iterator = iterator;
+    }
+
+    public ListResponseSinkOut prevIterator(String prevIterator) {
+        this.prevIterator = prevIterator;
+        return this;
+    }
+
+    /**
+    * Get prevIterator
+    *
+     * @return prevIterator
+     */
+    @javax.annotation.Nullable
+    public String getPrevIterator() {
+        return prevIterator;
+    }
+
+    public void setPrevIterator(String prevIterator) {
+        this.prevIterator = prevIterator;
+    }
+
+    public ListResponseSinkOut done(Boolean done) {
+        this.done = done;
+        return this;
+    }
+
+    /**
+    * Get done
+    *
+     * @return done
+     */
+    @javax.annotation.Nonnull
+    public Boolean getDone() {
+        return done;
+    }
+
+    public void setDone(Boolean done) {
+        this.done = done;
+    }
+
+    /**
+     * Create an instance of ListResponseSinkOut given a JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of ListResponseSinkOut
+     * @throws JsonProcessingException if the JSON string is invalid with respect to ListResponseSinkOut
+     */
+    public static ListResponseSinkOut fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, ListResponseSinkOut.class);
+    }
+
+    /**
+     * Convert an instance of ListResponseSinkOut to a JSON string
+     *
+     * @return JSON string
+     */
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
+    }
+}

@@ -23,6 +23,9 @@ func (msgs Msgs) Namespace() MsgsNamespace {
 func (msgs Msgs) Queue() MsgsQueue {
 	return NewMsgsQueue(msgs.client)
 }
+func (msgs Msgs) Sink() MsgsSink {
+	return NewMsgsSink(msgs.client)
+}
 func (msgs Msgs) Stream() MsgsStream {
 	return NewMsgsStream(msgs.client)
 }
