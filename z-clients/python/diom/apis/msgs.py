@@ -13,6 +13,10 @@ from .msgs_queue import (
     MsgsQueue,
     MsgsQueueAsync,
 )
+from .msgs_sink import (
+    MsgsSink,
+    MsgsSinkAsync,
+)
 from .msgs_stream import (
     MsgsStream,
     MsgsStreamAsync,
@@ -37,6 +41,10 @@ class MsgsAsync(ApiBase):
     @property
     def queue(self) -> MsgsQueueAsync:
         return MsgsQueueAsync(self._client)
+
+    @property
+    def sink(self) -> MsgsSinkAsync:
+        return MsgsSinkAsync(self._client)
 
     @property
     def stream(self) -> MsgsStreamAsync:
@@ -79,6 +87,10 @@ class Msgs(ApiBase):
     @property
     def queue(self) -> MsgsQueue:
         return MsgsQueue(self._client)
+
+    @property
+    def sink(self) -> MsgsSink:
+        return MsgsSink(self._client)
 
     @property
     def stream(self) -> MsgsStream:

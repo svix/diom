@@ -614,6 +614,23 @@ pub struct ConfigurationInner {
     )]
     pub svix_poller_max_task_duration: NonZeroDurationMs,
 
+    /// Maximum number of topic sinks that can be drained concurrently.
+    ///
+    /// Larger values allow for faster forwarding (when the number of sinks exceeds
+    /// `sink_max_concurrency`), at the expense of memory/CPU.
+    #[serde(default = "defaults::sink_max_concurrency")]
+    pub sink_max_concurrency: NonZeroUsize,
+
+    /// Maximum time a single sink drain task may run before yielding to others.
+    ///
+    /// When the number of sinks exceeds `sink_max_concurrency`, shorter durations improve fairness
+    /// across sinks; longer durations are generally more throughput-efficient.
+    #[serde(
+        rename = "sink_max_task_duration_ms",
+        default = "defaults::sink_max_task_duration"
+    )]
+    pub sink_max_task_duration: NonZeroDurationMs,
+
     /// How to persist data to the actual underlying database
     ///
     /// This is similar to the `cluster.log_sync` options, but applies to the actual

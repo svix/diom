@@ -18,7 +18,7 @@
     "{{ field.name }}": {{ field_example(field) }},
     {%- endfor -%}
     {%- if resource.kind == "struct_enum" -%}
-    {%- set variant = resource.variants[1] -%}
+    {%- set variant = resource.variants[1] if resource.variants | length > 1 else resource.variants[0] -%}
     {%- set variant_val -%}
         {%- if variant.schema_ref is defined -%}
             {{ render_example_resource(variant.inner) }}

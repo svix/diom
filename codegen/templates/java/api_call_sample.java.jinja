@@ -20,7 +20,7 @@ new {{ resource.name | to_upper_camel_case }}()
     {%- endfor %}
 
     {%- if resource.kind == "struct_enum" -%}
-        {%- set variant = resource.variants[1] -%}
+        {%- set variant = resource.variants[1] if resource.variants | length > 1 else resource.variants[0] -%}
         {%- set variant_val -%}
             new {{ resource.name | to_upper_camel_case }}{{ resource.content_field | to_upper_camel_case }}.{{ variant.name | to_upper_camel_case }}(
                 {%- if variant.schema_ref is defined -%}

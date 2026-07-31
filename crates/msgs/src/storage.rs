@@ -10,8 +10,8 @@ use fjall_utils::{FjallKey, TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{
-    ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, SvixPollerListItem, TopicName,
-    obfuscate_token,
+    ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, SinkListItem, SinkSettings,
+    SvixPollerListItem, TopicName, obfuscate_token,
 };
 
 /// Prefixes for rows stored in the `metadata_tables` keyspace.
@@ -23,6 +23,7 @@ enum MetadataPrefix {
     QueueConfig = 4,
     Idempotency = 5,
     SvixPoller = 6,
+    ExternalSink = 7,
 }
 
 /// Prefixes for rows stored in the `msg_table` keyspace.
@@ -694,6 +695,63 @@ pub fn list_svix_pollers(
                 topic: row.topic,
                 poller_id,
                 token: obfuscate_token(&row.token),
+            })
+        })
+        .collect()
+}
+
+// --- External sink configuration ---
+
+#[derive(Clone, Serialize, Deserialize, PersistableValue)]
+pub(crate) struct SinkRow {
+    // Redundant with the TopicId, but keeping the name lets the background worker avoid a lookup.
+    pub topic: TopicName,
+    pub settings: SinkSettings,
+}
+
+impl TableRow for SinkRow {
+    const ROW_TYPE: u8 = MetadataPrefix::ExternalSink as u8;
+}
+
+#[derive(FjallKey)]
+#[table_key(prefix = MetadataPrefix::ExternalSink)]
+pub(crate) struct SinkKey {
+    #[key(0)]
+    pub(crate) namespace_id: NamespaceId,
+    #[key(1)]
+    pub(crate) topic_id: TopicId,
+    #[key(2)]
+    pub(crate) consumer_group: ConsumerGroup,
+}
+
+#[tracing::instrument(skip(metadata_tables))]
+pub fn list_sinks(
+    metadata_tables: &impl fjall_utils::ReadableKeyspace,
+    namespace_id: NamespaceId,
+    topic: &TopicName,
+    limit: usize,
+    iterator: Option<&str>,
+) -> Result<Vec<SinkListItem>> {
+    let Some(topic_row) =
+        TopicRow::fetch(metadata_tables, TopicKey::build_key(&namespace_id, topic))?
+    else {
+        return Ok(Vec::new());
+    };
+
+    let prefix = SinkKey::prefix_topic_id(&namespace_id, &topic_row.id);
+    let iterator = iterator.map(|consumer_group| {
+        SinkKey::build_key(&namespace_id, &topic_row.id, consumer_group).to_vec()
+    });
+
+    SinkRow::list_range(metadata_tables, &prefix, iterator, limit)?
+        .into_iter()
+        .map(|(key, row)| {
+            let consumer_group = SinkKey::extract_consumer_group(&key)
+                .map_err(|e| diom_error::Error::internal(e.to_string()))?;
+            Ok(SinkListItem {
+                topic: row.topic,
+                consumer_group,
+                settings: row.settings,
             })
         })
         .collect()

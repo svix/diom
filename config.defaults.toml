@@ -40,6 +40,18 @@ log_format = "default"
 # The log level to run the service with. Supported: info, debug, trace
 log_level = "info"
 
+# Maximum number of topic sinks that can be drained concurrently.
+#
+# Larger values allow for faster forwarding (when the number of sinks exceeds
+# `sink_max_concurrency`), at the expense of memory/CPU.
+sink_max_concurrency = 32
+
+# Maximum time a single sink drain task may run before yielding to others.
+#
+# When the number of sinks exceeds `sink_max_concurrency`, shorter durations improve fairness
+# across sinks; longer durations are generally more throughput-efficient.
+sink_max_task_duration_ms = 5000
+
 # Maximum number of Svix Ingest pollers that can run concurrently.
 #
 # Larger values allow for faster processing (if the number of svix pollers exceeds svix_poller_max_concurrency),

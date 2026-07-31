@@ -57,6 +57,8 @@ type (
 	Consistency                      = diom_models.Consistency
 	EvictionPolicy                   = diom_models.EvictionPolicy
 	GetMetricsOut                    = diom_models.GetMetricsOut
+	HttpMethod                       = diom_models.HttpMethod
+	HttpSinkConfig                   = diom_models.HttpSinkConfig
 	IdempotencyAbortIn               = diom_models.IdempotencyAbortIn
 	IdempotencyAbortOut              = diom_models.IdempotencyAbortOut
 	IdempotencyCompleteIn            = diom_models.IdempotencyCompleteIn
@@ -81,6 +83,7 @@ type (
 	ListResponseAdminAccessPolicyOut = diom_models.ListResponseAdminAccessPolicyOut
 	ListResponseAdminAuthTokenOut    = diom_models.ListResponseAdminAuthTokenOut
 	ListResponseAdminRoleOut         = diom_models.ListResponseAdminRoleOut
+	ListResponseSinkOut              = diom_models.ListResponseSinkOut
 	ListResponseSvixPollerOut        = diom_models.ListResponseSvixPollerOut
 	MetricOut                        = diom_models.MetricOut
 	MetricType                       = diom_models.MetricType
@@ -132,6 +135,13 @@ type (
 	Retention                        = diom_models.Retention
 	SeekPosition                     = diom_models.SeekPosition
 	ServerState                      = diom_models.ServerState
+	SinkConfig                       = diom_models.SinkConfig
+	SinkConfigureIn                  = diom_models.SinkConfigureIn
+	SinkConfigureOut                 = diom_models.SinkConfigureOut
+	SinkDeleteIn                     = diom_models.SinkDeleteIn
+	SinkDeleteOut                    = diom_models.SinkDeleteOut
+	SinkListIn                       = diom_models.SinkListIn
+	SinkOut                          = diom_models.SinkOut
 	StreamMsgOut                     = diom_models.StreamMsgOut
 	SvixPollerCreateIn               = diom_models.SvixPollerCreateIn
 	SvixPollerCreateOut              = diom_models.SvixPollerCreateOut

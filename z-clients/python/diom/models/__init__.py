@@ -51,6 +51,8 @@ from .cluster_status_out import ClusterStatusOut
 from .consistency import Consistency
 from .eviction_policy import EvictionPolicy
 from .get_metrics_out import GetMetricsOut
+from .http_method import HttpMethod
+from .http_sink_config import HttpSinkConfig
 from .idempotency_abort_in import IdempotencyAbortIn
 from .idempotency_abort_out import IdempotencyAbortOut
 from .idempotency_complete_in import IdempotencyCompleteIn
@@ -75,6 +77,7 @@ from .kv_set_out import KvSetOut
 from .list_response_admin_access_policy_out import ListResponseAdminAccessPolicyOut
 from .list_response_admin_auth_token_out import ListResponseAdminAuthTokenOut
 from .list_response_admin_role_out import ListResponseAdminRoleOut
+from .list_response_sink_out import ListResponseSinkOut
 from .list_response_svix_poller_out import ListResponseSvixPollerOut
 from .metric_out import MetricOut
 from .metric_type import MetricType
@@ -126,6 +129,13 @@ from .rate_limit_reset_out import RateLimitResetOut
 from .retention import Retention
 from .seek_position import SeekPosition
 from .server_state import ServerState
+from .sink_config import SinkConfig
+from .sink_configure_in import SinkConfigureIn
+from .sink_configure_out import SinkConfigureOut
+from .sink_delete_in import SinkDeleteIn
+from .sink_delete_out import SinkDeleteOut
+from .sink_list_in import SinkListIn
+from .sink_out import SinkOut
 from .stream_msg_out import StreamMsgOut
 from .svix_poller_create_in import SvixPollerCreateIn
 from .svix_poller_create_out import SvixPollerCreateOut
@@ -188,6 +198,8 @@ __all__ = [
     "Consistency",
     "EvictionPolicy",
     "GetMetricsOut",
+    "HttpMethod",
+    "HttpSinkConfig",
     "IdempotencyAbortIn",
     "IdempotencyAbortOut",
     "IdempotencyCompleteIn",
@@ -212,6 +224,7 @@ __all__ = [
     "ListResponseAdminAccessPolicyOut",
     "ListResponseAdminAuthTokenOut",
     "ListResponseAdminRoleOut",
+    "ListResponseSinkOut",
     "ListResponseSvixPollerOut",
     "MetricOut",
     "MetricType",
@@ -263,6 +276,13 @@ __all__ = [
     "Retention",
     "SeekPosition",
     "ServerState",
+    "SinkConfig",
+    "SinkConfigureIn",
+    "SinkConfigureOut",
+    "SinkDeleteIn",
+    "SinkDeleteOut",
+    "SinkListIn",
+    "SinkOut",
     "StreamMsgOut",
     "SvixPollerCreateIn",
     "SvixPollerCreateOut",
