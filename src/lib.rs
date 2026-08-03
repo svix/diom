@@ -65,8 +65,10 @@ mod docs {
             debug_assertions => {
                 use tower_http::services::ServeFile;
 
-                let docs_route = ServeFile::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/static/docs.html"));
-                let openapi_json_route = ServeFile::new(concat!(env!("CARGO_MANIFEST_DIR"), "/openapi.json"));
+                let docs_route =
+                    ServeFile::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/static/docs.html"));
+                let openapi_json_route =
+                    ServeFile::new(concat!(env!("CARGO_MANIFEST_DIR"), "/openapi.json"));
             }
             // For release builds, embed both files in the binary for ease of deployment
             _ => {
