@@ -6,8 +6,12 @@
 
 # Base image for planner and build - keep in sync with .github/workflows/server-ci.yml
 FROM docker.io/rust:1.97.1-slim-trixie AS chef
-RUN cargo install --locked cargo-chef@0.1.77
-RUN cargo install --locked cargo-sbom@0.10.0
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+RUN <<EOF
+    cargo install --locked cargo-chef@0.1.77
+    cargo install --locked cargo-sbom@0.10.0
+EOF
+
 WORKDIR /app
 
 # Build plan environment
@@ -18,25 +22,8 @@ RUN cargo chef prepare --recipe-path recipe.json
 # Build environment
 FROM chef AS build-base
 
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 ARG __BUST_DOCKER_BUILD_CACHE=2026-06-10
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
-    #!/bin/bash
-    set -euxo pipefail
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update -q
-    apt-get install -y \
-        mold \
-        --no-install-recommends
-EOF
-
-# Set up mold as our linker
-RUN <<EOF
-    mkdir -p .cargo
-    echo "" >>.cargo/config.toml
-    echo "[target.'cfg(target_os = \"linux\"']" >>.cargo/config.toml
-    echo 'rustflags = ["-C", "link-arg=-fuse-ld=mold"]' >>.cargo/config.toml
-    cat .cargo/config.toml
-EOF
 
 COPY --from=planner /app/recipe.json recipe.json
 
@@ -50,8 +37,10 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
-RUN cargo build --release --package diom-server --bin diom-server --features diom-backend/openapi --frozen
-RUN cargo sbom --cargo-package diom-server > /app/diom-server.spdx
+RUN <<EOF
+    cargo build --release --package diom-server --bin diom-server --features diom-backend/openapi --frozen
+    cargo sbom --cargo-package diom-server > /app/diom-server.spdx
+EOF
 
 FROM build-base AS build-cli
 
@@ -64,16 +53,17 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
-RUN cargo build --release --package diom-cli --bin diom --frozen
-RUN cargo sbom --cargo-package diom-cli > /app/diom-cli.spdx
+RUN <<EOF
+    cargo build --release --package diom-cli --bin diom --frozen
+    cargo sbom --cargo-package diom-cli > /app/diom-cli.spdx
+EOF
 
 # shared base image with dependencies
 FROM docker.io/debian:trixie-20260713-slim AS base
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
 ARG __BUST_DOCKER_BUILD_CACHE=2026-07-13
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
-    #!/bin/bash
-    set -euxo pipefail
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -q
     apt-get install -y \
@@ -83,10 +73,9 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
 EOF
 
 RUN <<EOF
-    #!/bin/bash
-    set -euxo pipefail
     mkdir -p /app
-    useradd appuser
+    groupadd -g 1000 appgroup
+    useradd -u 1000 -g appgroup appuser
     chown -R appuser: /app
     mkdir -p /home/appuser
     chown -R appuser: /home/appuser
@@ -96,7 +85,7 @@ EOF
 # CLI Production
 FROM base AS cli-prod
 
-USER appuser
+USER 1000:1000
 WORKDIR /home/appuser
 
 COPY --chown=root:root --chmod=755 --from=build-cli /app/target/release/diom /usr/local/bin/diom
@@ -117,6 +106,8 @@ ENTRYPOINT ["/usr/local/bin/diom"]
 # Production
 FROM cli-prod AS prod
 
+# this is not a terminal USER stanza for this image
+# hadolint ignore=DL3066
 USER root
 
 RUN <<EOF
@@ -131,7 +122,7 @@ ENV DIOM_EPHEMERAL_DB_PATH="/storage/db-ephemeral"
 ENV DIOM_CLUSTER_LOG_PATH="/storage/logs"
 ENV DIOM_CLUSTER_SNAPSHOT_PATH="/storage/snapshots"
 
-USER appuser
+USER 1000:1000
 WORKDIR /home/appuser
 EXPOSE 8624/tcp
 EXPOSE 8625/tcp

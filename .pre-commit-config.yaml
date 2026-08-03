@@ -48,3 +48,5 @@ repos:
     rev: 6b63472e72e1a91ed8a2f6d483790dfb644fa1d3 # frozen: 0.37.4
     hooks:
       - id: check-dependabot
+
+# hadolint *not* included here because of system dependencies

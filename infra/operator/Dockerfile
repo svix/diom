@@ -6,6 +6,7 @@
 
 # Base image for planner and build - keep in sync with root Dockerfile
 FROM docker.io/rust:1.97.1-slim-trixie AS chef
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN cargo install --locked cargo-chef@0.1.77
 WORKDIR /app
 
@@ -16,26 +17,9 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 # Build environment
 FROM chef AS build
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
 ARG __BUST_DOCKER_BUILD_CACHE=2026-06-10
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
-    #!/bin/bash
-    set -euxo pipefail
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update -q
-    apt-get install -y \
-        mold \
-        --no-install-recommends
-EOF
-
-# Set up mold as our linker
-RUN <<EOF
-    mkdir -p .cargo
-    echo "" >>.cargo/config.toml
-    echo "[target.'cfg(target_os = \"linux\"']" >>.cargo/config.toml
-    echo 'rustflags = ["-C", "link-arg=-fuse-ld=mold"]' >>.cargo/config.toml
-    cat .cargo/config.toml
-EOF
 
 COPY --from=planner /app/recipe.json recipe.json
 
@@ -52,19 +36,17 @@ RUN cargo build --release -p diom-operator --bin diom-operator --frozen
 
 # Production
 FROM docker.io/debian:trixie-20260713-slim AS prod
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
 RUN <<EOF
-    #!/bin/bash
-    set -euxo pipefail
-    useradd appuser
+    groupadd -g 1000 appgroup
+    useradd -u 1000 -g appgroup appuser
     mkdir -p /home/appuser
-    chown -R appuser: /home/appuser
+    chown -R appuser:appgroup /home/appuser
 EOF
 
 ARG __BUST_DOCKER_BUILD_CACHE=2026-06-10
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
-    #!/bin/bash
-    set -euxo pipefail
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -q
     apt-get install -y \
@@ -73,7 +55,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
     update-ca-certificates
 EOF
 
-USER appuser
+USER 1000:1000
 WORKDIR /home/appuser
 
 COPY --chown=root:root --chmod=755 --from=build /app/target/release/diom-operator /usr/local/bin/diom-operator
