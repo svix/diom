@@ -151,6 +151,13 @@ jobs:
       - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Install crun >= 1.14.3 (podman OCI v1.2.1 compat)
+        run: |
+          CRUN_VERSION=1.28
+          sudo curl -fsSL -o /usr/bin/crun \
+            "https://github.com/containers/crun/releases/download/${CRUN_VERSION}/crun-${CRUN_VERSION}-linux-amd64"
+          sudo chmod +x /usr/bin/crun
+          crun --version
       - name: Regerate openapi.json and SDKs
         run: cargo codegen
       - name: Regerate config.defaults.toml
