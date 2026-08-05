@@ -1,3 +1,4 @@
+mod fifo;
 mod namespace;
 mod publish;
 mod queue;
