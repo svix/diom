@@ -1,7 +1,10 @@
-use std::{sync::Arc, time::Duration};
+use std::{collections::HashSet, num::NonZeroU16, sync::Arc, time::Duration};
 
 use dashmap::DashMap;
-use diom_core::{Monotime, types::UnixTimestampMs};
+use diom_core::{
+    Monotime,
+    types::{DurationMs, UnixTimestampMs},
+};
 use diom_error::{Error, Result, ResultExt};
 use diom_id::{NamespaceId, TopicId};
 use diom_namespace::{Namespace, entities::MsgsConfig};
@@ -9,10 +12,11 @@ use diom_operations::BackgroundResult;
 use fjall::KeyspaceCreateOptions;
 use opentelemetry::metrics::Meter;
 
-use entities::{ConsumerGroup, Offset, Partition, TopicName};
+use entities::{ConsumerGroup, MsgId, Offset, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
+use operations::{FifoDisposition, classify_fifo_msg, fifo_scan_budget};
 use storage::{
-    MsgRow, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow,
+    MsgRow, QueueLeaseKey, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow,
     delete_expired_partition, delete_stale_queue_leases, delete_stale_stream_leases,
     earliest_offset,
 };
@@ -136,6 +140,140 @@ pub fn estimate_available_queue_messages(
     }
 
     Ok(total)
+}
+
+pub fn estimate_available_fifo_messages(
+    metadata_tables: &impl ReadableKeyspace,
+    msg_table: &impl ReadableKeyspace,
+    namespace_id: NamespaceId,
+    topic: &TopicName,
+    consumer_group: &ConsumerGroup,
+    batch_size: NonZeroU16,
+    retention_period: Option<DurationMs>,
+    now: UnixTimestampMs,
+) -> Result<u64> {
+    let Some(topic_row) =
+        TopicRow::fetch(metadata_tables, TopicKey::build_key(&namespace_id, topic))?
+    else {
+        return Ok(0);
+    };
+
+    let target = batch_size.get();
+    let scan_budget = fifo_scan_budget(target);
+    let expiry_cutoff = retention_period
+        .map(|rp| now.saturating_sub(rp))
+        .unwrap_or(UnixTimestampMs::UNIX_EPOCH);
+
+    let mut delivered = 0u16;
+    for partition in topic_row.partitions() {
+        if delivered >= target {
+            break;
+        }
+        let partition = partition?;
+
+        let cursor_offset = StreamLeaseRow::fetch(
+            metadata_tables,
+            StreamLeaseKey::build_key(&topic_row.id, &partition, consumer_group),
+        )?
+        .map(|c| c.offset)
+        .unwrap_or(0);
+
+        delivered += count_deliverable_in_partition(
+            metadata_tables,
+            msg_table,
+            topic_row.id,
+            partition,
+            consumer_group,
+            cursor_offset,
+            target - delivered,
+            scan_budget,
+            expiry_cutoff,
+            now,
+        )?;
+    }
+
+    Ok(delivered as u64)
+}
+
+/// Counts deliverable messages in one partition from `cursor_offset`, up to `remaining`, applying the
+/// same per-key locking as the FIFO receive scan. Bounded by `scan_budget`.
+#[allow(clippy::too_many_arguments)]
+fn count_deliverable_in_partition(
+    metadata_tables: &impl ReadableKeyspace,
+    msg_table: &impl ReadableKeyspace,
+    topic_id: TopicId,
+    partition: Partition,
+    consumer_group: &ConsumerGroup,
+    cursor_offset: Offset,
+    remaining: u16,
+    scan_budget: usize,
+    expiry_cutoff: UnixTimestampMs,
+    now: UnixTimestampMs,
+) -> Result<u16> {
+    let mut delivered = 0u16;
+    let mut scan_offset = cursor_offset;
+    let mut blocked_keys: HashSet<String> = HashSet::new();
+    let mut scanned = 0usize;
+
+    loop {
+        let window = remaining - delivered;
+        if window == 0 || scanned >= scan_budget {
+            break;
+        }
+
+        let msgs = MsgRow::fetch_range(
+            msg_table,
+            topic_id,
+            partition,
+            scan_offset,
+            window,
+            expiry_cutoff,
+        )?;
+        if msgs.is_empty() {
+            break;
+        }
+
+        let last_offset = msgs.last().expect("non-empty").0;
+        scanned += msgs.len();
+
+        for (offset, msg) in msgs {
+            if let Some(key) = &msg.key
+                && blocked_keys.contains(key)
+            {
+                continue;
+            }
+
+            let msg_id = MsgId::new(partition, offset);
+            let existing_lease = QueueLeaseRow::fetch(
+                metadata_tables,
+                QueueLeaseKey::build_key(
+                    &topic_id,
+                    &msg_id.partition,
+                    &msg_id.offset,
+                    consumer_group,
+                ),
+            )?;
+
+            match classify_fifo_msg(existing_lease.as_ref(), msg.scheduled_at, now) {
+                FifoDisposition::Skip => {}
+                FifoDisposition::Block => {
+                    if let Some(key) = msg.key {
+                        blocked_keys.insert(key);
+                    }
+                }
+                FifoDisposition::Deliver => {
+                    delivered += 1;
+                    if delivered >= remaining {
+                        return Ok(delivered);
+                    }
+                }
+            }
+        }
+
+        scan_offset = last_offset + 1;
+    }
+
+    Ok(delivered)
 }
 
 /// Result of estimating available stream messages.
@@ -441,6 +579,7 @@ pub(crate) mod test_fixture {
                         headers: HashMap::new(),
                         timestamp,
                         scheduled_at: None,
+                        key: None,
                     },
                 )
                 .unwrap();

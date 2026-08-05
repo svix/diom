@@ -19,17 +19,17 @@ use diom_id::Module;
 use diom_msgs::{
     MsgsNamespace,
     entities::{
-        ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, QueueMsgOut, Retention, SeekPosition,
-        SinkListItem, SinkSettings, StreamMsgOut, SvixPollerListItem, TopicIn, TopicName,
-        TopicPartition,
+        ConsumerGroup, FifoMsgOut, MsgId, MsgsIdempotencyKey, Offset, QueueMsgOut, Retention,
+        SeekPosition, SinkListItem, SinkSettings, StreamMsgOut, SvixPollerListItem, TopicIn,
+        TopicName, TopicPartition,
     },
     operations::{
-        ConfigureNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
-        QueueExtendLeaseOperation, QueueNackOperation, QueueReceiveOperation,
-        QueueRedriveDlqOperation, SeekTarget, SinkConfigureOperation, SinkDeleteOperation,
-        StreamCancelLeaseOperation, StreamCommitOperation, StreamReceiveOperation,
-        StreamSeekOperation, SvixPollerCreateOperation, SvixPollerDeleteOperation,
-        TopicConfigureOperation,
+        ConfigureNamespaceOperation, FifoReceiveOperation, PublishOperation, QueueAckOperation,
+        QueueConfigureOperation, QueueExtendLeaseOperation, QueueNackOperation,
+        QueueReceiveOperation, QueueRedriveDlqOperation, SeekTarget, SinkConfigureOperation,
+        SinkDeleteOperation, StreamCancelLeaseOperation, StreamCommitOperation,
+        StreamReceiveOperation, StreamSeekOperation, SvixPollerCreateOperation,
+        SvixPollerDeleteOperation, TopicConfigureOperation,
     },
 };
 use diom_namespace::entities::NamespaceName;
@@ -809,6 +809,328 @@ async fn queue_redrive_dlq(
 }
 
 // ---------------------------------------------------------------------------
+// fifo — queue semantics with strict per-key ordering
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgFifoReceiveIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicIn,
+    pub consumer_group: ConsumerGroup,
+    #[serde(default = "default_batch_size")]
+    pub batch_size: NonZeroU16,
+    #[serde(rename = "lease_duration_ms", default = "default_queue_lease_duration")]
+    pub lease_duration: DurationMs,
+    /// Maximum time (in milliseconds) to wait for messages before returning.
+    #[serde(rename = "batch_wait_ms", default)]
+    pub batch_wait: Option<DurationMs>,
+}
+
+request_input!(MsgFifoReceiveIn, "fifo.receive");
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+struct MsgFifoReceiveOut {
+    pub msgs: Vec<FifoMsgOut>,
+}
+
+/// Receives messages from a topic with strict per-key ordering.
+///
+/// Like `queue/receive`, but a key is leased exclusively: once a consumer holds an in-flight
+/// message for a key, no other consumer receives that key's messages until it is acked (or its
+/// lease expires). A single call may return several messages of the same key, in order. Keyless
+/// messages are unordered. Note: increasing a topic's partition count re-hashes keys and can
+/// split a key across partitions, breaking its order at that boundary.
+#[aide_annotate(op_id = "v1.msgs.fifo.receive")]
+async fn fifo_receive(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgFifoReceiveIn>,
+) -> Result<MsgPackOrJson<MsgFifoReceiveOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let consumer_group = data.consumer_group.fifo_scoped();
+
+    if let Some(max_wait) = data.batch_wait {
+        let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
+        let metadata_ks = ro_db
+            .keyspace(diom_msgs::METADATA_KEYSPACE)
+            .or_internal_error()?;
+        let msg_ks = ro_db
+            .keyspace(diom_msgs::MSG_KEYSPACE)
+            .or_internal_error()?;
+
+        let ns_id = namespace.id;
+        let topic_name = data.topic.name().clone();
+        let cg = consumer_group.clone();
+        let now = state.time.now_utm();
+        let batch_size = data.batch_size;
+        let retention_period = namespace.config.retention_period;
+
+        let estimated = diom_core::task::spawn_blocking_in_current_span(move || {
+            diom_msgs::estimate_available_fifo_messages(
+                &metadata_ks,
+                &msg_ks,
+                ns_id,
+                &topic_name,
+                &cg,
+                batch_size,
+                retention_period,
+                now,
+            )
+        })
+        .await
+        .or_internal_error()??;
+
+        if (estimated as usize) < batch_size.get() as usize {
+            let needed = batch_size.get() as u64 - estimated;
+            let mut notified = state.topic_publish_notifier.register_notifier(
+                namespace.id,
+                data.topic.name().clone(),
+                vec![],
+            );
+            tracing::trace!(needed, "waiting for more messages");
+            let _ = tokio::time::timeout(max_wait.into(), notified.wait(needed)).await;
+        }
+    }
+
+    let operation = FifoReceiveOperation::new(
+        namespace.id,
+        data.topic,
+        consumer_group,
+        data.batch_size,
+        data.lease_duration,
+        namespace.config.retention_period,
+    )?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(MsgFifoReceiveOut {
+        msgs: response
+            .msgs
+            .into_iter()
+            .map(|m| FifoMsgOut {
+                msg_id: m.msg_id,
+                key: m.key,
+                value: m.value,
+                headers: m.headers,
+                timestamp: m.timestamp,
+                scheduled_at: m.scheduled_at,
+            })
+            .collect(),
+    }))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgFifoAckIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    pub msg_ids: Vec<MsgId>,
+}
+
+request_input!(MsgFifoAckIn, "fifo.ack");
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+struct MsgFifoAckOut {}
+
+/// Acknowledges fifo messages by their opaque msg_ids, releasing each key for its next message.
+#[aide_annotate(op_id = "v1.msgs.fifo.ack")]
+async fn fifo_ack(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgFifoAckIn>,
+) -> Result<MsgPackOrJson<MsgFifoAckOut>> {
+    if data.msg_ids.is_empty() {
+        return Ok(MsgPackOrJson(MsgFifoAckOut {}));
+    }
+
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let operation = QueueAckOperation::new(
+        namespace.id,
+        data.topic,
+        data.consumer_group.fifo_scoped(),
+        data.msg_ids,
+    );
+    repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(MsgFifoAckOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgFifoExtendLeaseIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    pub msg_ids: Vec<MsgId>,
+    #[serde(rename = "lease_duration_ms", default = "default_queue_lease_duration")]
+    pub lease_duration: DurationMs,
+}
+
+request_input!(MsgFifoExtendLeaseIn, "fifo.extend-lease");
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+struct MsgFifoExtendLeaseOut {}
+
+/// Extends the lease on in-flight fifo messages.
+#[aide_annotate(op_id = "v1.msgs.fifo.extend-lease")]
+async fn fifo_extend_lease(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgFifoExtendLeaseIn>,
+) -> Result<MsgPackOrJson<MsgFifoExtendLeaseOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let operation = QueueExtendLeaseOperation::new(
+        namespace.id,
+        data.topic,
+        data.consumer_group.fifo_scoped(),
+        data.msg_ids,
+        data.lease_duration,
+    );
+    repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(MsgFifoExtendLeaseOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgFifoConfigureIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    #[serde(default)]
+    pub retry_schedule: Vec<u64>,
+    pub dlq_topic: Option<TopicName>,
+}
+
+request_input!(MsgFifoConfigureIn, "fifo.configure");
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+struct MsgFifoConfigureOut {
+    pub retry_schedule: Vec<u64>,
+    pub dlq_topic: Option<TopicName>,
+}
+
+/// Configures retry and DLQ behavior for a fifo consumer group on a topic.
+#[aide_annotate(op_id = "v1.msgs.fifo.configure")]
+async fn fifo_configure(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgFifoConfigureIn>,
+) -> Result<MsgPackOrJson<MsgFifoConfigureOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let operation = QueueConfigureOperation::new(
+        namespace.id,
+        data.topic,
+        data.consumer_group.fifo_scoped(),
+        data.retry_schedule,
+        data.dlq_topic,
+    );
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(MsgFifoConfigureOut {
+        retry_schedule: response.retry_schedule,
+        dlq_topic: response.dlq_topic,
+    }))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgFifoNackIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    pub msg_ids: Vec<MsgId>,
+}
+
+request_input!(MsgFifoNackIn, "fifo.nack");
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+struct MsgFifoNackOut {}
+
+/// Rejects fifo messages, retrying per the configured schedule then sending them to the DLQ.
+#[aide_annotate(op_id = "v1.msgs.fifo.nack")]
+async fn fifo_nack(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgFifoNackIn>,
+) -> Result<MsgPackOrJson<MsgFifoNackOut>> {
+    if data.msg_ids.is_empty() {
+        return Ok(MsgPackOrJson(MsgFifoNackOut {}));
+    }
+
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let operation = QueueNackOperation::new(
+        namespace.id,
+        data.topic,
+        data.consumer_group.fifo_scoped(),
+        data.msg_ids,
+        namespace.config.retention_period,
+    );
+    repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(MsgFifoNackOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgFifoRedriveDlqIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+}
+
+request_input!(MsgFifoRedriveDlqIn, "fifo.redrive-dlq");
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+struct MsgFifoRedriveDlqOut {}
+
+/// Moves all dead-letter queue messages for a fifo consumer group back for reprocessing.
+#[aide_annotate(op_id = "v1.msgs.fifo.redrive-dlq")]
+async fn fifo_redrive_dlq(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgFifoRedriveDlqIn>,
+) -> Result<MsgPackOrJson<MsgFifoRedriveDlqOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let operation =
+        QueueRedriveDlqOperation::new(namespace.id, data.topic, data.consumer_group.fifo_scoped());
+    repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(MsgFifoRedriveDlqOut {}))
+}
+
+// ---------------------------------------------------------------------------
 // topic/configure
 // ---------------------------------------------------------------------------
 
@@ -1266,6 +1588,32 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             queue_redrive_dlq_path,
             post_with(queue_redrive_dlq, queue_redrive_dlq_operation),
+            &tag,
+        )
+        .api_route_with(
+            fifo_receive_path,
+            post_with(fifo_receive, fifo_receive_operation),
+            &tag,
+        )
+        .api_route_with(fifo_ack_path, post_with(fifo_ack, fifo_ack_operation), &tag)
+        .api_route_with(
+            fifo_extend_lease_path,
+            post_with(fifo_extend_lease, fifo_extend_lease_operation),
+            &tag,
+        )
+        .api_route_with(
+            fifo_configure_path,
+            post_with(fifo_configure, fifo_configure_operation),
+            &tag,
+        )
+        .api_route_with(
+            fifo_nack_path,
+            post_with(fifo_nack, fifo_nack_operation),
+            &tag,
+        )
+        .api_route_with(
+            fifo_redrive_dlq_path,
+            post_with(fifo_redrive_dlq, fifo_redrive_dlq_operation),
             &tag,
         )
         .api_route_with(

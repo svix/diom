@@ -6,7 +6,7 @@ use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
 use diom_error::{OptionExt, Result};
-use fjall_utils::{FjallKey, TableRow, WriteBatchExt};
+use fjall_utils::{FjallKey, ReadableKeyspace, TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{
@@ -197,7 +197,7 @@ impl QueueLeaseRow {
 
     /// Returns all lease rows for a given (topic, partition, consumer_group) via prefix scan.
     pub(crate) fn scan_partition(
-        keyspace: &impl fjall_utils::ReadableKeyspace,
+        keyspace: &impl ReadableKeyspace,
         topic_id: TopicId,
         partition: Partition,
         consumer_group: &ConsumerGroup,
@@ -279,6 +279,7 @@ pub(crate) struct MsgRow {
     pub headers: HashMap<String, String>,
     pub timestamp: UnixTimestampMs,
     pub scheduled_at: Option<UnixTimestampMs>,
+    pub key: Option<String>,
 }
 
 impl MsgRow {
@@ -289,7 +290,7 @@ impl MsgRow {
     /// to the persisted high-water mark.
     #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn next_offset(
-        keyspace: &impl fjall_utils::ReadableKeyspace,
+        keyspace: &impl ReadableKeyspace,
         topic_id: TopicId,
         partition: Partition,
     ) -> Result<Offset> {
@@ -321,7 +322,7 @@ impl MsgRow {
     /// increase monotonically with offsets.
     #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn first_offset_at_or_after(
-        keyspace: &impl fjall_utils::ReadableKeyspace,
+        keyspace: &impl ReadableKeyspace,
         topic_id: TopicId,
         partition: Partition,
         target_ts: UnixTimestampMs,
@@ -359,7 +360,7 @@ impl MsgRow {
     /// Fetch a single message by offset, skipping it if expired.
     #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn fetch_by_offset(
-        keyspace: &impl fjall_utils::ReadableKeyspace,
+        keyspace: &impl ReadableKeyspace,
         topic_id: TopicId,
         partition: Partition,
         offset: Offset,
@@ -379,7 +380,7 @@ impl MsgRow {
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size))]
     pub(crate) fn fetch_range(
-        keyspace: &fjall::Keyspace,
+        keyspace: &impl ReadableKeyspace,
         topic_id: TopicId,
         partition: Partition,
         offset: Offset,
@@ -478,7 +479,7 @@ pub(crate) fn delete_expired_partition(
 /// Returns the offset of the earliest message in a partition, or `None` if the partition is empty.
 #[tracing::instrument(skip_all, level = "debug")]
 pub(crate) fn earliest_offset(
-    msg_table: &impl fjall_utils::ReadableKeyspace,
+    msg_table: &impl ReadableKeyspace,
     topic_id: TopicId,
     partition: Partition,
 ) -> Result<Option<Offset>> {
@@ -551,7 +552,7 @@ pub(crate) fn delete_stale_queue_leases(
 #[tracing::instrument(skip_all, level = "debug")]
 pub(crate) fn delete_stale_stream_leases(
     metadata_tables: &fjall::Keyspace,
-    msg_table: &impl fjall_utils::ReadableKeyspace,
+    msg_table: &impl ReadableKeyspace,
     topic_id: TopicId,
 ) -> Result<usize> {
     let prefix = StreamLeaseKey::prefix_topic_id(&topic_id);
@@ -668,7 +669,7 @@ impl SvixPollerKey {
 /// obfuscated so the stored secret is never returned in full.
 #[tracing::instrument(skip(metadata_tables))]
 pub fn list_svix_pollers(
-    metadata_tables: &impl fjall_utils::ReadableKeyspace,
+    metadata_tables: &impl ReadableKeyspace,
     namespace_id: NamespaceId,
     topic: &TopicName,
     limit: usize,
@@ -726,7 +727,7 @@ pub(crate) struct SinkKey {
 
 #[tracing::instrument(skip(metadata_tables))]
 pub fn list_sinks(
-    metadata_tables: &impl fjall_utils::ReadableKeyspace,
+    metadata_tables: &impl ReadableKeyspace,
     namespace_id: NamespaceId,
     topic: &TopicName,
     limit: usize,
@@ -792,6 +793,7 @@ mod tests {
                     headers: HashMap::new(),
                     timestamp,
                     scheduled_at: None,
+                    key: None,
                 },
             )
             .unwrap();
@@ -923,6 +925,7 @@ mod tests {
                         headers: HashMap::new(),
                         timestamp: ts,
                         scheduled_at: None,
+                        key: None,
                     },
                 )
                 .unwrap();

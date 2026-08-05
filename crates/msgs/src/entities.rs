@@ -426,6 +426,16 @@ pub struct QueueMsgOut {
     pub scheduled_at: Option<UnixTimestampMs>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct FifoMsgOut {
+    pub msg_id: MsgId,
+    pub key: Option<String>,
+    pub value: ByteString,
+    pub headers: HashMap<String, String>,
+    pub timestamp: UnixTimestampMs,
+    pub scheduled_at: Option<UnixTimestampMs>,
+}
+
 /// A Svix poller configuration as returned by a list query.
 ///
 /// The autoconfig `token` is obfuscated (e.g. `auto_v1_eyJh...fQ==`) so the
@@ -618,6 +628,16 @@ pub struct ConsumerGroup(pub(crate) String);
 
 impl ConsumerGroup {
     const MAX_LEN: usize = 64;
+
+    /// Returns this consumer group scoped to the FIFO namespace.
+    ///
+    /// FIFO reuses the queue operations, which key all cursor, lease, and configure state by consumer
+    /// group. Prefixing with `fifo:` gives FIFO its own state so a queue consumer and a FIFO consumer
+    /// on the same topic and group name never collide. The `:` is reserved (validate_str forbids it),
+    /// so no user supplied group can produce a scoped name.
+    pub fn fifo_scoped(self) -> Self {
+        Self(format!("fifo:{}", self.0))
+    }
 
     fn validate_str(s: &str) -> Result<(), &'static str> {
         if s.len() > Self::MAX_LEN {

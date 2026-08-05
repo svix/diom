@@ -39,6 +39,8 @@ pub struct MsgMetrics {
     pub(crate) queue_lease_extended: Counter<u64>,
     pub(crate) queue_redrive: Counter<u64>,
 
+    pub(crate) fifo_received: Counter<u64>,
+
     pub(crate) stream_received: Counter<u64>,
     pub(crate) stream_committed: Counter<u64>,
     pub(crate) stream_no_lease: Counter<u64>,
@@ -93,6 +95,11 @@ impl MsgMetrics {
             queue_redrive: meter
                 .u64_counter("diom.msgs.queue.redrive")
                 .with_description("Messages redriven from dead-letter queue")
+                .with_unit("{message}")
+                .build(),
+            fifo_received: meter
+                .u64_counter("diom.msgs.fifo.received")
+                .with_description("FIFO messages delivered")
                 .with_unit("{message}")
                 .build(),
             stream_received: meter
@@ -159,6 +166,16 @@ impl MsgMetrics {
     ) {
         let attrs = &[topic.into(), consumer_group.into()];
         self.queue_acked.add(count, attrs);
+    }
+
+    pub(crate) fn record_fifo_received(
+        &self,
+        topic: &TopicName,
+        consumer_group: &ConsumerGroup,
+        count: u64,
+    ) {
+        let attrs = &[topic.into(), consumer_group.into()];
+        self.fifo_received.add(count, attrs);
     }
 
     pub(crate) fn record_queue_lease_extended(
@@ -385,6 +402,7 @@ mod tests {
             headers: HashMap::new(),
             timestamp: UnixTimestampMs::UNIX_EPOCH,
             scheduled_at: None,
+            key: None,
         };
         batch
             .insert_row(

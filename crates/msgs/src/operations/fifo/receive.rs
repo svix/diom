@@ -1,4 +1,7 @@
-use std::{collections::HashMap, num::NonZeroU16};
+use std::{
+    collections::{HashMap, HashSet},
+    num::NonZeroU16,
+};
 
 use diom_core::{
     PersistableValue,
@@ -14,13 +17,58 @@ use tracing::Span;
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, Offset, Partition, TopicIn, TopicName},
+    operations::queue::compact_cursor,
     storage::{MsgRow, QueueLeaseKey, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
 };
 
-use super::super::{MsgsRaftState, MsgsRequest, QueueReceiveResponse};
+use super::super::{FifoReceiveResponse, MsgsRaftState, MsgsRequest};
+
+/// Per-partition scan budget. Blocked-key messages are skipped without filling the batch, so a
+/// partition dominated by one locked key could otherwise be walked end to end for a near-empty
+/// batch. Once the budget is spent the receive returns what it has; the next receive continues.
+const FIFO_SCAN_MULTIPLE: usize = 16;
+const FIFO_MIN_SCAN: usize = 1024;
+
+/// The per-partition scan budget for a given batch size. See the constants above.
+pub(crate) fn fifo_scan_budget(batch_size: u16) -> usize {
+    (batch_size as usize)
+        .saturating_mul(FIFO_SCAN_MULTIPLE)
+        .max(FIFO_MIN_SCAN)
+}
+
+/// What a FIFO scan does with a candidate whose key is not already blocked.
+pub(crate) enum FifoDisposition {
+    /// Terminal (acked or DLQ'd). Neither delivered nor locks the key.
+    Skip,
+    /// In flight or not yet due. Locks the key so nothing later of it is handed out.
+    Block,
+    /// Available now. Delivered, and the key stays unblocked so the rest of its run follows.
+    Deliver,
+}
+
+/// Classifies a candidate message from its lease state and schedule. The blocked-key check is left
+/// to the caller so a blocked key can be skipped without fetching its lease. Shared by the receive
+/// path and the availability estimate so both apply identical rules.
+pub(crate) fn classify_fifo_msg(
+    existing_lease: Option<&QueueLeaseRow>,
+    scheduled_at: Option<UnixTimestampMs>,
+    now: UnixTimestampMs,
+) -> FifoDisposition {
+    if existing_lease.is_some_and(|l| l.is_acked() || l.is_dlq()) {
+        return FifoDisposition::Skip;
+    }
+
+    let leased = existing_lease.is_some_and(|l| !l.is_available(now));
+    let scheduled = scheduled_at.is_some_and(|at| at > now);
+    if leased || scheduled {
+        return FifoDisposition::Block;
+    }
+
+    FifoDisposition::Deliver
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
-pub struct QueueReceiveOperation {
+pub struct FifoReceiveOperation {
     namespace_id: NamespaceId,
     pub(crate) topic: TopicName,
     partition: Option<Partition>,
@@ -32,7 +80,7 @@ pub struct QueueReceiveOperation {
     retention_period: Option<DurationMs>,
 }
 
-impl QueueReceiveOperation {
+impl FifoReceiveOperation {
     pub fn new(
         namespace_id: NamespaceId,
         topic: TopicIn,
@@ -57,23 +105,24 @@ impl QueueReceiveOperation {
         })
     }
 
-    #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size, partition_count = tracing::field::Empty, msgs_returned = tracing::field::Empty))]
+    #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size, msgs_returned = tracing::field::Empty))]
     async fn apply_real(
         self,
         state: &State,
         now: UnixTimestampMs,
-    ) -> Result<QueueReceiveResponseData> {
+    ) -> Result<FifoReceiveResponseData> {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
             let mut remaining = self.batch_size.get();
-            let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
+            let mut all_msgs: Vec<FifoReceiveMsg> = Vec::with_capacity(remaining.into());
 
             let expiry = now + self.lease_duration;
             let expiry_cutoff = self
                 .retention_period
                 .map(|rp| now.saturating_sub(rp))
                 .unwrap_or(UnixTimestampMs::UNIX_EPOCH);
+            let scan_budget = fifo_scan_budget(self.batch_size.get());
 
             let mut batch = state.db.batch();
 
@@ -86,16 +135,12 @@ impl QueueReceiveOperation {
                 self.topic_id_random_bytes,
             )?;
 
-            Span::current().record("partition_count", topic_row.partitions);
-
             let partitions = match self.partition {
                 Some(p) => vec![p],
                 None => topic_row.partitions_shuffled(now.as_millisecond())?,
             };
 
             for partition in partitions {
-                // Fetch or create cursor for this partition.
-                // Queue starts from offset 0 (earliest), unlike stream which starts from latest.
                 let mut cursor = match StreamLeaseRow::fetch(
                     &state.metadata_tables,
                     StreamLeaseKey::build_key(&topic_row.id, &partition, &self.consumer_group),
@@ -105,10 +150,11 @@ impl QueueReceiveOperation {
                 };
 
                 let mut scan_offset = cursor.offset;
+                let mut blocked_keys: HashSet<String> = HashSet::new();
+                let mut scanned = 0usize;
 
-                // Scan messages from cursor, skipping leased and acked ones
                 loop {
-                    if remaining == 0 {
+                    if remaining == 0 || scanned >= scan_budget {
                         break;
                     }
 
@@ -126,8 +172,9 @@ impl QueueReceiveOperation {
                     }
 
                     let last_offset = msgs.last().expect("non-empty").0;
+                    scanned += msgs.len();
 
-                    let n = lease_available_msgs(
+                    let n = fifo_lease_available_msgs(
                         &state,
                         &mut batch,
                         &mut all_msgs,
@@ -137,13 +184,13 @@ impl QueueReceiveOperation {
                         &self.consumer_group,
                         now,
                         expiry,
+                        &mut blocked_keys,
                     )?;
                     remaining = remaining.saturating_sub(n);
 
                     scan_offset = last_offset + 1;
                 }
 
-                // Compact cursor: advance past contiguous acked messages
                 compact_cursor(
                     &mut cursor,
                     &mut batch,
@@ -167,141 +214,114 @@ impl QueueReceiveOperation {
             batch.commit().map_err(Error::from)?;
 
             Span::current().record("msgs_returned", all_msgs.len());
-            state.metrics.record_queue_received(
+            state.metrics.record_fifo_received(
                 &self.topic,
                 &self.consumer_group,
                 all_msgs.len() as u64,
             );
-            Ok(QueueReceiveResponseData { msgs: all_msgs })
+            Ok(FifoReceiveResponseData { msgs: all_msgs })
         })
         .await?
     }
 }
 
-/// Processes a batch of fetched messages, leasing any that are available.
+/// Leases messages under strict per-key ordering: a key is delivered to at most one caller at a
+/// time. The first un-acked message of each key is its head. If the head is in-flight (leased,
+/// retry-scheduled, or not-yet-due) the key is locked and none of its later messages are handed
+/// out. A key whose head is available is delivered along with its subsequent messages,
+/// which is why a delivered key is deliberately left unblocked. Keyless messages are ungrouped.
 #[allow(clippy::too_many_arguments)]
-fn lease_available_msgs(
+fn fifo_lease_available_msgs(
     state: &State,
     batch: &mut fjall::OwnedWriteBatch,
-    all_msgs: &mut Vec<QueueReceiveMsg>,
+    all_msgs: &mut Vec<FifoReceiveMsg>,
     msgs: Vec<(Offset, MsgRow)>,
     partition: Partition,
     topic_id: TopicId,
     consumer_group: &ConsumerGroup,
     now: UnixTimestampMs,
     expiry: UnixTimestampMs,
+    blocked_keys: &mut HashSet<String>,
 ) -> Result<u16> {
     let mut count = 0;
 
     for (offset, msg) in msgs {
-        let msg_id = MsgId::new(partition, offset);
+        if let Some(key) = &msg.key
+            && blocked_keys.contains(key)
+        {
+            continue;
+        }
 
+        let msg_id = MsgId::new(partition, offset);
         let existing_lease = QueueLeaseRow::fetch(
             &state.metadata_tables,
             QueueLeaseKey::build_key(&topic_id, &msg_id.partition, &msg_id.offset, consumer_group),
         )?;
 
-        if existing_lease
-            .as_ref()
-            .is_some_and(|l| !l.is_available(now))
-        {
-            continue;
+        match classify_fifo_msg(existing_lease.as_ref(), msg.scheduled_at, now) {
+            FifoDisposition::Skip => {}
+            FifoDisposition::Block => {
+                // A not-yet-due head that has no lease gets a synthetic one (expiry = scheduled_at) so
+                // later scans skip it via the lease table without re-reading the message body.
+                if msg.scheduled_at.is_some_and(|at| at > now) && existing_lease.is_none() {
+                    let scheduled_at = msg.scheduled_at.expect("scheduled implies Some");
+                    batch.insert_row(
+                        &state.metadata_tables,
+                        QueueLeaseKey::build_key(
+                            &topic_id,
+                            &msg_id.partition,
+                            &msg_id.offset,
+                            consumer_group,
+                        ),
+                        &QueueLeaseRow {
+                            expiry: scheduled_at,
+                            dlq: false,
+                            attempt_count: 0,
+                        },
+                    )?;
+                }
+                if let Some(key) = msg.key {
+                    blocked_keys.insert(key);
+                }
+            }
+            FifoDisposition::Deliver => {
+                let attempt_count = existing_lease.map(|l| l.attempt_count).unwrap_or(0);
+                batch.insert_row(
+                    &state.metadata_tables,
+                    QueueLeaseKey::build_key(
+                        &topic_id,
+                        &msg_id.partition,
+                        &msg_id.offset,
+                        consumer_group,
+                    ),
+                    &QueueLeaseRow {
+                        expiry,
+                        dlq: false,
+                        attempt_count,
+                    },
+                )?;
+
+                // The key is left unblocked so the rest of its run is delivered to this same caller.
+                all_msgs.push(FifoReceiveMsg {
+                    msg_id,
+                    key: msg.key,
+                    value: msg.value,
+                    headers: msg.headers,
+                    timestamp: msg.timestamp,
+                    scheduled_at: msg.scheduled_at,
+                });
+                count += 1;
+            }
         }
-
-        // If the message is scheduled for future delivery, write a synthetic lease with
-        // expiry = scheduled_at so subsequent scans skip it via the lease table without
-        // re-checking the message body.
-        if let Some(scheduled_at) = msg.scheduled_at
-            && scheduled_at > now
-        {
-            batch.insert_row(
-                &state.metadata_tables,
-                QueueLeaseKey::build_key(
-                    &topic_id,
-                    &msg_id.partition,
-                    &msg_id.offset,
-                    consumer_group,
-                ),
-                &QueueLeaseRow {
-                    expiry: scheduled_at,
-                    dlq: false,
-                    attempt_count: 0,
-                },
-            )?;
-            continue;
-        }
-
-        // Preserve retry_count from previous lease so nack retries are tracked correctly
-        let attempt_count = existing_lease.map(|l| l.attempt_count).unwrap_or(0);
-
-        batch.insert_row(
-            &state.metadata_tables,
-            QueueLeaseKey::build_key(&topic_id, &msg_id.partition, &msg_id.offset, consumer_group),
-            &QueueLeaseRow {
-                expiry,
-                dlq: false,
-                attempt_count,
-            },
-        )?;
-
-        all_msgs.push(QueueReceiveMsg {
-            msg_id,
-            value: msg.value,
-            headers: msg.headers,
-            timestamp: msg.timestamp,
-            scheduled_at: msg.scheduled_at,
-        });
-
-        count += 1;
     }
 
     Ok(count)
 }
 
-/// Advances the cursor past contiguous acked messages, deleting their
-/// [`QueueLeaseRow`] entries to prevent unbounded growth.
-pub(crate) fn compact_cursor(
-    cursor: &mut StreamLeaseRow,
-    batch: &mut fjall::OwnedWriteBatch,
-    state: &State,
-    topic_id: TopicId,
-    partition: Partition,
-    consumer_group: &ConsumerGroup,
-) -> Result<()> {
-    loop {
-        let check_id = MsgId::new(partition, cursor.offset);
-        let key = QueueLeaseKey::build_key(
-            &topic_id,
-            &check_id.partition,
-            &check_id.offset,
-            consumer_group,
-        );
-        match QueueLeaseRow::fetch(&state.metadata_tables, key)? {
-            Some(lease) if lease.is_acked() => {
-                batch.remove_row::<QueueLeaseRow, _>(
-                    &state.metadata_tables,
-                    QueueLeaseKey::build_key(
-                        &topic_id,
-                        &check_id.partition,
-                        &check_id.offset,
-                        consumer_group,
-                    ),
-                )?;
-                cursor.offset += 1;
-            }
-            // Advance past DLQ'd messages but keep their rows for redrive
-            Some(lease) if lease.is_dlq() => {
-                cursor.offset += 1;
-            }
-            _ => break,
-        }
-    }
-    Ok(())
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueueReceiveMsg {
+pub struct FifoReceiveMsg {
     pub msg_id: MsgId,
+    pub key: Option<String>,
     pub value: ByteString,
     pub headers: HashMap<String, String>,
     pub timestamp: UnixTimestampMs,
@@ -309,16 +329,16 @@ pub struct QueueReceiveMsg {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueueReceiveResponseData {
-    pub msgs: Vec<QueueReceiveMsg>,
+pub struct FifoReceiveResponseData {
+    pub msgs: Vec<FifoReceiveMsg>,
 }
 
-impl MsgsRequest for QueueReceiveOperation {
+impl MsgsRequest for FifoReceiveOperation {
     async fn apply(
         self,
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
-    ) -> QueueReceiveResponse {
-        QueueReceiveResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
+    ) -> FifoReceiveResponse {
+        FifoReceiveResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }

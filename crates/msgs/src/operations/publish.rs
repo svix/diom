@@ -234,6 +234,7 @@ fn write_msg_batch(
                 headers: msg.headers,
                 timestamp: now,
                 scheduled_at,
+                key: msg.key,
             };
             batch.insert_row(
                 &state.msg_table,

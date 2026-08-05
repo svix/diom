@@ -1,4 +1,5 @@
 mod configure_namespace;
+mod fifo;
 mod publish;
 mod queue;
 mod sink;
@@ -7,7 +8,7 @@ mod svix_poller;
 mod topic_configure;
 
 pub use self::{
-    configure_namespace::*, publish::*, queue::*, sink::*, stream::*, svix_poller::*,
+    configure_namespace::*, fifo::*, publish::*, queue::*, sink::*, stream::*, svix_poller::*,
     topic_configure::*,
 };
 
@@ -24,6 +25,7 @@ raft_module_operations!(
     MsgsRequest,
     MsgsOperation {
         ConfigureNamespace(ConfigureNamespaceOperation) -> ConfigureNamespaceResponseData,
+        FifoReceive(FifoReceiveOperation) -> FifoReceiveResponseData,
         Publish(PublishOperation) -> PublishResponseData,
         QueueAck(QueueAckOperation) -> QueueAckResponseData,
         QueueConfigure(QueueConfigureOperation) -> QueueConfigureResponseData,
@@ -48,6 +50,7 @@ impl MsgsOperation {
     pub fn key_name(&self) -> String {
         match self {
             MsgsOperation::ConfigureNamespace(op) => op.name.to_string(),
+            MsgsOperation::FifoReceive(op) => op.topic.to_string(),
             MsgsOperation::Publish(op) => op.topic.to_string(),
             MsgsOperation::QueueAck(op) => op.topic.to_string(),
             MsgsOperation::QueueConfigure(op) => op.topic.to_string(),
