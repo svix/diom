@@ -21,6 +21,10 @@ public class Msgs {
         this.client = client;
     }
 
+    public MsgsFifo fifo() {
+        return new MsgsFifo(this.client);
+    }
+
     public MsgsNamespace namespace() {
         return new MsgsNamespace(this.client);
     }

@@ -52,6 +52,7 @@ mod cluster_remove_node_out;
 mod cluster_status_out;
 mod consistency;
 mod eviction_policy;
+mod fifo_msg_out;
 mod get_metrics_out;
 mod http_method;
 mod http_sink_config;
@@ -83,6 +84,18 @@ mod list_response_sink_out;
 mod list_response_svix_poller_out;
 mod metric_out;
 mod metric_type;
+mod msg_fifo_ack_in;
+mod msg_fifo_ack_out;
+mod msg_fifo_configure_in;
+mod msg_fifo_configure_out;
+mod msg_fifo_extend_lease_in;
+mod msg_fifo_extend_lease_out;
+mod msg_fifo_nack_in;
+mod msg_fifo_nack_out;
+mod msg_fifo_receive_in;
+mod msg_fifo_receive_out;
+mod msg_fifo_redrive_dlq_in;
+mod msg_fifo_redrive_dlq_out;
 mod msg_in;
 mod msg_namespace_configure_in;
 mod msg_namespace_configure_out;
@@ -183,9 +196,10 @@ pub use self::{
     cluster_initialize_in::ClusterInitializeIn, cluster_initialize_out::ClusterInitializeOut,
     cluster_remove_node_in::ClusterRemoveNodeIn, cluster_remove_node_out::ClusterRemoveNodeOut,
     cluster_status_out::ClusterStatusOut, consistency::Consistency,
-    eviction_policy::EvictionPolicy, get_metrics_out::GetMetricsOut, http_method::HttpMethod,
-    http_sink_config::HttpSinkConfig, idempotency_abort_in::IdempotencyAbortIn,
-    idempotency_abort_out::IdempotencyAbortOut, idempotency_complete_in::IdempotencyCompleteIn,
+    eviction_policy::EvictionPolicy, fifo_msg_out::FifoMsgOut, get_metrics_out::GetMetricsOut,
+    http_method::HttpMethod, http_sink_config::HttpSinkConfig,
+    idempotency_abort_in::IdempotencyAbortIn, idempotency_abort_out::IdempotencyAbortOut,
+    idempotency_complete_in::IdempotencyCompleteIn,
     idempotency_complete_out::IdempotencyCompleteOut, idempotency_completed::IdempotencyCompleted,
     idempotency_configure_namespace_in::IdempotencyConfigureNamespaceIn,
     idempotency_configure_namespace_out::IdempotencyConfigureNamespaceOut,
@@ -201,7 +215,14 @@ pub use self::{
     list_response_admin_role_out::ListResponseAdminRoleOut,
     list_response_sink_out::ListResponseSinkOut,
     list_response_svix_poller_out::ListResponseSvixPollerOut, metric_out::MetricOut,
-    metric_type::MetricType, msg_in::MsgIn, msg_namespace_configure_in::MsgNamespaceConfigureIn,
+    metric_type::MetricType, msg_fifo_ack_in::MsgFifoAckIn, msg_fifo_ack_out::MsgFifoAckOut,
+    msg_fifo_configure_in::MsgFifoConfigureIn, msg_fifo_configure_out::MsgFifoConfigureOut,
+    msg_fifo_extend_lease_in::MsgFifoExtendLeaseIn,
+    msg_fifo_extend_lease_out::MsgFifoExtendLeaseOut, msg_fifo_nack_in::MsgFifoNackIn,
+    msg_fifo_nack_out::MsgFifoNackOut, msg_fifo_receive_in::MsgFifoReceiveIn,
+    msg_fifo_receive_out::MsgFifoReceiveOut, msg_fifo_redrive_dlq_in::MsgFifoRedriveDlqIn,
+    msg_fifo_redrive_dlq_out::MsgFifoRedriveDlqOut, msg_in::MsgIn,
+    msg_namespace_configure_in::MsgNamespaceConfigureIn,
     msg_namespace_configure_out::MsgNamespaceConfigureOut, msg_namespace_get_in::MsgNamespaceGetIn,
     msg_namespace_get_out::MsgNamespaceGetOut, msg_publish_in::MsgPublishIn,
     msg_publish_out::MsgPublishOut, msg_publish_out_topic::MsgPublishOutTopic,
@@ -241,9 +262,13 @@ pub(crate) use self::{
     cache_delete_in::CacheDeleteIn_, cache_get_in::CacheGetIn_, cache_set_in::CacheSetIn_,
     idempotency_abort_in::IdempotencyAbortIn_, idempotency_complete_in::IdempotencyCompleteIn_,
     idempotency_start_in::IdempotencyStartIn_, kv_delete_in::KvDeleteIn_, kv_get_in::KvGetIn_,
-    kv_set_in::KvSetIn_, msg_namespace_configure_in::MsgNamespaceConfigureIn_,
-    msg_namespace_get_in::MsgNamespaceGetIn_, msg_publish_in::MsgPublishIn_,
-    msg_queue_ack_in::MsgQueueAckIn_, msg_queue_configure_in::MsgQueueConfigureIn_,
+    kv_set_in::KvSetIn_, msg_fifo_ack_in::MsgFifoAckIn_,
+    msg_fifo_configure_in::MsgFifoConfigureIn_, msg_fifo_extend_lease_in::MsgFifoExtendLeaseIn_,
+    msg_fifo_nack_in::MsgFifoNackIn_, msg_fifo_receive_in::MsgFifoReceiveIn_,
+    msg_fifo_redrive_dlq_in::MsgFifoRedriveDlqIn_,
+    msg_namespace_configure_in::MsgNamespaceConfigureIn_, msg_namespace_get_in::MsgNamespaceGetIn_,
+    msg_publish_in::MsgPublishIn_, msg_queue_ack_in::MsgQueueAckIn_,
+    msg_queue_configure_in::MsgQueueConfigureIn_,
     msg_queue_extend_lease_in::MsgQueueExtendLeaseIn_, msg_queue_nack_in::MsgQueueNackIn_,
     msg_queue_receive_in::MsgQueueReceiveIn_, msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn_,
     msg_stream_cancel_lease_in::MsgStreamCancelLeaseIn_, msg_stream_commit_in::MsgStreamCommitIn_,

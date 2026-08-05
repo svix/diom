@@ -17,6 +17,9 @@ func NewMsgs(client *diom_proto.HttpClient) Msgs {
 	return Msgs{client}
 }
 
+func (msgs Msgs) Fifo() MsgsFifo {
+	return NewMsgsFifo(msgs.client)
+}
 func (msgs Msgs) Namespace() MsgsNamespace {
 	return NewMsgsNamespace(msgs.client)
 }

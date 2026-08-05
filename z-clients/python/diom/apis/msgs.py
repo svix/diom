@@ -5,6 +5,10 @@ from ..models import (
     MsgPublishIn,
     MsgPublishOut,
 )
+from .msgs_fifo import (
+    MsgsFifo,
+    MsgsFifoAsync,
+)
 from .msgs_namespace import (
     MsgsNamespace,
     MsgsNamespaceAsync,
@@ -34,6 +38,10 @@ from ..models.msg_publish_in import _MsgPublishIn
 
 
 class MsgsAsync(ApiBase):
+    @property
+    def fifo(self) -> MsgsFifoAsync:
+        return MsgsFifoAsync(self._client)
+
     @property
     def namespace(self) -> MsgsNamespaceAsync:
         return MsgsNamespaceAsync(self._client)
@@ -80,6 +88,10 @@ class MsgsAsync(ApiBase):
 
 
 class Msgs(ApiBase):
+    @property
+    def fifo(self) -> MsgsFifo:
+        return MsgsFifo(self._client)
+
     @property
     def namespace(self) -> MsgsNamespace:
         return MsgsNamespace(self._client)

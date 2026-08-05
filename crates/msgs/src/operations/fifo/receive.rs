@@ -23,14 +23,19 @@ use crate::{
 
 use super::super::{FifoReceiveResponse, MsgsRaftState, MsgsRequest};
 
-/// Per-partition scan budget. Blocked-key messages are skipped without filling the batch, so a
-/// partition dominated by one locked key could otherwise be walked end to end for a near-empty
-/// batch. Once the budget is spent the receive returns what it has; the next receive continues.
-const FIFO_SCAN_MULTIPLE: usize = 16;
-const FIFO_MIN_SCAN: usize = 1024;
-
-/// The per-partition scan budget for a given batch size. See the constants above.
+/// How many messages, at most, a single `receive` call is allowed to scan
+/// on a single partition before it gives up and returns whatever's collected.
+///
+/// With FIFO semantics, a message could be scanned but not delivered. This would
+/// happen if a key is blocked because earlier messages with the same key
+/// are already leased to another Consumer. In this situation, we might have to keep
+/// scanning a partition for msgs, and we want to clamp how long that scanning can take.
 pub(crate) fn fifo_scan_budget(batch_size: u16) -> usize {
+    // Right now these values are mostly vibes based. They might be revisited later.
+
+    const FIFO_SCAN_MULTIPLE: usize = 16;
+    const FIFO_MIN_SCAN: usize = 1024;
+
     (batch_size as usize)
         .saturating_mul(FIFO_SCAN_MULTIPLE)
         .max(FIFO_MIN_SCAN)
@@ -46,9 +51,6 @@ pub(crate) enum FifoDisposition {
     Deliver,
 }
 
-/// Classifies a candidate message from its lease state and schedule. The blocked-key check is left
-/// to the caller so a blocked key can be skipped without fetching its lease. Shared by the receive
-/// path and the availability estimate so both apply identical rules.
 pub(crate) fn classify_fifo_msg(
     existing_lease: Option<&QueueLeaseRow>,
     scheduled_at: Option<UnixTimestampMs>,
@@ -301,7 +303,8 @@ fn fifo_lease_available_msgs(
                     },
                 )?;
 
-                // The key is left unblocked so the rest of its run is delivered to this same caller.
+                // The key is left unblocked so the rest of the messages with the same key
+                // are delivered to this same caller.
                 all_msgs.push(FifoReceiveMsg {
                     msg_id,
                     key: msg.key,

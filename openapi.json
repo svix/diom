@@ -6578,6 +6578,660 @@
         ]
       }
     },
+    "/api/v1.msgs.fifo.receive": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Fifo Receive",
+        "description": "Receives messages from a topic with strict per-key ordering.\n\nLike `queue/receive`, but a key is leased exclusively: once a consumer holds an in-flight\nmessage for a key, no other consumer receives that key's messages until it is acked (or its\nlease expires). A single call may return several messages of the same key, in order. Keyless\nmessages are unordered. Note: increasing a topic's partition count re-hashes keys and can\nsplit a key across partitions, breaking its order at that boundary.",
+        "operationId": "v1.msgs.fifo.receive",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgFifoReceiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgFifoReceiveOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs fifo receive \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"batch_size\": 1,\n    \"lease_duration_ms\": 30000,\n    \"batch_wait_ms\": 30000\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Fifo.Receive(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoReceiveIn{\n        Namespace: new(\"some_namespace\"),\n        BatchSize: new(uint16(1)),\n        LeaseDuration: new(diom.DurationMs(30000)),\n        BatchWait: new(diom.DurationMs(30000)),\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getFifo.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgFifoReceiveIn()\n        .namespace(\"some_namespace\")\n        .batchSize(1)\n        .leaseDurationMs(Duration.ofSeconds(30))\n        .batchWaitMs(Duration.ofSeconds(30))\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.fifo.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        batchSize: 1,\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n        batchWait: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.fifo.receive(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoReceiveIn(\n        namespace = \"some_namespace\",\n        batch_size = 1,\n        lease_duration_ms = timedelta(seconds=30),\n        batch_wait_ms = timedelta(seconds=30),\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .fifo()\n    .receive(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgFifoReceiveIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_batch_size(1)\n            .with_lease_duration(Duration::from_secs(30))\n            .with_batch_wait(Duration::from_secs(30)),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.msgs.fifo.ack": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Fifo Ack",
+        "description": "Acknowledges fifo messages by their opaque msg_ids, releasing each key for its next message.",
+        "operationId": "v1.msgs.fifo.ack",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgFifoAckIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgFifoAckOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs fifo ack \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"msg_ids\": []\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Fifo.Ack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoAckIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getFifo.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgFifoAckIn()\n        .namespace(\"some_namespace\")\n        .msgIds(List.of())\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.fifo.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        msgIds: [],\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.fifo.ack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoAckIn(\n        namespace = \"some_namespace\",\n        msg_ids = [],\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .fifo()\n    .ack(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgFifoAckIn::new(vec![])\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.msgs.fifo.extend-lease": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Fifo Extend Lease",
+        "description": "Extends the lease on in-flight fifo messages.",
+        "operationId": "v1.msgs.fifo.extend-lease",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgFifoExtendLeaseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgFifoExtendLeaseOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs fifo extend-lease \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"msg_ids\": [],\n    \"lease_duration_ms\": 30000\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Fifo.ExtendLease(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoExtendLeaseIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n        LeaseDuration: new(diom.DurationMs(30000)),\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getFifo.extendLease(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgFifoExtendLeaseIn()\n        .namespace(\"some_namespace\")\n        .msgIds(List.of())\n        .leaseDurationMs(Duration.ofSeconds(30))\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.fifo.extendLease(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        msgIds: [],\n        leaseDuration: Temporal.Duration.from({ seconds: 30 }),\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.fifo.extend_lease(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoExtendLeaseIn(\n        namespace = \"some_namespace\",\n        msg_ids = [],\n        lease_duration_ms = timedelta(seconds=30),\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .fifo()\n    .extend_lease(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgFifoExtendLeaseIn::new(vec![])\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_lease_duration(Duration::from_secs(30)),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.msgs.fifo.configure": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Fifo Configure",
+        "description": "Configures retry and DLQ behavior for a fifo consumer group on a topic.",
+        "operationId": "v1.msgs.fifo.configure",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgFifoConfigureIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgFifoConfigureOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs fifo configure \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"retry_schedule\": [],\n    \"dlq_topic\": \"some_topic_name\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Fifo.Configure(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        RetrySchedule: []uint64{},\n        DlqTopic: new(\"some_topic_name\"),\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getFifo.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgFifoConfigureIn()\n        .namespace(\"some_namespace\")\n        .retrySchedule(List.of())\n        .dlqTopic(\"some_topic_name\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.fifo.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        retrySchedule: [],\n        dlqTopic: \"some_topic_name\",\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.fifo.configure(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoConfigureIn(\n        namespace = \"some_namespace\",\n        retry_schedule = [],\n        dlq_topic = \"some_topic_name\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .fifo()\n    .configure(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgFifoConfigureIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_retry_schedule(vec![])\n            .with_dlq_topic(\"some_topic_name\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.msgs.fifo.nack": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Fifo Nack",
+        "description": "Rejects fifo messages, retrying per the configured schedule then sending them to the DLQ.",
+        "operationId": "v1.msgs.fifo.nack",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgFifoNackIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgFifoNackOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs fifo nack \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\",\n    \"msg_ids\": []\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Fifo.Nack(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoNackIn{\n        Namespace: new(\"some_namespace\"),\n        MsgIds: []string{},\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getFifo.nack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgFifoNackIn()\n        .namespace(\"some_namespace\")\n        .msgIds(List.of())\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.fifo.nack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n        msgIds: [],\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.fifo.nack(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoNackIn(\n        namespace = \"some_namespace\",\n        msg_ids = [],\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .fifo()\n    .nack(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgFifoNackIn::new(vec![])\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.msgs.fifo.redrive-dlq": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Fifo Redrive Dlq",
+        "description": "Moves all dead-letter queue messages for a fifo consumer group back for reprocessing.",
+        "operationId": "v1.msgs.fifo.redrive-dlq",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgFifoRedriveDlqIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgFifoRedriveDlqOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs fifo redrive-dlq \"some_topic_name\" \"some_consumer_group\" '{\n    \"namespace\": \"some_namespace\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Fifo.RedriveDlq(\n    ctx,\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoRedriveDlqIn{\n        Namespace: new(\"some_namespace\"),\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getFifo.redriveDlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    new MsgFifoRedriveDlqIn()\n        .namespace(\"some_namespace\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.fifo.redriveDlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    {\n        namespace: \"some_namespace\",\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.fifo.redrive_dlq(\n    \"some_topic_name\",\n    \"some_consumer_group\",\n    MsgFifoRedriveDlqIn(\n        namespace = \"some_namespace\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .fifo()\n    .redrive_dlq(\n        \"some_topic_name\".to_owned(),\n        \"some_consumer_group\".to_owned(),\n        MsgFifoRedriveDlqIn::new()\n            .with_namespace(\"some_namespace\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
     "/api/v1.msgs.topic.configure": {
       "post": {
         "tags": [
@@ -9047,6 +9701,52 @@
           "no-eviction"
         ]
       },
+      "FifoMsgOut": {
+        "type": "object",
+        "properties": {
+          "msg_id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string",
+            "nullable": true
+          },
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
+          },
+          "scheduled_at": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
+            "nullable": true
+          }
+        },
+        "required": [
+          "msg_id",
+          "value",
+          "headers",
+          "timestamp"
+        ]
+      },
       "GetMetricsOut": {
         "type": "object",
         "properties": {
@@ -9868,6 +10568,298 @@
           "counter",
           "gauge"
         ]
+      },
+      "MsgFifoAckIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          },
+          "msg_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "msg_ids"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgFifoAckOut": {
+        "type": "object"
+      },
+      "MsgFifoConfigureIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          },
+          "retry_schedule": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "default": []
+          },
+          "dlq_topic": {
+            "type": "string",
+            "example": "some_topic_name",
+            "nullable": true
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgFifoConfigureOut": {
+        "type": "object",
+        "properties": {
+          "retry_schedule": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            }
+          },
+          "dlq_topic": {
+            "type": "string",
+            "example": "some_topic_name",
+            "nullable": true
+          }
+        },
+        "required": [
+          "retry_schedule"
+        ]
+      },
+      "MsgFifoExtendLeaseIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          },
+          "msg_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lease_duration_ms": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "DurationMs",
+            "default": 30000
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "msg_ids"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgFifoExtendLeaseOut": {
+        "type": "object"
+      },
+      "MsgFifoNackIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          },
+          "msg_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "msg_ids"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgFifoNackOut": {
+        "type": "object"
+      },
+      "MsgFifoReceiveIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          },
+          "batch_size": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 1,
+            "maximum": 65535,
+            "default": 10
+          },
+          "lease_duration_ms": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "DurationMs",
+            "default": 30000
+          },
+          "batch_wait_ms": {
+            "description": "Maximum time (in milliseconds) to wait for messages before returning.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "DurationMs",
+            "default": null,
+            "nullable": true
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgFifoReceiveOut": {
+        "type": "object",
+        "properties": {
+          "msgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FifoMsgOut"
+            }
+          }
+        },
+        "required": [
+          "msgs"
+        ]
+      },
+      "MsgFifoRedriveDlqIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consumer_group": {
+            "type": "string",
+            "example": "some_consumer_group"
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgFifoRedriveDlqOut": {
+        "type": "object"
       },
       "MsgIn": {
         "type": "object",

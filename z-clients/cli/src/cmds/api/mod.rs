@@ -13,6 +13,7 @@ mod idempotency_namespace;
 mod kv;
 mod kv_namespace;
 mod msgs;
+mod msgs_fifo;
 mod msgs_namespace;
 mod msgs_queue;
 mod msgs_sink;
@@ -27,8 +28,8 @@ pub(crate) use self::{
     admin_auth_token::AdminAuthTokenArgs, admin_metrics::AdminMetricsArgs, cache::CacheArgs,
     cache_namespace::CacheNamespaceArgs, cluster_admin::ClusterAdminArgs, health::HealthArgs,
     idempotency::IdempotencyArgs, idempotency_namespace::IdempotencyNamespaceArgs, kv::KvArgs,
-    kv_namespace::KvNamespaceArgs, msgs::MsgsArgs, msgs_namespace::MsgsNamespaceArgs,
-    msgs_queue::MsgsQueueArgs, msgs_sink::MsgsSinkArgs, msgs_stream::MsgsStreamArgs,
-    msgs_svix_poller::MsgsSvixPollerArgs, msgs_topic::MsgsTopicArgs, rate_limit::RateLimitArgs,
-    rate_limit_namespace::RateLimitNamespaceArgs,
+    kv_namespace::KvNamespaceArgs, msgs::MsgsArgs, msgs_fifo::MsgsFifoArgs,
+    msgs_namespace::MsgsNamespaceArgs, msgs_queue::MsgsQueueArgs, msgs_sink::MsgsSinkArgs,
+    msgs_stream::MsgsStreamArgs, msgs_svix_poller::MsgsSvixPollerArgs, msgs_topic::MsgsTopicArgs,
+    rate_limit::RateLimitArgs, rate_limit_namespace::RateLimitNamespaceArgs,
 };

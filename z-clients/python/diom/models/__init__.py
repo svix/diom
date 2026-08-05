@@ -50,6 +50,7 @@ from .cluster_remove_node_out import ClusterRemoveNodeOut
 from .cluster_status_out import ClusterStatusOut
 from .consistency import Consistency
 from .eviction_policy import EvictionPolicy
+from .fifo_msg_out import FifoMsgOut
 from .get_metrics_out import GetMetricsOut
 from .http_method import HttpMethod
 from .http_sink_config import HttpSinkConfig
@@ -81,6 +82,18 @@ from .list_response_sink_out import ListResponseSinkOut
 from .list_response_svix_poller_out import ListResponseSvixPollerOut
 from .metric_out import MetricOut
 from .metric_type import MetricType
+from .msg_fifo_ack_in import MsgFifoAckIn
+from .msg_fifo_ack_out import MsgFifoAckOut
+from .msg_fifo_configure_in import MsgFifoConfigureIn
+from .msg_fifo_configure_out import MsgFifoConfigureOut
+from .msg_fifo_extend_lease_in import MsgFifoExtendLeaseIn
+from .msg_fifo_extend_lease_out import MsgFifoExtendLeaseOut
+from .msg_fifo_nack_in import MsgFifoNackIn
+from .msg_fifo_nack_out import MsgFifoNackOut
+from .msg_fifo_receive_in import MsgFifoReceiveIn
+from .msg_fifo_receive_out import MsgFifoReceiveOut
+from .msg_fifo_redrive_dlq_in import MsgFifoRedriveDlqIn
+from .msg_fifo_redrive_dlq_out import MsgFifoRedriveDlqOut
 from .msg_in import MsgIn
 from .msg_namespace_configure_in import MsgNamespaceConfigureIn
 from .msg_namespace_configure_out import MsgNamespaceConfigureOut
@@ -197,6 +210,7 @@ __all__ = [
     "ClusterStatusOut",
     "Consistency",
     "EvictionPolicy",
+    "FifoMsgOut",
     "GetMetricsOut",
     "HttpMethod",
     "HttpSinkConfig",
@@ -228,6 +242,18 @@ __all__ = [
     "ListResponseSvixPollerOut",
     "MetricOut",
     "MetricType",
+    "MsgFifoAckIn",
+    "MsgFifoAckOut",
+    "MsgFifoConfigureIn",
+    "MsgFifoConfigureOut",
+    "MsgFifoExtendLeaseIn",
+    "MsgFifoExtendLeaseOut",
+    "MsgFifoNackIn",
+    "MsgFifoNackOut",
+    "MsgFifoReceiveIn",
+    "MsgFifoReceiveOut",
+    "MsgFifoRedriveDlqIn",
+    "MsgFifoRedriveDlqOut",
     "MsgIn",
     "MsgNamespaceConfigureIn",
     "MsgNamespaceConfigureOut",

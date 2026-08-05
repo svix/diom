@@ -6,8 +6,8 @@ use diom::DiomClient;
 use crate::prelude::*;
 
 use super::{
-    MsgsNamespaceArgs, MsgsQueueArgs, MsgsSinkArgs, MsgsStreamArgs, MsgsSvixPollerArgs,
-    MsgsTopicArgs,
+    MsgsFifoArgs, MsgsNamespaceArgs, MsgsQueueArgs, MsgsSinkArgs, MsgsStreamArgs,
+    MsgsSvixPollerArgs, MsgsTopicArgs,
 };
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -19,6 +19,7 @@ pub struct MsgsArgs {
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum MsgsCommands {
+    Fifo(MsgsFifoArgs),
     Namespace(MsgsNamespaceArgs),
     Queue(MsgsQueueArgs),
     Sink(MsgsSinkArgs),
@@ -52,6 +53,9 @@ pub enum MsgsCommands {
 impl MsgsCommands {
     pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
+            Self::Fifo(args) => {
+                args.command.exec(client).await?;
+            }
             Self::Namespace(args) => {
                 args.command.exec(client).await?;
             }

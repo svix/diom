@@ -8,6 +8,7 @@ import {
     type MsgPublishOut,
     MsgPublishOutSerializer,
 } from '../models/msgPublishOut';
+import { MsgsFifo } from './msgsFifo';
 import { MsgsNamespace } from './msgsNamespace';
 import { MsgsQueue } from './msgsQueue';
 import { MsgsSink } from './msgsSink';
@@ -18,6 +19,10 @@ import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class Msgs {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
+
+    public get fifo() {
+        return new MsgsFifo(this.requestCtx);
+    }
 
     public get namespace() {
         return new MsgsNamespace(this.requestCtx);

@@ -13,6 +13,7 @@ from .idempotency_namespace import IdempotencyNamespace, IdempotencyNamespaceAsy
 from .kv import Kv, KvAsync
 from .kv_namespace import KvNamespace, KvNamespaceAsync
 from .msgs import Msgs, MsgsAsync
+from .msgs_fifo import MsgsFifo, MsgsFifoAsync
 from .msgs_namespace import MsgsNamespace, MsgsNamespaceAsync
 from .msgs_queue import MsgsQueue, MsgsQueueAsync
 from .msgs_sink import MsgsSink, MsgsSinkAsync
@@ -52,6 +53,8 @@ __all__ = [
     "KvNamespaceAsync",
     "Msgs",
     "MsgsAsync",
+    "MsgsFifo",
+    "MsgsFifoAsync",
     "MsgsNamespace",
     "MsgsNamespaceAsync",
     "MsgsQueue",

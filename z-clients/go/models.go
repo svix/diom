@@ -56,6 +56,7 @@ type (
 	ClusterStatusOut                 = diom_models.ClusterStatusOut
 	Consistency                      = diom_models.Consistency
 	EvictionPolicy                   = diom_models.EvictionPolicy
+	FifoMsgOut                       = diom_models.FifoMsgOut
 	GetMetricsOut                    = diom_models.GetMetricsOut
 	HttpMethod                       = diom_models.HttpMethod
 	HttpSinkConfig                   = diom_models.HttpSinkConfig
@@ -87,6 +88,18 @@ type (
 	ListResponseSvixPollerOut        = diom_models.ListResponseSvixPollerOut
 	MetricOut                        = diom_models.MetricOut
 	MetricType                       = diom_models.MetricType
+	MsgFifoAckIn                     = diom_models.MsgFifoAckIn
+	MsgFifoAckOut                    = diom_models.MsgFifoAckOut
+	MsgFifoConfigureIn               = diom_models.MsgFifoConfigureIn
+	MsgFifoConfigureOut              = diom_models.MsgFifoConfigureOut
+	MsgFifoExtendLeaseIn             = diom_models.MsgFifoExtendLeaseIn
+	MsgFifoExtendLeaseOut            = diom_models.MsgFifoExtendLeaseOut
+	MsgFifoNackIn                    = diom_models.MsgFifoNackIn
+	MsgFifoNackOut                   = diom_models.MsgFifoNackOut
+	MsgFifoReceiveIn                 = diom_models.MsgFifoReceiveIn
+	MsgFifoReceiveOut                = diom_models.MsgFifoReceiveOut
+	MsgFifoRedriveDlqIn              = diom_models.MsgFifoRedriveDlqIn
+	MsgFifoRedriveDlqOut             = diom_models.MsgFifoRedriveDlqOut
 	MsgIn                            = diom_models.MsgIn
 	MsgNamespaceConfigureIn          = diom_models.MsgNamespaceConfigureIn
 	MsgNamespaceConfigureOut         = diom_models.MsgNamespaceConfigureOut

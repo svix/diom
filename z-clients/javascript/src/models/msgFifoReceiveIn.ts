@@ -1,0 +1,46 @@
+// this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
+
+export interface MsgFifoReceiveIn {
+    namespace?: string | null;
+    batchSize?: number;
+    leaseDuration?: Temporal.Duration;
+    /** Maximum time (in milliseconds) to wait for messages before returning. */
+    batchWait?: Temporal.Duration | null;
+}
+
+export interface MsgFifoReceiveIn_ {
+    namespace?: string | null;
+    topic: string;
+    consumerGroup: string;
+    batchSize?: number;
+    leaseDuration?: Temporal.Duration;
+    /** Maximum time (in milliseconds) to wait for messages before returning. */
+    batchWait?: Temporal.Duration | null;
+}
+
+export const MsgFifoReceiveInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
+    _fromJsonObject(object: any): MsgFifoReceiveIn_ {
+        return {
+            namespace: object['namespace'],
+            topic: object['topic'],
+            consumerGroup: object['consumer_group'],
+            batchSize: object['batch_size'],
+            leaseDuration: object['lease_duration_ms'] != null ? Temporal.Duration.from({ milliseconds: object['lease_duration_ms'] }) : undefined,
+            batchWait: object['batch_wait_ms'] != null ? Temporal.Duration.from({ milliseconds: object['batch_wait_ms'] }) : undefined,
+        };
+    },
+
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
+    _toJsonObject(self: MsgFifoReceiveIn_): any {
+        return {
+            'namespace': self.namespace,
+            'topic': self.topic,
+            'consumer_group': self.consumerGroup,
+            'batch_size': self.batchSize,
+            'lease_duration_ms': self.leaseDuration != null ? self.leaseDuration.total('millisecond') : undefined,
+            'batch_wait_ms': self.batchWait != null ? self.batchWait.total('millisecond') : undefined,
+        };
+    }
+}
