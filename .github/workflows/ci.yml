@@ -142,6 +142,8 @@ jobs:
   check-codegen:
     name: Check openapi.json, SDK, and default config freshness
     runs-on: ubicloud-standard-4-ubuntu-2404
+    env:
+      CODEGEN_OCI_RUNNER: docker
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master

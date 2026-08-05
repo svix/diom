@@ -1,4 +1,4 @@
-use std::{fmt::Write as _, io};
+use std::{borrow::Cow, fmt::Write as _, io};
 
 use anyhow::anyhow;
 use async_process::{Command, Stdio};
@@ -96,23 +96,25 @@ impl ContainerizedFormatter<'_> {
             })
             .collect::<io::Result<Vec<_>>>()?;
 
-        let base = if which::which("podman").is_ok() {
-            "podman"
+        let base = if let Ok(value) = std::env::var("CODEGEN_OCI_RUNNER") {
+            Cow::Owned(value)
+        } else if which::which("podman").is_ok() {
+            Cow::Borrowed("podman")
         } else if which::which("docker").is_ok() {
-            "docker"
+            Cow::Borrowed("docker")
         } else {
             return Err(io::Error::other("could not find podman or docker in $PATH"));
         };
 
         let ctx_dir = "codegen/formatters";
         let args = vec!["build", "-t", &tag, "-f", &containerfile_path, ctx_dir];
-        exec(base, args).await?;
+        exec(&base, args).await?;
         let args = ["run", "--rm"]
             .into_iter()
             .chain(mounts.iter().map(|m| m.as_str()))
             .chain([tag.as_str()])
             .chain(cmd.iter().copied());
-        exec(base, args).await?;
+        exec(&base, args).await?;
 
         Ok(())
     }
