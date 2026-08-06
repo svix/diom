@@ -62,6 +62,7 @@ jiff.workspace = true
 jsonwebtoken.workspace = true
 maplit.workspace = true
 openraft.workspace = true
+openraft-legacy.workspace = true
 opentelemetry.workspace = true
 opentelemetry-http.workspace = true
 opentelemetry_sdk.workspace = true
@@ -195,7 +196,8 @@ maplit = "1"
 mimalloc = { version = "0.1.48", features = ["v3"] }
 mime = "0.3"
 openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "23994cce27a8806d907044ebcc0446dfc8d6796e" }
-openraft = { version = "=0.10.0-alpha.25", default-features = false, features = ["tracing-log", "anyhow", "serde", "tokio-rt"] }
+openraft = { version = "=0.10.0-alpha.34", default-features = false, features = ["tracing-log", "anyhow", "serde", "tokio-rt"] }
+openraft-legacy = { version = "=0.10.0-alpha.34", features = ["serde"] }
 opentelemetry = { version = "0.32.0", features = ["metrics"] }
 opentelemetry-http = "0.32.0"
 opentelemetry-otlp = { version = "0.32.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto"] }
@@ -314,3 +316,7 @@ strip = false
 [profile.dist]
 inherits = "release"
 lto = "thin"
+
+[patch.crates-io]
+openraft = { git = "https://github.com/databendlabs/openraft.git", rev = "70c7bc30680b9abc9a14beca5bf074948b98d62e" }
+openraft-legacy = { git = "https://github.com/databendlabs/openraft.git", rev = "70c7bc30680b9abc9a14beca5bf074948b98d62e" }

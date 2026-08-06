@@ -10,7 +10,6 @@ use tap::{TapFallible, TapOptional};
 use super::{
     handle::{RaftState, Request, RequestWithContext, Response},
     node::{Node, NodeId},
-    state_machine::StoredSnapshot,
 };
 use crate::{
     AppState,
@@ -30,7 +29,6 @@ openraft::declare_raft_types!(
         R = Response,
         Node = Node,
         NodeId = NodeId,
-        SnapshotData = StoredSnapshot
 );
 
 pub type Raft = openraft::Raft<TypeConfig, StoreHandle>;
@@ -68,6 +66,7 @@ pub(crate) async fn initialize_cluster(
 }
 
 struct RaftStateWatcherInner {
+    my_node_id: NodeId,
     has_applied_log: bool,
     is_single_node: bool,
     leader: Option<(NodeId, u64)>,
@@ -77,7 +76,11 @@ struct RaftStateWatcherInner {
 
 impl RaftStateWatcherInner {
     fn recompute_ready(&mut self) {
-        let new_ready = self.leader.is_some() && (self.is_single_node || self.has_applied_log);
+        let new_ready = if self.is_single_node {
+            self.leader.is_some_and(|n| n.0 == self.my_node_id)
+        } else {
+            self.leader.is_some() && self.has_applied_log
+        };
         Observable::set_if_not_eq(&mut self.is_ready, new_ready);
     }
 }
@@ -88,8 +91,9 @@ pub struct RaftStateWatcher {
 }
 
 impl RaftStateWatcher {
-    fn new() -> Self {
+    fn new(my_node_id: NodeId) -> Self {
         let inner = Arc::new(parking_lot::RwLock::new(RaftStateWatcherInner {
+            my_node_id,
             is_ready: Observable::new(false),
             has_applied_log: false,
             is_single_node: false,
@@ -210,7 +214,7 @@ pub async fn initialize_raft(
 
     let metrics = ClusterMetrics::new(&app_state.meter, id);
 
-    let mut state_watcher = RaftStateWatcher::new();
+    let mut state_watcher = RaftStateWatcher::new(id);
 
     let state_machine = super::state_machine::Store::new(
         db,
@@ -351,6 +355,7 @@ pub async fn initialize_raft(
 mod tests {
     use std::time::Duration;
 
+    use anyhow::Context;
     use diom_error::CanFailExt;
     use diom_proto::InternalClient;
     use fjall::Database;
@@ -394,7 +399,7 @@ mod tests {
             let log_path = Dir::new(log_path)?;
             let token = CancellationToken::new();
 
-            let logs = DiomLogs::new(
+            let mut logs = DiomLogs::new(
                 log_path,
                 1,
                 Duration::from_secs(10),
@@ -404,6 +409,10 @@ mod tests {
                 token.clone(),
             )
             .await?;
+            let id = logs
+                .get_node_id()
+                .await
+                .context("reading node ID from logs")?;
 
             let data_path = workdir.path().join("data");
             let e_data_path = workdir.path().join("edata");
@@ -435,7 +444,7 @@ mod tests {
                 1.into(),
                 time,
                 token.clone(),
-                super::RaftStateWatcher::new(),
+                super::RaftStateWatcher::new(id),
             )
             .await?;
 

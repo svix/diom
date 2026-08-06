@@ -1388,7 +1388,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ccc2776f0c61eca1ca32528f85548abd1a4be8fb53d1b21c013e4f18da1e7090"
 dependencies = [
  "data-encoding",
- "syn 1.0.109",
+ "syn 2.0.118",
 ]
 
 [[package]]
@@ -1613,6 +1613,7 @@ dependencies = [
  "maplit",
  "more-asserts",
  "openraft",
+ "openraft-legacy",
  "opentelemetry",
  "opentelemetry-http",
  "opentelemetry_sdk",
@@ -3852,9 +3853,8 @@ dependencies = [
 
 [[package]]
 name = "openraft"
-version = "0.10.0-alpha.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a66d99dfb16ed37410298bcd5e5de85b2578471fa2fe6b630123a9fe1435960"
+version = "0.10.0-alpha.34"
+source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
 dependencies = [
  "anyerror",
  "anyhow",
@@ -3879,23 +3879,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "openraft-legacy"
+version = "0.10.0-alpha.34"
+source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
+dependencies = [
+ "anyerror",
+ "derive_more",
+ "display-more",
+ "futures",
+ "openraft",
+ "openraft-macros",
+ "serde",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "openraft-macros"
-version = "0.10.0-alpha.27"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d43c6ef109db505b8ef57de389b34d54927181f3a07819f09c9f0a6cf0ff72c"
+version = "0.10.0-alpha.34"
+source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
 dependencies = [
  "chrono",
  "proc-macro2",
  "quote",
  "semver",
- "syn 2.0.118",
+ "syn 3.0.3",
 ]
 
 [[package]]
 name = "openraft-rt"
-version = "0.10.0-alpha.27"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd3e555284a21902ba525163451fb86c24329e8617143387b0dbddfd7e362de9"
+version = "0.10.0-alpha.34"
+source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
 dependencies = [
  "futures-channel",
  "futures-util",
@@ -3906,9 +3921,8 @@ dependencies = [
 
 [[package]]
 name = "openraft-rt-tokio"
-version = "0.10.0-alpha.27"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2514284b14f28321f8a5614bf82ebae5e2bf8a444d6d879a460a684f71b5c2f7"
+version = "0.10.0-alpha.34"
+source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
 dependencies = [
  "futures-util",
  "openraft-rt",
@@ -5611,6 +5625,17 @@ name = "syn"
 version = "2.0.118"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b9ae57f904213ebb649ce6895b8a66c66f0203b9319718f69a5612a065b1422"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "syn"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53e9bae58849f64dfa4f5d5ae372c8341f7305f82a3868709269343628b659a3"
 dependencies = [
  "proc-macro2",
  "quote",

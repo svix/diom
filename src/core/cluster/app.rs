@@ -15,16 +15,15 @@ use headers::{Authorization, authorization::Bearer};
 use http::StatusCode;
 use openraft::{
     ChangeMembers,
-    raft::{AppendEntriesRequest, InstallSnapshotRequest, TransferLeaderRequest, VoteRequest},
+    raft::{AppendEntriesRequest, TransferLeaderRequest, VoteRequest},
 };
+use openraft_legacy::network_v1::InstallSnapshotRequest;
 use serde::Serialize;
 use tap::{Pipe, TapFallible};
 
-use super::{
-    Node, handle::RaftState, proto::*, raft::TypeConfig,
-    streaming_snapshot::ChunkedSnapshotReceiver as _,
-};
+use super::{Node, handle::RaftState, proto::*, raft::TypeConfig};
 use crate::{AppState, Configuration};
+use openraft_legacy::network_v1::ChunkedSnapshotReceiver as _;
 
 #[derive(Clone)]
 struct RaftSecret(Arc<Vec<u8>>);
