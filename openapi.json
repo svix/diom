@@ -8987,6 +8987,13 @@
             "type": "string",
             "nullable": true
           },
+          "this_node_last_purged_log_index": {
+            "description": "The last-purged log on this node",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          },
           "nodes": {
             "description": "A list of all nodes known to be in the cluster",
             "type": "array",

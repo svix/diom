@@ -31,5 +31,8 @@ class ClusterStatusOut(BaseModel):
     this_node_last_snapshot_id: str | None = None
     """The last snapshot taken on this node"""
 
+    this_node_last_purged_log_index: int | None = None
+    """The last-purged log on this node"""
+
     nodes: t.List[NodeStatusOut]
     """A list of all nodes known to be in the cluster"""

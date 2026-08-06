@@ -98,6 +98,8 @@ pub struct ClusterStatusOut {
     pub this_node_last_committed_timestamp: UnixTimestampMs,
     /// The last snapshot taken on this node
     pub this_node_last_snapshot_id: Option<String>,
+    /// The last-purged log on this node
+    pub this_node_last_purged_log_index: Option<u64>,
     /// A list of all nodes known to be in the cluster
     pub nodes: Vec<NodeStatusOut>,
 }
@@ -117,11 +119,12 @@ async fn cluster_status(
 ) -> Result<MsgPackOrJson<ClusterStatusOut>> {
     // TODO: move all of this out of the endpoint at some point
     let leader_id = repl.raft.current_leader().await;
-    let (this_node_state, this_last_committed_log_index, pnodes) = repl
+    let (this_node_state, this_last_committed_log_index, this_last_purged_log_index, pnodes) = repl
         .raft
         .with_raft_state(move |s| {
             let this_node_state = s.server_state.into();
             let committed = s.local_committed().copied();
+            let purged = s.log_ids.purged().map(|l| l.index);
             let members = s.membership_state.effective().membership();
             let voters = members.voter_ids().collect::<BTreeSet<NodeId>>();
             let learners = members.voter_ids().collect::<BTreeSet<NodeId>>();
@@ -146,7 +149,7 @@ async fn cluster_status(
                     }
                 })
                 .collect::<Vec<_>>();
-            (this_node_state, committed, nodes)
+            (this_node_state, committed, purged, nodes)
         })
         .await
         .or_internal_error()?;
@@ -191,6 +194,7 @@ async fn cluster_status(
         this_node_state,
         this_node_last_committed_timestamp: this_node_last_committed_timestamp.into(),
         this_node_last_snapshot_id,
+        this_node_last_purged_log_index: this_last_purged_log_index,
         nodes,
     }))
 }

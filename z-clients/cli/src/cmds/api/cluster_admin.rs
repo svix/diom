@@ -32,6 +32,7 @@ pub enum ClusterAdminCommands {
   \"this_node_state\": \"leader\",
   \"this_node_last_committed_timestamp\": 1234567890123,
   \"this_node_last_snapshot_id\": \"...\",
+  \"this_node_last_purged_log_index\": 123,
   \"nodes\": [{\"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\", \"address\": \"...\", \"state\": \"leader\", \"last_committed_log_index\": 123, \"last_committed_term\": 123}]
 }\n")]
     Status {},

@@ -109,6 +109,9 @@ async fn print_status(json: bool, client: &DiomClient) -> anyhow::Result<()> {
             }),
         ],
     ]);
+    if let Some(last_purged) = raw_status.this_node_last_purged_log_index {
+        table.add_row([Cell::new("Last Purged Log"), Cell::new(last_purged)]);
+    }
     println!("{table}");
     let header = "Nodes".underline();
     println!("\n{header}\n");
