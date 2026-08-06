@@ -549,8 +549,15 @@ impl Store {
         // load the embedded information from the metadata table in the snapshot
         self.load_information().await?;
         // load the cluster ID
-        if let Some(found_cluster_id) = cluster_id {
-            self.set_cluster_id(found_cluster_id).await?;
+        if let Some(new_cluster_id) = cluster_id {
+            if let Some(existing_cluster_id) = self.cluster_id {
+                if new_cluster_id != existing_cluster_id {
+                    tracing::error!(%existing_cluster_id, %new_cluster_id, "cluster_id has changed! switching clusters is not supported!");
+                }
+            } else {
+                tracing::info!(%new_cluster_id, "discovered cluster_id from snapshot");
+                self.set_cluster_id(new_cluster_id).await?;
+            }
         }
         // overwrite any last_log_id and membership in the snapshot with the ones the leader told us
         self.last_applied_log_id = meta.last_log_id;

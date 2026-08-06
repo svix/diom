@@ -2,6 +2,7 @@ mod admin;
 mod auth_token;
 mod bootstrap;
 mod cache;
+mod cluster;
 mod cluster_admin;
 mod common;
 mod idempotency;
