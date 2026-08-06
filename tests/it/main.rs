@@ -4,6 +4,7 @@ mod bootstrap;
 mod cache;
 mod cluster_admin;
 mod common;
+mod health;
 mod idempotency;
 mod jwt_auth;
 mod kv;

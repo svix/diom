@@ -337,6 +337,11 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
 
     wait_for_up(&app_config, &raft_state).await?;
 
+    if let Some(delay) = app_config.bootstrap_delay {
+        tracing::debug!(?delay, "pausing before running bootstrap");
+        tokio::time::sleep(delay.into()).await;
+    }
+
     let mut paths = app_config.bootstrap_cfg_paths.clone();
     if let Some(path) = &app_config.bootstrap_cfg_path {
         tracing::warn!("`bootstrap_cfg_path` is deprecated; use `bootstrap_cfg_paths` instead");

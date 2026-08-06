@@ -48,6 +48,7 @@ pub struct TestServerBuilder {
     listener: Option<TcpListener>,
     repl_listener: Option<TcpListener>,
     workdir: Option<TempDir>,
+    wait_for_initialization: bool,
 }
 
 impl TestServerBuilder {
@@ -60,7 +61,13 @@ impl TestServerBuilder {
             token: None,
             listener: None,
             repl_listener: None,
+            wait_for_initialization: true,
         }
+    }
+
+    pub fn set_wait_for_initialization(mut self, value: bool) -> Self {
+        self.wait_for_initialization = value;
+        self
     }
 
     /// Mutate the current configuration.
@@ -149,10 +156,12 @@ impl TestServerBuilder {
         };
         let client = TestClient::new(base_uri, &token);
 
-        initialized
-            .wait()
-            .await
-            .expect("initialization should finish");
+        if self.wait_for_initialization {
+            initialized
+                .wait()
+                .await
+                .expect("initialization should finish");
+        }
 
         let (node_id, cluster_id) = wait_for_initialized(addr, repl_addr, Duration::from_secs(8))
             .await
@@ -350,6 +359,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         bootstrap_cfg: None,
         bootstrap_cfg_paths: vec![],
         bootstrap_cfg_path: None,
+        bootstrap_delay: None,
         sync_mode: SyncMode::Buffer,
         fsync_mode: FsyncMode::SyncData,
         admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
