@@ -273,7 +273,7 @@ fn build_container(
 ) -> Container {
     let intracluster_port = INTRACLUSTER_PORT;
     const API_HEALTH_ENDPOINT: &str = "/api/v1.health.ping";
-    const CLUSTER_HEALTH_ENDPOINT: &str = "/repl/health";
+    const API_READINESS_ENDPOINT: &str = "/api/v1.health.ready";
 
     Container {
         name: "diom".into(),
@@ -301,13 +301,13 @@ fn build_container(
             ..Default::default()
         })),
         readiness_probe: Some(spec.probes.readiness.as_probe_with_http_get(HTTPGetAction {
-            path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
-            port: IntOrString::Int(intracluster_port as _),
+            path: Some(API_READINESS_ENDPOINT.into()),
+            port: IntOrString::Int(spec.diom.api_port as _),
             ..Default::default()
         })),
         startup_probe: Some(spec.probes.startup.as_probe_with_http_get(HTTPGetAction {
-            path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
-            port: IntOrString::Int(intracluster_port as _),
+            path: Some(API_READINESS_ENDPOINT.into()),
+            port: IntOrString::Int(spec.diom.api_port as _),
             ..Default::default()
         })),
         ..Default::default()
