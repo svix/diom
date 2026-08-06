@@ -541,13 +541,17 @@ impl Store {
         let mut f = snapshot.file.try_clone().await?.into_std().await;
         f.seek(SeekFrom::Start(0))?;
         let handle = self.stores.clone();
-        spawn_blocking_in_current_span(move || {
+        let cluster_id = spawn_blocking_in_current_span(move || {
             let stores = handle.write();
             serialized_state_machine::load_from_file(&stores.databases, &mut f)
         })
         .await??;
         // load the embedded information from the metadata table in the snapshot
         self.load_information().await?;
+        // load the cluster ID
+        if let Some(found_cluster_id) = cluster_id {
+            self.set_cluster_id(found_cluster_id).await?;
+        }
         // overwrite any last_log_id and membership in the snapshot with the ones the leader told us
         self.last_applied_log_id = meta.last_log_id;
         self.last_membership = meta.last_membership.clone();
@@ -682,7 +686,9 @@ impl Store {
         }
     }
 
-    async fn snapshot_phase_1(&mut self) -> anyhow::Result<(SnapshotMeta, Vec<SnapshotTarget>)> {
+    async fn snapshot_phase_1(
+        &mut self,
+    ) -> anyhow::Result<(SnapshotMeta, Vec<SnapshotTarget>, Option<ClusterId>)> {
         self.snapshot_idx += 1;
         let last_log_id = self.last_applied_log_id;
         let last_membership = self.last_membership.clone();
@@ -733,7 +739,7 @@ impl Store {
         .await
         .context("failed to generate snapshot targets")?;
 
-        Ok((meta, targets))
+        Ok((meta, targets, self.cluster_id))
     }
 }
 
@@ -829,6 +835,7 @@ impl StoredSnapshot {
         metadata: &SnapshotMeta,
         directory: &Path,
         targets: Vec<(StorageType, Database, fjall::Snapshot, Vec<String>)>,
+        cluster_id: Option<ClusterId>,
     ) -> anyhow::Result<Self> {
         let file_name = format!("diom-{}", metadata.snapshot_id);
         let path = directory.join(file_name);
@@ -841,7 +848,7 @@ impl StoredSnapshot {
                 temp_path = %tf.path().display(),
                 "writing snapshot",
             );
-            serialized_state_machine::serialize_to_file(targets, tf.as_file_mut())?;
+            serialized_state_machine::serialize_to_file(targets, cluster_id, tf.as_file_mut())?;
             tf.as_file_mut().sync_all()?;
             let mut f = tf.persist_noclobber(path_c)?;
             f.seek(SeekFrom::Start(0))?;
@@ -893,12 +900,12 @@ impl StoreSnapshotHandle {
         let start = std::time::Instant::now();
 
         // lock the underlying store while we pull out some fields atomically
-        let (meta, targets) = {
+        let (meta, targets, cluster_id) = {
             let mut guard = self.inner.write().await;
             guard.snapshot_phase_1().await
         }?;
 
-        let snapshot = StoredSnapshot::new(&meta, &self.snapshot_directory, targets)
+        let snapshot = StoredSnapshot::new(&meta, &self.snapshot_directory, targets, cluster_id)
             .await
             .context("failed to build snapshot")?;
 
