@@ -128,6 +128,7 @@ mod rate_limit_get_remaining_in;
 mod rate_limit_get_remaining_out;
 mod rate_limit_reset_in;
 mod rate_limit_reset_out;
+mod ready_out;
 mod retention;
 mod seek_position;
 mod server_state;
@@ -227,11 +228,11 @@ pub use self::{
     rate_limit_get_namespace_out::RateLimitGetNamespaceOut,
     rate_limit_get_remaining_in::RateLimitGetRemainingIn,
     rate_limit_get_remaining_out::RateLimitGetRemainingOut, rate_limit_reset_in::RateLimitResetIn,
-    rate_limit_reset_out::RateLimitResetOut, retention::Retention, seek_position::SeekPosition,
-    server_state::ServerState, sink_config::SinkConfig, sink_configure_in::SinkConfigureIn,
-    sink_configure_out::SinkConfigureOut, sink_delete_in::SinkDeleteIn,
-    sink_delete_out::SinkDeleteOut, sink_list_in::SinkListIn, sink_out::SinkOut,
-    stream_msg_out::StreamMsgOut, svix_poller_create_in::SvixPollerCreateIn,
+    rate_limit_reset_out::RateLimitResetOut, ready_out::ReadyOut, retention::Retention,
+    seek_position::SeekPosition, server_state::ServerState, sink_config::SinkConfig,
+    sink_configure_in::SinkConfigureIn, sink_configure_out::SinkConfigureOut,
+    sink_delete_in::SinkDeleteIn, sink_delete_out::SinkDeleteOut, sink_list_in::SinkListIn,
+    sink_out::SinkOut, stream_msg_out::StreamMsgOut, svix_poller_create_in::SvixPollerCreateIn,
     svix_poller_create_out::SvixPollerCreateOut, svix_poller_delete_in::SvixPollerDeleteIn,
     svix_poller_delete_out::SvixPollerDeleteOut, svix_poller_list_in::SvixPollerListIn,
     svix_poller_out::SvixPollerOut,

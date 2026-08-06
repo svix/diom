@@ -126,6 +126,7 @@ export type { RateLimitGetRemainingIn } from "./rateLimitGetRemainingIn";
 export type { RateLimitGetRemainingOut } from "./rateLimitGetRemainingOut";
 export type { RateLimitResetIn } from "./rateLimitResetIn";
 export type { RateLimitResetOut } from "./rateLimitResetOut";
+export type { ReadyOut } from "./readyOut";
 export type { Retention } from "./retention";
 export type { SeekPosition } from "./seekPosition";
 export type { ServerState } from "./serverState";

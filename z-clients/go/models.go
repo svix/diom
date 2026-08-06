@@ -132,6 +132,7 @@ type (
 	RateLimitGetRemainingOut         = diom_models.RateLimitGetRemainingOut
 	RateLimitResetIn                 = diom_models.RateLimitResetIn
 	RateLimitResetOut                = diom_models.RateLimitResetOut
+	ReadyOut                         = diom_models.ReadyOut
 	Retention                        = diom_models.Retention
 	SeekPosition                     = diom_models.SeekPosition
 	ServerState                      = diom_models.ServerState

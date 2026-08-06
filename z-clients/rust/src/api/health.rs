@@ -11,8 +11,18 @@ impl<'a> Health<'a> {
     }
 
     /// Verify the server is up and running.
+    ///
+    /// This endpoint only checks the server itself, not the cluster mechanism, and should not be used
+    /// as a readiness gate.
     pub async fn ping(&self) -> Result<PingOut> {
         crate::request::Request::new(http::Method::GET, "/api/v1.health.ping")
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Verify that this server is ready to serve customer traffic.
+    pub async fn ready(&self) -> Result<ReadyOut> {
+        crate::request::Request::new(http::Method::GET, "/api/v1.health.ready")
             .execute(self.cfg)
             .await
     }

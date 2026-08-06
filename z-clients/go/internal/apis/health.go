@@ -18,6 +18,9 @@ func NewHealth(client *diom_proto.HttpClient) Health {
 }
 
 // Verify the server is up and running.
+//
+// This endpoint only checks the server itself, not the cluster mechanism, and should not be used
+// as a readiness gate.
 func (health Health) Ping(
 	ctx context.Context,
 ) (*diom_models.PingOut, error) {
@@ -26,6 +29,19 @@ func (health Health) Ping(
 		health.client,
 		"GET",
 		"/api/v1.health.ping",
+		nil,
+	)
+}
+
+// Verify that this server is ready to serve customer traffic.
+func (health Health) Ready(
+	ctx context.Context,
+) (*diom_models.ReadyOut, error) {
+	return diom_proto.ExecuteRequest[any, diom_models.ReadyOut](
+		ctx,
+		health.client,
+		"GET",
+		"/api/v1.health.ready",
 		nil,
 	)
 }

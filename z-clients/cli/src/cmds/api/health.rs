@@ -16,6 +16,9 @@ pub struct HealthArgs {
 #[derive(Subcommand)]
 pub enum HealthCommands {
     /// Verify the server is up and running.
+    ///
+    /// This endpoint only checks the server itself, not the cluster mechanism, and should not be used
+    /// as a readiness gate.
     #[command(help_template = concat!(
             "{about-with-newline}\n",
             "{usage-heading} {usage}\n\n",
@@ -29,6 +32,21 @@ pub enum HealthCommands {
   \"ok\": true
 }\n")]
     Ping {},
+    /// Verify that this server is ready to serve customer traffic.
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom health ready\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "Example response:
+{
+  \"ok\": true,
+  \"message\": \"...\"
+}\n")]
+    Ready {},
     /// Intentionally return an error
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -46,6 +64,10 @@ impl HealthCommands {
         match self {
             Self::Ping {} => {
                 let resp = client.health().ping().await?;
+                crate::json::print_json_output(&resp)?;
+            }
+            Self::Ready {} => {
+                let resp = client.health().ready().await?;
                 crate::json::print_json_output(&resp)?;
             }
             Self::Error {} => {
