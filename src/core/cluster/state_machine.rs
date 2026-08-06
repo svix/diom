@@ -418,7 +418,8 @@ impl Store {
         self.last_membership = last_membership;
         self.snapshot_idx = last_snapshot
             .as_ref()
-            .map_or(Ok(0), |s| s.meta.snapshot_idx())?;
+            .and_then(|s| s.meta.snapshot_idx().ok())
+            .unwrap_or(0);
         self.cluster_id = cluster_id;
         if let Some(cluster_id) = &cluster_id {
             tracing::info!(%cluster_id, "starting up with existing cluster membership");
@@ -434,7 +435,7 @@ impl Store {
     ) -> anyhow::Result<()> {
         let handle = self.stores.clone();
         let keyspace = self.meta_keyspace.clone();
-        self.snapshot_idx = std::cmp::max(self.snapshot_idx + 1, meta.snapshot_idx()?);
+        self.snapshot_idx = std::cmp::max(self.snapshot_idx + 1, meta.snapshot_idx().unwrap_or(0));
         let data = LastSnapshot {
             meta,
             path: snapshot_path.clone(),
