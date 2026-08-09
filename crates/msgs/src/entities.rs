@@ -485,6 +485,7 @@ pub enum HttpMethod {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SinkConfig {
     Http(HttpSinkConfig),
+    Svix(SvixSinkConfig),
 }
 
 impl PersistableValue for SinkConfig {}
@@ -494,12 +495,14 @@ impl PersistableValue for SinkConfig {}
 #[schemars(rename = "SinkConfig")]
 enum SinkConfigTaggedRef<'a> {
     Http(&'a HttpSinkConfig),
+    Svix(&'a SvixSinkConfig),
 }
 
 #[derive(Deserialize)]
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]
 enum SinkConfigTagged {
     Http(HttpSinkConfig),
+    Svix(SvixSinkConfig),
 }
 
 // Externally-tagged mirror used for non-self-describing formats
@@ -507,12 +510,14 @@ enum SinkConfigTagged {
 #[serde(rename_all = "snake_case")]
 enum SinkConfigUntaggedRef<'a> {
     Http(&'a HttpSinkConfig),
+    Svix(&'a SvixSinkConfig),
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum SinkConfigUntagged {
     Http(HttpSinkConfig),
+    Svix(SvixSinkConfig),
 }
 
 impl Serialize for SinkConfig {
@@ -520,11 +525,16 @@ impl Serialize for SinkConfig {
     where
         S: Serializer,
     {
-        let SinkConfig::Http(http) = self;
         if serializer.is_human_readable() {
-            SinkConfigTaggedRef::Http(http).serialize(serializer)
+            match self {
+                SinkConfig::Http(http) => SinkConfigTaggedRef::Http(http).serialize(serializer),
+                SinkConfig::Svix(svix) => SinkConfigTaggedRef::Svix(svix).serialize(serializer),
+            }
         } else {
-            SinkConfigUntaggedRef::Http(http).serialize(serializer)
+            match self {
+                SinkConfig::Http(http) => SinkConfigUntaggedRef::Http(http).serialize(serializer),
+                SinkConfig::Svix(svix) => SinkConfigUntaggedRef::Svix(svix).serialize(serializer),
+            }
         }
     }
 }
@@ -537,11 +547,24 @@ impl<'de> Deserialize<'de> for SinkConfig {
         if deserializer.is_human_readable() {
             Ok(match SinkConfigTagged::deserialize(deserializer)? {
                 SinkConfigTagged::Http(http) => SinkConfig::Http(http),
+                SinkConfigTagged::Svix(svix) => SinkConfig::Svix(svix),
             })
         } else {
             Ok(match SinkConfigUntagged::deserialize(deserializer)? {
                 SinkConfigUntagged::Http(http) => SinkConfig::Http(http),
+                SinkConfigUntagged::Svix(svix) => SinkConfig::Svix(svix),
             })
+        }
+    }
+}
+
+impl SinkConfig {
+    /// Masks any secret credentials in place so the config can be returned to callers (e.g. from
+    /// list endpoints) without leaking them.
+    pub(crate) fn obfuscate_secrets(&mut self) {
+        match self {
+            SinkConfig::Http(_) => {}
+            SinkConfig::Svix(svix) => svix.token = obfuscate_token(&svix.token),
         }
     }
 }
@@ -573,6 +596,26 @@ pub struct HttpSinkConfig {
     /// Templated request body. When absent, the raw message value bytes are sent unchanged.
     #[serde(default)]
     pub body: Option<Template>,
+}
+
+/// Configuration for a Svix sink. Each message is forwarded as a Svix message-create call
+/// (`POST {server_url}/api/v1/app/{app_id}/msg/`). This is a thin convenience over an HTTP sink.
+/// The `app_id`, `event_type`, and `payload` are templates rendered per-message
+/// (see [`diom_core::template_str`]).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue)]
+pub struct SvixSinkConfig {
+    /// Svix API token, sent as the bearer credential. Obfuscated in list responses.
+    pub token: String,
+    /// Target Svix application. Can be optionally templated.
+    pub app_id: Template,
+    /// Svix event type. Can be optionally templated.
+    pub event_type: Template,
+    /// Templated message payload. When absent, the raw message value bytes are used (must be JSON).
+    #[serde(default)]
+    pub payload: Option<Template>,
+    /// Optional base URL override. When absent, the region is inferred from the token.
+    #[serde(default)]
+    pub server_url: Option<String>,
 }
 
 fn default_sink_starting_position() -> SeekPosition {

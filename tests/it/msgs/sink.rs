@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_types)]
 use std::time::Duration;
 
 use diom_core::types::NonZeroDurationMs;
@@ -36,6 +37,95 @@ async fn test_sink_configure() -> TestResult {
 
     assert_eq!(response["topic"], "orders");
     assert_eq!(response["consumer_group"], "sink_123");
+
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Svix sink
+// ---------------------------------------------------------------------------
+
+const SVIX_SINK_TOKEN: &str = "testsk_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.eu";
+
+#[tokio::test]
+async fn test_svix_sink_configure() -> TestResult {
+    let ctx = start_server().await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = ctx
+        .client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "svix_sink",
+            "config": {
+                "type": "svix",
+                "data": {
+                    "token": SVIX_SINK_TOKEN,
+                    "app_id": "${headers.org_id}",
+                    "event_type": "order.created",
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(response["topic"], "orders");
+    assert_eq!(response["consumer_group"], "svix_sink");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_svix_sink_list_obfuscates_token() -> TestResult {
+    let ctx = start_server().await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "svix_sink",
+            "config": {
+                "type": "svix",
+                "data": {
+                    "token": SVIX_SINK_TOKEN,
+                    "app_id": "app_1",
+                    "event_type": "order.created",
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = ctx
+        .client
+        .post("v1.msgs.sink.list")
+        .json(json!({ "topic": "orders" }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let data = response["data"].as_array().expect("data array");
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["consumer_group"], "svix_sink");
+
+    // The non-secret fields come back verbatim, but the token is obfuscated (first 12 and last 4
+    // chars kept) so the secret is not recoverable from a list call.
+    assert_eq!(data[0]["config"]["type"], "svix");
+    assert_eq!(data[0]["config"]["data"]["app_id"], "app_1");
+    assert_eq!(data[0]["config"]["data"]["token"], "testsk_ABCDE...9.eu");
 
     Ok(())
 }
@@ -332,6 +422,115 @@ async fn test_sink_forwards_published_messages() -> TestResult {
             bodies.contains("topic=orders"),
             "missing topic var: {bodies}"
         );
+        Ok(())
+    })
+    .await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_svix_sink_forwards_published_messages() -> TestResult {
+    let mock = MockServer::start().await;
+    Mock::given(any())
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&mock)
+        .await;
+
+    let ctx = TestServerBuilder::with_default_config()
+        .tap_cfg(|cfg| {
+            cfg.background_cleanup_interval = NonZeroDurationMs::from_secs(1).unwrap();
+        })
+        .build()
+        .await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "svix_sink",
+            "default_starting_position": "earliest",
+            "config": {
+                "type": "svix",
+                "data": {
+                    "token": SVIX_SINK_TOKEN,
+                    "server_url": mock.uri(),
+                    "app_id": "${headers.org_id}",
+                    "event_type": "order.${headers.kind}",
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "orders",
+            "msgs": [
+                {
+                    "value": json!({ "id": 1 }).to_string().as_bytes(),
+                    "headers": { "org_id": "acme", "kind": "created" },
+                },
+                {
+                    "value": json!({ "id": 2 }).to_string().as_bytes(),
+                    "headers": { "org_id": "acme", "kind": "created" },
+                },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    run_with_retries(async || {
+        let reqs = mock.received_requests().await.unwrap_or_default();
+        let deliveries: Vec<_> = reqs
+            .iter()
+            .filter(|r| r.url.path() == "/api/v1/app/acme/msg/")
+            .collect();
+        anyhow::ensure!(
+            deliveries.len() >= 2,
+            "expected >= 2 deliveries to the Svix app path, got {}",
+            deliveries.len()
+        );
+
+        anyhow::ensure!(
+            deliveries.iter().all(|r| r.method == "POST"),
+            "each delivery should be a POST"
+        );
+        anyhow::ensure!(
+            deliveries.iter().all(|r| r
+                .headers
+                .get("authorization")
+                .is_some_and(|v| v == &format!("Bearer {SVIX_SINK_TOKEN}"))),
+            "each request should carry the bearer token"
+        );
+        anyhow::ensure!(
+            deliveries.iter().all(|r| r
+                .headers
+                .get("content-type")
+                .is_some_and(|v| v.as_bytes().starts_with(b"application/json"))),
+            "each request should be sent as JSON"
+        );
+
+        // The body wraps the message value as `payload` under the templated `eventType`.
+        for r in &deliveries {
+            let body: serde_json::Value = serde_json::from_slice(&r.body)
+                .map_err(|e| anyhow::anyhow!("body was not JSON: {e}"))?;
+            anyhow::ensure!(
+                body["eventType"] == "order.created",
+                "unexpected eventType: {body}"
+            );
+            anyhow::ensure!(
+                body["payload"]["id"].is_number(),
+                "payload should carry the message value: {body}"
+            );
+        }
         Ok(())
     })
     .await?;

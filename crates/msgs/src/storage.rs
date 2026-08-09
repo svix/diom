@@ -748,10 +748,12 @@ pub fn list_sinks(
         .map(|(key, row)| {
             let consumer_group = SinkKey::extract_consumer_group(&key)
                 .map_err(|e| diom_error::Error::internal(e.to_string()))?;
+            let mut settings = row.settings;
+            settings.config.obfuscate_secrets();
             Ok(SinkListItem {
                 topic: row.topic,
                 consumer_group,
-                settings: row.settings,
+                settings,
             })
         })
         .collect()

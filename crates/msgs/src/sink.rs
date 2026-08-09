@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_types)]
 use std::{
     collections::HashMap,
     num::{NonZeroU16, NonZeroU32},
@@ -17,7 +18,7 @@ use crate::{
     State,
     entities::{
         ConsumerGroup, HttpMethod, HttpSinkConfig, Offset, Partition, SeekPosition, SinkConfig,
-        SinkSettings, TopicIn, TopicName, TopicPartition,
+        SinkSettings, SvixSinkConfig, TopicIn, TopicName, TopicPartition,
     },
     operations::{MsgsOperation, StreamCommitOperation, StreamReceiveMsg, StreamReceiveOperation},
     storage::{SinkKey, SinkRow},
@@ -150,9 +151,11 @@ async fn drain_sink<F>(
     F: OperationWriter<MsgsOperation> + Send + Sync,
 {
     let consumer_group = key.consumer_group.clone();
-    let SinkConfig::Http(http_config) = &settings.config;
+    let compiled = match &settings.config {
+        SinkConfig::Http(http_config) => CompiledSink::Http(CompiledHttpSink::new(http_config)),
+        SinkConfig::Svix(svix_config) => CompiledSink::Svix(CompiledSvixSink::new(svix_config)),
+    };
     let start = settings.default_starting_position.clone();
-    let compiled = CompiledHttpSink::new(http_config);
     let deadline = Instant::now() + max_duration;
 
     while Instant::now() < deadline {
@@ -240,7 +243,7 @@ where
 async fn deliver_and_commit_batch<F>(
     handle: &F,
     http: &reqwest::Client,
-    compiled: &CompiledHttpSink<'_>,
+    compiled: &CompiledSink<'_>,
     namespace_id: NamespaceId,
     topic_name: &TopicName,
     consumer_group: &ConsumerGroup,
@@ -300,7 +303,7 @@ where
 async fn deliver_and_commit_partition<F>(
     handle: &F,
     http: &reqwest::Client,
-    compiled: &CompiledHttpSink<'_>,
+    compiled: &CompiledSink<'_>,
     namespace_id: NamespaceId,
     topic_name: &TopicName,
     consumer_group: &ConsumerGroup,
@@ -388,7 +391,7 @@ enum Delivery {
 /// budget stops early, leaving the message uncommitted for a fresh attempt next cycle.
 async fn deliver_with_retry(
     http: &reqwest::Client,
-    compiled: &CompiledHttpSink<'_>,
+    compiled: &CompiledSink<'_>,
     msg: &StreamReceiveMsg,
     lease_deadline: Instant,
     deadline: Instant,
@@ -403,7 +406,7 @@ async fn deliver_with_retry(
             tokio::time::sleep(delay).await;
         }
 
-        match deliver(http, compiled, msg).await {
+        match compiled.deliver_one(http, msg).await {
             Ok(()) => return Delivery::Delivered,
             Err(e) => {
                 tracing::warn!(error = %e, offset = msg.offset, attempt, "sink delivery failed");
@@ -412,6 +415,24 @@ async fn deliver_with_retry(
     }
 
     Delivery::Failed
+}
+
+enum CompiledSink<'a> {
+    Http(CompiledHttpSink<'a>),
+    Svix(CompiledSvixSink<'a>),
+}
+
+impl CompiledSink<'_> {
+    async fn deliver_one(
+        &self,
+        http: &reqwest::Client,
+        msg: &StreamReceiveMsg,
+    ) -> Result<(), String> {
+        match self {
+            CompiledSink::Http(sink) => deliver(http, sink, msg).await,
+            CompiledSink::Svix(sink) => sink.deliver(http, msg).await,
+        }
+    }
 }
 
 /// An HTTP sink's templates compiled once so each delivery only runs [`CompiledTemplate::apply`]
@@ -463,8 +484,79 @@ async fn deliver(
         None => msg.value.to_vec(),
     };
 
+    send_request(request.body(body)).await
+}
+
+/// A Svix sink's templates compiled once. Delivery renders `app_id` into the URL and wraps the
+/// message value as the Svix message payload under the templated `event_type`.
+struct CompiledSvixSink<'a> {
+    token: &'a str,
+    /// Base URL, either the explicit override or inferred from the token's region.
+    base_url: String,
+    app_id: CompiledTemplate<'a>,
+    event_type: CompiledTemplate<'a>,
+    payload: Option<CompiledTemplate<'a>>,
+}
+
+impl<'a> CompiledSvixSink<'a> {
+    fn new(config: &'a SvixSinkConfig) -> Self {
+        let base_url = config
+            .server_url
+            .clone()
+            .unwrap_or_else(|| svix_base_url_from_token(&config.token));
+        Self {
+            token: &config.token,
+            base_url,
+            app_id: config.app_id.compile(),
+            event_type: config.event_type.compile(),
+            payload: config.payload.as_ref().map(|t| t.compile()),
+        }
+    }
+
+    async fn deliver(&self, http: &reqwest::Client, msg: &StreamReceiveMsg) -> Result<(), String> {
+        let vars = build_vars(msg);
+        let app_id = self.app_id.apply(&vars);
+        let url = format!(
+            "{}/api/v1/app/{}/msg/",
+            self.base_url.trim_end_matches('/'),
+            app_id
+        );
+
+        // Build the JSON body programmatically so `event_type` is escaped and the payload is embedded
+        // as real JSON rather than a quoted string.
+        let payload: serde_json::Value = match &self.payload {
+            Some(template) => serde_json::from_str(&template.apply(&vars))
+                .map_err(|e| format!("svix payload is not valid JSON: {e}"))?,
+            None => serde_json::from_slice(&msg.value)
+                .map_err(|e| format!("svix message value is not valid JSON: {e}"))?,
+        };
+        let body = serde_json::json!({
+            "eventType": self.event_type.apply(&vars),
+            "payload": payload,
+        });
+
+        let request = http.post(&url).bearer_auth(self.token).json(&body);
+        send_request(request).await
+    }
+}
+
+/// Infers the Svix API base URL from the token's region suffix, matching the Svix SDK. Tokens
+/// without a known region fall back to the default host.
+fn svix_base_url_from_token(token: &str) -> String {
+    match token.split('.').next_back() {
+        Some("us") => "https://api.us.svix.com",
+        Some("eu") => "https://api.eu.svix.com",
+        Some("in") => "https://api.in.svix.com",
+        Some("ca") => "https://api.ca.svix.com",
+        Some("au") => "https://api.au.svix.com",
+        _ => "https://api.svix.com",
+    }
+    .to_owned()
+}
+
+/// Sends a prepared request and maps the outcome to the sink delivery contract (any 2xx is success).
+async fn send_request(request: reqwest::RequestBuilder) -> Result<(), String> {
     let response = request
-        .body(body)
         .send()
         .await
         .map_err(|e| format!("request failed: {e}"))?;
