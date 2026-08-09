@@ -5,6 +5,9 @@ license.workspace = true
 version.workspace = true
 rust-version.workspace = true
 
+[features]
+kafka = ["dep:rdkafka"]
+
 [dependencies]
 dashmap.workspace = true
 diom-core.workspace = true
@@ -18,6 +21,7 @@ futures-util.workspace = true
 jiff.workspace = true
 opentelemetry.workspace = true
 rand.workspace = true
+rdkafka = { workspace = true, optional = true }
 reqwest.workspace = true
 schemars.workspace = true
 serde.workspace = true

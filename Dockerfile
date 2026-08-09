@@ -24,8 +24,17 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
     set -euxo pipefail
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -q
+    # build-essential (make plus a C/C++ toolchain), cmake, pkg-config and the OpenSSL, zlib and curl
+    # headers are needed to build librdkafka (rdkafka-sys) from source with the ssl feature. cmake
+    # uses make, and curl is pulled in by librdkafka's SASL OAUTHBEARER/OIDC support.
     apt-get install -y \
+        build-essential \
+        cmake \
+        libcurl4-openssl-dev \
+        libssl-dev \
         mold \
+        pkg-config \
+        zlib1g-dev \
         --no-install-recommends
 EOF
 
@@ -76,8 +85,13 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
     set -euxo pipefail
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -q
+    # libssl3, zlib1g and libcurl4 are the shared libraries that librdkafka (built with the ssl
+    # feature) links against at runtime.
     apt-get install -y \
         ca-certificates=20250419 \
+        libcurl4 \
+        libssl3 \
+        zlib1g \
         --no-install-recommends
     update-ca-certificates
 EOF

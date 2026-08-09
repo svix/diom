@@ -1092,6 +1092,11 @@ async fn sink_configure(
         .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found("namespace")?;
 
+    data.settings
+        .config
+        .validate()
+        .map_err(|detail| Error::invalid_data(detail, None))?;
+
     let operation =
         SinkConfigureOperation::new(namespace.id, data.topic, data.consumer_group, data.settings);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;

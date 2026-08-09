@@ -1,24 +1,31 @@
-#![allow(clippy::disallowed_types)]
+mod http;
+#[cfg(feature = "kafka")]
+mod kafka;
+mod svix;
+
 use std::{
     collections::HashMap,
     num::{NonZeroU16, NonZeroU32},
     time::{Duration, Instant},
 };
 
-use diom_core::{
-    backoff::jitter, template_str::CompiledTemplate, tokio_nursery::TaskNursery, types::DurationMs,
-};
+use diom_core::{backoff::jitter, tokio_nursery::TaskNursery, types::DurationMs};
 use diom_id::NamespaceId;
 use diom_operations::{BackgroundResult, OperationWriter};
 use fjall_utils::{FjallKey, TableRow};
 use futures_util::StreamExt;
 use tracing::instrument;
 
+use http::CompiledHttpSink;
+#[cfg(feature = "kafka")]
+use kafka::CompiledKafkaSink;
+use svix::CompiledSvixSink;
+
 use crate::{
     State,
     entities::{
-        ConsumerGroup, HttpMethod, HttpSinkConfig, Offset, Partition, SeekPosition, SinkConfig,
-        SinkSettings, SvixSinkConfig, TopicIn, TopicName, TopicPartition,
+        ConsumerGroup, Offset, Partition, SeekPosition, SinkConfig, SinkSettings, TopicIn,
+        TopicName, TopicPartition,
     },
     operations::{MsgsOperation, StreamCommitOperation, StreamReceiveMsg, StreamReceiveOperation},
     storage::{SinkKey, SinkRow},
@@ -154,6 +161,19 @@ async fn drain_sink<F>(
     let compiled = match &settings.config {
         SinkConfig::Http(http_config) => CompiledSink::Http(CompiledHttpSink::new(http_config)),
         SinkConfig::Svix(svix_config) => CompiledSink::Svix(CompiledSvixSink::new(svix_config)),
+        #[cfg(feature = "kafka")]
+        SinkConfig::Kafka(kafka_config) => match CompiledKafkaSink::new(kafka_config) {
+            Ok(sink) => CompiledSink::Kafka(sink),
+            Err(e) => {
+                tracing::error!(error = %e, "failed to build kafka producer, skipping sink");
+                return;
+            }
+        },
+        #[cfg(not(feature = "kafka"))]
+        SinkConfig::Kafka(_) => {
+            tracing::error!("kafka sink support not compiled in, skipping sink");
+            return;
+        }
     };
     let start = settings.default_starting_position.clone();
     let deadline = Instant::now() + max_duration;
@@ -268,8 +288,6 @@ where
         .map(|n| n.get() as usize)
         .unwrap_or_else(|| by_partition.len().max(1));
 
-    // Collect the per-partition futures eagerly (each borrow gets a concrete lifetime) before
-    // buffering, sidestepping the higher-ranked-lifetime inference that trips on a mapped stream.
     let partition_futures: Vec<_> = by_partition
         .into_iter()
         .map(|(partition, partition_msgs)| {
@@ -420,6 +438,8 @@ async fn deliver_with_retry(
 enum CompiledSink<'a> {
     Http(CompiledHttpSink<'a>),
     Svix(CompiledSvixSink<'a>),
+    #[cfg(feature = "kafka")]
+    Kafka(CompiledKafkaSink<'a>),
 }
 
 impl CompiledSink<'_> {
@@ -429,143 +449,11 @@ impl CompiledSink<'_> {
         msg: &StreamReceiveMsg,
     ) -> Result<(), String> {
         match self {
-            CompiledSink::Http(sink) => deliver(http, sink, msg).await,
+            CompiledSink::Http(sink) => sink.deliver(http, msg).await,
             CompiledSink::Svix(sink) => sink.deliver(http, msg).await,
+            #[cfg(feature = "kafka")]
+            CompiledSink::Kafka(sink) => sink.deliver(msg).await,
         }
-    }
-}
-
-/// An HTTP sink's templates compiled once so each delivery only runs [`CompiledTemplate::apply`]
-/// against the per-message variables, instead of recompiling every template per message.
-struct CompiledHttpSink<'a> {
-    method: reqwest::Method,
-    url: CompiledTemplate<'a>,
-    headers: Vec<(CompiledTemplate<'a>, CompiledTemplate<'a>)>,
-    body: Option<CompiledTemplate<'a>>,
-}
-
-impl<'a> CompiledHttpSink<'a> {
-    fn new(config: &'a HttpSinkConfig) -> Self {
-        let method = match config.method {
-            HttpMethod::Post => reqwest::Method::POST,
-            HttpMethod::Put => reqwest::Method::PUT,
-            HttpMethod::Patch => reqwest::Method::PATCH,
-        };
-        let headers = config
-            .headers
-            .iter()
-            .map(|(name, value)| (name.compile(), value.compile()))
-            .collect();
-        Self {
-            method,
-            url: config.url.compile(),
-            headers,
-            body: config.body.as_ref().map(|t| t.compile()),
-        }
-    }
-}
-
-/// Delivers a single message to the sink's destination.
-async fn deliver(
-    http: &reqwest::Client,
-    sink: &CompiledHttpSink<'_>,
-    msg: &StreamReceiveMsg,
-) -> Result<(), String> {
-    let vars = build_vars(msg);
-    let url = sink.url.apply(&vars);
-
-    let mut request = http.request(sink.method.clone(), &url);
-    for (name, value) in &sink.headers {
-        request = request.header(name.apply(&vars), value.apply(&vars));
-    }
-
-    let body: Vec<u8> = match &sink.body {
-        Some(template) => template.apply(&vars).into_bytes(),
-        None => msg.value.to_vec(),
-    };
-
-    send_request(request.body(body)).await
-}
-
-/// A Svix sink's templates compiled once. Delivery renders `app_id` into the URL and wraps the
-/// message value as the Svix message payload under the templated `event_type`.
-struct CompiledSvixSink<'a> {
-    token: &'a str,
-    /// Base URL, either the explicit override or inferred from the token's region.
-    base_url: String,
-    app_id: CompiledTemplate<'a>,
-    event_type: CompiledTemplate<'a>,
-    payload: Option<CompiledTemplate<'a>>,
-}
-
-impl<'a> CompiledSvixSink<'a> {
-    fn new(config: &'a SvixSinkConfig) -> Self {
-        let base_url = config
-            .server_url
-            .clone()
-            .unwrap_or_else(|| svix_base_url_from_token(&config.token));
-        Self {
-            token: &config.token,
-            base_url,
-            app_id: config.app_id.compile(),
-            event_type: config.event_type.compile(),
-            payload: config.payload.as_ref().map(|t| t.compile()),
-        }
-    }
-
-    async fn deliver(&self, http: &reqwest::Client, msg: &StreamReceiveMsg) -> Result<(), String> {
-        let vars = build_vars(msg);
-        let app_id = self.app_id.apply(&vars);
-        let url = format!(
-            "{}/api/v1/app/{}/msg/",
-            self.base_url.trim_end_matches('/'),
-            app_id
-        );
-
-        // Build the JSON body programmatically so `event_type` is escaped and the payload is embedded
-        // as real JSON rather than a quoted string.
-        let payload: serde_json::Value = match &self.payload {
-            Some(template) => serde_json::from_str(&template.apply(&vars))
-                .map_err(|e| format!("svix payload is not valid JSON: {e}"))?,
-            None => serde_json::from_slice(&msg.value)
-                .map_err(|e| format!("svix message value is not valid JSON: {e}"))?,
-        };
-        let body = serde_json::json!({
-            "eventType": self.event_type.apply(&vars),
-            "payload": payload,
-        });
-
-        let request = http.post(&url).bearer_auth(self.token).json(&body);
-        send_request(request).await
-    }
-}
-
-/// Infers the Svix API base URL from the token's region suffix, matching the Svix SDK. Tokens
-/// without a known region fall back to the default host.
-fn svix_base_url_from_token(token: &str) -> String {
-    match token.split('.').next_back() {
-        Some("us") => "https://api.us.svix.com",
-        Some("eu") => "https://api.eu.svix.com",
-        Some("in") => "https://api.in.svix.com",
-        Some("ca") => "https://api.ca.svix.com",
-        Some("au") => "https://api.au.svix.com",
-        _ => "https://api.svix.com",
-    }
-    .to_owned()
-}
-
-/// Sends a prepared request and maps the outcome to the sink delivery contract (any 2xx is success).
-async fn send_request(request: reqwest::RequestBuilder) -> Result<(), String> {
-    let response = request
-        .send()
-        .await
-        .map_err(|e| format!("request failed: {e}"))?;
-
-    let status = response.status();
-    if status.is_success() {
-        Ok(())
-    } else {
-        Err(format!("sink returned status {status}"))
     }
 }
 
@@ -593,6 +481,21 @@ fn build_vars(msg: &StreamReceiveMsg) -> HashMap<String, String> {
     );
 
     vars
+}
+
+/// Sends a prepared request and maps the outcome to the sink delivery contract (any 2xx is success).
+async fn send_request(request: reqwest::RequestBuilder) -> Result<(), String> {
+    let response = request
+        .send()
+        .await
+        .map_err(|e| format!("request failed: {e}"))?;
+
+    let status = response.status();
+    if status.is_success() {
+        Ok(())
+    } else {
+        Err(format!("sink returned status {status}"))
+    }
 }
 
 impl<F: OperationWriter<MsgsOperation>> diom_operations::workers::BackgroundWorker

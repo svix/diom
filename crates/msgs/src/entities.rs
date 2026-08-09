@@ -486,6 +486,7 @@ pub enum HttpMethod {
 pub enum SinkConfig {
     Http(HttpSinkConfig),
     Svix(SvixSinkConfig),
+    Kafka(KafkaSinkConfig),
 }
 
 impl PersistableValue for SinkConfig {}
@@ -496,6 +497,7 @@ impl PersistableValue for SinkConfig {}
 enum SinkConfigTaggedRef<'a> {
     Http(&'a HttpSinkConfig),
     Svix(&'a SvixSinkConfig),
+    Kafka(&'a KafkaSinkConfig),
 }
 
 #[derive(Deserialize)]
@@ -503,6 +505,7 @@ enum SinkConfigTaggedRef<'a> {
 enum SinkConfigTagged {
     Http(HttpSinkConfig),
     Svix(SvixSinkConfig),
+    Kafka(KafkaSinkConfig),
 }
 
 // Externally-tagged mirror used for non-self-describing formats
@@ -511,6 +514,7 @@ enum SinkConfigTagged {
 enum SinkConfigUntaggedRef<'a> {
     Http(&'a HttpSinkConfig),
     Svix(&'a SvixSinkConfig),
+    Kafka(&'a KafkaSinkConfig),
 }
 
 #[derive(Deserialize)]
@@ -518,6 +522,7 @@ enum SinkConfigUntaggedRef<'a> {
 enum SinkConfigUntagged {
     Http(HttpSinkConfig),
     Svix(SvixSinkConfig),
+    Kafka(KafkaSinkConfig),
 }
 
 impl Serialize for SinkConfig {
@@ -529,11 +534,15 @@ impl Serialize for SinkConfig {
             match self {
                 SinkConfig::Http(http) => SinkConfigTaggedRef::Http(http).serialize(serializer),
                 SinkConfig::Svix(svix) => SinkConfigTaggedRef::Svix(svix).serialize(serializer),
+                SinkConfig::Kafka(kafka) => SinkConfigTaggedRef::Kafka(kafka).serialize(serializer),
             }
         } else {
             match self {
                 SinkConfig::Http(http) => SinkConfigUntaggedRef::Http(http).serialize(serializer),
                 SinkConfig::Svix(svix) => SinkConfigUntaggedRef::Svix(svix).serialize(serializer),
+                SinkConfig::Kafka(kafka) => {
+                    SinkConfigUntaggedRef::Kafka(kafka).serialize(serializer)
+                }
             }
         }
     }
@@ -548,11 +557,13 @@ impl<'de> Deserialize<'de> for SinkConfig {
             Ok(match SinkConfigTagged::deserialize(deserializer)? {
                 SinkConfigTagged::Http(http) => SinkConfig::Http(http),
                 SinkConfigTagged::Svix(svix) => SinkConfig::Svix(svix),
+                SinkConfigTagged::Kafka(kafka) => SinkConfig::Kafka(kafka),
             })
         } else {
             Ok(match SinkConfigUntagged::deserialize(deserializer)? {
                 SinkConfigUntagged::Http(http) => SinkConfig::Http(http),
                 SinkConfigUntagged::Svix(svix) => SinkConfig::Svix(svix),
+                SinkConfigUntagged::Kafka(kafka) => SinkConfig::Kafka(kafka),
             })
         }
     }
@@ -565,6 +576,16 @@ impl SinkConfig {
         match self {
             SinkConfig::Http(_) => {}
             SinkConfig::Svix(svix) => svix.token = obfuscate_token(&svix.token),
+            SinkConfig::Kafka(kafka) => kafka.security.obfuscate_secrets(),
+        }
+    }
+
+    /// Rejects semantically invalid configs that deserialization cannot catch. HTTP and Svix
+    /// templates are already validated when deserialized, so only Kafka has cross-field rules.
+    pub fn validate(&self) -> Result<(), String> {
+        match self {
+            SinkConfig::Http(_) | SinkConfig::Svix(_) => Ok(()),
+            SinkConfig::Kafka(kafka) => kafka.security.validate(),
         }
     }
 }
@@ -616,6 +637,186 @@ pub struct SvixSinkConfig {
     /// Optional base URL override. When absent, the region is inferred from the token.
     #[serde(default)]
     pub server_url: Option<String>,
+}
+
+/// The connection security protocol, mapped onto librdkafka's `security.protocol`.
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum SecurityProtocol {
+    Plaintext,
+    Ssl,
+    SaslPlaintext,
+    SaslSsl,
+}
+
+impl SecurityProtocol {
+    #[cfg(feature = "kafka")]
+    fn librdkafka_value(self) -> &'static str {
+        match self {
+            Self::Plaintext => "plaintext",
+            Self::Ssl => "ssl",
+            Self::SaslPlaintext => "sasl_plaintext",
+            Self::SaslSsl => "sasl_ssl",
+        }
+    }
+
+    fn is_sasl(self) -> bool {
+        matches!(self, Self::SaslPlaintext | Self::SaslSsl)
+    }
+}
+
+/// The SASL mechanism, mapped onto librdkafka's `sasl.mechanism`.
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum SaslMechanism {
+    Plain,
+    ScramSha256,
+    ScramSha512,
+}
+
+impl SaslMechanism {
+    #[cfg(feature = "kafka")]
+    fn librdkafka_value(self) -> &'static str {
+        match self {
+            Self::Plain => "PLAIN",
+            Self::ScramSha256 => "SCRAM-SHA-256",
+            Self::ScramSha512 => "SCRAM-SHA-512",
+        }
+    }
+}
+
+/// Connection security for a Kafka sink. Every field is optional and maps 1:1 onto a librdkafka
+/// config key, so absent fields leave librdkafka at its defaults. Certificates and keys are inline
+/// PEMs so credentials live in the config rather than in per-node files.
+#[derive(
+    Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue,
+)]
+pub struct KafkaSecurity {
+    #[serde(default)]
+    pub security_protocol: Option<SecurityProtocol>,
+    #[serde(default)]
+    pub sasl_mechanism: Option<SaslMechanism>,
+    #[serde(default)]
+    pub sasl_username: Option<String>,
+    /// Secret. Obfuscated in list responses.
+    #[serde(default)]
+    pub sasl_password: Option<String>,
+    /// Inline CA certificate PEM. When absent, the system trust roots are used.
+    #[serde(default)]
+    pub ssl_ca_pem: Option<String>,
+    /// Inline client certificate PEM for mutual TLS.
+    #[serde(default)]
+    pub ssl_certificate_pem: Option<String>,
+    /// Inline client key PEM for mutual TLS. Secret. Fully redacted in list responses.
+    #[serde(default)]
+    pub ssl_key_pem: Option<String>,
+    /// Password for an encrypted client key. Secret. Fully redacted in list responses.
+    #[serde(default)]
+    pub ssl_key_password: Option<String>,
+    #[serde(default)]
+    pub enable_ssl_certificate_verification: Option<bool>,
+}
+
+impl KafkaSecurity {
+    /// The librdkafka config key/value pairs for the fields that are set.
+    #[cfg(feature = "kafka")]
+    pub(crate) fn librdkafka_options(&self) -> Vec<(&'static str, String)> {
+        let mut opts = Vec::new();
+        let mut push = |key, value: Option<String>| {
+            if let Some(value) = value {
+                opts.push((key, value));
+            }
+        };
+        push(
+            "security.protocol",
+            self.security_protocol
+                .map(|p| p.librdkafka_value().to_owned()),
+        );
+        push(
+            "sasl.mechanism",
+            self.sasl_mechanism.map(|m| m.librdkafka_value().to_owned()),
+        );
+        push("sasl.username", self.sasl_username.clone());
+        push("sasl.password", self.sasl_password.clone());
+        push("ssl.ca.pem", self.ssl_ca_pem.clone());
+        push("ssl.certificate.pem", self.ssl_certificate_pem.clone());
+        push("ssl.key.pem", self.ssl_key_pem.clone());
+        push("ssl.key.password", self.ssl_key_password.clone());
+        push(
+            "enable.ssl.certificate.verification",
+            self.enable_ssl_certificate_verification
+                .map(|v| v.to_string()),
+        );
+        opts
+    }
+
+    /// Rejects incoherent combinations before they reach the broker.
+    fn validate(&self) -> Result<(), String> {
+        let protocol_is_sasl = self
+            .security_protocol
+            .is_some_and(SecurityProtocol::is_sasl);
+
+        if protocol_is_sasl && self.sasl_mechanism.is_none() {
+            return Err("a SASL security_protocol requires sasl_mechanism".to_owned());
+        }
+        if self.sasl_mechanism.is_some() {
+            if !protocol_is_sasl {
+                return Err(
+                    "sasl_mechanism requires a SASL security_protocol (sasl_plaintext or sasl_ssl)"
+                        .to_owned(),
+                );
+            }
+            if self.sasl_username.is_none() || self.sasl_password.is_none() {
+                return Err("sasl_mechanism requires sasl_username and sasl_password".to_owned());
+            }
+        }
+        // Mutual TLS needs both the client certificate and its key.
+        if self.ssl_certificate_pem.is_some() != self.ssl_key_pem.is_some() {
+            return Err("ssl_certificate_pem and ssl_key_pem must be provided together".to_owned());
+        }
+        Ok(())
+    }
+
+    fn obfuscate_secrets(&mut self) {
+        if let Some(password) = &self.sasl_password {
+            self.sasl_password = Some(obfuscate_token(password));
+        }
+        // Key material is fully redacted (even a prefix or suffix reveal is undesirable).
+        if self.ssl_key_pem.is_some() {
+            self.ssl_key_pem = Some("...".to_owned());
+        }
+        if self.ssl_key_password.is_some() {
+            self.ssl_key_password = Some("...".to_owned());
+        }
+    }
+}
+
+/// Configuration for a Kafka sink. Each message is produced to `topic` on the target cluster. By
+/// default the message value and headers pass through unchanged, but each can be templated
+/// per-message (see [`diom_core::template_str`]).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue)]
+pub struct KafkaSinkConfig {
+    /// Comma-separated `host:port` list of the target cluster's bootstrap brokers.
+    pub bootstrap_servers: String,
+    /// Destination Kafka topic.
+    pub topic: String,
+    /// Templated record key rendered per-message. When absent, records are produced without a key.
+    #[serde(default)]
+    pub key: Option<Template>,
+    /// Templated record value. When absent, the raw message value bytes are produced unchanged.
+    #[serde(default)]
+    pub value: Option<Template>,
+    /// Templated record headers merged on top of the message's own headers (which pass through by
+    /// default). A templated header overrides a passed-through one with the same name.
+    #[serde(default)]
+    pub headers: HashMap<Template, Template>,
+    /// Connection security (SASL and/or TLS). Defaults to none (PLAINTEXT).
+    #[serde(default)]
+    pub security: KafkaSecurity,
 }
 
 fn default_sink_starting_position() -> SeekPosition {

@@ -2,12 +2,21 @@
 use std::time::Duration;
 
 use diom_core::types::NonZeroDurationMs;
+use rdkafka::{
+    ClientConfig, Message,
+    consumer::{Consumer, StreamConsumer},
+};
 use serde_json::json;
 use test_utils::{
     StatusCode, TestResult,
     retry::run_with_retries,
     server::{TestServerBuilder, start_server},
 };
+use testcontainers::{
+    GenericImage, ImageExt,
+    core::{IntoContainerPort, WaitFor},
+};
+use testcontainers_modules::{kafka::apache, testcontainers::runners::AsyncRunner};
 use wiremock::{Mock, MockServer, ResponseTemplate, matchers::any};
 
 #[tokio::test]
@@ -762,6 +771,342 @@ async fn test_sink_delete_clears_cursor() -> TestResult {
         Ok(())
     })
     .await?;
+
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Kafka sink
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn test_kafka_sink_configure() -> TestResult {
+    let ctx = start_server().await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = ctx
+        .client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "kafka_sink",
+            "config": {
+                "type": "kafka",
+                "data": {
+                    "bootstrap_servers": "localhost:9092",
+                    "topic": "orders-out",
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(response["topic"], "orders");
+    assert_eq!(response["consumer_group"], "kafka_sink");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_kafka_sink_configure_rejects_invalid_auth() -> TestResult {
+    let ctx = start_server().await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // A SASL mechanism without credentials is incoherent and must be rejected up front.
+    let response = ctx
+        .client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "kafka_bad_auth",
+            "config": {
+                "type": "kafka",
+                "data": {
+                    "bootstrap_servers": "localhost:9092",
+                    "topic": "orders-out",
+                    "security": {
+                        "security_protocol": "sasl-ssl",
+                        "sasl_mechanism": "scram-sha256",
+                    },
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::UNPROCESSABLE_ENTITY)
+        .json();
+
+    assert_eq!(response["type"], "invalid-input");
+    assert_eq!(response["code"], "invalid-data");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_kafka_sink_list_masks_auth_secrets() -> TestResult {
+    let ctx = start_server().await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "kafka_sink",
+            "config": {
+                "type": "kafka",
+                "data": {
+                    "bootstrap_servers": "localhost:9092",
+                    "topic": "orders-out",
+                    "security": {
+                        "security_protocol": "sasl-ssl",
+                        "sasl_mechanism": "scram-sha256",
+                        "sasl_username": "user",
+                        "sasl_password": "supersecretpassword123456",
+                        "ssl_certificate_pem": "-----BEGIN CERTIFICATE-----abc-----END CERTIFICATE-----",
+                        "ssl_key_pem": "-----BEGIN PRIVATE KEY-----abc-----END PRIVATE KEY-----",
+                    },
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = ctx
+        .client
+        .post("v1.msgs.sink.list")
+        .json(json!({ "topic": "orders" }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let security = &response["data"][0]["config"]["data"]["security"];
+    // The password is obfuscated (first 12 and last 4 chars kept), key material is fully redacted,
+    // and the non-secret username comes back verbatim.
+    assert_eq!(security["sasl_username"], "user");
+    assert_eq!(security["sasl_password"], "supersecretp...3456");
+    assert_eq!(security["ssl_key_pem"], "...");
+
+    Ok(())
+}
+
+// Requires Docker. Boots a real Kafka broker in a container and asserts the sink produces the
+// published messages to the target Kafka topic.
+#[tokio::test]
+async fn test_kafka_sink_forwards_published_messages() -> TestResult {
+    let broker = apache::Kafka::default().start().await?;
+    let bootstrap = format!(
+        "{}:{}",
+        broker.get_host().await?,
+        broker.get_host_port_ipv4(apache::KAFKA_PORT).await?
+    );
+
+    let ctx = TestServerBuilder::with_default_config()
+        .tap_cfg(|cfg| {
+            cfg.background_cleanup_interval = NonZeroDurationMs::from_secs(1).unwrap();
+        })
+        .build()
+        .await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // The sink forwards each message to `topic` on the target cluster, using the templated `key`.
+    ctx.client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "kafka_sink",
+            "default_starting_position": "earliest",
+            "config": {
+                "type": "kafka",
+                "data": {
+                    "bootstrap_servers": bootstrap,
+                    "topic": "orders-out",
+                    "key": "${headers.org_id}",
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "orders",
+            "msgs": [
+                { "value": "hello".as_bytes(), "headers": { "org_id": "acme" } },
+                { "value": "world".as_bytes(), "headers": { "org_id": "acme" } },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let consumer: StreamConsumer = ClientConfig::new()
+        .set("bootstrap.servers", &bootstrap)
+        .set("group.id", "kafka-sink-test-consumer")
+        .set("auto.offset.reset", "earliest")
+        .create()?;
+    consumer.subscribe(&["orders-out"])?;
+
+    let deadline = std::time::Instant::now() + Duration::from_secs(60);
+    let mut received: Vec<(String, Option<String>)> = Vec::new();
+    while received.len() < 2 && std::time::Instant::now() < deadline {
+        match tokio::time::timeout(Duration::from_secs(10), consumer.recv()).await {
+            Ok(Ok(msg)) => {
+                let value = String::from_utf8_lossy(msg.payload().unwrap_or_default()).into_owned();
+                let key = msg.key().map(|k| String::from_utf8_lossy(k).into_owned());
+                received.push((value, key));
+            }
+            Ok(Err(_)) => tokio::time::sleep(Duration::from_millis(250)).await,
+            Err(_elapsed) => {}
+        }
+    }
+    assert_eq!(received.len(), 2, "expected 2 records, got {received:?}");
+
+    let values: Vec<&str> = received.iter().map(|(v, _)| v.as_str()).collect();
+    assert!(values.contains(&"hello"), "missing hello: {values:?}");
+    assert!(values.contains(&"world"), "missing world: {values:?}");
+    assert!(
+        received.iter().all(|(_, k)| k.as_deref() == Some("acme")),
+        "each record should carry the templated key: {received:?}"
+    );
+
+    Ok(())
+}
+
+// Requires Docker. Boots a SASL-enabled Redpanda broker and asserts the sink authenticates with
+// SCRAM-SHA-256 and delivers to the target topic. The `testcontainers-modules` kafka module is
+// PLAINTEXT-only, so the broker is a hand-rolled GenericImage.
+#[tokio::test]
+async fn test_kafka_sink_forwards_with_sasl() -> TestResult {
+    const SASL_USER: &str = "superuser";
+    const SASL_PASS: &str = "secretpassword";
+    // Fixed host port so the broker can advertise a host-reachable address up front.
+    const HOST_PORT: u16 = 39092;
+
+    let _broker = GenericImage::new("redpandadata/redpanda", "v24.2.7")
+        .with_exposed_port(9092.tcp())
+        .with_wait_for(WaitFor::message_on_stderr("Successfully started Redpanda!"))
+        .with_mapped_port(HOST_PORT, 9092.tcp())
+        .with_env_var("RP_BOOTSTRAP_USER", format!("{SASL_USER}:{SASL_PASS}"))
+        .with_cmd(vec![
+            "redpanda".to_string(),
+            "start".to_string(),
+            "--overprovisioned".to_string(),
+            "--smp".to_string(),
+            "1".to_string(),
+            "--memory".to_string(),
+            "1G".to_string(),
+            "--reserve-memory".to_string(),
+            "0M".to_string(),
+            "--node-id".to_string(),
+            "0".to_string(),
+            "--check=false".to_string(),
+            "--kafka-addr".to_string(),
+            "PLAINTEXT://0.0.0.0:9092".to_string(),
+            format!("--advertise-kafka-addr=PLAINTEXT://127.0.0.1:{HOST_PORT}"),
+            "--set".to_string(),
+            "redpanda.enable_sasl=true".to_string(),
+            // The bootstrap user must be a superuser to be authorized, and the sink relies on topic
+            // auto-creation when it first produces.
+            "--set".to_string(),
+            "redpanda.superusers=['superuser']".to_string(),
+            "--set".to_string(),
+            "redpanda.auto_create_topics_enabled=true".to_string(),
+        ])
+        .start()
+        .await?;
+    let bootstrap = format!("127.0.0.1:{HOST_PORT}");
+
+    let ctx = TestServerBuilder::with_default_config()
+        .tap_cfg(|cfg| {
+            cfg.background_cleanup_interval = NonZeroDurationMs::from_secs(1).unwrap();
+        })
+        .build()
+        .await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "kafka_sink",
+            "default_starting_position": "earliest",
+            "config": {
+                "type": "kafka",
+                "data": {
+                    "bootstrap_servers": bootstrap,
+                    "topic": "orders-out",
+                    "security": {
+                        "security_protocol": "sasl-plaintext",
+                        "sasl_mechanism": "scram-sha256",
+                        "sasl_username": SASL_USER,
+                        "sasl_password": SASL_PASS,
+                    },
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "orders",
+            "msgs": [ { "value": "authed".as_bytes() } ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let consumer: StreamConsumer = ClientConfig::new()
+        .set("bootstrap.servers", &bootstrap)
+        .set("group.id", "kafka-sasl-test-consumer")
+        .set("auto.offset.reset", "earliest")
+        .set("security.protocol", "SASL_PLAINTEXT")
+        .set("sasl.mechanism", "SCRAM-SHA-256")
+        .set("sasl.username", SASL_USER)
+        .set("sasl.password", SASL_PASS)
+        .create()?;
+    consumer.subscribe(&["orders-out"])?;
+
+    // Kept under the nextest slow-timeout so a genuine failure asserts (and drops the container)
+    // rather than being killed mid-run and leaking the fixed host port.
+    let deadline = std::time::Instant::now() + Duration::from_secs(25);
+    let mut received: Vec<String> = Vec::new();
+    while received.is_empty() && std::time::Instant::now() < deadline {
+        match tokio::time::timeout(Duration::from_secs(10), consumer.recv()).await {
+            Ok(Ok(msg)) => {
+                received
+                    .push(String::from_utf8_lossy(msg.payload().unwrap_or_default()).into_owned());
+            }
+            Ok(Err(_)) => tokio::time::sleep(Duration::from_millis(250)).await,
+            Err(_elapsed) => {}
+        }
+    }
+    assert_eq!(received, vec!["authed".to_string()]);
 
     Ok(())
 }

@@ -13,6 +13,10 @@ rust-executable-metadata.workspace = true
 dist = false
 
 [features]
+default = ["kafka"]
+# Kafka sink support. On by default. The operator e2e image builds the server with
+# --no-default-features to drop librdkafka, since those tests never exercise the sink.
+kafka = ["diom-backend/kafka"]
 tokio-console = ["dep:console-subscriber"]
 
 [dependencies]

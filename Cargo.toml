@@ -21,6 +21,8 @@ ignored = [
 openapi = []
 # this enables console_subscriber / tokio-console
 tokio-console = []
+# enables the Kafka sink delivery worker (pulls in rdkafka / librdkafka)
+kafka = ["diom-msgs/kafka"]
 default = []
 
 [dependencies]
@@ -96,9 +98,12 @@ ctor.workspace = true
 dotenvy.workspace = true
 more-asserts = "0.3"
 rand.workspace = true
+rdkafka.workspace = true
 rmp-serde.workspace = true
 rmpv.workspace = true
 test-utils.workspace = true
+testcontainers.workspace = true
+testcontainers-modules.workspace = true
 wiremock.workspace = true
 
 [lints]
@@ -208,6 +213,7 @@ postcard = { version = "1", features = ["alloc"] }
 proc-macro2 = "1.0.78"
 quote = "1.0.15"
 rand = "0.10.1"
+rdkafka = { version = "0.38", features = ["cmake-build", "ssl"] }
 regex = "1.5.5"
 reqwest = { version = "0.13.3", default-features = false, features = ["json", "rustls", "hickory-dns", "stream", "http2"] }
 rmp-serde = "1.3.1"
@@ -227,6 +233,8 @@ sysinfo = "0.39.0"
 tap = "1"
 tempfile = "3.24.0"
 test-utils.path = "crates/test-utils"
+testcontainers = "0.27"
+testcontainers-modules = { version = "0.15", features = ["kafka"] }
 thiserror = "2.0.18"
 tokio = { version = "1.24.2", features = ["rt", "rt-multi-thread", "signal", "time", "fs"] }
 tokio-util = "0.7"

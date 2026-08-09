@@ -28,8 +28,17 @@ fn ensure_e2e_image_built() {
         let repo_root = format!("{manifest_dir}/../..");
         let dockerfile = format!("{manifest_dir}/tests/Dockerfile.e2e");
 
+        // Build without default features so the e2e server drops the Kafka sink (and librdkafka).
+        // These tests only exercise operator reconciliation, never the sink.
         let status = Command::new("cargo")
-            .args(["build", "-p", "diom-server", "--bin", "diom-server"])
+            .args([
+                "build",
+                "-p",
+                "diom-server",
+                "--bin",
+                "diom-server",
+                "--no-default-features",
+            ])
             .current_dir(&repo_root)
             .status()
             .expect("failed to build diom-server");
