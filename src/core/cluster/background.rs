@@ -375,7 +375,7 @@ pub(super) async fn run_background_jobs_on_all_nodes(
         .raft
         .with_raft_state(|st| st.local_committed().copied())
         .await?;
-    let mut ticker = tokio::time::interval(Duration::from_secs(60));
+    let mut ticker = tokio::time::interval(cfg.cluster.minimum_snapshot_interval.into());
     let shutdown = crate::shutting_down_token();
 
     loop {

@@ -105,6 +105,10 @@ pub(super) const fn cluster_send_snapshot_timeout() -> NonZeroDurationMs {
     NonZeroDurationMs::from_secs(300).unwrap()
 }
 
+pub(super) const fn minimum_snapshot_interval() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(60).unwrap()
+}
+
 pub(super) fn cluster_replication_lag_threshold() -> u64 {
     100_000
 }

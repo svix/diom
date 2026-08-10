@@ -404,6 +404,13 @@ pub struct ClusterConfiguration {
     )]
     pub snapshot_after_time: Option<NonZeroDurationMs>,
 
+    /// Snapshot at most this often
+    #[serde(
+        rename = "minimum_snapshot_interval_ms",
+        default = "defaults::minimum_snapshot_interval"
+    )]
+    pub minimum_snapshot_interval: NonZeroDurationMs,
+
     /// Shut down the process when the it is evicted from the cluster.
     ///
     /// This should be true unless you are testing internal details of the replication system.

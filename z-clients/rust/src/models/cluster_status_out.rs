@@ -31,6 +31,10 @@ pub struct ClusterStatusOut {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub this_node_last_snapshot_id: Option<String>,
 
+    /// The last-purged log on this node
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub this_node_last_purged_log_index: Option<u64>,
+
     /// A list of all nodes known to be in the cluster
     pub nodes: Vec<NodeStatusOut>,
 }
@@ -49,6 +53,7 @@ impl ClusterStatusOut {
             this_node_state,
             this_node_last_committed_timestamp,
             this_node_last_snapshot_id: None,
+            this_node_last_purged_log_index: None,
             nodes,
         }
     }
@@ -65,6 +70,11 @@ impl ClusterStatusOut {
 
     pub fn with_this_node_last_snapshot_id(mut self, value: impl Into<Option<String>>) -> Self {
         self.this_node_last_snapshot_id = value.into();
+        self
+    }
+
+    pub fn with_this_node_last_purged_log_index(mut self, value: impl Into<Option<u64>>) -> Self {
+        self.this_node_last_purged_log_index = value.into();
         self
     }
 }

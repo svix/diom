@@ -29,6 +29,8 @@ export interface ClusterStatusOut {
     thisNodeLastCommittedTimestamp: Date;
     /** The last snapshot taken on this node */
     thisNodeLastSnapshotId?: string | null;
+    /** The last-purged log on this node */
+    thisNodeLastPurgedLogIndex?: number | null;
     /** A list of all nodes known to be in the cluster */
     nodes: NodeStatusOut[];
 }
@@ -43,6 +45,7 @@ export const ClusterStatusOutSerializer = {
             thisNodeState: ServerStateSerializer._fromJsonObject(object['this_node_state']),
             thisNodeLastCommittedTimestamp: new Date(Number(object['this_node_last_committed_timestamp'])),
             thisNodeLastSnapshotId: object['this_node_last_snapshot_id'],
+            thisNodeLastPurgedLogIndex: object['this_node_last_purged_log_index'],
             nodes: object['nodes'].map((item: NodeStatusOut) => NodeStatusOutSerializer._fromJsonObject(item)),
         };
     },
@@ -56,6 +59,7 @@ export const ClusterStatusOutSerializer = {
             'this_node_state': ServerStateSerializer._toJsonObject(self.thisNodeState),
             'this_node_last_committed_timestamp': self.thisNodeLastCommittedTimestamp.getTime(),
             'this_node_last_snapshot_id': self.thisNodeLastSnapshotId,
+            'this_node_last_purged_log_index': self.thisNodeLastPurgedLogIndex,
             'nodes': self.nodes.map((item) => NodeStatusOutSerializer._toJsonObject(item)),
         };
     }

@@ -42,6 +42,7 @@ public class ClusterStatusOut {
     @JsonProperty("this_node_state") private ServerState thisNodeState;
     @JsonProperty("this_node_last_committed_timestamp") @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant thisNodeLastCommittedTimestamp;
     @JsonProperty("this_node_last_snapshot_id") private String thisNodeLastSnapshotId;
+    @JsonProperty("this_node_last_purged_log_index") private Long thisNodeLastPurgedLogIndex;
     @JsonProperty private List<NodeStatusOut> nodes;
     public ClusterStatusOut() {}
 
@@ -161,6 +162,25 @@ This value is not replicated and should only be used for debugging.
 
     public void setThisNodeLastSnapshotId(String thisNodeLastSnapshotId) {
         this.thisNodeLastSnapshotId = thisNodeLastSnapshotId;
+    }
+
+    public ClusterStatusOut thisNodeLastPurgedLogIndex(Long thisNodeLastPurgedLogIndex) {
+        this.thisNodeLastPurgedLogIndex = thisNodeLastPurgedLogIndex;
+        return this;
+    }
+
+    /**
+    * The last-purged log on this node
+    *
+     * @return thisNodeLastPurgedLogIndex
+     */
+    @javax.annotation.Nullable
+    public Long getThisNodeLastPurgedLogIndex() {
+        return thisNodeLastPurgedLogIndex;
+    }
+
+    public void setThisNodeLastPurgedLogIndex(Long thisNodeLastPurgedLogIndex) {
+        this.thisNodeLastPurgedLogIndex = thisNodeLastPurgedLogIndex;
     }
 
     public ClusterStatusOut nodes(List<NodeStatusOut> nodes) {

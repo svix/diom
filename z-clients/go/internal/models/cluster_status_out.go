@@ -11,9 +11,10 @@ type ClusterStatusOut struct {
 	//
 	// This value is not replicated and should only be used for debugging.
 	ClusterName                    *string         `msgpack:"cluster_name,omitempty"`
-	ThisNodeId                     string          `msgpack:"this_node_id"`                         // The unique ID of the node servicing this request
-	ThisNodeState                  ServerState     `msgpack:"this_node_state"`                      // The cluster state of the node servicing this request
-	ThisNodeLastCommittedTimestamp uint64          `msgpack:"this_node_last_committed_timestamp"`   // The timestamp of the last transaction committed on this node
-	ThisNodeLastSnapshotId         *string         `msgpack:"this_node_last_snapshot_id,omitempty"` // The last snapshot taken on this node
-	Nodes                          []NodeStatusOut `msgpack:"nodes"`                                // A list of all nodes known to be in the cluster
+	ThisNodeId                     string          `msgpack:"this_node_id"`                              // The unique ID of the node servicing this request
+	ThisNodeState                  ServerState     `msgpack:"this_node_state"`                           // The cluster state of the node servicing this request
+	ThisNodeLastCommittedTimestamp uint64          `msgpack:"this_node_last_committed_timestamp"`        // The timestamp of the last transaction committed on this node
+	ThisNodeLastSnapshotId         *string         `msgpack:"this_node_last_snapshot_id,omitempty"`      // The last snapshot taken on this node
+	ThisNodeLastPurgedLogIndex     *uint64         `msgpack:"this_node_last_purged_log_index,omitempty"` // The last-purged log on this node
+	Nodes                          []NodeStatusOut `msgpack:"nodes"`                                     // A list of all nodes known to be in the cluster
 }

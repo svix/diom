@@ -10,6 +10,8 @@ use fjall_utils::{Databases, SchemaManifest, StorageType};
 use serde::{Deserialize, Serialize};
 use zip::{ZipArchive, write::SimpleFileOptions};
 
+use crate::core::cluster::ClusterId;
+
 // This file supports serializing a bunch of Fjall keyspaces to a file
 // to be sent as a Raft snapshot. In the future, when
 // https://github.com/fjall-rs/fjall/issues/52 is done, we should use that to just
@@ -45,9 +47,10 @@ struct KeyspaceManifest {
     keyspace_schemas: SchemaManifest,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Manifest {
     databases: BTreeMap<StorageType, KeyspaceManifest>,
+    cluster_id: Option<ClusterId>,
 }
 
 struct KeyspaceSerializer<'a, B: Write + Seek> {
@@ -212,13 +215,17 @@ fn deserialize_keyspace<R: Read + Seek>(
 #[tracing::instrument(skip_all)]
 pub(crate) fn serialize_to_file<F: Write + Seek>(
     targets: Vec<(StorageType, Database, fjall::Snapshot, Vec<String>)>,
+    cluster_id: Option<ClusterId>,
     file: &mut F,
 ) -> anyhow::Result<()> {
     file.write_all(b"DIOM01")?;
 
     let mut zip = zip::write::ZipWriter::new(file);
 
-    let mut manifest = Manifest::default();
+    let mut manifest = Manifest {
+        databases: BTreeMap::default(),
+        cluster_id,
+    };
 
     for (db_name, db, snapshot, keyspaces) in targets {
         let mut keyspace_manifests = KeyspaceManifest {
@@ -250,7 +257,10 @@ pub(crate) fn serialize_to_file<F: Write + Seek>(
 }
 
 #[tracing::instrument(skip_all)]
-pub(crate) fn load_from_file<F: Read + Seek>(dbs: &Databases, f: &mut F) -> anyhow::Result<()> {
+pub(crate) fn load_from_file<F: Read + Seek>(
+    dbs: &Databases,
+    f: &mut F,
+) -> anyhow::Result<Option<ClusterId>> {
     let mut magic = [0u8; 6];
     f.read_exact(&mut magic)?;
     if &magic != b"DIOM01" {
@@ -284,7 +294,7 @@ pub(crate) fn load_from_file<F: Read + Seek>(dbs: &Databases, f: &mut F) -> anyh
         }
     }
 
-    Ok(())
+    Ok(manifest.cluster_id)
 }
 
 #[cfg(test)]
@@ -294,7 +304,7 @@ mod tests {
     use fjall::{Database, KeyspaceCreateOptions, Slice};
     use fjall_utils::{Databases, SchemaManifest, SerializableKeyspaceCreateOptions};
 
-    use super::{load_from_file, serialize_to_file};
+    use super::{ClusterId, load_from_file, serialize_to_file};
     use fjall_utils::StorageType;
 
     #[test]
@@ -323,7 +333,9 @@ mod tests {
             vec!["keyspace1".to_owned(), "keyspace2".to_owned()],
         )];
 
-        serialize_to_file(targets, &mut cursor)?;
+        let cluster_id = ClusterId::generate();
+
+        serialize_to_file(targets, Some(cluster_id), &mut cursor)?;
 
         let out = cursor.into_inner();
 
@@ -341,7 +353,8 @@ mod tests {
 
         let mut cursor = Cursor::new(out);
 
-        load_from_file(&databases, &mut cursor)?;
+        let found_cluster_id = load_from_file(&databases, &mut cursor)?;
+        assert_eq!(found_cluster_id, Some(cluster_id));
 
         let found_keyspaces = db2
             .list_keyspace_names()
@@ -397,7 +410,7 @@ mod tests {
 
         let targets = vec![(StorageType::Persistent, db, snapshot, keyspaces)];
 
-        serialize_to_file(targets, &mut cursor)?;
+        serialize_to_file(targets, None, &mut cursor)?;
 
         let out = cursor.into_inner();
 
@@ -474,7 +487,7 @@ mod tests {
         ];
 
         let mut cursor = Cursor::new(vec![]);
-        serialize_to_file(targets, &mut cursor)?;
+        serialize_to_file(targets, None, &mut cursor)?;
 
         let out = cursor.into_inner();
 
