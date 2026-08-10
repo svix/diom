@@ -65,3 +65,9 @@ tracing = { workspace = true, features = ["release_max_level_debug"] }
 tracing-subscriber.workspace = true
 v_jsonescape = { version = "0.7.8", features = ["buf-min", "bytes-buf"] }
 yansi.workspace = true
+
+[lints.clippy]
+# The generated clap subcommand enums (src/cmds/api) embed the full request bodies, so the sink
+# configure command variant is much larger than its sibling commands. Boxing generated clap args is
+# not worthwhile, so the size difference is allowed.
+large_enum_variant = "allow"
