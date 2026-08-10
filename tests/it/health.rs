@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use diom_core::types::NonZeroDurationMs;
-use test_utils::{JsonFastAndLoose as _, StatusCode, TestResult, server::TestServerBuilder};
+use test_utils::{StatusCode, TestResult, server::TestServerBuilder};
 
 #[tokio::test]
 async fn test_health_ping() -> TestResult {
@@ -15,7 +15,7 @@ async fn test_health_ping() -> TestResult {
     let response = ctx.client.get("v1.health.ping").await?;
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.json();
-    assert!(body["ok"].assert_bool());
+    assert_eq!(body["ok"], true);
     Ok(())
 }
 
@@ -42,11 +42,8 @@ async fn test_error() -> TestResult {
     let response = ctx.client.post("v1.health.error").await?;
     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     let body = response.json();
-    assert_eq!(body["code"].assert_str(), "internal");
-    assert_eq!(
-        body["detail"].assert_str(),
-        "despite appearances, I am not an error"
-    );
-    assert_eq!(body["type"].assert_str(), "server-error");
+    assert_eq!(body["code"], "internal");
+    assert_eq!(body["detail"], "despite appearances, I am not an error");
+    assert_eq!(body["type"], "server-error");
     Ok(())
 }
