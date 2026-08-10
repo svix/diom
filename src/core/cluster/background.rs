@@ -6,7 +6,7 @@ use super::{
     operations::{RecordLogTimestampOperation, TickOperation},
     raft::TypeConfig,
 };
-use crate::cfg::Configuration;
+use crate::{cfg::Configuration, core::cluster::operations::SetClusterUuidOperation};
 use diom_error::CanFailExt;
 use diom_operations::{
     BackgroundError, BackgroundResult, OperationWriter, workers::BackgroundWorker,
@@ -85,6 +85,36 @@ impl BackgroundWorker for Tick {
     }
 }
 
+// XXX: this background operation only exists because a bug caused some clusters
+// to lose their cluster UUID around snapshots; this should be removed after it's had
+// a chance to run on every live cluster
+#[derive(Clone)]
+struct RefreshClusterUuid {
+    handle: RaftState,
+}
+
+impl RefreshClusterUuid {
+    const INTERVAL: Duration = Duration::from_mins(5);
+}
+
+impl BackgroundWorker for RefreshClusterUuid {
+    const NAME: &str = "refresh-cluster-uuid";
+
+    async fn run(self) -> BackgroundResult<()> {
+        let mut ticker = tokio::time::interval(Self::INTERVAL);
+        loop {
+            if let Some(cluster_id) = self.handle.state_machine.cluster_id().await {
+                tracing::debug!(%cluster_id, "refreshing cluster uuid");
+                let op = SetClusterUuidOperation(cluster_id);
+                self.handle.write_request(op).await?;
+                ticker.tick().await;
+            } else {
+                tracing::warn!("no cluster_id set, not refreshing");
+            }
+        }
+    }
+}
+
 struct BackgroundJobRunner {
     jobs: JoinSet<BackgroundResult<()>>,
     spawned: bool,
@@ -113,6 +143,9 @@ impl BackgroundJobRunner {
             handle: handle.clone(),
         });
         self.spawn_job(Tick {
+            handle: handle.clone(),
+        });
+        self.spawn_job(RefreshClusterUuid {
             handle: handle.clone(),
         });
         self.spawn_job(diom_kv::LeaderWorker::new(
