@@ -376,6 +376,11 @@ impl Store {
     pub(super) async fn set_cluster_id(&mut self, id: ClusterId) -> anyhow::Result<()> {
         let keyspace = self.meta_keyspace.clone();
         let handle = self.stores.clone();
+        if let Some(existing_id) = self.cluster_id
+            && id != existing_id
+        {
+            tracing::warn!(%existing_id, new_id=%id, "updating cluster_id; this might cause odd issues");
+        }
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
             let mut tx = handle
                 .read()
