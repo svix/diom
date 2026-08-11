@@ -7347,7 +7347,7 @@
           "Health"
         ],
         "summary": "Ping",
-        "description": "Verify the server is up and running.",
+        "description": "Verify the server is up and running.\n\nThis endpoint only checks the server itself, not the cluster mechanism, and should not be used\nas a readiness gate.",
         "operationId": "v1.health.ping",
         "responses": {
           "200": {
@@ -7436,6 +7436,105 @@
             "lang": "Rust",
             "label": "Rust",
             "source": "let response = diom.health()\n    .ping()\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.health.ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Ready",
+        "description": "Verify that this server is ready to serve customer traffic.",
+        "operationId": "v1.health.ready",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom health ready"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Health.Ready(ctx)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getHealth.ready();"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.health.ready();"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.health.ready();"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.health()\n    .ready()\n    .await?;"
           }
         ]
       }
@@ -10988,6 +11087,21 @@
       },
       "RateLimitResetOut": {
         "type": "object"
+      },
+      "ReadyOut": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "message"
+        ]
       },
       "Retention": {
         "type": "object",

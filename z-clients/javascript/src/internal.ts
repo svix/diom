@@ -127,6 +127,7 @@ export { RateLimitGetRemainingInSerializer } from "./models/rateLimitGetRemainin
 export { RateLimitGetRemainingOutSerializer } from "./models/rateLimitGetRemainingOut";
 export { RateLimitResetInSerializer } from "./models/rateLimitResetIn";
 export { RateLimitResetOutSerializer } from "./models/rateLimitResetOut";
+export { ReadyOutSerializer } from "./models/readyOut";
 export { RetentionSerializer } from "./models/retention";
 export { SeekPositionSerializer } from "./models/seekPosition";
 export { ServerStateSerializer } from "./models/serverState";

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import com.svix.diom.models.PingOut;
+import com.svix.diom.models.ReadyOut;
 
 public class Health {
     private final HttpClient client;
@@ -19,7 +20,12 @@ public class Health {
         this.client = client;
     }
 
-    /** Verify the server is up and running. */
+    /**
+* Verify the server is up and running.
+* 
+* This endpoint only checks the server itself, not the cluster mechanism, and should not be used
+* as a readiness gate.
+*/
     public PingOut ping(
         
     ) throws DiomException {
@@ -30,6 +36,20 @@ public class Health {
             null,
             null,
             PingOut.class
+        );
+    }
+
+    /** Verify that this server is ready to serve customer traffic. */
+    public ReadyOut ready(
+        
+    ) throws DiomException {
+
+        return this.client.executeRequest(
+            "GET",
+            "/api/v1.health.ready",
+            null,
+            null,
+            ReadyOut.class
         );
     }
 

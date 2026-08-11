@@ -595,6 +595,12 @@ pub struct ConfigurationInner {
     #[serde(rename = "bootstrap_max_wait_ms", default)]
     pub bootstrap_max_wait_time: Option<NonZeroDurationMs>,
 
+    /// Wait before bootstrapping (for use in tests)
+    #[env_overridable(skip)]
+    #[dumpable_config(skip)]
+    #[serde(rename = "bootstrap_delay_ms", default)]
+    pub bootstrap_delay: Option<NonZeroDurationMs>,
+
     /// How often to run background cleanup/garbage collection jobs
     ///
     /// Correctness should never be affected by this, just wasted memory/disk.
