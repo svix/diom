@@ -16,7 +16,21 @@ on:
         default: './Dockerfile'
 
 jobs:
+  hadolint:
+    name: Run hadolint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: '0'
+      - name: Run hadolint
+        uses: hadolint/hadolint-action@2a66e89f53d0771bb131a7fa31f3136336094aa6 # v3.4.0
+        with:
+          dockerfile: ${{ inputs.file }}
+
   build-image:
+    name: Build (but do not push) image
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
