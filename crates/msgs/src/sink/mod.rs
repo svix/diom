@@ -35,7 +35,7 @@ use crate::{
 const DEFAULT_SINK_BATCH_SIZE: NonZeroU16 = NonZeroU16::new(100).unwrap();
 
 /// Per-request timeout for outbound deliveries.
-const SINK_HTTP_TIMEOUT: Duration = Duration::from_secs(30);
+const SINK_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// How many times a failed delivery is retried within a single lease before the message is left
 /// uncommitted for a later poll cycle to retry (effectively retrying forever across cycles).
@@ -76,7 +76,7 @@ where
 {
     pub fn new(state: State, poll_interval: Duration, handle: F, config: SinkWorkerConfig) -> Self {
         let http = reqwest::Client::builder()
-            .timeout(SINK_HTTP_TIMEOUT)
+            .timeout(SINK_TIMEOUT)
             .build()
             .expect("failed to build sink HTTP client");
         Self {
@@ -160,7 +160,11 @@ async fn drain_sink<F>(
     let consumer_group = key.consumer_group.clone();
     let compiled = match &settings.config {
         SinkConfig::Http(http_config) => CompiledSink::Http(CompiledHttpSink::new(http_config)),
-        SinkConfig::Svix(svix_config) => CompiledSink::Svix(CompiledSvixSink::new(svix_config)),
+        SinkConfig::Svix(svix_config) => CompiledSink::Svix(CompiledSvixSink::new(
+            key.namespace_id,
+            consumer_group.clone(),
+            svix_config,
+        )),
         #[cfg(feature = "kafka")]
         SinkConfig::Kafka(kafka_config) => match CompiledKafkaSink::new(kafka_config) {
             Ok(sink) => CompiledSink::Kafka(sink),
@@ -337,7 +341,7 @@ where
     let mut stopped = false;
     for msg in msgs {
         let now = Instant::now();
-        if now + SINK_HTTP_TIMEOUT > lease_deadline || now >= deadline {
+        if now + SINK_TIMEOUT > lease_deadline || now >= deadline {
             stopped = true;
             break;
         }
@@ -418,7 +422,7 @@ async fn deliver_with_retry(
         if attempt > 0 {
             let delay = jitter(SINK_RETRY_MIN_INTERVAL..SINK_RETRY_MAX_INTERVAL);
             let now = Instant::now();
-            if now + delay + SINK_HTTP_TIMEOUT > lease_deadline || now + delay >= deadline {
+            if now + delay + SINK_TIMEOUT > lease_deadline || now + delay >= deadline {
                 return Delivery::Stopped;
             }
             tokio::time::sleep(delay).await;

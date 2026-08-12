@@ -6,7 +6,7 @@ use rdkafka::{
     util::Timeout,
 };
 
-use super::{SINK_HTTP_TIMEOUT, build_vars};
+use super::{SINK_TIMEOUT, build_vars};
 use crate::{entities::KafkaSinkConfig, operations::StreamReceiveMsg};
 
 /// A Kafka sink's producer and templates compiled once. The message value and headers pass through
@@ -24,10 +24,7 @@ impl<'a> CompiledKafkaSink<'a> {
         let mut client_config = ClientConfig::new();
         client_config
             .set("bootstrap.servers", &config.bootstrap_servers)
-            .set(
-                "message.timeout.ms",
-                (SINK_HTTP_TIMEOUT.as_millis()).to_string(),
-            );
+            .set("message.timeout.ms", (SINK_TIMEOUT.as_millis()).to_string());
         for (key, value) in config.security.librdkafka_options() {
             client_config.set(key, value);
         }
@@ -75,7 +72,7 @@ impl<'a> CompiledKafkaSink<'a> {
             .headers(record_headers);
         // The key branch changes the record's type parameter, so each arm sends independently.
         // Bound the enqueue wait so a full producer queue cannot block the delivery task forever.
-        let timeout = Timeout::After(SINK_HTTP_TIMEOUT);
+        let timeout = Timeout::After(SINK_TIMEOUT);
         let sent = match &key {
             Some(key) => self.producer.send(record.key(key), timeout).await,
             None => self.producer.send(record, timeout).await,

@@ -634,6 +634,11 @@ pub struct SvixSinkConfig {
     /// Templated message payload. When absent, the raw message value bytes are used (must be JSON).
     #[serde(default)]
     pub payload: Option<Template>,
+    /// Templated Svix `Idempotency-Key`. When absent or it renders to an empty string, a stable
+    /// key derived from the sink and message identity (namespace, topic, consumer_group, partition,
+    /// offset) is used so retries are de-duplicated by Svix.
+    #[serde(default)]
+    pub idempotency_key: Option<Template>,
     /// Optional base URL override. When absent, the region is inferred from the token.
     #[serde(default)]
     pub server_url: Option<String>,

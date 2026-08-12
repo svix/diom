@@ -527,6 +527,26 @@ async fn test_svix_sink_forwards_published_messages() -> TestResult {
             "each request should be sent as JSON"
         );
 
+        // Every delivery carries a non-empty idempotency key, and the two distinct messages get
+        // distinct keys (they differ by offset).
+        anyhow::ensure!(
+            deliveries.iter().all(|r| r
+                .headers
+                .get("idempotency-key")
+                .is_some_and(|v| !v.as_bytes().is_empty())),
+            "each delivery should carry a non-empty idempotency-key"
+        );
+        let distinct_keys: std::collections::HashSet<_> = deliveries
+            .iter()
+            .filter_map(|r| r.headers.get("idempotency-key"))
+            .map(|v| v.as_bytes().to_vec())
+            .collect();
+        anyhow::ensure!(
+            distinct_keys.len() >= 2,
+            "the two messages should get distinct idempotency keys, got {}",
+            distinct_keys.len()
+        );
+
         // The body wraps the message value as `payload` under the templated `eventType`.
         for r in &deliveries {
             let body: serde_json::Value = serde_json::from_slice(&r.body)
@@ -540,6 +560,199 @@ async fn test_svix_sink_forwards_published_messages() -> TestResult {
                 "payload should carry the message value: {body}"
             );
         }
+        Ok(())
+    })
+    .await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_svix_sink_idempotency_key_stable_across_retries() -> TestResult {
+    let mock = MockServer::start().await;
+    // Fail the first attempt, then succeed. The retried delivery must reuse the same key so Svix
+    // can de-duplicate it.
+    Mock::given(any())
+        .respond_with(ResponseTemplate::new(500))
+        .up_to_n_times(1)
+        .with_priority(1)
+        .mount(&mock)
+        .await;
+    Mock::given(any())
+        .respond_with(ResponseTemplate::new(200))
+        .with_priority(2)
+        .mount(&mock)
+        .await;
+
+    let ctx = TestServerBuilder::with_default_config()
+        .tap_cfg(|cfg| {
+            cfg.background_cleanup_interval = NonZeroDurationMs::from_secs(1).unwrap();
+        })
+        .build()
+        .await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "svix_sink",
+            "default_starting_position": "earliest",
+            "config": {
+                "type": "svix",
+                "data": {
+                    "token": SVIX_SINK_TOKEN,
+                    "server_url": mock.uri(),
+                    "app_id": "acme",
+                    "event_type": "order.created",
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "orders",
+            "msgs": [ { "value": json!({ "id": 1 }).to_string().as_bytes() } ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Both the failed attempt and the successful retry should carry the same idempotency key.
+    run_with_retries(async || {
+        let reqs = mock.received_requests().await.unwrap_or_default();
+        let deliveries: Vec<_> = reqs
+            .iter()
+            .filter(|r| r.url.path() == "/api/v1/app/acme/msg/")
+            .collect();
+        anyhow::ensure!(
+            deliveries.len() >= 2,
+            "expected the message to be retried, got {} deliveries",
+            deliveries.len()
+        );
+        let distinct_keys: std::collections::HashSet<_> = deliveries
+            .iter()
+            .filter_map(|r| r.headers.get("idempotency-key"))
+            .map(|v| v.as_bytes().to_vec())
+            .collect();
+        anyhow::ensure!(
+            distinct_keys.len() == 1,
+            "retries of one message should reuse a single idempotency key, got {}",
+            distinct_keys.len()
+        );
+        Ok(())
+    })
+    .await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_svix_sink_idempotency_key_custom_template_and_fallback() -> TestResult {
+    let mock = MockServer::start().await;
+    Mock::given(any())
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&mock)
+        .await;
+
+    let ctx = TestServerBuilder::with_default_config()
+        .tap_cfg(|cfg| {
+            cfg.background_cleanup_interval = NonZeroDurationMs::from_secs(1).unwrap();
+        })
+        .build()
+        .await;
+
+    ctx.client
+        .post("v1.msgs.namespace.configure")
+        .json(json!({ "name": "default" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    ctx.client
+        .post("v1.msgs.sink.configure")
+        .json(json!({
+            "topic": "orders",
+            "consumer_group": "svix_sink",
+            "default_starting_position": "earliest",
+            "config": {
+                "type": "svix",
+                "data": {
+                    "token": SVIX_SINK_TOKEN,
+                    "server_url": mock.uri(),
+                    "app_id": "acme",
+                    "event_type": "order.created",
+                    "idempotency_key": "${headers.order_id}",
+                },
+            },
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // First message carries the templated header, the second does not so it falls back to the
+    // derived default key.
+    ctx.client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "orders",
+            "msgs": [
+                {
+                    "value": json!({ "id": 1 }).to_string().as_bytes(),
+                    "headers": { "order_id": "order-42" },
+                },
+                {
+                    "value": json!({ "id": 2 }).to_string().as_bytes(),
+                },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    run_with_retries(async || {
+        let reqs = mock.received_requests().await.unwrap_or_default();
+        let deliveries: Vec<_> = reqs
+            .iter()
+            .filter(|r| r.url.path() == "/api/v1/app/acme/msg/")
+            .collect();
+
+        // Pair each delivery's message id with its idempotency key.
+        let mut keys_by_id: std::collections::HashMap<u64, String> =
+            std::collections::HashMap::new();
+        for r in &deliveries {
+            let body: serde_json::Value = serde_json::from_slice(&r.body)
+                .map_err(|e| anyhow::anyhow!("body was not JSON: {e}"))?;
+            let Some(id) = body["payload"]["id"].as_u64() else {
+                continue;
+            };
+            let key = r
+                .headers
+                .get("idempotency-key")
+                .map(|v| v.to_str().unwrap_or_default().to_owned())
+                .unwrap_or_default();
+            keys_by_id.insert(id, key);
+        }
+
+        let templated = keys_by_id
+            .get(&1)
+            .ok_or_else(|| anyhow::anyhow!("message 1 was not delivered yet"))?;
+        anyhow::ensure!(
+            templated == "order-42",
+            "templated idempotency key should render the header, got {templated:?}"
+        );
+
+        let fallback = keys_by_id
+            .get(&2)
+            .ok_or_else(|| anyhow::anyhow!("message 2 was not delivered yet"))?;
+        anyhow::ensure!(
+            fallback.len() == 64 && fallback.bytes().all(|b| b.is_ascii_hexdigit()),
+            "an empty templated key should fall back to the 64 char hex default, got {fallback:?}"
+        );
         Ok(())
     })
     .await?;
