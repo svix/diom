@@ -34,6 +34,30 @@ public abstract class SinkConfigConfig {
             return Utils.getObjectMapper().valueToTree(http);
             }
     }
+    @Getter
+        @Setter
+        @AllArgsConstructor
+        @ToString
+    @EqualsAndHashCode(callSuper = false)
+    @VariantName("svix")
+    public static class Svix extends SinkConfigConfig {
+        private final SvixSinkConfig svix;
+        @Override public JsonNode toJsonNode() {
+            return Utils.getObjectMapper().valueToTree(svix);
+            }
+    }
+    @Getter
+        @Setter
+        @AllArgsConstructor
+        @ToString
+    @EqualsAndHashCode(callSuper = false)
+    @VariantName("kafka")
+    public static class Kafka extends SinkConfigConfig {
+        private final KafkaSinkConfig kafka;
+        @Override public JsonNode toJsonNode() {
+            return Utils.getObjectMapper().valueToTree(kafka);
+            }
+    }
     @FunctionalInterface
     private interface TypeFactory {
         SinkConfigConfig create(JsonNode config);
@@ -42,6 +66,8 @@ public abstract class SinkConfigConfig {
     private static final ObjectMapper m = Utils.getObjectMapper();
     static {
         TY_M.put("http", c -> new Http(m.convertValue(c, HttpSinkConfig.class)));
+            TY_M.put("svix", c -> new Svix(m.convertValue(c, SvixSinkConfig.class)));
+            TY_M.put("kafka", c -> new Kafka(m.convertValue(c, KafkaSinkConfig.class)));
             }
 
     public static SinkConfigConfig fromTypeAndConfig(String type, JsonNode config) {

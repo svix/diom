@@ -64,6 +64,8 @@ from .idempotency_get_namespace_in import IdempotencyGetNamespaceIn
 from .idempotency_get_namespace_out import IdempotencyGetNamespaceOut
 from .idempotency_start_in import IdempotencyStartIn
 from .idempotency_start_out import IdempotencyStartOut
+from .kafka_security import KafkaSecurity
+from .kafka_sink_config import KafkaSinkConfig
 from .kv_configure_namespace_in import KvConfigureNamespaceIn
 from .kv_configure_namespace_out import KvConfigureNamespaceOut
 from .kv_delete_in import KvDeleteIn
@@ -128,6 +130,8 @@ from .rate_limit_reset_in import RateLimitResetIn
 from .rate_limit_reset_out import RateLimitResetOut
 from .ready_out import ReadyOut
 from .retention import Retention
+from .sasl_mechanism import SaslMechanism
+from .security_protocol import SecurityProtocol
 from .seek_position import SeekPosition
 from .server_state import ServerState
 from .sink_config import SinkConfig
@@ -144,6 +148,7 @@ from .svix_poller_delete_in import SvixPollerDeleteIn
 from .svix_poller_delete_out import SvixPollerDeleteOut
 from .svix_poller_list_in import SvixPollerListIn
 from .svix_poller_out import SvixPollerOut
+from .svix_sink_config import SvixSinkConfig
 
 
 __all__ = [
@@ -212,6 +217,8 @@ __all__ = [
     "IdempotencyGetNamespaceOut",
     "IdempotencyStartIn",
     "IdempotencyStartOut",
+    "KafkaSecurity",
+    "KafkaSinkConfig",
     "KvConfigureNamespaceIn",
     "KvConfigureNamespaceOut",
     "KvDeleteIn",
@@ -276,6 +283,8 @@ __all__ = [
     "RateLimitResetOut",
     "ReadyOut",
     "Retention",
+    "SaslMechanism",
+    "SecurityProtocol",
     "SeekPosition",
     "ServerState",
     "SinkConfig",
@@ -292,4 +301,5 @@ __all__ = [
     "SvixPollerDeleteOut",
     "SvixPollerListIn",
     "SvixPollerOut",
+    "SvixSinkConfig",
 ]

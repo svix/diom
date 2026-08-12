@@ -11,6 +11,8 @@ import (
 // When creating an SinkConfig, use the appropriate data structure based on the Type:
 //
 // - "http": Use HttpSinkConfig
+// - "kafka": Use KafkaSinkConfig
+// - "svix": Use SvixSinkConfig
 type SinkConfig struct {
 	Type SinkConfigType `msgpack:"type"`
 	Data SinkConfigData `msgpack:"data"`
@@ -19,14 +21,18 @@ type SinkConfig struct {
 type SinkConfigType string
 
 const (
-	SinkConfigTypeHttp SinkConfigType = "http"
+	SinkConfigTypeHttp  SinkConfigType = "http"
+	SinkConfigTypeSvix  SinkConfigType = "svix"
+	SinkConfigTypeKafka SinkConfigType = "kafka"
 )
 
 type SinkConfigData interface {
 	isSinkConfigData()
 }
 
-func (HttpSinkConfig) isSinkConfigData() {}
+func (HttpSinkConfig) isSinkConfigData()  {}
+func (SvixSinkConfig) isSinkConfigData()  {}
+func (KafkaSinkConfig) isSinkConfigData() {}
 
 func (i *SinkConfig) UnmarshalMsgpack(data []byte) error {
 	type Alias SinkConfig
@@ -45,6 +51,14 @@ func (i *SinkConfig) UnmarshalMsgpack(data []byte) error {
 		var c HttpSinkConfig
 		err = msgpack.Unmarshal(aux.Data, &c)
 		i.Data = c
+	case "kafka":
+		var c KafkaSinkConfig
+		err = msgpack.Unmarshal(aux.Data, &c)
+		i.Data = c
+	case "svix":
+		var c SvixSinkConfig
+		err = msgpack.Unmarshal(aux.Data, &c)
+		i.Data = c
 	default:
 		// should be unreachable
 		return fmt.Errorf("unexpected type %s", i.Type)
@@ -58,5 +72,7 @@ func (i SinkConfig) MarshalMsgpack() ([]byte, error) {
 }
 
 var SinkConfigTypeFromString = map[string]SinkConfigType{
-	"http": SinkConfigTypeHttp,
+	"http":  SinkConfigTypeHttp,
+	"svix":  SinkConfigTypeSvix,
+	"kafka": SinkConfigTypeKafka,
 }

@@ -66,6 +66,8 @@ mod idempotency_get_namespace_in;
 mod idempotency_get_namespace_out;
 mod idempotency_start_in;
 mod idempotency_start_out;
+mod kafka_security;
+mod kafka_sink_config;
 mod kv_configure_namespace_in;
 mod kv_configure_namespace_out;
 mod kv_delete_in;
@@ -130,6 +132,8 @@ mod rate_limit_reset_in;
 mod rate_limit_reset_out;
 mod ready_out;
 mod retention;
+mod sasl_mechanism;
+mod security_protocol;
 mod seek_position;
 mod server_state;
 mod sink_config;
@@ -146,6 +150,7 @@ mod svix_poller_delete_in;
 mod svix_poller_delete_out;
 mod svix_poller_list_in;
 mod svix_poller_out;
+mod svix_sink_config;
 
 pub use self::{
     access_rule::AccessRule, access_rule_effect::AccessRuleEffect,
@@ -193,6 +198,7 @@ pub use self::{
     idempotency_get_namespace_in::IdempotencyGetNamespaceIn,
     idempotency_get_namespace_out::IdempotencyGetNamespaceOut,
     idempotency_start_in::IdempotencyStartIn, idempotency_start_out::IdempotencyStartOut,
+    kafka_security::KafkaSecurity, kafka_sink_config::KafkaSinkConfig,
     kv_configure_namespace_in::KvConfigureNamespaceIn,
     kv_configure_namespace_out::KvConfigureNamespaceOut, kv_delete_in::KvDeleteIn,
     kv_delete_out::KvDeleteOut, kv_get_in::KvGetIn, kv_get_namespace_in::KvGetNamespaceIn,
@@ -229,13 +235,14 @@ pub use self::{
     rate_limit_get_remaining_in::RateLimitGetRemainingIn,
     rate_limit_get_remaining_out::RateLimitGetRemainingOut, rate_limit_reset_in::RateLimitResetIn,
     rate_limit_reset_out::RateLimitResetOut, ready_out::ReadyOut, retention::Retention,
+    sasl_mechanism::SaslMechanism, security_protocol::SecurityProtocol,
     seek_position::SeekPosition, server_state::ServerState, sink_config::SinkConfig,
     sink_configure_in::SinkConfigureIn, sink_configure_out::SinkConfigureOut,
     sink_delete_in::SinkDeleteIn, sink_delete_out::SinkDeleteOut, sink_list_in::SinkListIn,
     sink_out::SinkOut, stream_msg_out::StreamMsgOut, svix_poller_create_in::SvixPollerCreateIn,
     svix_poller_create_out::SvixPollerCreateOut, svix_poller_delete_in::SvixPollerDeleteIn,
     svix_poller_delete_out::SvixPollerDeleteOut, svix_poller_list_in::SvixPollerListIn,
-    svix_poller_out::SvixPollerOut,
+    svix_poller_out::SvixPollerOut, svix_sink_config::SvixSinkConfig,
 };
 
 pub(crate) use self::{

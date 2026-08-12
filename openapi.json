@@ -7093,27 +7093,27 @@
           {
             "lang": "Shell",
             "label": "CLI",
-            "source": "diom msgs sink configure '{\n    \"namespace\": \"some_namespace\",\n    \"topic\": \"some_topic_name\",\n    \"consumer_group\": \"some_consumer_group\",\n    \"default_starting_position\": \"earliest\",\n    \"max_in_flight\": 1,\n    \"config\": {\"type\": \"http\",\n        \"data\": {\n        \"url\": \"My name is ${name}!\",\n        \"method\": \"post\",\n        \"headers\": {},\n        \"body\": \"My name is ${name}!\"\n    }\n    }\n}'"
+            "source": "diom msgs sink configure '{\n    \"namespace\": \"some_namespace\",\n    \"topic\": \"some_topic_name\",\n    \"consumer_group\": \"some_consumer_group\",\n    \"default_starting_position\": \"earliest\",\n    \"max_in_flight\": 1,\n    \"config\": {\"type\": \"svix\",\n        \"data\": {\n        \"token\": \"sample string\",\n        \"app_id\": \"My name is ${name}!\",\n        \"event_type\": \"My name is ${name}!\",\n        \"payload\": \"My name is ${name}!\",\n        \"idempotency_key\": \"My name is ${name}!\",\n        \"server_url\": \"sample string\"\n    }\n    }\n}'"
           },
           {
             "lang": "Go",
             "label": "Go",
-            "source": "response, err := diom.Msgs.Sink.Configure(\n    ctx,\n    SinkConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        DefaultStartingPosition: new(SEEKPOSITION_EARLIEST),\n        MaxInFlight: new(uint32(1)),\n        Config: SinkConfig{\n        Data: (HttpSinkConfig{\n            Url: \"My name is ${name}!\",\n            Method: new(HTTPMETHOD_POST),\n            Headers: nil,\n            Body: new(\"My name is ${name}!\"),\n        }),\n        Type: \"http\",\n        },\n    },\n)"
+            "source": "response, err := diom.Msgs.Sink.Configure(\n    ctx,\n    SinkConfigureIn{\n        Namespace: new(\"some_namespace\"),\n        Topic: \"some_topic_name\",\n        ConsumerGroup: \"some_consumer_group\",\n        DefaultStartingPosition: new(SEEKPOSITION_EARLIEST),\n        MaxInFlight: new(uint32(1)),\n        Config: SinkConfig{\n        Data: (SvixSinkConfig{\n            Token: \"sample string\",\n            AppId: \"My name is ${name}!\",\n            EventType: \"My name is ${name}!\",\n            Payload: new(\"My name is ${name}!\"),\n            IdempotencyKey: new(\"My name is ${name}!\"),\n            ServerUrl: new(\"sample string\"),\n        }),\n        Type: \"svix\",\n        },\n    },\n)"
           },
           {
             "lang": "Java",
             "label": "Java",
-            "source": "var response = diom.getMsgs.getSink.configure(\n    new SinkConfigureIn()\n        .namespace(\"some_namespace\")\n        .topic(\"some_topic_name\")\n        .consumerGroup(\"some_consumer_group\")\n        .defaultStartingPosition(\n            SeekPosition.Earliest\n        )\n        .maxInFlight(1)\n        .config(\n            new SinkConfig().data(new SinkConfigData.Http(new HttpSinkConfig()\n                    .url(\"My name is ${name}!\")\n                    .method(\n                        HttpMethod.Post\n                    )\n                    .headers(Map.of())\n                    .body(\"My name is ${name}!\")))\n        )\n);"
+            "source": "var response = diom.getMsgs.getSink.configure(\n    new SinkConfigureIn()\n        .namespace(\"some_namespace\")\n        .topic(\"some_topic_name\")\n        .consumerGroup(\"some_consumer_group\")\n        .defaultStartingPosition(\n            SeekPosition.Earliest\n        )\n        .maxInFlight(1)\n        .config(\n            new SinkConfig().data(new SinkConfigData.Svix(new SvixSinkConfig()\n                    .token(\"sample string\")\n                    .appId(\"My name is ${name}!\")\n                    .eventType(\"My name is ${name}!\")\n                    .payload(\"My name is ${name}!\")\n                    .idempotencyKey(\"My name is ${name}!\")\n                    .serverUrl(\"sample string\")))\n        )\n);"
           },
           {
             "lang": "TypeScript",
             "label": "JavaScript",
-            "source": "const response = await diom.msgs.sink.configure({\n    namespace: \"some_namespace\",\n    topic: \"some_topic_name\",\n    consumerGroup: \"some_consumer_group\",\n    defaultStartingPosition: SeekPosition.Earliest,\n    maxInFlight: 1,\n    config: {type: \"http\",\n        data: {\n        url: \"My name is ${name}!\",\n        method: HttpMethod.Post,\n        headers: {},\n        body: \"My name is ${name}!\",\n    }\n                    \n    },\n});"
+            "source": "const response = await diom.msgs.sink.configure({\n    namespace: \"some_namespace\",\n    topic: \"some_topic_name\",\n    consumerGroup: \"some_consumer_group\",\n    defaultStartingPosition: SeekPosition.Earliest,\n    maxInFlight: 1,\n    config: {type: \"svix\",\n        data: {\n        token: \"sample string\",\n        appId: \"My name is ${name}!\",\n        eventType: \"My name is ${name}!\",\n        payload: \"My name is ${name}!\",\n        idempotencyKey: \"My name is ${name}!\",\n        serverUrl: \"sample string\",\n    }\n                    \n    },\n});"
           },
           {
             "lang": "Python",
             "label": "Python",
-            "source": "response = diom.msgs.sink.configure(\n    SinkConfigureIn(\n        namespace = \"some_namespace\",\n        topic = \"some_topic_name\",\n        consumer_group = \"some_consumer_group\",\n        default_starting_position = SeekPosition.EARLIEST,\n        max_in_flight = 1,\n        config = SinkConfig(\n            type = \"http\",\n            data = HttpSinkConfig(\n            url = \"My name is ${name}!\",\n            method = HttpMethod.POST,\n            headers = {},\n            body = \"My name is ${name}!\",\n        )\n\n        ),\n    ),\n);"
+            "source": "response = diom.msgs.sink.configure(\n    SinkConfigureIn(\n        namespace = \"some_namespace\",\n        topic = \"some_topic_name\",\n        consumer_group = \"some_consumer_group\",\n        default_starting_position = SeekPosition.EARLIEST,\n        max_in_flight = 1,\n        config = SinkConfig(\n            type = \"svix\",\n            data = SvixSinkConfig(\n            token = \"sample string\",\n            app_id = \"My name is ${name}!\",\n            event_type = \"My name is ${name}!\",\n            payload = \"My name is ${name}!\",\n            idempotency_key = \"My name is ${name}!\",\n            server_url = \"sample string\",\n        )\n\n        ),\n    ),\n);"
           },
           {
             "lang": "Rust",
@@ -9496,6 +9496,116 @@
           }
         ]
       },
+      "KafkaSecurity": {
+        "description": "Connection security for a Kafka sink. Every field is optional and maps 1:1 onto a librdkafka\nconfig key, so absent fields leave librdkafka at its defaults. Certificates and keys are inline\nPEMs so credentials live in the config rather than in per-node files.",
+        "type": "object",
+        "properties": {
+          "security_protocol": {
+            "$ref": "#/components/schemas/SecurityProtocol",
+            "nullable": true
+          },
+          "sasl_mechanism": {
+            "$ref": "#/components/schemas/SaslMechanism",
+            "nullable": true
+          },
+          "sasl_username": {
+            "type": "string",
+            "default": null,
+            "nullable": true
+          },
+          "sasl_password": {
+            "description": "Secret. Obfuscated in list responses.",
+            "type": "string",
+            "default": null,
+            "nullable": true
+          },
+          "ssl_ca_pem": {
+            "description": "Inline CA certificate PEM. When absent, the system trust roots are used.",
+            "type": "string",
+            "default": null,
+            "nullable": true
+          },
+          "ssl_certificate_pem": {
+            "description": "Inline client certificate PEM for mutual TLS.",
+            "type": "string",
+            "default": null,
+            "nullable": true
+          },
+          "ssl_key_pem": {
+            "description": "Inline client key PEM for mutual TLS. Secret. Fully redacted in list responses.",
+            "type": "string",
+            "default": null,
+            "nullable": true
+          },
+          "ssl_key_password": {
+            "description": "Password for an encrypted client key. Secret. Fully redacted in list responses.",
+            "type": "string",
+            "default": null,
+            "nullable": true
+          },
+          "enable_ssl_certificate_verification": {
+            "type": "boolean",
+            "default": null,
+            "nullable": true
+          }
+        }
+      },
+      "KafkaSinkConfig": {
+        "description": "Configuration for a Kafka sink. Each message is produced to `topic` on the target cluster. By\ndefault the message value and headers pass through unchanged, but each can be templated\nper-message (see [`diom_core::template_str`]).",
+        "type": "object",
+        "properties": {
+          "bootstrap_servers": {
+            "description": "Comma-separated `host:port` list of the target cluster's bootstrap brokers.",
+            "type": "string"
+          },
+          "topic": {
+            "description": "Destination Kafka topic.",
+            "type": "string"
+          },
+          "key": {
+            "description": "Templated record key rendered per-message. When absent, records are produced without a key.",
+            "type": "string",
+            "example": "My name is ${name}!",
+            "default": null,
+            "nullable": true
+          },
+          "value": {
+            "description": "Templated record value. When absent, the raw message value bytes are produced unchanged.",
+            "type": "string",
+            "example": "My name is ${name}!",
+            "default": null,
+            "nullable": true
+          },
+          "headers": {
+            "description": "Templated record headers merged on top of the message's own headers (which pass through by\ndefault). A templated header overrides a passed-through one with the same name.",
+            "type": "object",
+            "default": {},
+            "additionalProperties": {
+              "type": "string",
+              "example": "My name is ${name}!"
+            }
+          },
+          "security": {
+            "description": "Connection security (SASL and/or TLS). Defaults to none (PLAINTEXT).",
+            "default": {
+              "security_protocol": null,
+              "sasl_mechanism": null,
+              "sasl_username": null,
+              "sasl_password": null,
+              "ssl_ca_pem": null,
+              "ssl_certificate_pem": null,
+              "ssl_key_pem": null,
+              "ssl_key_password": null,
+              "enable_ssl_certificate_verification": null
+            },
+            "$ref": "#/components/schemas/KafkaSecurity"
+          }
+        },
+        "required": [
+          "bootstrap_servers",
+          "topic"
+        ]
+      },
       "KvConfigureNamespaceIn": {
         "type": "object",
         "properties": {
@@ -11115,6 +11225,25 @@
           }
         }
       },
+      "SaslMechanism": {
+        "description": "The SASL mechanism, mapped onto librdkafka's `sasl.mechanism`.",
+        "type": "string",
+        "enum": [
+          "plain",
+          "scram-sha256",
+          "scram-sha512"
+        ]
+      },
+      "SecurityProtocol": {
+        "description": "The connection security protocol, mapped onto librdkafka's `security.protocol`.",
+        "type": "string",
+        "enum": [
+          "plaintext",
+          "ssl",
+          "sasl-plaintext",
+          "sasl-ssl"
+        ]
+      },
       "SeekPosition": {
         "type": "string",
         "enum": [
@@ -11146,6 +11275,42 @@
               },
               "data": {
                 "$ref": "#/components/schemas/HttpSinkConfig"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "svix"
+                ]
+              },
+              "data": {
+                "$ref": "#/components/schemas/SvixSinkConfig"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "kafka"
+                ]
+              },
+              "data": {
+                "$ref": "#/components/schemas/KafkaSinkConfig"
               }
             },
             "required": [
@@ -11533,6 +11698,51 @@
           "topic",
           "poller_id",
           "token"
+        ]
+      },
+      "SvixSinkConfig": {
+        "description": "Configuration for a Svix sink. Each message is forwarded as a Svix message-create call\n(`POST {server_url}/api/v1/app/{app_id}/msg/`). This is a thin convenience over an HTTP sink.\nThe `app_id`, `event_type`, and `payload` are templates rendered per-message\n(see [`diom_core::template_str`]).",
+        "type": "object",
+        "properties": {
+          "token": {
+            "description": "Svix API token, sent as the bearer credential. Obfuscated in list responses.",
+            "type": "string"
+          },
+          "app_id": {
+            "description": "Target Svix application. Can be optionally templated.",
+            "type": "string",
+            "example": "My name is ${name}!"
+          },
+          "event_type": {
+            "description": "Svix event type. Can be optionally templated.",
+            "type": "string",
+            "example": "My name is ${name}!"
+          },
+          "payload": {
+            "description": "Templated message payload. When absent, the raw message value bytes are used (must be JSON).",
+            "type": "string",
+            "example": "My name is ${name}!",
+            "default": null,
+            "nullable": true
+          },
+          "idempotency_key": {
+            "description": "Templated Svix `Idempotency-Key`. When absent or it renders to an empty string, a stable\nkey derived from the sink and message identity (namespace, topic, consumer_group, partition,\noffset) is used so retries are de-duplicated by Svix.",
+            "type": "string",
+            "example": "My name is ${name}!",
+            "default": null,
+            "nullable": true
+          },
+          "server_url": {
+            "description": "Optional base URL override. When absent, the region is inferred from the token.",
+            "type": "string",
+            "default": null,
+            "nullable": true
+          }
+        },
+        "required": [
+          "token",
+          "app_id",
+          "event_type"
         ]
       }
     }

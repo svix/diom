@@ -3,10 +3,20 @@ import {
     type HttpSinkConfig,
     HttpSinkConfigSerializer,
 } from './httpSinkConfig';
+import {
+    type KafkaSinkConfig,
+    KafkaSinkConfigSerializer,
+} from './kafkaSinkConfig';
+import {
+    type SvixSinkConfig,
+    SvixSinkConfigSerializer,
+} from './svixSinkConfig';
 
 
 // biome-ignore lint/suspicious/noEmptyInterface: backwards compat
 interface _SinkConfigFields {}
+
+
 
 
 
@@ -18,9 +28,23 @@ interface SinkConfigHttp {
     
 }
 
+interface SinkConfigSvix {
+    type: 'svix';
+    data: SvixSinkConfig;
+    
+}
+
+interface SinkConfigKafka {
+    type: 'kafka';
+    data: KafkaSinkConfig;
+    
+}
+
 
 
 export type SinkConfig = _SinkConfigFields & (| SinkConfigHttp
+    | SinkConfigSvix
+    | SinkConfigKafka
     );
 
 export const SinkConfigSerializer = {
@@ -33,6 +57,14 @@ export const SinkConfigSerializer = {
             switch (type) {
                 case 'http':
                     return HttpSinkConfigSerializer._fromJsonObject(
+                            object['data']
+                        );
+                case 'svix':
+                    return SvixSinkConfigSerializer._fromJsonObject(
+                            object['data']
+                        );
+                case 'kafka':
+                    return KafkaSinkConfigSerializer._fromJsonObject(
                             object['data']
                         );default:
                     throw new Error(`Unexpected type: ${ type }`);
@@ -53,6 +85,18 @@ export const SinkConfigSerializer = {
             case 'http':
                 data =
                     HttpSinkConfigSerializer._toJsonObject(
+                        self.data
+                    );
+                break;
+            case 'svix':
+                data =
+                    SvixSinkConfigSerializer._toJsonObject(
+                        self.data
+                    );
+                break;
+            case 'kafka':
+                data =
+                    KafkaSinkConfigSerializer._toJsonObject(
                         self.data
                     );
                 break;}

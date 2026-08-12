@@ -70,6 +70,8 @@ type (
 	IdempotencyGetNamespaceOut       = diom_models.IdempotencyGetNamespaceOut
 	IdempotencyStartIn               = diom_models.IdempotencyStartIn
 	IdempotencyStartOut              = diom_models.IdempotencyStartOut
+	KafkaSecurity                    = diom_models.KafkaSecurity
+	KafkaSinkConfig                  = diom_models.KafkaSinkConfig
 	KvConfigureNamespaceIn           = diom_models.KvConfigureNamespaceIn
 	KvConfigureNamespaceOut          = diom_models.KvConfigureNamespaceOut
 	KvDeleteIn                       = diom_models.KvDeleteIn
@@ -134,6 +136,8 @@ type (
 	RateLimitResetOut                = diom_models.RateLimitResetOut
 	ReadyOut                         = diom_models.ReadyOut
 	Retention                        = diom_models.Retention
+	SaslMechanism                    = diom_models.SaslMechanism
+	SecurityProtocol                 = diom_models.SecurityProtocol
 	SeekPosition                     = diom_models.SeekPosition
 	ServerState                      = diom_models.ServerState
 	SinkConfig                       = diom_models.SinkConfig
@@ -150,4 +154,5 @@ type (
 	SvixPollerDeleteOut              = diom_models.SvixPollerDeleteOut
 	SvixPollerListIn                 = diom_models.SvixPollerListIn
 	SvixPollerOut                    = diom_models.SvixPollerOut
+	SvixSinkConfig                   = diom_models.SvixSinkConfig
 )
