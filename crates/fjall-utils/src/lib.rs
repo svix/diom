@@ -133,4 +133,174 @@ mod tests {
         let via_vec = postcard::to_allocvec(&V0Wrapper::V0(original)).unwrap();
         assert_eq!(&*via_slice, via_vec.as_slice());
     }
+
+    // `Fixture` and `FixtureOld` model a row serialized in the db prior to this addition
+    // of `PersistableVersioned`, and then being swapped to use PersistableVersioned
+    // later on, so we can prove backwards compatibility.
+
+    #[derive(diom_core::PersistableVersioned, PartialEq, Debug)]
+    #[versioned(row_type = 0)]
+    struct Fixture {
+        a: u32,
+        b: u32,
+        #[since(1)]
+        c: Option<u32>,
+    }
+
+    #[derive(serde::Serialize, serde::Deserialize, diom_core::PersistableValue)]
+    struct FixtureOld {
+        a: u32,
+        b: u32,
+    }
+
+    impl TableRow for FixtureOld {
+        const ROW_TYPE: u8 = 0;
+    }
+
+    #[test]
+    fn versioned_round_trips_current_version() {
+        assert_eq!(Fixture::WRITE_VERSION, 1);
+
+        let value = Fixture {
+            a: 1,
+            b: 2,
+            c: Some(3),
+        };
+        let bytes = value.to_fjall_value().unwrap();
+        let decoded = Fixture::from_fjall_value(bytes).unwrap();
+        assert_eq!(decoded, value);
+    }
+
+    #[test]
+    fn versioned_decodes_legacy_v0_with_defaulted_field() {
+        let legacy = FixtureOld { a: 10, b: 20 }.to_fjall_value().unwrap();
+        let decoded = Fixture::from_fjall_value(legacy).unwrap();
+        assert_eq!(
+            decoded,
+            Fixture {
+                a: 10,
+                b: 20,
+                c: None,
+            }
+        );
+    }
+
+    #[test]
+    fn versioned_all_v0_matches_old_encoding() {
+        #[derive(diom_core::PersistableVersioned)]
+        #[versioned(row_type = 3)]
+        struct FixtureAllV0 {
+            a: u32,
+            b: u32,
+        }
+        assert_eq!(FixtureAllV0::WRITE_VERSION, 0);
+
+        let old = FixtureOld { a: 10, b: 20 }.to_fjall_value().unwrap();
+        let versioned = FixtureAllV0 { a: 10, b: 20 }.to_fjall_value().unwrap();
+        assert_eq!(old, versioned);
+    }
+
+    /// A non-Option field added in a later version falls back to its `#[since(.., default = ..)]`
+    /// expression when reading data that predates the field.
+    #[test]
+    fn versioned_uses_explicit_default_for_legacy_field() {
+        #[derive(diom_core::PersistableVersioned, PartialEq, Debug)]
+        #[versioned(row_type = 4)]
+        struct WithDefault {
+            a: u32,
+            #[since(1, default = 99)]
+            b: u32,
+        }
+
+        // The same row before `b` existed.
+        #[derive(serde::Serialize, serde::Deserialize, diom_core::PersistableValue)]
+        struct WithDefaultOld {
+            a: u32,
+        }
+        impl TableRow for WithDefaultOld {
+            const ROW_TYPE: u8 = 4;
+        }
+
+        let legacy = WithDefaultOld { a: 10 }.to_fjall_value().unwrap();
+        let decoded = WithDefault::from_fjall_value(legacy).unwrap();
+        assert_eq!(decoded, WithDefault { a: 10, b: 99 });
+
+        // A value written at the current version keeps its real `b`.
+        let current = WithDefault { a: 10, b: 7 }.to_fjall_value().unwrap();
+        assert_eq!(
+            WithDefault::from_fjall_value(current).unwrap(),
+            WithDefault { a: 10, b: 7 }
+        );
+    }
+
+    #[test]
+    fn versioned_reads_all_prior_versions_at_v2() {
+        // The row before any fields were added.
+        #[derive(serde::Serialize, serde::Deserialize, diom_core::PersistableValue)]
+        struct RowV0 {
+            a: u32,
+        }
+        impl TableRow for RowV0 {
+            const ROW_TYPE: u8 = 5;
+        }
+
+        // The row after `b` was added in version 1.
+        #[derive(diom_core::PersistableVersioned)]
+        #[versioned(row_type = 5)]
+        struct RowV1 {
+            a: u32,
+            #[since(1)]
+            b: Option<u32>,
+        }
+
+        // The current row, with `c` added in version 2.
+        #[derive(diom_core::PersistableVersioned, PartialEq, Debug)]
+        #[versioned(row_type = 5)]
+        struct RowV2 {
+            a: u32,
+            #[since(1)]
+            b: Option<u32>,
+            #[since(2)]
+            c: Option<u32>,
+        }
+
+        assert_eq!(RowV1::WRITE_VERSION, 1);
+        assert_eq!(RowV2::WRITE_VERSION, 2);
+
+        let v0 = RowV0 { a: 1 }.to_fjall_value().unwrap();
+        assert_eq!(
+            RowV2::from_fjall_value(v0).unwrap(),
+            RowV2 {
+                a: 1,
+                b: None,
+                c: None,
+            }
+        );
+
+        let v1 = RowV1 { a: 1, b: Some(2) }.to_fjall_value().unwrap();
+        assert_eq!(
+            RowV2::from_fjall_value(v1).unwrap(),
+            RowV2 {
+                a: 1,
+                b: Some(2),
+                c: None,
+            }
+        );
+
+        let v2 = RowV2 {
+            a: 1,
+            b: Some(2),
+            c: Some(3),
+        }
+        .to_fjall_value()
+        .unwrap();
+        assert_eq!(
+            RowV2::from_fjall_value(v2).unwrap(),
+            RowV2 {
+                a: 1,
+                b: Some(2),
+                c: Some(3),
+            }
+        );
+    }
 }

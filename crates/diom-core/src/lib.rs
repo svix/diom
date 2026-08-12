@@ -28,5 +28,5 @@ pub mod __reexport {
     pub use serde_json;
 }
 
-pub use diom_derive::PersistableValue;
+pub use diom_derive::{PersistableValue, PersistableVersioned};
 pub use persistable_value::PersistableValue;

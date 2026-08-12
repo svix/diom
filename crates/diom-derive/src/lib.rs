@@ -15,6 +15,7 @@ use crate::{
 };
 mod fjall_key;
 mod fjall_key_component;
+mod versioned;
 
 use self::aide::{AideAnnotateArgumentList, expand_aide_annotate};
 
@@ -84,4 +85,21 @@ pub fn macro_derive_dumpable_config(input: TokenStream) -> TokenStream {
 pub fn macro_derive_persistable_value(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     derive_persistable_value(input).into()
+}
+
+/// Derive `Serialize`/`Deserialize` with a leading schema-version tag so trailing fields can be
+/// added over time without breaking reads of existing postcard data.
+///
+/// Use this **instead of** `#[derive(Serialize, Deserialize, PersistableValue)]`. Mark fields added
+/// after the initial layout with `#[since(n)]` (unmarked fields are version 0). A non-`Option` field
+/// added later must supply a default via `#[since(n, default = EXPR)]`. Fields must be declared in
+/// non-decreasing `since` order.
+///
+/// Add `#[versioned(row_type = EXPR)]` on the struct to also generate a `TableRow` impl.
+/// Omit it for versioned types used only as nested (non-row) values.
+#[proc_macro_derive(PersistableVersioned, attributes(since, versioned))]
+pub fn macro_derive_persistable_versioned(input: TokenStream) -> TokenStream {
+    versioned::derive(input.into())
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }
