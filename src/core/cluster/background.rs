@@ -1,4 +1,10 @@
-use std::time::Duration;
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
+};
 
 use super::{
     LogId,
@@ -117,14 +123,18 @@ impl BackgroundWorker for RefreshClusterUuid {
 
 struct BackgroundJobRunner {
     jobs: JoinSet<BackgroundResult<()>>,
+    cfg: Configuration,
+    handle: RaftState,
     spawned: bool,
 }
 
 impl BackgroundJobRunner {
-    fn new() -> Self {
+    fn new(cfg: Configuration, handle: RaftState) -> Self {
         Self {
             jobs: JoinSet::new(),
             spawned: false,
+            cfg,
+            handle,
         }
     }
 
@@ -133,10 +143,12 @@ impl BackgroundJobRunner {
             .spawn(async move { job.run_while_handling_panics().await });
     }
 
-    async fn spawn_all(&mut self, cfg: Configuration, handle: RaftState) {
+    async fn spawn_all(&mut self) {
         if self.spawned {
             return;
         }
+        let cfg = self.cfg.clone();
+        let handle = self.handle.clone();
         tracing::debug!("starting leader-only background jobs");
         self.spawn_job(RecordLogTimestamps {
             cfg: cfg.clone(),
@@ -216,24 +228,68 @@ impl BackgroundJobRunner {
         tracing::trace!("leader-only background jobs stopped");
         Ok(())
     }
+
+    async fn reconcile(&mut self, expected: bool) -> anyhow::Result<()> {
+        if self.spawned == expected {
+            return Ok(());
+        }
+        if expected {
+            self.spawn_all().await;
+            Ok(())
+        } else {
+            self.stop_all().await
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
 enum BackgroundJobLeaderMessage {
     StartBeingLeader,
     StopBeingLeader,
+    Reconcile,
+}
+
+struct ReconcileDebouncer {
+    debounce_waiting: Arc<AtomicBool>,
+    tx: tokio::sync::mpsc::Sender<BackgroundJobLeaderMessage>,
+}
+
+impl ReconcileDebouncer {
+    const DEBOUNCE_TIME: Duration = Duration::from_millis(100);
+
+    fn new(tx: tokio::sync::mpsc::Sender<BackgroundJobLeaderMessage>) -> Self {
+        Self {
+            debounce_waiting: Arc::new(AtomicBool::new(false)),
+            tx,
+        }
+    }
+
+    fn debounce_reconcile(&self) {
+        let debounce_waiting = Arc::clone(&self.debounce_waiting);
+        let tx = self.tx.clone();
+
+        if !debounce_waiting.load(Ordering::Acquire) {
+            debounce_waiting.store(true, Ordering::Release);
+            tokio::task::spawn(async move {
+                tokio::time::sleep(Self::DEBOUNCE_TIME).await;
+                debounce_waiting.store(false, Ordering::Release);
+                let _ = tx.send(BackgroundJobLeaderMessage::Reconcile).await;
+            });
+        }
+    }
 }
 
 pub(super) async fn run_background_jobs_on_leader(
     cfg: Configuration,
     handle: RaftState,
 ) -> anyhow::Result<()> {
-    let mut runner = BackgroundJobRunner::new();
+    let mut runner = BackgroundJobRunner::new(cfg.clone(), handle.clone());
     let shutdown = crate::shutting_down_token();
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(5);
 
     let watch_tx = tx.clone();
+    let debounce = ReconcileDebouncer::new(tx.clone());
 
     let my_node_id = handle.node_id;
 
@@ -284,16 +340,23 @@ pub(super) async fn run_background_jobs_on_leader(
 
     tracing::debug!("starting loop waiting to become leader");
 
+    let mut should_be_running = false;
+
     while !shutdown.is_cancelled() {
         tokio::select! {
             message = rx.recv() => {
                 tracing::debug!(?my_node_id, ?message, "receive message in leader background process");
                 match message {
                     Some(BackgroundJobLeaderMessage::StartBeingLeader) => {
-                        runner.spawn_all(cfg.clone(), handle.clone()).await;
+                        should_be_running = true;
+                        debounce.debounce_reconcile();
                     }
                     Some(BackgroundJobLeaderMessage::StopBeingLeader) => {
-                        runner.stop_all().await?;
+                        should_be_running = false;
+                        debounce.debounce_reconcile();
+                    }
+                    Some(BackgroundJobLeaderMessage::Reconcile) => {
+                        runner.reconcile(should_be_running).await?;
                     }
                     None => {
                         tracing::warn!("leader detection died");
@@ -308,15 +371,21 @@ pub(super) async fn run_background_jobs_on_leader(
                         Ok(Ok(_)) => {},
                         Ok(Err(e)) => {
                             if e.is_forward_to_leader_err() {
-                                tracing::trace!("failed a write because we are not the leader");
-                                break;
+                                tracing::debug!("failed a write because we are not the leader");
+                                should_be_running = false;
+                                // don't debounce this, because we just failed a write so we need to
+                                // shut down right away
+                                runner.stop_all().await?;
                             } else {
+                                tracing::warn!(err=?e, "other error in background job; shutting down all background jobs");
                                 runner.stop_all().await?;
                                 return Err(e.into());
                             }
                         }
                         Err(e) => {
                             if !e.is_cancelled() {
+                                tracing::warn!(err=?e, "other error in background job; shutting down all background jobs");
+                                runner.stop_all().await?;
                                 return Err(e.into());
                             }
                         }
