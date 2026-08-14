@@ -1,4 +1,10 @@
-use std::time::Duration;
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
+};
 
 use super::{
     LogId,
@@ -243,13 +249,34 @@ enum BackgroundJobLeaderMessage {
     Reconcile,
 }
 
-fn debounce_reconcile(tx: tokio::sync::mpsc::Sender<BackgroundJobLeaderMessage>) {
+struct ReconcileDebouncer {
+    debounce_waiting: Arc<AtomicBool>,
+    tx: tokio::sync::mpsc::Sender<BackgroundJobLeaderMessage>,
+}
+
+impl ReconcileDebouncer {
     const DEBOUNCE_TIME: Duration = Duration::from_millis(100);
 
-    tokio::task::spawn(async move {
-        tokio::time::sleep(DEBOUNCE_TIME).await;
-        let _ = tx.send(BackgroundJobLeaderMessage::Reconcile).await;
-    });
+    fn new(tx: tokio::sync::mpsc::Sender<BackgroundJobLeaderMessage>) -> Self {
+        Self {
+            debounce_waiting: Arc::new(AtomicBool::new(false)),
+            tx,
+        }
+    }
+
+    fn debounce_reconcile(&self) {
+        let debounce_waiting = Arc::clone(&self.debounce_waiting);
+        let tx = self.tx.clone();
+
+        if !debounce_waiting.load(Ordering::Acquire) {
+            debounce_waiting.store(true, Ordering::Release);
+            tokio::task::spawn(async move {
+                tokio::time::sleep(Self::DEBOUNCE_TIME).await;
+                debounce_waiting.store(false, Ordering::Release);
+                let _ = tx.send(BackgroundJobLeaderMessage::Reconcile).await;
+            });
+        }
+    }
 }
 
 pub(super) async fn run_background_jobs_on_leader(
@@ -262,7 +289,7 @@ pub(super) async fn run_background_jobs_on_leader(
     let (tx, mut rx) = tokio::sync::mpsc::channel(5);
 
     let watch_tx = tx.clone();
-    let debounce_tx = tx.clone();
+    let debounce = ReconcileDebouncer::new(tx.clone());
 
     let my_node_id = handle.node_id;
 
@@ -322,14 +349,14 @@ pub(super) async fn run_background_jobs_on_leader(
                 match message {
                     Some(BackgroundJobLeaderMessage::StartBeingLeader) => {
                         should_be_running = true;
-                        debounce_reconcile(debounce_tx.clone());
+                        debounce.debounce_reconcile();
                     }
                     Some(BackgroundJobLeaderMessage::StopBeingLeader) => {
                         should_be_running = false;
-                        debounce_reconcile(debounce_tx.clone());
+                        debounce.debounce_reconcile();
                     }
                     Some(BackgroundJobLeaderMessage::Reconcile) => {
-                        runner.reconcile(should_be_running).await;
+                        runner.reconcile(should_be_running).await?;
                     }
                     None => {
                         tracing::warn!("leader detection died");
