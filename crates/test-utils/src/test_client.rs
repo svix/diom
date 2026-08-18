@@ -170,6 +170,7 @@ impl<'a> IntoFuture for TestRequestBuilder<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct TestResponse(http::Response<Bytes>);
 
 impl TestResponse {

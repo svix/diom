@@ -40,6 +40,13 @@ log_format = "default"
 # The log level to run the service with. Supported: info, debug, trace
 log_level = "info"
 
+# Maximum size for a request body, in bytes.
+#
+# This should be set to a large enough value to handle all real requests that you receive,
+# but small enough not to consume all of your RAM. Requests more than 4x this size will
+# be ungracefully terminated.
+max_body_size = 2000000
+
 # Maximum number of topic sinks that can be drained concurrently.
 #
 # Larger values allow for faster forwarding (when the number of sinks exceeds

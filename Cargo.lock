@@ -1900,6 +1900,7 @@ dependencies = [
  "axum",
  "bytes",
  "diom-authorization",
+ "futures-util",
  "http 1.4.2",
  "http-body-util",
  "mime",

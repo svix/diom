@@ -75,7 +75,7 @@ where
 
                 _ => {
                     tracing::error!("Error reading body as bytes: {e}");
-                    MsgPackOrJsonRejection::InternalServerError {
+                    MsgPackOrJsonRejection::BadRequestError {
                         msg: "Failed to read request body".to_owned(),
                     }
                 }
@@ -305,6 +305,9 @@ fn classify_content_type(
 
 pub enum MsgPackOrJsonRejection {
     PayloadTooLarge,
+    BadRequestError {
+        msg: String,
+    },
     InternalServerError {
         msg: String,
     },
@@ -339,6 +342,7 @@ impl IntoResponse for MsgPackOrJsonRejection {
                 "Request payload is too large.",
             ),
             Self::InternalServerError { msg } => internal_server_error(msg),
+            Self::BadRequestError { msg } => bad_request_error(msg),
             Self::ContentType { code } => invalid_input(
                 StatusCode::BAD_REQUEST,
                 code,
@@ -368,6 +372,13 @@ fn internal_server_error(msg: String) -> Response {
     error_response(
         StatusCode::INTERNAL_SERVER_ERROR,
         ErrorBody::server_error("internal", msg),
+    )
+}
+
+fn bad_request_error(msg: String) -> Response {
+    error_response(
+        StatusCode::BAD_REQUEST,
+        ErrorBody::server_error("request", msg),
     )
 }
 

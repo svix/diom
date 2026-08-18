@@ -148,6 +148,11 @@ pub async fn run_with_listeners(
                 .allow_methods(Any)
                 .allow_headers(AllowHeaders::mirror_request())
                 .max_age(Duration::from_secs(600)),
+            DefaultBodyLimit::max(cfg.max_body_size * 4),
+            middleware::from_fn_with_state(
+                (cfg.max_body_size, cfg.max_body_size * 4),
+                diom_proto::limit_requests_body_gracefully,
+            ),
             CompressionLayer::new(),
         ))
         .into_make_service();
@@ -279,6 +284,7 @@ async fn run_internal(
             core::otel_spans::request_metrics_middleware,
         ),
         middleware::from_fn(diom_proto::capture_accept_hdr),
+        DefaultBodyLimit::disable(),
     ));
 
     // FIXME: Do we want to delay graceful shutdown of the internal API server
