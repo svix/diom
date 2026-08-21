@@ -6,6 +6,20 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use futures_util::stream::StreamExt;
+use std::time::Duration;
+
+const MAX_BODY_READ_TIME: Duration = Duration::from_secs(10);
+
+async fn read_body_forever(body: axum::body::Body, hard_body_limit: usize) {
+    let mut stream = body.into_data_stream();
+    let mut remaining = hard_body_limit;
+    while let Some(Ok(data)) = stream.next().await {
+        remaining = remaining.saturating_sub(data.len());
+        if remaining == 0 {
+            break;
+        }
+    }
+}
 
 /// Handler to ensure that large requests (but not huge) get a graceful 413
 ///
@@ -31,16 +45,12 @@ pub async fn limit_requests_body_gracefully(
         .and_then(|v| v.parse::<usize>().ok())
         && content_length > body_limit
     {
-        // consume up to hard_body_limit bytes and discard them
-        let body = request.into_body();
-        let mut stream = body.into_data_stream();
-        let mut remaining = hard_body_limit;
-        while let Some(Ok(data)) = stream.next().await {
-            remaining = remaining.saturating_sub(data.len());
-            if remaining == 0 {
-                break;
-            }
-        }
+        tokio::task::spawn(async move {
+            // consume up to hard_body_limit bytes and discard them; do this in
+            // a background task so that we can send the response right away
+            let body = request.into_body();
+            tokio::time::timeout(MAX_BODY_READ_TIME, read_body_forever(body, hard_body_limit)).await
+        });
         return (
             http::StatusCode::PAYLOAD_TOO_LARGE,
             MsgPackOrJson(ErrorBody::invalid_input(
