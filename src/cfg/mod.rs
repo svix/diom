@@ -683,6 +683,15 @@ pub struct ConfigurationInner {
     #[env_overridable(nest_with_prefix("OPENTELEMETRY"))]
     #[dumpable_config(nest)]
     pub opentelemetry: OpenTelemetryConfig,
+
+    /// Maximum size for a request body, in bytes.
+    ///
+    /// This should be set to a large enough value to handle all real requests that you receive,
+    /// but small enough not to consume all of your RAM. Requests more than 2x this size will
+    /// be ungracefully terminated.
+    #[serde(default = "defaults::default_max_body_size")]
+    #[validate(range(min = 10_000))]
+    pub max_body_size: usize,
 }
 
 impl ConfigurationInner {

@@ -193,6 +193,12 @@ pub struct TestContext {
     pub time: Monotime,
 }
 
+impl TestContext {
+    pub fn builder() -> TestServerBuilder {
+        TestServerBuilder::with_default_config()
+    }
+}
+
 async fn check_initialized(
     client: &reqwest::Client,
     url: &str,
@@ -365,6 +371,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         fsync_mode: FsyncMode::SyncData,
         admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
         jwt: Default::default(),
+        max_body_size: 2_000_000,
     }
 }
 

@@ -48,6 +48,7 @@ The diom server accepts the following environment variables:
 | `$DIOM_LISTEN_ADDRESS` | The address to listen on |
 | `$DIOM_LOG_FORMAT` | The log format that all output will follow. Supported: default, json |
 | `$DIOM_LOG_LEVEL` | The log level to run the service with. Supported: info, debug, trace |
+| `$DIOM_MAX_BODY_SIZE` | Maximum size for a request body, in bytes.<br/><br/>This should be set to a large enough value to handle all real requests that you receive, but small enough not to consume all of your RAM. Requests more than 2x this size will be ungracefully terminated. |
 | `$DIOM_OPENTELEMETRY_ADDRESS` | The OpenTelemetry address to send events to if given.<br/><br/>Currently only GRPC exports are supported. |
 | `$DIOM_OPENTELEMETRY_METRICS_ADDRESS` | The OpenTelemetry address to send metrics to if given.<br/><br/>If not specified, the server will attempt to fall back to `opentelemetry_address`. |
 | `$DIOM_OPENTELEMETRY_METRICS_PERIOD_MS` | How often to send metrics to opentelemetry receivers |

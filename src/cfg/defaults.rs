@@ -136,3 +136,8 @@ pub(super) const fn sink_max_task_duration() -> NonZeroDurationMs {
 pub(super) fn default_database_size() -> MemorySize {
     MemorySize::Percent(20)
 }
+
+pub(super) const fn default_max_body_size() -> usize {
+    // 2 MB
+    2 * 1000 * 1000
+}
