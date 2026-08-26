@@ -59,7 +59,7 @@ RUN <<EOF
 EOF
 
 # shared base image with dependencies
-FROM docker.io/debian:trixie-20260713-slim AS base
+FROM docker.io/debian:trixie-20260824-slim AS base
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
 ARG __BUST_DOCKER_BUILD_CACHE=2026-07-13
