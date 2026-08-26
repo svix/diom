@@ -35,7 +35,7 @@ ARG RELEASE_VERSION
 RUN cargo build --release -p diom-operator --bin diom-operator --frozen
 
 # Production
-FROM docker.io/debian:trixie-20260713-slim AS prod
+FROM docker.io/debian:trixie-20260824-slim AS prod
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
 RUN <<EOF
