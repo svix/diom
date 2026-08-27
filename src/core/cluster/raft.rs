@@ -2,6 +2,7 @@ use std::{collections::BTreeMap, sync::Arc, time::Instant};
 
 use anyhow::Context;
 use diom_core::Monotime;
+use diom_error::CanFailExt;
 use eyeball::Observable;
 use openraft::error::{InitializeError, RaftError};
 use tap::TapFallible;
@@ -287,6 +288,52 @@ pub async fn initialize_raft(
                 );
                 crate::start_shut_down()
             }
+        }
+    });
+    tokio::spawn({
+        let handle = handle.clone();
+        let initialized = initialized.clone();
+        let my_node_id = handle.node_id;
+        let token = diom_core::shutdown::graceful_shutting_down_token();
+        async move {
+            if initialized.wait().await.is_err() {
+                return;
+            }
+            token.cancelled().await;
+            tracing::debug!("graceful shutdown started, can I transfer leadership?");
+            let Ok(other_peer) = handle
+                .raft
+                .with_raft_state(move |f| {
+                    if !f.server_state.is_leader() {
+                        return None;
+                    }
+                    f.membership_state
+                        .effective()
+                        .nodes()
+                        .find_map(|(node_id, _node)| {
+                            if *node_id != my_node_id {
+                                Some(*node_id)
+                            } else {
+                                None
+                            }
+                        })
+                })
+                .await
+            else {
+                tracing::warn!("error looking up other peers at shutdown; ignoring");
+                return;
+            };
+            let Some(other_node_id) = other_peer else {
+                tracing::debug!("no other node to hand off leadership to");
+                return;
+            };
+            tracing::info!(my_node_id = %handle.node_id, %other_node_id, "transferring leadership to other node at shutdown");
+            handle
+                .raft
+                .trigger()
+                .transfer_leader(other_node_id)
+                .await
+                .can_fail("transferring leadership to other node");
         }
     });
     Ok(handle)

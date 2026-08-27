@@ -98,7 +98,7 @@ pub async fn run_with_listeners(
 
     let interserver_started_barrier = Arc::new(Barrier::new(2));
 
-    tokio::spawn(graceful_shutdown_handler());
+    tokio::spawn(graceful_shutdown_handler(cfg.clone()));
 
     let connection_metrics = ConnectionMetrics::new(&app_state.meter, node_id);
 

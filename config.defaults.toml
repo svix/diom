@@ -31,6 +31,9 @@ environment = "dev"
 # When fsyncing, should we use fsync(2) or fdatasync(2)
 fsync_mode = "sync-data"
 
+# How long to wait before shutting down once a shutdown signal is received
+graceful_shutdown_time_ms = 15000
+
 # The address to listen on
 listen_address = "[::]:8624"
 

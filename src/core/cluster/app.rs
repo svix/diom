@@ -15,7 +15,7 @@ use headers::{Authorization, authorization::Bearer};
 use http::StatusCode;
 use openraft::{
     ChangeMembers,
-    raft::{AppendEntriesRequest, InstallSnapshotRequest, VoteRequest},
+    raft::{AppendEntriesRequest, InstallSnapshotRequest, TransferLeaderRequest, VoteRequest},
 };
 use serde::Serialize;
 use tap::{Pipe, TapFallible};
@@ -59,6 +59,7 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
         .route("/repl/discover", get(discover))
         .route("/repl/raft/append_entries", post(append_entries))
         .route("/repl/raft/vote", post(vote))
+        .route("/repl/raft/transfer_leader", post(transfer_leader))
         .route("/repl/raft/stream-snapshot", post(stream_snapshot))
         .route(
             "/repl/raft/handle-forwarded-write",
@@ -160,6 +161,19 @@ async fn vote(
         "recording a vote",
     );
     state.raft.vote(body).await.pipe(rpc_response)
+}
+
+#[tracing::instrument(skip_all)]
+async fn transfer_leader(
+    Extension(state): Extension<RaftState>,
+    MsgPack(body): MsgPack<TransferLeaderRequest<TypeConfig>>,
+) -> impl IntoResponse {
+    tracing::trace!("recording leadership-transfer request",);
+    state
+        .raft
+        .handle_transfer_leader(body)
+        .await
+        .pipe(rpc_response)
 }
 
 #[tracing::instrument(skip_all)]
