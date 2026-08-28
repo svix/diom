@@ -58,8 +58,10 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
     let mut authenticated = axum::Router::new()
         .route("/repl/discover", get(discover))
         .route("/repl/raft/append_entries", post(append_entries))
+        .route("/repl/raft/append-entries", post(append_entries))
         .route("/repl/raft/vote", post(vote))
         .route("/repl/raft/transfer_leader", post(transfer_leader))
+        .route("/repl/raft/transfer-leader", post(transfer_leader))
         .route("/repl/raft/stream-snapshot", post(stream_snapshot))
         .route(
             "/repl/raft/handle-forwarded-write",
