@@ -343,6 +343,16 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
     > {
         super::streaming_snapshot::Sender::send_snapshot(self, vote, snapshot, cancel, option).await
     }
+
+    #[tracing::instrument(skip_all)]
+    async fn transfer_leader(
+        &mut self,
+        rpc: openraft::raft::TransferLeaderRequest<TypeConfig>,
+        option: RPCOption,
+    ) -> Result<openraft::raft::TransferLeaderResponse<TypeConfig>, RPCError> {
+        self.send_request_with_timeout("/repl/raft/transfer_leader", rpc, option.soft_ttl())
+            .await
+    }
 }
 
 impl RaftNetworkFactory<TypeConfig> for NetworkFactory {

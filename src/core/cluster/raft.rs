@@ -2,9 +2,10 @@ use std::{collections::BTreeMap, sync::Arc, time::Instant};
 
 use anyhow::Context;
 use diom_core::Monotime;
+use diom_error::CanFailExt;
 use eyeball::Observable;
 use openraft::error::{InitializeError, RaftError};
-use tap::TapFallible;
+use tap::{TapFallible, TapOptional};
 
 use super::{
     handle::{RaftState, Request, RequestWithContext, Response},
@@ -287,6 +288,60 @@ pub async fn initialize_raft(
                 );
                 crate::start_shut_down()
             }
+        }
+    });
+    tokio::spawn({
+        let handle = handle.clone();
+        let initialized = initialized.clone();
+        let my_node_id = handle.node_id;
+        let token = diom_core::shutdown::graceful_shutting_down_token();
+        async move {
+            if initialized.wait().await.is_err() {
+                // if we never initialized, it'd be pointless to do a leadership handoff
+                return;
+            }
+            // wait until a graceful shutdown starts
+            token.cancelled().await;
+            tracing::trace!("graceful shutdown started, can I transfer leadership?");
+            let other_node_id = match handle
+                .raft
+                .with_raft_state(move |f| {
+                    if !f.server_state.is_leader() {
+                        tracing::debug!("not a leader; doing nothing");
+                        return None;
+                    }
+                    f.membership_state
+                        .effective()
+                        .nodes()
+                        .find_map(|(node_id, _node)| {
+                            if *node_id != my_node_id {
+                                Some(*node_id)
+                            } else {
+                                None
+                            }
+                        })
+                        .tap_none(|| {
+                            tracing::debug!(
+                                "no other node to hand off leadership to; this is a 1-node cluster right now"
+                            )
+                        })
+                })
+                .await
+            {
+                Ok(Some(other_node_id)) => other_node_id,
+                Ok(None) => return,
+                Err(err) => {
+                    tracing::warn!(?err, "error looking up other peers at shutdown; ignoring");
+                    return;
+                }
+            };
+            tracing::info!(my_node_id = %handle.node_id, %other_node_id, "transferring leadership to other node at shutdown");
+            handle
+                .raft
+                .trigger()
+                .transfer_leader(other_node_id)
+                .await
+                .can_fail("transferring leadership to other node");
         }
     });
     Ok(handle)

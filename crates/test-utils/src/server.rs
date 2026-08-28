@@ -372,6 +372,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
         jwt: Default::default(),
         max_body_size: 2_000_000,
+        graceful_shutdown_time: NonZeroDurationMs::from_millis(10).unwrap(),
     }
 }
 

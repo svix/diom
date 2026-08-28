@@ -5,6 +5,7 @@ use aide::axum::{
     routing::{get_with, post_with},
 };
 use axum::extract::Extension;
+use diom_core::shutdown::is_shutting_down;
 use diom_derive::aide_annotate;
 use diom_proto::MsgPackOrJson;
 use schemars::JsonSchema;
@@ -40,6 +41,11 @@ pub struct ReadyOut {
 /// Verify that this server is ready to serve customer traffic.
 #[aide_annotate(op_id = "v1.health.ready")]
 async fn ready(Extension(repl): Extension<RaftState>) -> Result<MsgPackOrJson<ReadyOut>> {
+    if is_shutting_down() {
+        return Err(Error::not_ready(
+            "This node is currently shutting down".to_owned(),
+        ));
+    }
     let state = repl.state().await.or_internal_error()?;
     if state.is_leader() || state.is_follower() || state.is_candidate() {
         Ok(MsgPackOrJson(ReadyOut {

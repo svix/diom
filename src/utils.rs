@@ -13,11 +13,15 @@ use axum::{
     response::IntoResponse as _,
     serve::{Listener, ListenerExt as _},
 };
-use diom_core::shutdown::{shutting_down_token, start_shut_down};
+use diom_core::shutdown::{shutting_down_token, start_shut_down_gracefully};
+
 use diom_error::Error;
 use tokio::net::TcpListener;
 
-use crate::core::metrics::{ConnectionMetrics, ConnectionType};
+use crate::{
+    cfg::Configuration,
+    core::metrics::{ConnectionMetrics, ConnectionType},
+};
 
 #[derive(Debug, Clone)]
 pub struct Initialized {
@@ -68,7 +72,7 @@ pub(crate) async fn fail_until_bootstrapped(
     next.run(request).await
 }
 
-pub(crate) async fn graceful_shutdown_handler() {
+pub(crate) async fn graceful_shutdown_handler(cfg: Configuration) {
     let ctrl_c = async {
         tokio::signal::ctrl_c()
             .await
@@ -92,7 +96,7 @@ pub(crate) async fn graceful_shutdown_handler() {
     }
 
     tracing::info!("Received shutdown signal. Shutting down gracefully...");
-    start_shut_down();
+    start_shut_down_gracefully(cfg.graceful_shutdown_time.into()).await;
 }
 
 pub(crate) fn handle_panic(

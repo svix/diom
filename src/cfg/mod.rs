@@ -601,6 +601,13 @@ pub struct ConfigurationInner {
     #[serde(rename = "bootstrap_delay_ms", default)]
     pub bootstrap_delay: Option<NonZeroDurationMs>,
 
+    /// How long to wait before shutting down once a shutdown signal is received
+    #[serde(
+        rename = "graceful_shutdown_time_ms",
+        default = "defaults::graceful_shutdown_time"
+    )]
+    pub graceful_shutdown_time: NonZeroDurationMs,
+
     /// How often to run background cleanup/garbage collection jobs
     ///
     /// Correctness should never be affected by this, just wasted memory/disk.
