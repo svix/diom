@@ -168,7 +168,7 @@ async fn transfer_leader(
     Extension(state): Extension<RaftState>,
     MsgPack(body): MsgPack<TransferLeaderRequest<TypeConfig>>,
 ) -> impl IntoResponse {
-    tracing::trace!("recording leadership-transfer request",);
+    tracing::trace!("recording leadership-transfer request");
     state
         .raft
         .handle_transfer_leader(body)
