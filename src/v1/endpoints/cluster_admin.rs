@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, time::Duration};
+use std::{collections::BTreeSet, fmt::Write, time::Duration};
 
 use aide::axum::{
     ApiRouter,
@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AppState, RaftState,
-    core::cluster::{ClusterId, Node, NodeId},
+    core::cluster::{ClusterId, Node, NodeId, SnapshotSignature},
     error::Result,
     v1::utils::openapi_tag,
 };
@@ -39,6 +39,23 @@ macro_rules! request_input {
             }
         }
     };
+}
+
+pub fn snapshot_id_from_signature(sig: SnapshotSignature) -> String {
+    let mut buf = String::new();
+    if let Some(last_membership) = sig.last_membership_log_id {
+        write!(buf, "{}-", last_membership.leader_id.term)
+            .expect("writing to a String is infallible");
+    } else {
+        buf.push_str("x-")
+    }
+    if let Some(last_log_id) = sig.last_log_id {
+        write!(buf, "{}-{}", last_log_id.leader_id.term, last_log_id.index)
+            .expect("writing to a String is infallible");
+    } else {
+        buf.push_str("x-x")
+    }
+    buf
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, JsonSchema)]
@@ -160,7 +177,11 @@ async fn cluster_status(
     let this_node_id = repl.node_id;
 
     let this_node_last_committed_timestamp = repl.time.now();
-    let this_node_last_snapshot_id = repl.state_machine.last_snapshot_id().await;
+    let this_node_last_snapshot_id = repl
+        .state_machine
+        .last_snapshot_signature()
+        .await
+        .map(snapshot_id_from_signature);
 
     let nodes = futures_util::stream::iter(pnodes)
         .map(|peer| {
@@ -280,16 +301,16 @@ struct ClusterForceSnapshotOut {
 
 async fn wait_for_snapshot_to_update(
     repl: &RaftState,
-    previous_snapshot_id: String,
-) -> Result<String> {
+    previous_snapshot_id: SnapshotSignature,
+) -> Result<SnapshotSignature> {
     let mut ticker = tokio::time::interval(Duration::from_millis(500));
     loop {
         let previous_snapshot_id = previous_snapshot_id.clone();
         if let Some(new_snapshot_id) = repl
             .raft
             .with_raft_state(move |s| {
-                if s.snapshot_meta.snapshot_id != previous_snapshot_id {
-                    Some(s.snapshot_meta.snapshot_id.clone())
+                if s.snapshot_meta.signature() != previous_snapshot_id {
+                    Some(s.snapshot_meta.signature())
                 } else {
                     None
                 }
@@ -311,7 +332,7 @@ async fn cluster_force_snapshot(
 ) -> Result<MsgPackOrJson<ClusterForceSnapshotOut>> {
     let previous_snapshot_id = repl
         .raft
-        .with_raft_state(|s| s.snapshot_meta.snapshot_id.clone())
+        .with_raft_state(|s| s.snapshot_meta.signature())
         .await
         .or_internal_error()?;
 
@@ -343,7 +364,7 @@ async fn cluster_force_snapshot(
     Ok(MsgPackOrJson(ClusterForceSnapshotOut {
         snapshot_time: snapshot_time.into(),
         snapshot_log_index: log_id.index,
-        snapshot_id,
+        snapshot_id: snapshot_id.map(snapshot_id_from_signature),
     }))
 }
 

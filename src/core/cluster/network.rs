@@ -5,18 +5,22 @@ use std::{
 
 use crate::{
     cfg::{Configuration, PeerAddr},
-    core::metrics::{ClusterNetworkMetrics, ClusterRequestStatus},
+    core::{
+        cluster::state_machine::StoredSnapshot,
+        metrics::{ClusterNetworkMetrics, ClusterRequestStatus},
+    },
 };
 
-use super::{LogId, Node, NodeId, proto, raft::TypeConfig};
+use super::{LogId, Node, NodeId, RaftError, proto, raft::TypeConfig};
 use anyhow::Context;
 use diom_proto::prelude::*;
 use http::{HeaderMap, HeaderValue, StatusCode, header};
 use openraft::{
-    RaftNetworkFactory, RaftNetworkV2,
+    RaftNetworkFactory,
     error::{NetworkError, Unreachable},
     network::RPCOption,
 };
+use openraft_legacy::network_v1::{InstallSnapshotError, RaftNetwork};
 use serde::{Serialize, de::DeserializeOwned};
 use tap::Pipe;
 
@@ -288,32 +292,19 @@ impl NetworkClient {
         Ok(last_committed_log_id)
     }
 
-    #[allow(clippy::result_large_err)]
-    #[tracing::instrument(skip_all)]
-    pub(super) async fn install_snapshot(
-        &mut self,
-        rpc: openraft::raft::InstallSnapshotRequest<TypeConfig>,
-        option: RPCOption,
-    ) -> Result<
-        openraft::raft::InstallSnapshotResponse<TypeConfig>,
-        RPCError<openraft::errors::RaftError<TypeConfig, openraft::errors::InstallSnapshotError>>,
-    > {
-        self.send_request_with_timeout("/repl/raft/stream-snapshot", rpc, option.soft_ttl())
-            .await
-    }
-
+    #[allow(unused)]
     pub(super) fn target(&self) -> NodeId {
         self.target
     }
 }
 
-impl RaftNetworkV2<TypeConfig> for NetworkClient {
+impl RaftNetwork<TypeConfig> for NetworkClient {
     #[tracing::instrument(skip_all)]
     async fn append_entries(
         &mut self,
         rpc: openraft::raft::AppendEntriesRequest<TypeConfig>,
         option: RPCOption,
-    ) -> Result<openraft::raft::AppendEntriesResponse<TypeConfig>, RPCError> {
+    ) -> Result<openraft::raft::AppendEntriesResponse<TypeConfig>, RPCError<RaftError>> {
         self.send_request_with_timeout("/repl/raft/append_entries", rpc, option.soft_ttl())
             .await
     }
@@ -323,25 +314,22 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
         &mut self,
         rpc: openraft::raft::VoteRequest<TypeConfig>,
         option: RPCOption,
-    ) -> Result<openraft::raft::VoteResponse<TypeConfig>, RPCError> {
+    ) -> Result<openraft::raft::VoteResponse<TypeConfig>, RPCError<RaftError>> {
         self.send_request_with_timeout("/repl/raft/vote", rpc, option.soft_ttl())
             .await
     }
 
-    #[tracing::instrument(skip_all, fields(?vote))]
-    async fn full_snapshot(
+    #[tracing::instrument(skip_all)]
+    async fn install_snapshot(
         &mut self,
-        vote: openraft::type_config::alias::VoteOf<TypeConfig>,
-        snapshot: openraft::type_config::alias::SnapshotOf<TypeConfig>,
-        cancel: impl Future<Output = openraft::error::ReplicationClosed>
-        + openraft::OptionalSend
-        + 'static,
+        rpc: openraft_legacy::network_v1::InstallSnapshotRequest<TypeConfig>,
         option: RPCOption,
     ) -> Result<
-        openraft::raft::SnapshotResponse<TypeConfig>,
-        openraft::error::StreamingError<TypeConfig>,
+        openraft_legacy::network_v1::InstallSnapshotResponse<TypeConfig>,
+        RPCError<RaftError<InstallSnapshotError>>,
     > {
-        super::streaming_snapshot::Sender::send_snapshot(self, vote, snapshot, cancel, option).await
+        self.send_request_with_timeout("/repl/raft/stream-snapshot", rpc, option.soft_ttl())
+            .await
     }
 
     #[tracing::instrument(skip_all)]
@@ -356,10 +344,10 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
 }
 
 impl RaftNetworkFactory<TypeConfig> for NetworkFactory {
-    type Network = NetworkClient;
+    type Network = openraft_legacy::network_v1::Adapter<TypeConfig, NetworkClient, StoredSnapshot>;
 
     async fn new_client(&mut self, target: NodeId, node: &Node) -> Self::Network {
-        self.client_for(target, node)
+        self.client_for(target, node).into_v2()
     }
 }
 

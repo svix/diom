@@ -21,7 +21,7 @@ use fjall_utils::StorageType;
 use itertools::Itertools;
 use jiff::Timestamp;
 use maplit::btreeset;
-use openraft::{RaftNetworkFactory, ServerState};
+use openraft::ServerState;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -420,8 +420,8 @@ impl RaftState {
                         }
                         tracing::Span::current().record("forwarded", true);
                         tracing::trace!("received write to non-leader, forwarding");
-                        let mut network_handle = self.network.clone();
-                        let client = network_handle.new_client(leader_id, leader_node).await;
+                        let network_handle = self.network.clone();
+                        let client = network_handle.client_for(leader_id, leader_node);
                         write_type = WriteType::Forwarded;
                         client
                             .forward_request(super::proto::ForwardedWriteRequest {
@@ -538,8 +538,8 @@ impl RaftState {
             .await?
             .ok_or_else(|| anyhow::anyhow!("unable to look up leader node IP"))?;
         tracing::trace!(?leader_id, "performing a linearizable read on a follower");
-        let mut network_handle = self.network.clone();
-        let client = network_handle.new_client(leader_id, &leader_node).await;
+        let network_handle = self.network.clone();
+        let client = network_handle.client_for(leader_id, &leader_node);
         let Some(last_committed_log_id) = client.get_last_committed_log_id().await? else {
             tracing::warn!(
                 "attempted to do a linearizable read, but nothing has ever been written"
@@ -565,8 +565,8 @@ impl RaftState {
         node_id: NodeId,
         address: &Node,
     ) -> anyhow::Result<Option<LogId>> {
-        let mut network_handle = self.network.clone();
-        let client = network_handle.new_client(node_id, address).await;
+        let network_handle = self.network.clone();
+        let client = network_handle.client_for(node_id, address);
         client
             .get_last_committed_log_id()
             .await
@@ -715,8 +715,8 @@ impl RaftState {
                 leader_node,
             }) => {
                 tracing::debug!(?leader_id, "forwarding remove-node request to leader");
-                let mut network_handle = self.network.clone();
-                let client = network_handle.new_client(leader_id, &leader_node).await;
+                let network_handle = self.network.clone();
+                let client = network_handle.client_for(leader_id, &leader_node);
                 client
                     .remove_node(super::proto::RemoveNodeRequest { node_id })
                     .await
