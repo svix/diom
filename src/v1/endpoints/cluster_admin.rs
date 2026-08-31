@@ -44,7 +44,7 @@ macro_rules! request_input {
 pub fn snapshot_id_from_signature(sig: SnapshotSignature) -> String {
     let mut buf = String::new();
     if let Some(last_membership) = sig.last_membership_log_id {
-        write!(buf, "{}-", last_membership.leader_id.term,)
+        write!(buf, "{}-", last_membership.leader_id.term)
             .expect("writing to a String is infallible");
     } else {
         buf.push_str("x-")

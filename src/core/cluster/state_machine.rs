@@ -508,7 +508,6 @@ impl Store {
 
     async fn install_snapshot_(
         &mut self,
-
         meta: &SnapshotMeta,
         mut snapshot: StoredSnapshot,
     ) -> anyhow::Result<()> {

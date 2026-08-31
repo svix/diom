@@ -26,7 +26,8 @@ pub use self::{
 pub(crate) type LogId = LogIdOf<TypeConfig>;
 pub type NodeId = NodeIdOf<TypeConfig>;
 pub(crate) type Node = NodeOf<TypeConfig>;
-pub(crate) type RaftError<C> = openraft::error::RaftError<TypeConfig, C>;
+pub(crate) type RaftError<E = openraft::errors::Infallible> =
+    openraft::error::RaftError<TypeConfig, E>;
 pub(crate) type ClientWriteError = openraft::error::ClientWriteError<TypeConfig>;
 pub(crate) type SnapshotSignature = openraft::type_config::alias::SnapshotSignatureOf<TypeConfig>;
 

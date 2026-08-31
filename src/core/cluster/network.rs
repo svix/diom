@@ -11,13 +11,13 @@ use crate::{
     },
 };
 
-use super::{LogId, Node, NodeId, proto, raft::TypeConfig};
+use super::{LogId, Node, NodeId, RaftError, proto, raft::TypeConfig};
 use anyhow::Context;
 use diom_proto::prelude::*;
 use http::{HeaderMap, HeaderValue, StatusCode, header};
 use openraft::{
     RaftNetworkFactory,
-    error::{NetworkError, RaftError, Unreachable},
+    error::{NetworkError, Unreachable},
     network::RPCOption,
 };
 use openraft_legacy::network_v1::{InstallSnapshotError, RaftNetwork};
@@ -304,8 +304,7 @@ impl RaftNetwork<TypeConfig> for NetworkClient {
         &mut self,
         rpc: openraft::raft::AppendEntriesRequest<TypeConfig>,
         option: RPCOption,
-    ) -> Result<openraft::raft::AppendEntriesResponse<TypeConfig>, RPCError<RaftError<TypeConfig>>>
-    {
+    ) -> Result<openraft::raft::AppendEntriesResponse<TypeConfig>, RPCError<RaftError>> {
         self.send_request_with_timeout("/repl/raft/append_entries", rpc, option.soft_ttl())
             .await
     }
@@ -315,7 +314,7 @@ impl RaftNetwork<TypeConfig> for NetworkClient {
         &mut self,
         rpc: openraft::raft::VoteRequest<TypeConfig>,
         option: RPCOption,
-    ) -> Result<openraft::raft::VoteResponse<TypeConfig>, RPCError<RaftError<TypeConfig>>> {
+    ) -> Result<openraft::raft::VoteResponse<TypeConfig>, RPCError<RaftError>> {
         self.send_request_with_timeout("/repl/raft/vote", rpc, option.soft_ttl())
             .await
     }
@@ -327,7 +326,7 @@ impl RaftNetwork<TypeConfig> for NetworkClient {
         option: RPCOption,
     ) -> Result<
         openraft_legacy::network_v1::InstallSnapshotResponse<TypeConfig>,
-        RPCError<RaftError<TypeConfig, InstallSnapshotError>>,
+        RPCError<RaftError<InstallSnapshotError>>,
     > {
         self.send_request_with_timeout("/repl/raft/stream-snapshot", rpc, option.soft_ttl())
             .await
