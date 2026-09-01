@@ -299,10 +299,11 @@ pub(crate) fn load_from_file<F: Read + Seek>(
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
+    use std::{collections::BTreeSet, io::Cursor};
 
     use fjall::{Database, KeyspaceCreateOptions, Slice};
     use fjall_utils::{Databases, SchemaManifest, SerializableKeyspaceCreateOptions};
+    use maplit::btreeset;
 
     use super::{ClusterId, load_from_file, serialize_to_file};
     use fjall_utils::StorageType;
@@ -436,8 +437,11 @@ mod tests {
             .list_keyspace_names()
             .into_iter()
             .map(|s| s.to_string())
-            .collect::<Vec<_>>();
-        assert_eq!(&found_keyspaces, &["keyspace1", "_schema"]);
+            .collect::<BTreeSet<_>>();
+        assert_eq!(
+            found_keyspaces,
+            btreeset!["keyspace1".to_owned(), "_schema".to_owned()]
+        );
 
         // even though we initialize it here with ::default, it should already have been
         // initialized as kv-separated in the `load_from_file` call.
