@@ -25,7 +25,7 @@ jobs:
         with:
           fetch-depth: '0'
       - name: Run hadolint
-        uses: hadolint/hadolint-action@2a66e89f53d0771bb131a7fa31f3136336094aa6 # v3.4.0
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
         with:
           dockerfile: ${{ inputs.file }}
 
@@ -55,7 +55,7 @@ jobs:
 
       - name: Scan image with Grype for only fixable
         id: scan
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           image: ${{ steps.build.outputs.imageid }}
           fail-build: true
@@ -69,7 +69,7 @@ jobs:
 
       - name: Scan image with Grype for all
         id: scan-all
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           image: ${{ steps.build.outputs.imageid }}
           fail-build: false
