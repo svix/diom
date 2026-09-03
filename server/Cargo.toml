@@ -6,9 +6,6 @@ repository.workspace = true
 edition = "2024"
 publish = false
 
-[build-dependencies]
-rust-executable-metadata.workspace = true
-
 [package.metadata.dist]
 dist = false
 
@@ -39,6 +36,9 @@ tracing = { workspace = true, features = ["release_max_level_debug"] }
 tracing-log.workspace = true
 tracing-opentelemetry.workspace = true
 tracing-subscriber.workspace = true
+
+[build-dependencies]
+rust-executable-metadata.workspace = true
 
 [lints]
 workspace = true

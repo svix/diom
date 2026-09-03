@@ -30,7 +30,7 @@ fmt:
 # run cargo sort
 [group('lint')]
 sort:
-    cargo sort --no-format --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
+    cargo sort --no-format --workspace -o package,lib,bin,features,dependencies,build-dependencies,dev-dependencies,lints,workspace
 
 # run `vacuum` to check openapi; only prints out errors
 [group('lint')]
