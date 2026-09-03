@@ -1,0 +1,1088 @@
+- module_path: diom_admin_auth::operations
+  type_name: AdminAuthOperation
+  kind: value-enum
+  members:
+  - name: ConfigureRole
+    ty: ConfigureRoleOperation
+  - name: DeleteRole
+    ty: DeleteRoleOperation
+  - name: ConfigureAccessPolicy
+    ty: ConfigureAccessPolicyOperation
+  - name: DeleteAccessPolicy
+    ty: DeleteAccessPolicyOperation
+- module_path: diom_admin_auth::operations::configure_policy
+  type_name: ConfigureAccessPolicyOperation
+  kind: value-struct
+  members:
+  - name: id
+    ty: AccessPolicyId
+  - name: description
+    ty: String
+  - name: rules
+    ty: Vec<AccessRule>
+- module_path: diom_admin_auth::operations::configure_role
+  type_name: ConfigureRoleOperation
+  kind: value-struct
+  members:
+  - name: id
+    ty: RoleId
+  - name: description
+    ty: String
+  - name: rules
+    ty: Vec<AccessRule>
+  - name: policies
+    ty: Vec<AccessPolicyId>
+  - name: context
+    ty: HashMap<String, String>
+- module_path: diom_admin_auth::operations::delete_policy
+  type_name: DeleteAccessPolicyOperation
+  kind: value-struct
+  members:
+  - name: id
+    ty: AccessPolicyId
+- module_path: diom_admin_auth::operations::delete_role
+  type_name: DeleteRoleOperation
+  kind: value-struct
+  members:
+  - name: id
+    ty: RoleId
+- module_path: diom_admin_auth::storage
+  type_name: AccessPolicyRow
+  kind: value-struct
+  members:
+  - name: description
+    ty: String
+  - name: rules
+    ty: Vec<AccessRule>
+  - name: created
+    ty: UnixTimestampMs
+  - name: updated
+    ty: UnixTimestampMs
+- module_path: diom_admin_auth::storage
+  type_name: RoleRow
+  kind: value-struct
+  members:
+  - name: id
+    ty: RoleId
+  - name: description
+    ty: String
+  - name: rules
+    ty: Vec<AccessRule>
+  - name: policies
+    ty: Vec<AccessPolicyId>
+  - name: context
+    ty: HashMap<String, String>
+  - name: created
+    ty: UnixTimestampMs
+  - name: updated
+    ty: UnixTimestampMs
+- module_path: diom_auth_token::entities
+  type_name: TokenHashed
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: "[u8; 32]"
+- module_path: diom_auth_token::operations
+  type_name: AuthTokenOperation
+  kind: value-enum
+  members:
+  - name: Create
+    ty: CreateAuthTokenOperation
+  - name: Expire
+    ty: ExpireAuthTokenOperation
+  - name: Delete
+    ty: DeleteAuthTokenOperation
+  - name: Update
+    ty: UpdateAuthTokenOperation
+  - name: Rotate
+    ty: RotateAuthTokenOperation
+  - name: ConfigureNamespace
+    ty: ConfigureAuthTokenNamespaceOperation
+- module_path: diom_auth_token::operations::configure_namespace
+  type_name: ConfigureAuthTokenNamespaceOperation
+  kind: value-struct
+  members:
+  - name: name
+    ty: NamespaceName
+  - name: id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_auth_token::operations::create
+  type_name: CreateAuthTokenOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: id_random_bytes
+    ty: UuidV7RandomBytes
+  - name: name
+    ty: String
+  - name: token_hashed
+    ty: TokenHashed
+  - name: expiry
+    ty: Option<UnixTimestampMs>
+  - name: metadata
+    ty: Metadata
+  - name: owner_id
+    ty: String
+  - name: scopes
+    ty: Vec<String>
+  - name: enabled
+    ty: bool
+- module_path: diom_auth_token::operations::delete
+  type_name: DeleteAuthTokenOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: id
+    ty: AuthTokenId
+- module_path: diom_auth_token::operations::expire
+  type_name: ExpireAuthTokenOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: id
+    ty: AuthTokenId
+  - name: expiry
+    ty: Option<UnixTimestampMs>
+- module_path: diom_auth_token::operations::rotate
+  type_name: RotateAuthTokenOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: old_id
+    ty: AuthTokenId
+  - name: new_id_random_bytes
+    ty: UuidV7RandomBytes
+  - name: new_token_hashed
+    ty: TokenHashed
+  - name: old_expiry
+    ty: Option<UnixTimestampMs>
+- module_path: diom_auth_token::operations::update
+  type_name: UpdateAuthTokenOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: id
+    ty: AuthTokenId
+  - name: name
+    ty: Option<String>
+  - name: expiry
+    ty: Option<UnixTimestampMs>
+  - name: metadata
+    ty: Option<Metadata>
+  - name: scopes
+    ty: Option<Vec<String>>
+  - name: enabled
+    ty: Option<bool>
+- module_path: diom_auth_token::storage
+  type_name: AuthTokenRow
+  kind: value-struct
+  members:
+  - name: id
+    ty: AuthTokenId
+  - name: name
+    ty: String
+  - name: expiry
+    ty: Option<UnixTimestampMs>
+  - name: metadata
+    ty: Metadata
+  - name: owner_id
+    ty: String
+  - name: scopes
+    ty: Vec<String>
+  - name: enabled
+    ty: bool
+  - name: created
+    ty: UnixTimestampMs
+  - name: updated
+    ty: UnixTimestampMs
+- module_path: diom_auth_token::storage
+  type_name: IdIndexRow
+  kind: value-struct
+  members:
+  - name: token_hashed
+    ty: TokenHashed
+- module_path: diom_auth_token::storage
+  type_name: OwnerIndexRow
+  kind: value-struct
+  members: []
+- module_path: diom_authorization::api
+  type_name: AccessPolicyId
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: String
+- module_path: diom_authorization::api
+  type_name: AccessRule
+  kind: value-struct
+  members:
+  - name: effect
+    ty: AccessRuleEffect
+  - name: resource
+    ty: ResourcePattern
+  - name: actions
+    ty: Vec<String>
+- module_path: diom_authorization::api
+  type_name: AccessRuleEffect
+  kind: value-enum
+  members:
+  - name: Allow
+  - name: Deny
+- module_path: diom_authorization::api
+  type_name: ModulePattern
+  kind: value-enum
+  members:
+  - name: Any
+  - name: Exactly
+    ty: Module
+- module_path: diom_authorization::api
+  type_name: ResourcePattern
+  kind: value-struct
+  members:
+  - name: module
+    ty: ModulePattern
+  - name: namespace
+    ty: NamespacePattern
+  - name: key
+    ty: KeyPattern
+- module_path: diom_authorization::api
+  type_name: RoleId
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: String
+- module_path: diom_authorization::pattern
+  type_name: KeyPattern
+  kind: value-struct
+  members:
+  - name: segments
+    ty: Vec<KeyPatternSegment>
+  - name: trailing_any
+    ty: bool
+- module_path: diom_authorization::pattern
+  type_name: KeyPatternSegment
+  kind: value-enum
+  members:
+  - name: Fixed
+    ty: String
+  - name: Placeholder
+    ty: String
+- module_path: diom_authorization::pattern
+  type_name: NamespacePattern
+  kind: value-enum
+  members:
+  - name: Default
+  - name: Named
+    ty: String
+  - name: Any
+- module_path: diom_backend::core::cluster::handle
+  type_name: Request
+  kind: value-enum
+  members:
+  - name: ClusterInternal
+    ty: InternalOperation
+  - name: Kv
+    ty: diom_kv::operations::KvOperation
+  - name: RateLimit
+    ty: diom_rate_limit::operations::RateLimitOperation
+  - name: Idempotency
+    ty: diom_idempotency::operations::IdempotencyOperation
+  - name: Cache
+    ty: diom_cache::operations::CacheOperation
+  - name: Msgs
+    ty: diom_msgs::operations::MsgsOperation
+  - name: AuthToken
+    ty: diom_auth_token::operations::AuthTokenOperation
+  - name: AdminAuth
+    ty: diom_admin_auth::operations::AdminAuthOperation
+- module_path: diom_backend::core::cluster::logs
+  type_name: LogIndex
+  kind: value-struct
+  members:
+  - name: unix_timestamp_ms
+    ty: u64
+  - name: log_id
+    ty: u64
+- module_path: diom_backend::core::cluster::operations
+  type_name: InternalOperation
+  kind: value-enum
+  members:
+  - name: SetClusterUuid
+    ty: SetClusterUuidOperation
+  - name: RecordLogTimestamp
+    ty: RecordLogTimestampOperation
+  - name: Tick
+    ty: TickOperation
+- module_path: diom_backend::core::cluster::operations::record_log_timestamp
+  type_name: RecordLogTimestampOperation
+  kind: value-struct
+  members: []
+- module_path: diom_backend::core::cluster::operations::set_cluster_uuid
+  type_name: SetClusterUuidOperation
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: ClusterId
+- module_path: diom_backend::core::cluster::operations::tick
+  type_name: TickOperation
+  kind: value-struct
+  members: []
+- module_path: diom_backend::core::cluster::state_machine
+  type_name: ClusterId
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: Uuid
+- module_path: diom_cache::operations
+  type_name: CacheOperation
+  kind: value-enum
+  members:
+  - name: ClearExpired
+    ty: ClearExpiredOperation
+  - name: ConfigureCache
+    ty: ConfigureCacheOperation
+  - name: Delete
+    ty: DeleteOperation
+  - name: Set
+    ty: SetOperation
+- module_path: diom_cache::operations::clear_expired
+  type_name: ClearExpiredOperation
+  kind: value-struct
+  members: []
+- module_path: diom_cache::operations::configure_namespace
+  type_name: ConfigureCacheOperation
+  kind: value-struct
+  members:
+  - name: name
+    ty: NamespaceName
+  - name: eviction_policy
+    ty: EvictionPolicy
+  - name: id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_cache::operations::delete
+  type_name: DeleteOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: key
+    ty: String
+- module_path: diom_cache::operations::set
+  type_name: SetOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: key
+    ty: String
+  - name: ttl
+    ty: Option<DurationMs>
+  - name: value
+    ty: ByteString
+- module_path: diom_id
+  type_name: UuidV7RandomBytes
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: "[u8; V7_RANDOM_BYTES_LEN]"
+- module_path: diom_id::module
+  type_name: Module
+  kind: value-enum
+  members:
+  - name: Cache
+  - name: Idempotency
+  - name: Kv
+  - name: RateLimit
+  - name: Msgs
+  - name: AuthToken
+  - name: AdminCluster
+  - name: AdminNamespace
+  - name: AdminAuthToken
+  - name: AdminRole
+  - name: AdminAccessPolicy
+- module_path: diom_idempotency::operations
+  type_name: IdempotencyOperation
+  kind: value-enum
+  members:
+  - name: Abort
+    ty: AbortOperation
+  - name: ClearExpired
+    ty: ClearExpiredOperation
+  - name: Complete
+    ty: CompleteOperation
+  - name: ConfigureIdempotency
+    ty: ConfigureIdempotencyOperation
+  - name: TryStart
+    ty: TryStartOperation
+- module_path: diom_idempotency::operations::abort
+  type_name: AbortOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: key
+    ty: String
+- module_path: diom_idempotency::operations::clear_expired
+  type_name: ClearExpiredOperation
+  kind: value-struct
+  members: []
+- module_path: diom_idempotency::operations::complete
+  type_name: CompleteOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: key
+    ty: String
+  - name: response
+    ty: ByteString
+  - name: context
+    ty: Option<Metadata>
+  - name: ttl
+    ty: DurationMs
+- module_path: diom_idempotency::operations::configure_namespace
+  type_name: ConfigureIdempotencyOperation
+  kind: value-struct
+  members:
+  - name: name
+    ty: NamespaceName
+  - name: id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_idempotency::operations::try_start
+  type_name: TryStartOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: key
+    ty: String
+  - name: lock_period
+    ty: DurationMs
+- module_path: diom_idempotency::storage
+  type_name: IdempotencyState
+  kind: value-enum
+  members:
+  - name: InProgress
+  - name: Completed
+    ty: ByteString, Option<Metadata>
+- module_path: diom_kv::kvcontroller
+  type_name: OperationBehavior
+  kind: value-enum
+  members:
+  - name: Upsert
+  - name: Insert
+  - name: Update
+- module_path: diom_kv::operations
+  type_name: KvOperation
+  kind: value-enum
+  members:
+  - name: ClearExpired
+    ty: ClearExpiredOperation
+  - name: ConfigureKv
+    ty: ConfigureKvOperation
+  - name: Delete
+    ty: DeleteOperation
+  - name: Set
+    ty: SetOperation
+- module_path: diom_kv::operations::clear_expired
+  type_name: ClearExpiredOperation
+  kind: value-struct
+  members: []
+- module_path: diom_kv::operations::configure_namespace
+  type_name: ConfigureKvOperation
+  kind: value-struct
+  members:
+  - name: name
+    ty: NamespaceName
+  - name: id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_kv::operations::delete
+  type_name: DeleteOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: key
+    ty: EntityKey
+  - name: version
+    ty: Option<u64>
+- module_path: diom_kv::operations::set
+  type_name: SetOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: key
+    ty: EntityKey
+  - name: value
+    ty: ByteString
+  - name: version
+    ty: Option<u64>
+  - name: ttl
+    ty: Option<DurationMs>
+  - name: behavior
+    ty: OperationBehavior
+- module_path: diom_kv::storage
+  type_name: ExpirationRow
+  kind: value-struct
+  members: []
+- module_path: diom_kv::storage
+  type_name: KvPairRow
+  kind: value-struct
+  members:
+  - name: value
+    ty: ByteString
+  - name: expiry
+    ty: Option<UnixTimestampMs>
+  - name: version
+    ty: u64
+- module_path: diom_msgs::entities
+  type_name: ConsumerGroup
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: String
+- module_path: diom_msgs::entities
+  type_name: HttpMethod
+  kind: value-enum
+  members:
+  - name: Post
+  - name: Put
+  - name: Patch
+- module_path: diom_msgs::entities
+  type_name: HttpSinkConfig
+  kind: value-struct
+  members:
+  - name: url
+    ty: Template
+  - name: method
+    ty: HttpMethod
+  - name: headers
+    ty: HashMap<Template, Template>
+  - name: body
+    ty: Option<Template>
+- module_path: diom_msgs::entities
+  type_name: MsgId
+  kind: value-struct
+  members:
+  - name: partition
+    ty: Partition
+  - name: offset
+    ty: Offset
+- module_path: diom_msgs::entities
+  type_name: MsgIn
+  kind: value-struct
+  members:
+  - name: value
+    ty: ByteString
+  - name: headers
+    ty: HashMap<String, String>
+  - name: key
+    ty: Option<String>
+  - name: delay
+    ty: Option<DurationMs>
+- module_path: diom_msgs::entities
+  type_name: MsgsIdempotencyKey
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: "[u8; 32]"
+- module_path: diom_msgs::entities
+  type_name: Partition
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: u16
+- module_path: diom_msgs::entities
+  type_name: Retention
+  kind: value-struct
+  members:
+  - name: period
+    ty: Option<DurationMs>
+  - name: size_bytes
+    ty: Option<NonZeroU64>
+- module_path: diom_msgs::entities
+  type_name: SeekPosition
+  kind: value-enum
+  members:
+  - name: Earliest
+  - name: Latest
+- module_path: diom_msgs::entities
+  type_name: SinkSettings
+  kind: value-struct
+  members:
+  - name: default_starting_position
+    ty: SeekPosition
+  - name: max_in_flight
+    ty: Option<NonZeroU32>
+  - name: config
+    ty: SinkConfig
+- module_path: diom_msgs::entities
+  type_name: TopicName
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: String
+- module_path: diom_msgs::entities
+  type_name: TopicPartition
+  kind: value-struct
+  members:
+  - name: topic
+    ty: TopicName
+  - name: partition
+    ty: Partition
+- module_path: diom_msgs::operations
+  type_name: MsgsOperation
+  kind: value-enum
+  members:
+  - name: ConfigureNamespace
+    ty: ConfigureNamespaceOperation
+  - name: Publish
+    ty: PublishOperation
+  - name: QueueAck
+    ty: QueueAckOperation
+  - name: QueueConfigure
+    ty: QueueConfigureOperation
+  - name: QueueExtendLease
+    ty: QueueExtendLeaseOperation
+  - name: QueueNack
+    ty: QueueNackOperation
+  - name: QueueReceive
+    ty: QueueReceiveOperation
+  - name: QueueRedriveDlq
+    ty: QueueRedriveDlqOperation
+  - name: SinkConfigure
+    ty: SinkConfigureOperation
+  - name: SinkDelete
+    ty: SinkDeleteOperation
+  - name: StreamCancelLease
+    ty: StreamCancelLeaseOperation
+  - name: StreamCommit
+    ty: StreamCommitOperation
+  - name: StreamReceive
+    ty: StreamReceiveOperation
+  - name: StreamSeek
+    ty: StreamSeekOperation
+  - name: SvixPollerCreate
+    ty: SvixPollerCreateOperation
+  - name: SvixPollerDelete
+    ty: SvixPollerDeleteOperation
+  - name: TopicConfigure
+    ty: TopicConfigureOperation
+- module_path: diom_msgs::operations::configure_namespace
+  type_name: ConfigureNamespaceOperation
+  kind: value-struct
+  members:
+  - name: name
+    ty: NamespaceName
+  - name: retention
+    ty: Retention
+  - name: id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_msgs::operations::publish
+  type_name: PublishOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: partition
+    ty: Option<Partition>
+  - name: msgs
+    ty: Vec<MsgIn>
+  - name: topic_id_random_bytes
+    ty: UuidV7RandomBytes
+  - name: idempotency_key
+    ty: Option<MsgsIdempotencyKey>
+- module_path: diom_msgs::operations::queue::ack
+  type_name: QueueAckOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: consumer_group
+    ty: ConsumerGroup
+  - name: msg_ids
+    ty: Vec<MsgId>
+- module_path: diom_msgs::operations::queue::configure
+  type_name: QueueConfigureOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: consumer_group
+    ty: ConsumerGroup
+  - name: retry_schedule
+    ty: Vec<u64>
+  - name: dlq_topic
+    ty: Option<TopicName>
+  - name: topic_id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_msgs::operations::queue::extend_lease
+  type_name: QueueExtendLeaseOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: consumer_group
+    ty: ConsumerGroup
+  - name: msg_ids
+    ty: Vec<MsgId>
+  - name: lease_duration_ms
+    ty: DurationMs
+- module_path: diom_msgs::operations::queue::nack
+  type_name: QueueNackOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: consumer_group
+    ty: ConsumerGroup
+  - name: msg_ids
+    ty: Vec<MsgId>
+  - name: dlq_topic_id_random_bytes
+    ty: UuidV7RandomBytes
+  - name: retention_period
+    ty: Option<DurationMs>
+- module_path: diom_msgs::operations::queue::receive
+  type_name: QueueReceiveOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: partition
+    ty: Option<Partition>
+  - name: consumer_group
+    ty: ConsumerGroup
+  - name: batch_size
+    ty: NonZeroU16
+  - name: lease_duration
+    ty: DurationMs
+  - name: topic_id_random_bytes
+    ty: UuidV7RandomBytes
+  - name: retention_period
+    ty: Option<DurationMs>
+- module_path: diom_msgs::operations::queue::redrive_dlq
+  type_name: QueueRedriveDlqOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: consumer_group
+    ty: ConsumerGroup
+- module_path: diom_msgs::operations::sink::configure
+  type_name: SinkConfigureOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: consumer_group
+    ty: ConsumerGroup
+  - name: settings
+    ty: SinkSettings
+  - name: topic_id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_msgs::operations::sink::delete
+  type_name: SinkDeleteOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: consumer_group
+    ty: ConsumerGroup
+- module_path: diom_msgs::operations::stream::cancel_lease
+  type_name: StreamCancelLeaseOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicPartition
+  - name: consumer_group
+    ty: ConsumerGroup
+- module_path: diom_msgs::operations::stream::commit
+  type_name: StreamCommitOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicPartition
+  - name: consumer_group
+    ty: ConsumerGroup
+  - name: offset
+    ty: Offset
+- module_path: diom_msgs::operations::stream::receive
+  type_name: StreamReceiveOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: partition
+    ty: Option<Partition>
+  - name: consumer_group
+    ty: ConsumerGroup
+  - name: batch_size
+    ty: NonZeroU16
+  - name: lease_duration
+    ty: DurationMs
+  - name: default_starting_position
+    ty: SeekPosition
+  - name: topic_id_random_bytes
+    ty: UuidV7RandomBytes
+  - name: retention_period
+    ty: Option<DurationMs>
+- module_path: diom_msgs::operations::stream::seek
+  type_name: SeekTarget
+  kind: value-enum
+  members:
+  - name: Offset
+    ty: Offset
+  - name: Position
+    ty: SeekPosition
+  - name: Timestamp
+    ty: UnixTimestampMs
+- module_path: diom_msgs::operations::stream::seek
+  type_name: StreamSeekOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: partition
+    ty: Option<Partition>
+  - name: consumer_group
+    ty: ConsumerGroup
+  - name: target
+    ty: SeekTarget
+- module_path: diom_msgs::operations::svix_poller::create
+  type_name: SvixPollerCreateOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: poller_id
+    ty: String
+  - name: token
+    ty: String
+  - name: topic_id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_msgs::operations::svix_poller::delete
+  type_name: SvixPollerDeleteOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: poller_id
+    ty: String
+- module_path: diom_msgs::operations::topic_configure
+  type_name: TopicConfigureOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: topic
+    ty: TopicName
+  - name: partitions
+    ty: u16
+  - name: topic_id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_msgs::storage
+  type_name: HighWaterMarkRow
+  kind: value-struct
+  members:
+  - name: next_offset
+    ty: Offset
+- module_path: diom_msgs::storage
+  type_name: IdempotencyRow
+  kind: value-struct
+  members:
+  - name: expiry
+    ty: UnixTimestampMs
+- module_path: diom_msgs::storage
+  type_name: MsgRow
+  kind: value-struct
+  members:
+  - name: value
+    ty: ByteString
+  - name: headers
+    ty: HashMap<String, String>
+  - name: timestamp
+    ty: UnixTimestampMs
+  - name: scheduled_at
+    ty: Option<UnixTimestampMs>
+- module_path: diom_msgs::storage
+  type_name: QueueConfigRow
+  kind: value-struct
+  members:
+  - name: retry_schedule
+    ty: Vec<u64>
+  - name: dlq_topic
+    ty: Option<TopicName>
+- module_path: diom_msgs::storage
+  type_name: QueueLeaseRow
+  kind: value-struct
+  members:
+  - name: expiry
+    ty: UnixTimestampMs
+  - name: dlq
+    ty: bool
+  - name: attempt_count
+    ty: u32
+- module_path: diom_msgs::storage
+  type_name: SinkRow
+  kind: value-struct
+  members:
+  - name: topic
+    ty: TopicName
+  - name: settings
+    ty: SinkSettings
+- module_path: diom_msgs::storage
+  type_name: StreamLeaseRow
+  kind: value-struct
+  members:
+  - name: offset
+    ty: u64
+  - name: expiry
+    ty: UnixTimestampMs
+  - name: end_offset
+    ty: Offset
+- module_path: diom_msgs::storage
+  type_name: SvixPollerRow
+  kind: value-struct
+  members:
+  - name: topic
+    ty: TopicName
+  - name: token
+    ty: String
+- module_path: diom_msgs::storage
+  type_name: TopicRow
+  kind: value-struct
+  members:
+  - name: id
+    ty: TopicId
+  - name: name
+    ty: TopicName
+  - name: partitions
+    ty: u16
+- module_path: diom_namespace::entities
+  type_name: AuthTokenConfig
+  kind: value-struct
+  members: []
+- module_path: diom_namespace::entities
+  type_name: CacheConfig
+  kind: value-struct
+  members:
+  - name: eviction_policy
+    ty: EvictionPolicy
+- module_path: diom_namespace::entities
+  type_name: EvictionPolicy
+  kind: value-enum
+  members:
+  - name: NoEviction
+- module_path: diom_namespace::entities
+  type_name: IdempotencyConfig
+  kind: value-struct
+  members: []
+- module_path: diom_namespace::entities
+  type_name: KeyValueConfig
+  kind: value-struct
+  members: []
+- module_path: diom_namespace::entities
+  type_name: MsgsConfig
+  kind: value-struct
+  members:
+  - name: retention_period
+    ty: Option<DurationMs>
+  - name: retention_bytes
+    ty: Option<NonZeroU64>
+- module_path: diom_namespace::entities
+  type_name: RateLimitConfig
+  kind: value-struct
+  members: []
+- module_path: diom_rate_limit::algorithms
+  type_name: TokenBucket
+  kind: value-struct
+  members:
+  - name: refill_rate
+    ty: u64
+  - name: refill_interval
+    ty: DurationMs
+  - name: bucket_size
+    ty: u64
+- module_path: diom_rate_limit::operations
+  type_name: RateLimitOperation
+  kind: value-enum
+  members:
+  - name: Limit
+    ty: LimitOperation
+  - name: Reset
+    ty: ResetOperation
+  - name: ConfigureRateLimit
+    ty: ConfigureRateLimitOperation
+- module_path: diom_rate_limit::operations::configure_namespace
+  type_name: ConfigureRateLimitOperation
+  kind: value-struct
+  members:
+  - name: name
+    ty: NamespaceName
+  - name: id_random_bytes
+    ty: UuidV7RandomBytes
+- module_path: diom_rate_limit::operations::limit
+  type_name: LimitOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: key
+    ty: String
+  - name: tokens
+    ty: u64
+  - name: method
+    ty: TokenBucket
+- module_path: diom_rate_limit::operations::reset
+  type_name: ResetOperation
+  kind: value-struct
+  members:
+  - name: namespace_id
+    ty: NamespaceId
+  - name: key
+    ty: String
+  - name: method
+    ty: TokenBucket
+- module_path: diom_rate_limit::storage
+  type_name: TokenBucketRow
+  kind: value-struct
+  members:
+  - name: tokens
+    ty: u64
+  - name: last_refill
+    ty: UnixTimestampMs
