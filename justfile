@@ -122,5 +122,9 @@ test-helm:
 generate-crd:
     cargo run -- --print-crd-json > {{ HERE / "infra/helm-diom/charts/crds/crds/diomclusters.json" }}
 
+# Regenerate the committed schema snapshot after changing a persisted or replicated type
+schema-snapshot:
+    UPDATE_SCHEMA_SNAPSHOT=1 cargo nextest run --test it schema_snapshot
+
 # Regenerate all checked-in generated assets (default configs, client libraries, CRD, etc)
-generate: default-config generate-crd codegen
+generate: default-config generate-crd codegen schema-snapshot

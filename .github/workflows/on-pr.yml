@@ -2,7 +2,8 @@ name: CI on PR
 
 on:
   pull_request:
-    branches: ['*']
+    # ** matches base branches containing a slash (stacked PRs). A single * does not.
+    branches: ['**']
 
 jobs:
   filter:

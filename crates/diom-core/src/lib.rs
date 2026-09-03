@@ -7,6 +7,7 @@ pub mod fifo_cache;
 pub mod instrumented_mutex;
 mod monotime;
 pub mod persistable_value;
+pub mod schema_shape;
 pub mod shutdown;
 pub mod svix_client;
 pub mod task;
@@ -22,6 +23,7 @@ pub use self::monotime::Monotime;
 
 #[doc(hidden)]
 pub mod __reexport {
+    pub use inventory;
     pub use postcard;
     pub use regex;
     pub use schemars;
