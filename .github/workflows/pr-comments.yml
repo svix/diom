@@ -25,15 +25,17 @@ jobs:
             const response = await github.rest.actions.listWorkflowRunArtifacts({
               owner,
               repo,
-              run_id: "${{ github.event.workflow_run.id }}",
+              run_id: ${{ github.event.workflow_run.id }},
             });
-            return response.artifacts[0].id.toString()
+            console.log(response);
+            return response?.artifacts?.[0]?.id?.toString()
 
       - name: Download Test Report
         uses: actions/download-artifact@v8
         with:
           run-id: ${{ github.event.workflow_run.id }}
-          artifact-ids: ${{ steps.get_test_report_artifact_id.outputs.result }}
+          name: test-report # use this for now, though the below should avoid an extra API roundtrip
+          #artifact-ids: ${{ steps.get_test_report_artifact_id.outputs.result }}
           github-token: ${{ github.token }}
 
       - name: Publish Test Report Comment
