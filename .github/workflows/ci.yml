@@ -45,7 +45,7 @@ jobs:
       - uses: taiki-e/install-action@1ed6d7be6168f6c9046541087ff549b6bc581fdf # v2.87.2
         with:
           tool: cargo-machete
-      - run: cargo sort --check --no-format --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
+      - run: cargo sort --check --no-format --workspace -o package,lib,bin,features,dependencies,build-dependencies,dev-dependencies,lints,workspace
       - run: cargo machete
   clippy:
     name: Clippy
