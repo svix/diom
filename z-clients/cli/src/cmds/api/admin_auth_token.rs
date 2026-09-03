@@ -28,8 +28,8 @@ pub enum AdminAuthTokenCommands {
 {
   \"name\": \"some token name\",
   \"role\": \"some token role\",
-  \"expiry_ms\": 60000,
-  \"enabled\": true
+  \"expiry_ms\": 60000, // Milliseconds from now until the token expires.
+  \"enabled\": true // Whether the token is enabled. Defaults to `true`.
 }\n\nExample response:
 {
   \"id\": \"key_06etngr201xwv7qj08mt4cs03w\",
@@ -52,7 +52,7 @@ pub enum AdminAuthTokenCommands {
     #[command(after_help = "Example body:
 {
   \"id\": \"key_06etngr201xwv7qj08mt4cs03w\",
-  \"expiry_ms\": 60000
+  \"expiry_ms\": 60000 // Milliseconds from now until the token expires. `None` means expire immediately.
 }\n\nExample response:
 {
 }\n")]
@@ -111,8 +111,8 @@ pub enum AdminAuthTokenCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"limit\": 123,
-  \"iterator\": \"key_06etngr201xwv7qj08mt4cs03w\"
+  \"limit\": 123, // Limit the number of returned items
+  \"iterator\": \"key_06etngr201xwv7qj08mt4cs03w\" // The iterator returned from a prior invocation
 }\n\nExample response:
 {
   \"data\": [{\"id\": \"key_06etngr201xwv7qj08mt4cs03w\", \"name\": \"...\", \"created\": 1234567890123, \"updated\": 1234567890123, \"expiry\": 1234567890123, \"role\": \"...\", \"enabled\": true, \"expired\": true}],

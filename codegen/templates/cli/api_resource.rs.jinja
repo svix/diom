@@ -70,7 +70,7 @@ use super::{
 {{ title }}:
 {
 {%- for field in schema.fields | selectattr("positional", "false") %}
-  \"{{ field.name }}\": {% if field.example is defined %}\"{{ field.example }}\"{% else %}{{ get_type_example(field, api) }}{% endif %}{{ "," if not loop.last else "" }}
+  \"{{ field.name }}\": {% if field.example is defined %}\"{{ field.example }}\"{% else %}{{ get_type_example(field, api) }}{% endif %}{{ "," if not loop.last else "" }}{% if field.description is defined %} // {{ field.description | split("\n\n") | first | replace("\n", " ") | trim }}{% endif %}
 {%- endfor %}
 }
 {%- endmacro -%}
