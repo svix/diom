@@ -1,0 +1,81 @@
+name: PR comments
+
+on:
+  workflow_run:
+    workflows: ["CI on PR"]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+
+jobs:
+  update-comments:
+    name: Update PR comments
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Get Test Report Artifact ID
+        id: get_test_report_artifact_id
+        uses: actions/github-script@v9
+        with:
+          result-encoding: string
+          script: |
+            const fullRepo = "${{ github.repository }}";
+            const [owner, repo] = fullRepo.split('/');
+            const response = await github.rest.actions.listWorkflowRunArtifacts({
+              owner,
+              repo,
+              run_id: "${{ github.event.workflow_run.id }}",
+            });
+            return response.artifacts[0].id.toString()
+
+      - name: Download Test Report
+        uses: actions/download-artifact@v8
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          artifact-ids: ${{ steps.get_test_report_artifact_id.outputs.result }}
+          github-token: ${{ github.token }}
+
+      - name: Publish Test Report Comment
+        uses: mikepenz/action-junit-report@a9170d5795813c01ab4901ffb045b52bab4ab09d # v6.5.0
+        with:
+          report_paths: './junit.xml'
+          comment: true
+          check_retries: true
+          job_summary: true
+          detailed_summary: true
+          verbose_summary: false
+          fail_on_parse_error: true
+          include_time_in_summary: true
+          group_suite: true
+          skip_annotations: true
+          check_name: 'Diom CI JUnit'
+          job_name: 'Diom CI'
+
+      - name: Parse coverage.json
+        id: parse_coverage
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        run: |
+          coverage_percentage=$(jq '.data[].totals.lines.percent' < coverage.json)
+          printf 'coverage_percent=%.2f\n' "$coverage_percentage" >> "$GITHUB_OUTPUT"
+
+      - name: Find Coverage Comment
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Test Coverage:'
+
+      - name: Upsert Coverage Comment
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            Test Coverage: ${{ steps.parse_coverage.outputs.coverage_percent }}%
+
+            [Artifact download](${{ github.event.workflow_run.artifacts_url }}/${{ steps.get_test_report_artifact_id.outputs.result }})
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          edit-mode: replace
