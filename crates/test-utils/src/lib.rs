@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use std::fmt::{Debug, Display};
 
 pub use reqwest::StatusCode;
