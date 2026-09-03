@@ -32,6 +32,7 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
+ARG WRITE_EXECUTABLE_METADATA="1"
 RUN cargo build --release -p diom-operator --bin diom-operator --frozen
 
 # Production
