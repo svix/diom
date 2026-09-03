@@ -17,16 +17,28 @@ pub trait TableRow:
     // FIXME: can probably get rid of this, and encode it in the type system.
     const ROW_TYPE: u8;
 
+    /// Whether this row carries its own leading schema-version tag (a `PersistableVersioned` type)
+    /// rather than the `V0Wrapper` envelope. Set automatically by the `PersistableVersioned` derive
+    /// when given `#[versioned(row_type = ...)]`.
+    const VERSIONED: bool = false;
+
     fn to_fjall_value(&self) -> Result<fjall::UserValue> {
-        crate::postcard_to_byteview(&crate::V0Wrapper::V0(self))
-            .map(fjall::Slice::from)
-            .or_internal_error()
+        let bytes = if Self::VERSIONED {
+            crate::postcard_to_byteview(self)
+        } else {
+            crate::postcard_to_byteview(&crate::V0Wrapper::V0(self))
+        };
+        bytes.map(fjall::Slice::from).or_internal_error()
     }
 
     fn from_fjall_value(value: fjall::UserValue) -> Result<Self> {
-        postcard::from_bytes::<crate::V0Wrapper<Self>>(&value)
-            .map(|crate::V0Wrapper::V0(inner)| inner)
-            .or_internal_error()
+        if Self::VERSIONED {
+            postcard::from_bytes::<Self>(&value).or_internal_error()
+        } else {
+            postcard::from_bytes::<crate::V0Wrapper<Self>>(&value)
+                .map(|crate::V0Wrapper::V0(inner)| inner)
+                .or_internal_error()
+        }
     }
 
     fn fetch<K: ReadableKeyspace, TK: Into<TableKey<Self>>>(
