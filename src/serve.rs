@@ -29,7 +29,7 @@ use crate::{
     core::{
         self,
         cluster::RaftState,
-        metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
+        metrics::{ConnectionMetrics, ConnectionType, RequestMetrics, spawn_tokio_metrics},
         otel_spans::trace_layer,
     },
     docs,
@@ -82,6 +82,8 @@ pub async fn run_with_listeners(
             .await
             .expect("failed to initialize cluster");
     let node_id = raft_state.node_id;
+
+    spawn_tokio_metrics(&app_state.meter, node_id);
 
     let request_metrics = RequestMetrics::new(&app_state.meter, node_id);
 

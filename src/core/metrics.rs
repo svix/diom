@@ -1,10 +1,12 @@
 use std::time::Duration;
 
+use diom_core::shutdown::shutting_down_token;
 use http::StatusCode;
 use opentelemetry::{
     KeyValue, Value,
     metrics::{Counter, Gauge, Histogram, Meter},
 };
+use tokio::runtime::{Handle, RuntimeMetrics};
 
 use super::cluster::NodeId;
 
@@ -689,4 +691,188 @@ impl ClusterNetworkMetrics {
         self.requests.add(1, dims);
         self.request_latency.record(duration.as_micros() as _, dims);
     }
+}
+
+trait GaugeExt {
+    fn record_if_nonzero(&self, value: u64, attributes: &[KeyValue]);
+}
+
+impl GaugeExt for Gauge<u64> {
+    fn record_if_nonzero(&self, value: u64, attributes: &[KeyValue]) {
+        if value > 0 {
+            self.record(value, attributes);
+        }
+    }
+}
+
+/// Number of poll-time histogram buckets reported per worker, from the slowest end.
+const NUM_REPORTED_POLL_HISTOGRAM_BUCKETS: usize = 10;
+
+/// Runtime saturation values at or below this are not reported.
+///
+/// Queue depths and the number of active blocking threads sit low almost all of
+/// the time, and only become interesting when they spike or stay elevated.
+/// Skipping the uninteresting values keeps the volume of reported metrics, and
+/// the cost of storing them, down.
+const SATURATION_REPORT_THRESHOLD: u64 = 2;
+
+/// Previous poll-time histogram bucket values, kept so each collection can report
+/// the per-interval difference of the runtime's monotonic bucket counters.
+///
+/// Must be sized with [`RuntimeMetricsContext::new`] to match the runtime's worker
+/// count; there is deliberately no `Default`, as an empty context would panic.
+pub struct RuntimeMetricsContext {
+    previous_poll_histogram_bucket_values: Vec<[u64; NUM_REPORTED_POLL_HISTOGRAM_BUCKETS]>,
+}
+
+impl RuntimeMetricsContext {
+    pub fn new(num_workers: usize) -> Self {
+        Self {
+            previous_poll_histogram_bucket_values: vec![
+                [0; NUM_REPORTED_POLL_HISTOGRAM_BUCKETS];
+                num_workers
+            ],
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct TokioMetrics {
+    alive_tasks: Gauge<u64>,
+    global_queue_depth: Gauge<u64>,
+    active_blocking_threads: Gauge<u64>,
+    blocking_queue_depth: Gauge<u64>,
+    poll_histogram: Gauge<u64>,
+    worker_local_queue_depth: Gauge<u64>,
+    node_id_kv: KeyValue,
+}
+
+impl TokioMetrics {
+    pub fn new(meter: &Meter, node_id: NodeId) -> Self {
+        Self {
+            alive_tasks: meter
+                .u64_gauge("diom.tokio.alive_tasks")
+                .with_description("Number of alive tasks in the runtime")
+                .build(),
+            global_queue_depth: meter
+                .u64_gauge("diom.tokio.global_queue_depth")
+                .with_description("Number of tasks in the runtime's global queue")
+                .build(),
+            active_blocking_threads: meter
+                .u64_gauge("diom.tokio.active_blocking_threads")
+                .with_description("Number of blocking threads currently running a task")
+                .build(),
+            blocking_queue_depth: meter
+                .u64_gauge("diom.tokio.blocking_queue_depth")
+                .with_description("Number of tasks queued to run on a blocking thread")
+                .build(),
+            poll_histogram: meter
+                .u64_gauge("diom.tokio.poll_histogram")
+                .with_description("Per-interval task poll-time histogram bucket counts")
+                .build(),
+            worker_local_queue_depth: meter
+                .u64_gauge("diom.tokio.worker.local_queue_depth")
+                .with_description("Number of tasks in a worker's local queue")
+                .build(),
+            node_id_kv: node_id.into(),
+        }
+    }
+
+    pub fn record(&self, metrics: &RuntimeMetrics, ctx: &mut RuntimeMetricsContext) {
+        let node = std::slice::from_ref(&self.node_id_kv);
+
+        self.alive_tasks
+            .record_if_nonzero(metrics.num_alive_tasks() as u64, node);
+
+        let global_queue_depth = metrics.global_queue_depth() as u64;
+        if global_queue_depth > SATURATION_REPORT_THRESHOLD {
+            self.global_queue_depth.record(global_queue_depth, node);
+        }
+
+        // saturating: the two counters are independent atomics, so a reader can
+        // briefly observe more idle threads than total during pool teardown.
+        let active_blocking_threads = metrics
+            .num_blocking_threads()
+            .saturating_sub(metrics.num_idle_blocking_threads())
+            as u64;
+        if active_blocking_threads > SATURATION_REPORT_THRESHOLD {
+            self.active_blocking_threads
+                .record(active_blocking_threads, node);
+        }
+
+        let blocking_queue_depth = metrics.blocking_queue_depth() as u64;
+        if blocking_queue_depth > SATURATION_REPORT_THRESHOLD {
+            self.blocking_queue_depth.record(blocking_queue_depth, node);
+        }
+
+        self.record_poll_histogram(metrics, ctx);
+
+        for worker in 0..metrics.num_workers() {
+            let local_queue_depth = metrics.worker_local_queue_depth(worker) as u64;
+            if local_queue_depth > SATURATION_REPORT_THRESHOLD {
+                self.worker_local_queue_depth.record(
+                    local_queue_depth,
+                    &[
+                        self.node_id_kv.clone(),
+                        KeyValue::new("worker_id", worker as i64),
+                    ],
+                );
+            }
+        }
+    }
+
+    fn record_poll_histogram(&self, metrics: &RuntimeMetrics, ctx: &mut RuntimeMetricsContext) {
+        // Only populated when the runtime is built with the poll-time histogram
+        // enabled; skipped otherwise (e.g. the test harness).
+        if !metrics.poll_time_histogram_enabled() {
+            return;
+        }
+
+        let total_buckets = metrics.poll_time_histogram_num_buckets();
+        let first_reported_bucket =
+            total_buckets.saturating_sub(NUM_REPORTED_POLL_HISTOGRAM_BUCKETS);
+
+        for worker in 0..metrics.num_workers() {
+            let prev_values = &mut ctx.previous_poll_histogram_bucket_values[worker];
+
+            for (bucket, prev) in prev_values.iter_mut().enumerate() {
+                let underlying_bucket = first_reported_bucket + bucket;
+                let bucket_range = metrics.poll_time_histogram_bucket_range(underlying_bucket);
+                let full_count =
+                    metrics.poll_time_histogram_bucket_count(worker, underlying_bucket);
+
+                let count = full_count - *prev;
+                *prev = full_count;
+
+                // Zero counts are skipped to keep metric cardinality and billing down.
+                self.poll_histogram.record_if_nonzero(
+                    count,
+                    &[
+                        self.node_id_kv.clone(),
+                        KeyValue::new("bucket_start_us", bucket_range.start.as_micros() as i64),
+                        KeyValue::new("bucket_end_us", bucket_range.end.as_micros() as i64),
+                        KeyValue::new("worker_id", worker as i64),
+                    ],
+                );
+            }
+        }
+    }
+}
+
+/// Spawn a background task that periodically reports Tokio runtime metrics.
+pub(crate) fn spawn_tokio_metrics(meter: &Meter, node_id: NodeId) {
+    let metrics = TokioMetrics::new(meter, node_id);
+    let handle = Handle::current();
+    let num_workers = handle.metrics().num_workers();
+    let shutdown = shutting_down_token();
+
+    tokio::spawn(async move {
+        let runtime_metrics = handle.metrics();
+        let mut ctx = RuntimeMetricsContext::new(num_workers);
+        let mut ticker = tokio::time::interval(Duration::from_secs(10));
+
+        while shutdown.run_until_cancelled(ticker.tick()).await.is_some() {
+            metrics.record(&runtime_metrics, &mut ctx);
+        }
+    });
 }

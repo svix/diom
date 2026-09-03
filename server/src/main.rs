@@ -134,8 +134,18 @@ fn dump_variables(path: Option<PathBuf>) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
+    // Build the runtime by hand rather than via `#[tokio::main]` so we can enable
+    // the poll-time histogram, which feeds the `diom.tokio.poll_histogram` metric.
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .enable_metrics_poll_time_histogram()
+        .build()
+        .context("building Tokio runtime")?
+        .block_on(async_main())
+}
+
+async fn async_main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     if let Some(env_file) = &args.env_file {
