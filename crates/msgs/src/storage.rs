@@ -1,5 +1,5 @@
 use diom_core::{
-    PersistableValue,
+    PersistableVersioned,
     types::{AsMillisecond, ByteString, UnixTimestampMs},
 };
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
@@ -7,7 +7,6 @@ use std::collections::HashMap;
 
 use diom_error::{OptionExt, Result};
 use fjall_utils::{FjallKey, TableRow, WriteBatchExt};
-use serde::{Deserialize, Serialize};
 
 use crate::entities::{
     ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, SinkListItem, SinkSettings,
@@ -33,15 +32,12 @@ enum MsgPrefix {
     HighWaterMark = 0,
 }
 
-#[derive(Serialize, Deserialize, PersistableValue)]
+#[derive(PersistableVersioned)]
+#[versioned(row_type = MetadataPrefix::Topic)]
 pub(crate) struct TopicRow {
     pub id: TopicId,
     pub name: TopicName,
     pub partitions: u16,
-}
-
-impl TableRow for TopicRow {
-    const ROW_TYPE: u8 = MetadataPrefix::Topic as u8;
 }
 
 #[derive(FjallKey)]
@@ -99,7 +95,8 @@ impl TopicRow {
     }
 }
 
-#[derive(Serialize, Deserialize, PersistableValue)]
+#[derive(PersistableVersioned)]
+#[versioned(row_type = MetadataPrefix::StreamLease)]
 pub(crate) struct StreamLeaseRow {
     pub offset: u64,
     pub expiry: UnixTimestampMs,
@@ -116,10 +113,6 @@ impl StreamLeaseRow {
             end_offset: 0,
         })
     }
-}
-
-impl TableRow for StreamLeaseRow {
-    const ROW_TYPE: u8 = MetadataPrefix::StreamLease as u8;
 }
 
 #[derive(FjallKey)]
@@ -141,7 +134,8 @@ pub(crate) struct StreamLeaseKey {
 /// - No row → message was never leased, available
 ///
 /// Rows below the queue cursor are deleted during cursor compaction to prevent unbounded growth.
-#[derive(Serialize, Deserialize, PersistableValue)]
+#[derive(PersistableVersioned)]
+#[versioned(row_type = MetadataPrefix::QueueLease)]
 pub(crate) struct QueueLeaseRow {
     pub expiry: UnixTimestampMs,
     pub dlq: bool,
@@ -223,10 +217,6 @@ impl QueueLeaseRow {
     }
 }
 
-impl TableRow for QueueLeaseRow {
-    const ROW_TYPE: u8 = MetadataPrefix::QueueLease as u8;
-}
-
 #[derive(FjallKey)]
 #[table_key(prefix = MetadataPrefix::QueueLease)]
 pub(crate) struct QueueLeaseKey {
@@ -241,14 +231,11 @@ pub(crate) struct QueueLeaseKey {
 }
 
 /// Per-consumer-group queue configuration
-#[derive(Serialize, Deserialize, PersistableValue)]
+#[derive(PersistableVersioned)]
+#[versioned(row_type = MetadataPrefix::QueueConfig)]
 pub(crate) struct QueueConfigRow {
     pub retry_schedule: Vec<u64>,
     pub dlq_topic: Option<TopicName>,
-}
-
-impl TableRow for QueueConfigRow {
-    const ROW_TYPE: u8 = MetadataPrefix::QueueConfig as u8;
 }
 
 #[derive(FjallKey)]
@@ -273,7 +260,8 @@ pub(crate) struct MsgKey {
     pub(crate) timestamp: UnixTimestampMs,
 }
 
-#[derive(Serialize, Deserialize, PersistableValue)]
+#[derive(PersistableVersioned)]
+#[versioned(row_type = MsgPrefix::Msg)]
 pub(crate) struct MsgRow {
     pub value: ByteString,
     pub headers: HashMap<String, String>,
@@ -415,10 +403,6 @@ impl MsgRow {
 
         Ok(results)
     }
-}
-
-impl TableRow for MsgRow {
-    const ROW_TYPE: u8 = MsgPrefix::Msg as u8;
 }
 
 const CLEANUP_BATCH_SIZE: usize = 1_000;
@@ -585,13 +569,10 @@ pub(crate) fn delete_stale_stream_leases(
     Ok(deleted)
 }
 
-#[derive(Clone, Serialize, Deserialize, PersistableValue)]
+#[derive(Clone, PersistableVersioned)]
+#[versioned(row_type = MetadataPrefix::Idempotency)]
 pub(crate) struct IdempotencyRow {
     pub expiry: UnixTimestampMs,
-}
-
-impl TableRow for IdempotencyRow {
-    const ROW_TYPE: u8 = MetadataPrefix::Idempotency as u8;
 }
 
 #[derive(FjallKey)]
@@ -607,13 +588,10 @@ pub(crate) struct IdempotencyKey {
 ///
 /// Survives message deletion so that offsets remain monotonically increasing
 /// even after all messages in a partition have been removed by retention cleanup.
-#[derive(Clone, Serialize, Deserialize, PersistableValue)]
+#[derive(Clone, PersistableVersioned)]
+#[versioned(row_type = MsgPrefix::HighWaterMark)]
 pub(crate) struct HighWaterMarkRow {
     pub next_offset: Offset,
-}
-
-impl TableRow for HighWaterMarkRow {
-    const ROW_TYPE: u8 = MsgPrefix::HighWaterMark as u8;
 }
 
 #[derive(FjallKey)]
@@ -627,16 +605,13 @@ pub(crate) struct HighWaterMarkKey {
 
 // --- Svix Poller configuration ---
 
-#[derive(Clone, Serialize, Deserialize, PersistableValue)]
+#[derive(Clone, PersistableVersioned)]
+#[versioned(row_type = MetadataPrefix::SvixPoller)]
 pub(crate) struct SvixPollerRow {
     // Technically redundant with the TopicId, but saving the name
     // let's us avoid a costly lookup of the name in the background worker.
     pub topic: TopicName,
     pub token: String,
-}
-
-impl TableRow for SvixPollerRow {
-    const ROW_TYPE: u8 = MetadataPrefix::SvixPoller as u8;
 }
 
 #[derive(FjallKey)]
@@ -702,15 +677,12 @@ pub fn list_svix_pollers(
 
 // --- External sink configuration ---
 
-#[derive(Clone, Serialize, Deserialize, PersistableValue)]
+#[derive(Clone, PersistableVersioned)]
+#[versioned(row_type = MetadataPrefix::ExternalSink)]
 pub(crate) struct SinkRow {
     // Redundant with the TopicId, but keeping the name lets the background worker avoid a lookup.
     pub topic: TopicName,
     pub settings: SinkSettings,
-}
-
-impl TableRow for SinkRow {
-    const ROW_TYPE: u8 = MetadataPrefix::ExternalSink as u8;
 }
 
 #[derive(FjallKey)]

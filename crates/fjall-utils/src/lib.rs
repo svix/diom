@@ -511,4 +511,38 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn persistable_versioned_works_with_generics() {
+        trait Payload:
+            serde::Serialize
+            + serde::de::DeserializeOwned
+            + diom_core::persistable_value::PersistableValue
+            + PartialEq
+            + core::fmt::Debug
+        {
+        }
+
+        #[derive(
+            serde::Serialize, serde::Deserialize, diom_core::PersistableValue, PartialEq, Debug,
+        )]
+        struct Inner {
+            x: u32,
+        }
+        impl Payload for Inner {}
+
+        #[derive(diom_core::PersistableVersioned, PartialEq, Debug)]
+        #[versioned(row_type = 30)]
+        struct Wrapper<T: Payload> {
+            a: u32,
+            payload: T,
+        }
+
+        let value = Wrapper {
+            a: 7,
+            payload: Inner { x: 42 },
+        };
+        let bytes = value.to_fjall_value().unwrap();
+        assert_eq!(Wrapper::<Inner>::from_fjall_value(bytes).unwrap(), value);
+    }
 }
