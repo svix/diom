@@ -55,3 +55,26 @@ pub(crate) struct AccessPolicyKey {
     #[key(0)]
     pub(crate) id: String,
 }
+
+#[cfg(test)]
+mod byte_fixtures {
+    use super::*;
+    use fjall_utils::fixtures::decode_row;
+    #[test]
+    fn role_row_v0() {
+        // bytes come from a serialized RoleRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: RoleRow = decode_row("0006726f6c652d310561646d696e00000080d095ffbc3181d095ffbc31");
+        assert_eq!(row.id.0, "role-1");
+        assert_eq!(row.description, "admin");
+        assert!(row.rules.is_empty());
+    }
+    #[test]
+    fn access_policy_row_v0() {
+        // bytes come from a serialized AccessPolicyRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: AccessPolicyRow = decode_row("0006706f6c6963790080d095ffbc3181d095ffbc31");
+        assert_eq!(row.description, "policy");
+        assert!(row.rules.is_empty());
+    }
+}
