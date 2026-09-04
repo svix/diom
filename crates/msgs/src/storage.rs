@@ -956,3 +956,88 @@ mod tests {
         assert!(msg.is_none(), "expired message should not be returned");
     }
 }
+
+#[cfg(test)]
+mod byte_fixtures {
+    use super::*;
+    use crate::entities::{SeekPosition, SinkConfig};
+    use fjall_utils::fixtures::decode_row;
+    #[test]
+    fn topic_row_v0() {
+        // bytes come from a serialized TopicRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: TopicRow = decode_row("00100000000000000000000000000000000005746f70696304");
+        assert_eq!(row.id, TopicId::nil());
+        assert_eq!(row.partitions, 4);
+    }
+    #[test]
+    fn stream_lease_row_v0() {
+        // bytes come from a serialized StreamLeaseRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: StreamLeaseRow = decode_row("000a80d095ffbc3114");
+        assert_eq!(row.offset, 10);
+        assert_eq!(row.end_offset, 20);
+    }
+    #[test]
+    fn queue_lease_row_v0() {
+        // bytes come from a serialized QueueLeaseRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: QueueLeaseRow = decode_row("0080d095ffbc310103");
+        assert!(row.dlq);
+        assert_eq!(row.attempt_count, 3);
+    }
+    #[test]
+    fn queue_config_row_v0() {
+        // bytes come from a serialized QueueConfigRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: QueueConfigRow = decode_row("0002e807882700");
+        assert_eq!(row.retry_schedule, vec![1000, 5000]);
+        assert!(row.dlq_topic.is_none());
+    }
+    #[test]
+    fn msg_row_v0() {
+        // bytes come from a serialized MsgRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: MsgRow = decode_row("00077061796c6f61640080d095ffbc3100");
+        assert_eq!(row.value, b"payload");
+        assert!(row.scheduled_at.is_none());
+    }
+    #[test]
+    fn idempotency_row_v0() {
+        // bytes come from a serialized IdempotencyRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: IdempotencyRow = decode_row("0080d095ffbc31");
+        assert_eq!(
+            row.expiry,
+            UnixTimestampMs::try_from_millisecond(1_700_000_000_000).unwrap()
+        );
+    }
+    #[test]
+    fn high_water_mark_row_v0() {
+        // bytes come from a serialized HighWaterMarkRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: HighWaterMarkRow = decode_row("002a");
+        assert_eq!(row.next_offset, 42);
+    }
+    #[test]
+    fn svix_poller_row_v0() {
+        // bytes come from a serialized SvixPollerRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: SvixPollerRow = decode_row("0008776562686f6f6b7306736563726574");
+        assert_eq!(row.token, "secret");
+    }
+    #[test]
+    fn sink_row_v0() {
+        // bytes come from a serialized SinkRow, an http sink pointed at https://example.com/hook.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: SinkRow = decode_row(
+            "0008776562686f6f6b730100001868747470733a2f2f6578616d706c652e636f6d2f686f6f6b000000",
+        );
+        assert!(matches!(
+            row.settings.default_starting_position,
+            SeekPosition::Latest
+        ));
+        assert!(row.settings.max_in_flight.is_none());
+        assert!(matches!(row.settings.config, SinkConfig::Http(_)));
+    }
+}

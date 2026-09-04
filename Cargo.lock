@@ -2215,6 +2215,7 @@ dependencies = [
  "diom-error",
  "diom-id",
  "fjall",
+ "hex",
  "itertools 0.15.0",
  "postcard",
  "rand 0.10.2",
