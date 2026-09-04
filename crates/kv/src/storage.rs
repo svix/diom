@@ -1,5 +1,5 @@
 use diom_core::{
-    PersistableValue,
+    PersistableValue, PersistableVersioned,
     types::{ByteString, UnixTimestampMs},
 };
 use diom_error::Result;
@@ -14,15 +14,12 @@ enum RowType {
     Expiration = 1,
 }
 
-#[derive(Serialize, Deserialize, PersistableValue)]
+#[derive(PersistableVersioned)]
+#[versioned(row_type = RowType::Pair)]
 pub struct KvPairRow {
     pub value: ByteString,
     pub expiry: Option<UnixTimestampMs>,
     pub version: u64,
-}
-
-impl TableRow for KvPairRow {
-    const ROW_TYPE: u8 = RowType::Pair as u8;
 }
 
 #[derive(FjallKey)]
