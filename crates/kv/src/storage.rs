@@ -62,3 +62,21 @@ impl TableRow for ExpirationRow {
         Ok(b"".into())
     }
 }
+
+#[cfg(test)]
+mod byte_fixtures {
+    use super::*;
+    use fjall_utils::fixtures::decode_row;
+    #[test]
+    fn kv_pair_row_v0() {
+        // bytes come from a serialized KvPairRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: KvPairRow = decode_row("000568656c6c6f0180d095ffbc3107");
+        assert_eq!(row.value, b"hello");
+        assert_eq!(
+            row.expiry,
+            UnixTimestampMs::try_from_millisecond(1_700_000_000_000)
+        );
+        assert_eq!(row.version, 7);
+    }
+}
