@@ -1880,6 +1880,7 @@ dependencies = [
  "k8s-openapi",
  "kube",
  "kube_quantity",
+ "rust-executable-metadata",
  "rustls",
  "schemars",
  "serde",

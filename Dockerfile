@@ -37,6 +37,7 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
+ARG WRITE_EXECUTABLE_METADATA="1"
 RUN <<EOF
     cargo build --release --package diom-server --bin diom-server --features diom-backend/openapi --frozen
     cargo sbom --cargo-package diom-server > /app/diom-server.spdx
@@ -53,6 +54,7 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
+ARG WRITE_EXECUTABLE_METADATA="1"
 RUN <<EOF
     cargo build --release --package diom-cli --bin diom --frozen
     cargo sbom --cargo-package diom-cli > /app/diom-cli.spdx
