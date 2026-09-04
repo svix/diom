@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use diom_authorization::api::{AccessPolicyId, AccessRule, RoleId};
-use diom_core::{PersistableValue, types::UnixTimestampMs};
-use fjall_utils::{FjallKey, TableRow};
-use serde::{Deserialize, Serialize};
+use diom_core::{PersistableVersioned, types::UnixTimestampMs};
+use fjall_utils::FjallKey;
 
 /// These values can never change. Only additions are allowed.
 #[repr(u8)]
@@ -13,7 +12,8 @@ enum RowType {
 }
 
 /// Primary row for a Role, keyed by `[ROW_TYPE][role_id_bytes]`.
-#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
+#[derive(Debug, Clone, PersistableVersioned)]
+#[versioned(row_type = RowType::Role)]
 pub struct RoleRow {
     // FIXME: remove the id from this, we don't want it serialized.
     pub id: RoleId,
@@ -25,10 +25,6 @@ pub struct RoleRow {
     pub updated: UnixTimestampMs,
 }
 
-impl TableRow for RoleRow {
-    const ROW_TYPE: u8 = RowType::Role as u8;
-}
-
 #[derive(FjallKey)]
 #[table_key(prefix = RowType::Role)]
 pub(crate) struct RoleKey {
@@ -37,16 +33,13 @@ pub(crate) struct RoleKey {
 }
 
 /// Primary row for an AccessPolicy, keyed by `[ROW_TYPE][policy_id_bytes]`.
-#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
+#[derive(Debug, Clone, PersistableVersioned)]
+#[versioned(row_type = RowType::AccessPolicy)]
 pub struct AccessPolicyRow {
     pub description: String,
     pub rules: Vec<AccessRule>,
     pub created: UnixTimestampMs,
     pub updated: UnixTimestampMs,
-}
-
-impl TableRow for AccessPolicyRow {
-    const ROW_TYPE: u8 = RowType::AccessPolicy as u8;
 }
 
 #[derive(FjallKey)]
