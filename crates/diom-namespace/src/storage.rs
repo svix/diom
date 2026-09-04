@@ -57,3 +57,69 @@ impl<C: ModuleConfig> Namespace<C> {
         }))
     }
 }
+
+#[cfg(test)]
+mod byte_fixtures {
+    use super::*;
+    use crate::entities::{
+        AuthTokenConfig, CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig,
+        MsgsConfig, RateLimitConfig,
+    };
+    use fjall_utils::fixtures::decode_row;
+    const WRAPPER: &str =
+        "0010000000000000000000000000000000000c6d792d6e616d65737061636580d095ffbc3181d095ffbc31";
+    #[test]
+    fn namespace_kv_v0() {
+        // bytes come from a serialized Namespace<KeyValueConfig>.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let ns: Namespace<KeyValueConfig> = decode_row(WRAPPER);
+        assert_eq!(ns.id, NamespaceId::nil());
+        assert_eq!(ns.config, KeyValueConfig {});
+    }
+    #[test]
+    fn namespace_cache_v0() {
+        // bytes come from a serialized Namespace<CacheConfig>.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let ns: Namespace<CacheConfig> = decode_row(&format!("{WRAPPER}00"));
+        assert_eq!(
+            ns.config,
+            CacheConfig {
+                eviction_policy: EvictionPolicy::NoEviction
+            }
+        );
+    }
+    #[test]
+    fn namespace_msgs_v0() {
+        // bytes come from a serialized Namespace<MsgsConfig>.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let ns: Namespace<MsgsConfig> = decode_row(&format!("{WRAPPER}0000"));
+        assert_eq!(
+            ns.config,
+            MsgsConfig {
+                retention_period: None,
+                retention_bytes: None
+            }
+        );
+    }
+    #[test]
+    fn namespace_rate_limit_v0() {
+        // bytes come from a serialized Namespace<RateLimitConfig>.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let ns: Namespace<RateLimitConfig> = decode_row(WRAPPER);
+        assert_eq!(ns.config, RateLimitConfig {});
+    }
+    #[test]
+    fn namespace_idempotency_v0() {
+        // bytes come from a serialized Namespace<IdempotencyConfig>.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let ns: Namespace<IdempotencyConfig> = decode_row(WRAPPER);
+        assert_eq!(ns.config, IdempotencyConfig {});
+    }
+    #[test]
+    fn namespace_auth_token_v0() {
+        // bytes come from a serialized Namespace<AuthTokenConfig>.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let ns: Namespace<AuthTokenConfig> = decode_row(WRAPPER);
+        assert_eq!(ns.config, AuthTokenConfig {});
+    }
+}
