@@ -240,6 +240,23 @@ snapshot_after_ms = 900000
 # persistent DB path if not passed.
 # snapshot_path =
 
+# Caps the maximum feature version this node advertises as supported, holding the cluster back
+# from advancing past it.
+#
+# Leave unset in normal operation, where the value the build was compiled with is used. To
+# stage a feature version bump across a rolling upgrade, set this on every voter to the current
+# max (one below the new build's max) before upgrading, let the cluster bake, then unset it and
+# restart so the cluster advances. The value must fall inside the range the build was compiled
+# with and be at most one below that maximum. It is validated at startup.
+# supported_feature_version_max =
+
+# Overrides the minimum feature version this node advertises as supported.
+#
+# Leave unset in normal operation, where the value the build was compiled with is used. This
+# exists mainly for testing the feature version subsystem and for symmetry with the max
+# override.
+# supported_feature_version_min =
+
 # Storage configuration for the ephemeral database, which is used by rate-limiting and some
 # other modules, and can be placed on less-durable storage, such as local instance storage
 [ephemeral_db]

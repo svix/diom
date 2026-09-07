@@ -10,6 +10,7 @@ use diom_core::types::UnixTimestampMs;
 use diom_derive::aide_annotate;
 use diom_error::{Error, ResultExt};
 use diom_id::Module;
+use diom_operations::FeatureVersion;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use futures_util::StreamExt;
 use schemars::JsonSchema;
@@ -103,6 +104,8 @@ pub struct ClusterStatusOut {
     ///
     /// This value is populated on cluster initialization and will never change.
     pub cluster_id: Option<ClusterId>,
+    /// The cluster's committed feature version, as seen by the node servicing this request.
+    pub feature_version: FeatureVersion,
     /// The name of this cluster (as defined in the config)
     ///
     /// This value is not replicated and should only be used for debugging.
@@ -171,6 +174,7 @@ async fn cluster_status(
         .await
         .or_internal_error()?;
     let cluster_id = repl.state_machine.cluster_id().await;
+    let feature_version = repl.state_machine.feature_version().await;
     let cluster_name = cluster_id
         .is_some()
         .then(|| app_state.cfg.cluster.name.to_owned());
@@ -210,6 +214,7 @@ async fn cluster_status(
 
     Ok(MsgPackOrJson(ClusterStatusOut {
         cluster_id,
+        feature_version,
         cluster_name,
         this_node_id,
         this_node_state,

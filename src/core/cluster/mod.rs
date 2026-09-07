@@ -14,6 +14,7 @@ pub mod proto;
 pub(crate) mod raft;
 mod serialized_state_machine;
 mod state_machine;
+pub(crate) mod version;
 
 pub use self::{
     app::router,

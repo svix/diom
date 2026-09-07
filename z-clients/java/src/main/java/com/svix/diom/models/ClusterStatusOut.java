@@ -37,6 +37,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class ClusterStatusOut {
     @JsonProperty("cluster_id") private String clusterId;
+    @JsonProperty("feature_version") private Integer featureVersion;
     @JsonProperty("cluster_name") private String clusterName;
     @JsonProperty("this_node_id") private String thisNodeId;
     @JsonProperty("this_node_state") private ServerState thisNodeState;
@@ -65,6 +66,25 @@ This value is populated on cluster initialization and will never change.
 
     public void setClusterId(String clusterId) {
         this.clusterId = clusterId;
+    }
+
+    public ClusterStatusOut featureVersion(Integer featureVersion) {
+        this.featureVersion = featureVersion;
+        return this;
+    }
+
+    /**
+    * The cluster's committed feature version, as seen by the node servicing this request.
+    *
+     * @return featureVersion
+     */
+    @javax.annotation.Nonnull
+    public Integer getFeatureVersion() {
+        return featureVersion;
+    }
+
+    public void setFeatureVersion(Integer featureVersion) {
+        this.featureVersion = featureVersion;
     }
 
     public ClusterStatusOut clusterName(String clusterName) {
