@@ -317,6 +317,14 @@
     ty: RecordLogTimestampOperation
   - name: Tick
     ty: TickOperation
+  - name: AdvanceFeatureVersion
+    ty: AdvanceFeatureVersionOperation
+- module_path: diom_backend::core::cluster::operations::advance_feature_version
+  type_name: AdvanceFeatureVersionOperation
+  kind: value-struct
+  members:
+  - name: "0"
+    ty: FeatureVersion
 - module_path: diom_backend::core::cluster::operations::record_log_timestamp
   type_name: RecordLogTimestampOperation
   kind: value-struct

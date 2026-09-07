@@ -11,6 +11,9 @@ pub struct ClusterStatusOut {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cluster_id: Option<String>,
 
+    /// The cluster's committed feature version, as seen by the node servicing this request.
+    pub feature_version: u32,
+
     /// The name of this cluster (as defined in the config)
     ///
     /// This value is not replicated and should only be used for debugging.
@@ -41,6 +44,7 @@ pub struct ClusterStatusOut {
 
 impl ClusterStatusOut {
     pub fn new(
+        feature_version: u32,
         this_node_id: String,
         this_node_state: ServerState,
         this_node_last_committed_timestamp: jiff::Timestamp,
@@ -48,6 +52,7 @@ impl ClusterStatusOut {
     ) -> Self {
         Self {
             cluster_id: None,
+            feature_version,
             cluster_name: None,
             this_node_id,
             this_node_state,

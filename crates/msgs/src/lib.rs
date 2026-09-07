@@ -474,6 +474,7 @@ pub(crate) mod test_fixture {
                 timestamp: now,
                 log_index: 0,
                 term: 0,
+                feature_version: 0,
             };
             let op: operations::MsgsOperation = op.into();
             let response = op.apply(raft_state, &ctx).await;
@@ -502,6 +503,7 @@ pub(crate) mod test_fixture {
                 timestamp: now,
                 log_index: 0,
                 term: 0,
+                feature_version: 0,
             };
             let op: operations::MsgsOperation = op.into();
             let response = op.apply(raft_state, &ctx).await;
@@ -536,6 +538,7 @@ pub(crate) mod test_fixture {
                 timestamp: now,
                 log_index: 0,
                 term: 0,
+                feature_version: 0,
             };
             let op: operations::MsgsOperation = op.into();
             let _ = op.apply(raft_state, &ctx).await;
@@ -567,6 +570,7 @@ pub(crate) mod test_fixture {
                 timestamp: now,
                 log_index: 0,
                 term: 0,
+                feature_version: 0,
             };
             let op: operations::MsgsOperation = op.into();
             let _ = op.apply(raft_state, &ctx).await;

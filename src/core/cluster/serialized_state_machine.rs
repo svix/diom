@@ -5,6 +5,7 @@ use std::{
 
 use anyhow::Context;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use diom_operations::FeatureVersion;
 use fjall::{Database, Keyspace, Readable};
 use fjall_utils::{Databases, SchemaManifest, StorageType};
 use serde::{Deserialize, Serialize};
@@ -51,6 +52,8 @@ struct KeyspaceManifest {
 struct Manifest {
     databases: BTreeMap<StorageType, KeyspaceManifest>,
     cluster_id: Option<ClusterId>,
+    #[serde(default)]
+    feature_version: FeatureVersion,
 }
 
 struct KeyspaceSerializer<'a, B: Write + Seek> {
@@ -222,6 +225,7 @@ fn deserialize_keyspace<R: Read + Seek>(
 pub(crate) fn serialize_to_file<F: Write + Seek>(
     targets: Vec<(StorageType, Database, fjall::Snapshot, Vec<String>)>,
     cluster_id: Option<ClusterId>,
+    feature_version: FeatureVersion,
     file: &mut F,
 ) -> anyhow::Result<()> {
     file.write_all(b"DIOM01")?;
@@ -231,6 +235,7 @@ pub(crate) fn serialize_to_file<F: Write + Seek>(
     let mut manifest = Manifest {
         databases: BTreeMap::default(),
         cluster_id,
+        feature_version,
     };
 
     for (db_name, db, snapshot, keyspaces) in targets {
@@ -267,11 +272,11 @@ pub(crate) fn load_from_file<F: Read + Seek>(
     dbs: &Databases,
     f: &mut F,
     fast_clear: bool,
-) -> anyhow::Result<Option<ClusterId>> {
+) -> anyhow::Result<(Option<ClusterId>, FeatureVersion)> {
     let mut magic = [0u8; 6];
     f.read_exact(&mut magic)?;
     if &magic != b"DIOM01" {
-        panic!("unhandled snapshot format {magic:?}");
+        anyhow::bail!("unhandled snapshot format {magic:?}");
     }
 
     let mut z = ZipArchive::new(f)?;
@@ -301,7 +306,7 @@ pub(crate) fn load_from_file<F: Read + Seek>(
         }
     }
 
-    Ok(manifest.cluster_id)
+    Ok((manifest.cluster_id, manifest.feature_version))
 }
 
 #[cfg(test)]
@@ -343,7 +348,7 @@ mod tests {
 
         let cluster_id = ClusterId::generate();
 
-        serialize_to_file(targets, Some(cluster_id), &mut cursor)?;
+        serialize_to_file(targets, Some(cluster_id), 7, &mut cursor)?;
 
         let out = cursor.into_inner();
 
@@ -361,8 +366,10 @@ mod tests {
 
         let mut cursor = Cursor::new(out);
 
-        let found_cluster_id = load_from_file(&databases, &mut cursor, true)?;
+        let (found_cluster_id, found_feature_version) =
+            load_from_file(&databases, &mut cursor, true)?;
         assert_eq!(found_cluster_id, Some(cluster_id));
+        assert_eq!(found_feature_version, 7);
 
         let found_keyspaces = db2
             .list_keyspace_names()
@@ -418,7 +425,7 @@ mod tests {
 
         let targets = vec![(StorageType::Persistent, db, snapshot, keyspaces)];
 
-        serialize_to_file(targets, None, &mut cursor)?;
+        serialize_to_file(targets, None, 0, &mut cursor)?;
 
         let out = cursor.into_inner();
 
@@ -498,7 +505,7 @@ mod tests {
         ];
 
         let mut cursor = Cursor::new(vec![]);
-        serialize_to_file(targets, None, &mut cursor)?;
+        serialize_to_file(targets, None, 0, &mut cursor)?;
 
         let out = cursor.into_inner();
 

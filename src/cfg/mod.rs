@@ -20,7 +20,11 @@ use tracing::Level;
 use tracing_subscriber::Layer;
 use validator::Validate;
 
-use crate::error::{Error, Result};
+pub use crate::core::cluster::version::VersionRange;
+use crate::{
+    core::cluster::version::SUPPORTED_VERSION_RANGE,
+    error::{Error, Result},
+};
 
 mod defaults;
 mod dumpable_config;
@@ -449,6 +453,26 @@ pub struct ClusterConfiguration {
     /// depending on your workload and other configuration; particularly, when fsyncs of both logs
     /// and data are enabled, this will substantially decrease latency.
     pub broadcast_submitted_on_append: bool,
+
+    /// Override for the feature-version range this node advertises as supported.
+    ///
+    /// This should only be set when testing the feature-version subsystem. When unset, the
+    /// compiled-in supported range is used.
+    #[serde(default)]
+    #[env_overridable(skip)]
+    #[dumpable_config(skip)]
+    pub supported_feature_versions: Option<VersionRange>,
+
+    /// How often the leader polls voters to decide whether to advance the cluster feature version.
+    ///
+    /// This should only be configured when testing the feature-version subsystem.
+    #[serde(
+        rename = "feature_version_advance_interval_ms",
+        default = "defaults::cluster_feature_version_advance_interval"
+    )]
+    #[env_overridable(skip)]
+    #[dumpable_config(skip)]
+    pub feature_version_advance_interval: NonZeroDurationMs,
 }
 
 impl ClusterConfiguration {
@@ -466,6 +490,12 @@ impl ClusterConfiguration {
         } else {
             Dir::new(root.persistent_db.path.join("cluster_snapshots"))
         }
+    }
+
+    /// The feature-version range this node advertises, honoring the debug override if set.
+    pub(crate) fn supported_versions(&self) -> VersionRange {
+        self.supported_feature_versions
+            .unwrap_or(SUPPORTED_VERSION_RANGE)
     }
 }
 
