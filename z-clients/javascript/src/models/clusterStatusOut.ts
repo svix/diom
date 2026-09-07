@@ -15,6 +15,8 @@ export interface ClusterStatusOut {
      * This value is populated on cluster initialization and will never change.
      */
     clusterId?: string | null;
+    /** The cluster's committed feature version, as seen by the node servicing this request. */
+    featureVersion: number;
     /**
      * The name of this cluster (as defined in the config)
      * 
@@ -40,6 +42,7 @@ export const ClusterStatusOutSerializer = {
     _fromJsonObject(object: any): ClusterStatusOut {
         return {
             clusterId: object['cluster_id'],
+            featureVersion: object['feature_version'],
             clusterName: object['cluster_name'],
             thisNodeId: object['this_node_id'],
             thisNodeState: ServerStateSerializer._fromJsonObject(object['this_node_state']),
@@ -54,6 +57,7 @@ export const ClusterStatusOutSerializer = {
     _toJsonObject(self: ClusterStatusOut): any {
         return {
             'cluster_id': self.clusterId,
+            'feature_version': self.featureVersion,
             'cluster_name': self.clusterName,
             'this_node_id': self.thisNodeId,
             'this_node_state': ServerStateSerializer._toJsonObject(self.thisNodeState),

@@ -39,7 +39,7 @@ use crate::{
     v1,
     workers::Workers,
 };
-use diom_core::shutdown::{shutting_down_token, start_shut_down};
+use tokio_util::sync::CancellationToken;
 
 /// Run the server with the given configuration
 pub async fn run(cfg: Configuration, metrics: MostRecentMetricStore) {
@@ -135,6 +135,7 @@ pub async fn run_with_listeners(
         api_router.clone(),
         internal_req_rx,
         request_metrics.with_connection_type(ConnectionType::Internal),
+        app_state.shutdown_token.clone(),
     ));
 
     openapi::postprocess_spec(&mut openapi);
@@ -163,10 +164,11 @@ pub async fn run_with_listeners(
         let cfg = cfg.clone();
         let raft_state = raft_state.clone();
         let initialized = initialized.clone();
+        let shutdown_token = raft_state.shutdown_token.clone();
         async move {
             if let Err(err) = bootstrap::run(cfg, raft_state).await {
                 tracing::error!(?err, "bootstrap failed");
-                start_shut_down();
+                shutdown_token.cancel();
             }
             bootstrapped_flag.store(true, Ordering::SeqCst);
             if initialized.set().is_err() {
@@ -187,7 +189,7 @@ pub async fn run_with_listeners(
 
     let worker_handle = tokio::task::spawn({
         let raft_state = raft_state.clone();
-        let shutting_down = shutting_down_token();
+        let shutting_down = app_state.shutdown_token.clone();
         let app_state = app_state.clone();
         async move {
             initialized.wait().await?;
@@ -200,7 +202,7 @@ pub async fn run_with_listeners(
     });
 
     axum::serve(listener, svc)
-        .with_graceful_shutdown(shutting_down_token().cancelled_owned())
+        .with_graceful_shutdown(app_state.shutdown_token.clone().cancelled_owned())
         .await
         .unwrap();
 
@@ -260,7 +262,7 @@ async fn run_interserver(
         ));
 
     axum::serve(listener, svc)
-        .with_graceful_shutdown(shutting_down_token().cancelled_owned())
+        .with_graceful_shutdown(state.shutdown_token.clone().cancelled_owned())
         .await
         .unwrap();
 
@@ -277,6 +279,7 @@ async fn run_internal(
     api_router: axum::Router,
     mut internal_req_rx: mpsc::Receiver<InternalRequest>,
     request_metrics: RequestMetrics,
+    shutdown_token: CancellationToken,
 ) {
     let svc = api_router.layer((
         trace_layer(),
@@ -291,7 +294,7 @@ async fn run_internal(
 
     // FIXME: Do we want to delay graceful shutdown of the internal API server
     //        a little compared to public / inter-server?
-    let shutdown_tok = shutting_down_token();
+    let shutdown_tok = shutdown_token;
     while let Some(Some(mut req)) = shutdown_tok
         .run_until_cancelled(internal_req_rx.recv())
         .await

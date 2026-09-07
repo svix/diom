@@ -130,6 +130,9 @@ diom_backend::core::cluster::operations::InternalOperation (value-enum)
     SetClusterUuid: SetClusterUuidOperation
     RecordLogTimestamp: RecordLogTimestampOperation
     Tick: TickOperation
+    AdvanceFeatureVersion: AdvanceFeatureVersionOperation
+diom_backend::core::cluster::operations::advance_feature_version::AdvanceFeatureVersionOperation (value-struct)
+    0: FeatureVersion
 diom_backend::core::cluster::operations::record_log_timestamp::RecordLogTimestampOperation (value-struct)
 diom_backend::core::cluster::operations::set_cluster_uuid::SetClusterUuidOperation (value-struct)
     0: ClusterId

@@ -19,6 +19,7 @@ use crate::{
 use anyhow::Context;
 use diom_core::{Monotime, PersistableValue, task::spawn_blocking_in_current_span};
 use diom_error::CanFailExt;
+use diom_operations::FeatureVersion;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace, StorageType};
 use futures_util::{Stream, StreamExt};
@@ -183,6 +184,7 @@ pub struct Store {
     last_membership: StoredMembership,
     last_snapshot: Arc<RwLock<Option<LastSnapshot>>>,
     cluster_id: Option<ClusterId>,
+    feature_version: FeatureVersion,
     pub(super) time: Monotime,
     pub(super) logs: DiomLogs,
     metrics: DbMetrics,
@@ -198,6 +200,7 @@ static LAST_APPLIED_LOG_ID: FjallFixedKey<LogId> = FjallFixedKey::new("last_appl
 static LAST_SNAPSHOT: FjallFixedKey<LastSnapshot> = FjallFixedKey::new("last_snapshot");
 static LAST_MEMBERSHIP: FjallFixedKey<StoredMembership> = FjallFixedKey::new("last_membership");
 static CLUSTER_UUID: FjallFixedKey<ClusterId> = FjallFixedKey::new("cluster_uuid");
+static FEATURE_VERSION: FjallFixedKey<FeatureVersion> = FjallFixedKey::new("feature_version");
 
 type SnapshotTarget = (StorageType, Database, fjall::Snapshot, Vec<String>);
 
@@ -268,6 +271,7 @@ impl Store {
             last_applied_log_id: None,
             last_membership: Default::default(),
             cluster_id: None,
+            feature_version: 0,
             time,
             logs,
             metrics,
@@ -277,12 +281,26 @@ impl Store {
             state_watcher,
         };
         this.load_information().await?;
+        let supported_max = this.state.cfg.cluster.supported_versions().max;
+        if this.feature_version > supported_max {
+            anyhow::bail!(
+                "on-disk feature version {} exceeds this build's supported maximum {supported_max}, \
+                 this node must run a newer build or be removed and resynced",
+                this.feature_version
+            );
+        }
         this.start_metrics();
         Ok(this)
     }
 
     pub fn cluster_id(&self) -> Option<&ClusterId> {
         self.cluster_id.as_ref()
+    }
+
+    /// The feature version this cluster has advanced to. Gates whether new columns and operations are
+    /// emitted. Only ever increases (see `set_feature_version`).
+    pub fn feature_version(&self) -> FeatureVersion {
+        self.feature_version
     }
 
     pub fn db_handle(&self) -> parking_lot::ArcRwLockReadGuard<parking_lot::RawRwLock, Stores> {
@@ -378,11 +396,60 @@ impl Store {
         Ok(())
     }
 
+    pub(super) fn supports_feature_version(&self, version: FeatureVersion) -> bool {
+        version <= self.state.cfg.cluster.supported_versions().max
+    }
+
+    fn start_shut_down_if_feature_version_unsupported(&self, version: FeatureVersion) {
+        if self.supports_feature_version(version) {
+            return;
+        }
+        tracing::error!(
+            feature_version = version,
+            supported_max = self.state.cfg.cluster.supported_versions().max,
+            "committed feature version exceeds this build's supported range; shutting down"
+        );
+        self.cancellation_token.cancel();
+    }
+
+    /// Advances the feature version to `version` if it is higher than the current one. Monotonic, so
+    /// it never lowers the version. Persisted like `cluster_id`.
+    pub(super) async fn set_feature_version(
+        &mut self,
+        version: FeatureVersion,
+    ) -> anyhow::Result<()> {
+        if version <= self.feature_version {
+            return Ok(());
+        }
+        let keyspace = self.meta_keyspace.clone();
+        let handle = self.stores.clone();
+        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
+            let mut tx = handle
+                .read()
+                .databases
+                .persistent
+                .batch()
+                .durability(Some(PersistMode::SyncAll));
+            FEATURE_VERSION.store_tx(&mut tx, &keyspace, &version)?;
+            tx.commit()?;
+            Ok(())
+        })
+        .await??;
+        tracing::info!(
+            from = self.feature_version,
+            to = version,
+            "advanced cluster feature version"
+        );
+        self.feature_version = version;
+        self.start_shut_down_if_feature_version_unsupported(version);
+        Ok(())
+    }
+
     #[tracing::instrument(skip_all)]
     async fn load_information(&mut self) -> anyhow::Result<()> {
         let keyspace = self.readonly_meta_keyspace.clone();
 
-        let (last_applied_log_id, last_membership, last_snapshot, cluster_id) =
+        let (last_applied_log_id, last_membership, last_snapshot, cluster_id, feature_version) =
             spawn_blocking_in_current_span(move || -> anyhow::Result<_> {
                 let last_applied_log_id = LAST_APPLIED_LOG_ID.get(&keyspace)?;
                 let last_membership = LAST_MEMBERSHIP
@@ -391,18 +458,21 @@ impl Store {
                     .unwrap_or_default();
                 let last_snapshot = LAST_SNAPSHOT.get(&keyspace)?;
                 let cluster_id = CLUSTER_UUID.get(&keyspace)?;
+                let feature_version = FEATURE_VERSION.get(&keyspace)?.unwrap_or(0);
 
                 Ok((
                     last_applied_log_id,
                     last_membership,
                     last_snapshot,
                     cluster_id,
+                    feature_version,
                 ))
             })
             .await??;
         self.last_applied_log_id = last_applied_log_id;
         self.last_membership = last_membership;
         self.cluster_id = cluster_id;
+        self.feature_version = feature_version;
         if let Some(cluster_id) = &cluster_id {
             tracing::info!(%cluster_id, "starting up with existing cluster membership");
         }
@@ -521,7 +591,7 @@ impl Store {
         }
         let mut f = snapshot.file.try_clone().await?.into_std().await;
         f.seek(SeekFrom::Start(0))?;
-        let cluster_id = spawn_blocking_in_current_span({
+        let (cluster_id, feature_version) = spawn_blocking_in_current_span({
             let handle = self.stores.clone();
             move || -> anyhow::Result<_> {
                 let stores = handle.write();
@@ -543,6 +613,8 @@ impl Store {
                 self.set_cluster_id(new_cluster_id).await?;
             }
         }
+        // adopt the feature version from the snapshot
+        self.set_feature_version(feature_version).await?;
         // overwrite any last_log_id and membership in the snapshot with the ones the leader told us
         self.last_applied_log_id = meta.last_log_id;
         self.last_membership = meta.last_membership.clone();
@@ -675,7 +747,12 @@ impl Store {
 
     async fn snapshot_phase_1(
         &mut self,
-    ) -> anyhow::Result<(SnapshotMeta, Vec<SnapshotTarget>, Option<ClusterId>)> {
+    ) -> anyhow::Result<(
+        SnapshotMeta,
+        Vec<SnapshotTarget>,
+        Option<ClusterId>,
+        FeatureVersion,
+    )> {
         let last_log_id = self.last_applied_log_id;
         let last_membership = self.last_membership.clone();
 
@@ -718,7 +795,7 @@ impl Store {
         .await
         .context("failed to generate snapshot targets")?;
 
-        Ok((meta, targets, self.cluster_id))
+        Ok((meta, targets, self.cluster_id, self.feature_version))
     }
 }
 
@@ -824,6 +901,7 @@ impl StoredSnapshot {
         directory: &Path,
         targets: Vec<(StorageType, Database, fjall::Snapshot, Vec<String>)>,
         cluster_id: Option<ClusterId>,
+        feature_version: FeatureVersion,
     ) -> anyhow::Result<Self> {
         let file_name = Self::final_file_name(metadata);
         let path = directory.join(file_name);
@@ -836,7 +914,12 @@ impl StoredSnapshot {
                 temp_path = %tf.path().display(),
                 "writing snapshot",
             );
-            serialized_state_machine::serialize_to_file(targets, cluster_id, tf.as_file_mut())?;
+            serialized_state_machine::serialize_to_file(
+                targets,
+                cluster_id,
+                feature_version,
+                tf.as_file_mut(),
+            )?;
             tf.as_file_mut().sync_all()?;
             let mut f = tf.persist_noclobber(path_c)?;
             f.seek(SeekFrom::Start(0))?;
@@ -890,14 +973,20 @@ impl StoreSnapshotHandle {
         let start = std::time::Instant::now();
 
         // lock the underlying store while we pull out some fields atomically
-        let (meta, targets, cluster_id) = {
+        let (meta, targets, cluster_id, feature_version) = {
             let mut guard = self.inner.write().await;
             guard.snapshot_phase_1().await
         }?;
 
-        let snapshot = StoredSnapshot::new(&meta, &self.snapshot_directory, targets, cluster_id)
-            .await
-            .context("failed to build snapshot")?;
+        let snapshot = StoredSnapshot::new(
+            &meta,
+            &self.snapshot_directory,
+            targets,
+            cluster_id,
+            feature_version,
+        )
+        .await
+        .context("failed to build snapshot")?;
 
         let path = snapshot.path.clone();
 
@@ -1004,6 +1093,10 @@ impl openraft_legacy::network_v1::SnapshotReceiverFactory<TypeConfig> for StoreH
 impl StoreHandle {
     pub async fn cluster_id(&self) -> Option<ClusterId> {
         self.inner.read().await.cluster_id().copied()
+    }
+
+    pub async fn feature_version(&self) -> FeatureVersion {
+        self.inner.read().await.feature_version()
     }
 
     pub async fn log_id_before_time(

@@ -101,6 +101,49 @@ impl TestServerBuilder {
     }
 
     pub async fn build(self) -> TestContext {
+        let wait_for_initialization = self.wait_for_initialization;
+        let spawned = self.spawn().await;
+
+        if wait_for_initialization {
+            spawned
+                .initialized
+                .wait()
+                .await
+                .expect("initialization should finish");
+        }
+
+        let (node_id, cluster_id) =
+            wait_for_initialized(spawned.addr, spawned.repl_addr, Duration::from_secs(8))
+                .await
+                .expect("failed to initialize server");
+
+        TestContext {
+            client: spawned.client,
+            cfg: spawned.cfg,
+            handle: spawned.handle,
+            token: spawned.token,
+            addr: spawned.addr,
+            repl_addr: spawned.repl_addr,
+            node_id,
+            cluster_id,
+            time: spawned.time,
+        }
+    }
+
+    /// Start the server but do not wait for it to join a cluster.
+    ///
+    /// Useful for scenarios where a node is expected to be refused entry and so will never
+    /// initialize.
+    pub async fn build_uninitialized(self) -> UninitializedServer {
+        let spawned = self.spawn().await;
+        UninitializedServer {
+            client: spawned.client,
+            repl_addr: spawned.repl_addr,
+            _handle: spawned.handle,
+        }
+    }
+
+    async fn spawn(self) -> SpawnedServer {
         let token = self.token.unwrap_or_else(|| TEST_ADMIN_TOKEN.to_string());
 
         let listener = if let Some(listener) = self.listener {
@@ -156,29 +199,38 @@ impl TestServerBuilder {
         };
         let client = TestClient::new(base_uri, &token);
 
-        if self.wait_for_initialization {
-            initialized
-                .wait()
-                .await
-                .expect("initialization should finish");
-        }
-
-        let (node_id, cluster_id) = wait_for_initialized(addr, repl_addr, Duration::from_secs(8))
-            .await
-            .expect("failed to initialize server");
-
-        TestContext {
+        SpawnedServer {
             client,
-            cfg,
-            handle,
-            token,
             addr,
             repl_addr,
-            node_id,
-            cluster_id,
+            handle,
+            cfg,
             time,
+            initialized,
+            token,
         }
     }
+}
+
+/// A running server plus the pieces needed to either wait for initialization or return early.
+struct SpawnedServer {
+    client: TestClient,
+    addr: SocketAddr,
+    repl_addr: SocketAddr,
+    handle: IsolatedServerHandle,
+    cfg: Arc<ConfigurationInner>,
+    time: Monotime,
+    initialized: Initialized,
+    token: String,
+}
+
+/// A server started without waiting for it to join a cluster.
+///
+/// See [`TestServerBuilder::build_uninitialized`].
+pub struct UninitializedServer {
+    pub client: TestClient,
+    pub repl_addr: SocketAddr,
+    _handle: IsolatedServerHandle,
 }
 
 pub struct TestContext {
@@ -357,6 +409,8 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             send_snapshot_timeout: NonZeroDurationMs::from_secs(3).unwrap(),
             forward_opentelemetry_context: false,
             minimum_snapshot_interval: NonZeroDurationMs::from_secs(10).unwrap(),
+            supported_feature_versions: None,
+            feature_version_advance_interval: NonZeroDurationMs::from_secs(60).unwrap(),
         },
         background_cleanup_interval: NonZeroDurationMs::from_secs(10).unwrap(),
         svix_poller_max_concurrency: 32.try_into().unwrap(),
@@ -439,6 +493,15 @@ impl ClusterTestContext {
 }
 
 pub async fn start_cluster(num_nodes: usize) -> ClusterTestContext {
+    start_cluster_with(num_nodes, |_, _| {}).await
+}
+
+/// Like [`start_cluster`], but `customize` runs against each node's config (by node index) after the
+/// standard cluster wiring, so individual nodes can be configured differently.
+pub async fn start_cluster_with(
+    num_nodes: usize,
+    mut customize: impl FnMut(usize, &mut ConfigurationInner),
+) -> ClusterTestContext {
     if num_nodes < 2 {
         panic!("cannot start a cluster with fewer than 2 nodes");
     }
@@ -452,6 +515,7 @@ pub async fn start_cluster(num_nodes: usize) -> ClusterTestContext {
                 cfg.cluster.auto_initialize = node_idx == 0;
                 cfg.cluster.seed_nodes = peers.clone();
                 cfg.cluster.shut_down_on_go_away = false;
+                customize(node_idx, cfg);
             })
             .build()
             .await;

@@ -9060,6 +9060,12 @@
             "type": "string",
             "nullable": true
           },
+          "feature_version": {
+            "description": "The cluster's committed feature version, as seen by the node servicing this request.",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
           "cluster_name": {
             "description": "The name of this cluster (as defined in the config)\n\nThis value is not replicated and should only be used for debugging.",
             "type": "string",
@@ -9102,6 +9108,7 @@
           }
         },
         "required": [
+          "feature_version",
           "this_node_id",
           "this_node_state",
           "this_node_last_committed_timestamp",
