@@ -30,13 +30,13 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"tokens\": 123,
-  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
+  \"tokens\": 123, // Number of tokens to consume (default: 1)
+  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000} // Rate limiter configuration
 }\n\nExample response:
 {
-  \"allowed\": true,
-  \"remaining\": 123,
-  \"retry_after_ms\": 60000
+  \"allowed\": true, // Whether the request is allowed
+  \"remaining\": 123, // Number of tokens remaining
+  \"retry_after_ms\": 60000 // Milliseconds until enough tokens are available (only present when allowed is false)
 }\n")]
     Limit {
         rate_limit_check_in: crate::json::JsonOf<diom::models::RateLimitCheckIn>,
@@ -54,11 +54,11 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
+  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000} // Rate limiter configuration
 }\n\nExample response:
 {
-  \"remaining\": 123,
-  \"retry_after_ms\": 60000
+  \"remaining\": 123, // Number of tokens remaining
+  \"retry_after_ms\": 60000 // Milliseconds until at least one token is available (only present when remaining is 0)
 }\n")]
     GetRemaining {
         rate_limit_get_remaining_in: crate::json::JsonOf<diom::models::RateLimitGetRemainingIn>,
@@ -76,7 +76,7 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
+  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000} // Rate limiter configuration
 }\n\nExample response:
 {
 }\n")]

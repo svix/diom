@@ -95,8 +95,8 @@ pub enum AdminAuthRoleCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"limit\": 123,
-  \"iterator\": \"some_role_id\"
+  \"limit\": 123, // Limit the number of returned items
+  \"iterator\": \"some_role_id\" // The iterator returned from a prior invocation
 }\n\nExample response:
 {
   \"data\": [{\"id\": \"some_role_id\", \"description\": \"...\", \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}], \"policies\": [\"...\"], \"context\": {\"key\": \"...\"}, \"created\": 1234567890123, \"updated\": 1234567890123}],

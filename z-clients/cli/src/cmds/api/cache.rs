@@ -29,7 +29,7 @@ pub enum CacheCommands {
     #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
-  \"ttl_ms\": 60000
+  \"ttl_ms\": 60000 // Time to live in milliseconds
 }\n\nExample response:
 {
 }\n")]
@@ -53,7 +53,7 @@ pub enum CacheCommands {
   \"consistency\": \"strong\"
 }\n\nExample response:
 {
-  \"expiry\": 1234567890123,
+  \"expiry\": 1234567890123, // Time of expiry
   \"value\": \"...\"
 }\n")]
     Get {

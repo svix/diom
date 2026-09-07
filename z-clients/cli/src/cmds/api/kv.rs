@@ -29,9 +29,9 @@ pub enum KvCommands {
     #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
-  \"ttl_ms\": 60000,
+  \"ttl_ms\": 60000, // Time to live in milliseconds
   \"behavior\": \"upsert\",
-  \"version\": 123
+  \"version\": 123 // If set, the write only succeeds when the stored version matches this value. Use the `version` field from a prior `get` response.
 }\n\nExample response:
 {
   \"version\": 123
@@ -56,9 +56,9 @@ pub enum KvCommands {
   \"consistency\": \"strong\"
 }\n\nExample response:
 {
-  \"expiry\": 1234567890123,
+  \"expiry\": 1234567890123, // Time of expiry
   \"value\": \"...\",
-  \"version\": 123
+  \"version\": 123 // Opaque version token for optimistic concurrency control. Pass as `version` in a subsequent `set` to perform a conditional write.
 }\n")]
     Get {
         key: String,
@@ -76,10 +76,10 @@ pub enum KvCommands {
     #[command(after_help = "Example body:
 {
   \"namespace\": \"some_namespace\",
-  \"version\": 123
+  \"version\": 123 // If set, the delete only succeeds when the stored version matches this value. Use the `version` field from a prior `get` response.
 }\n\nExample response:
 {
-  \"success\": true
+  \"success\": true // Whether the operation succeeded or was a noop due to pre-conditions.
 }\n")]
     Delete {
         key: String,

@@ -92,8 +92,8 @@ pub enum AdminAuthPolicyCommands {
         ))]
     #[command(after_help = "Example body:
 {
-  \"limit\": 123,
-  \"iterator\": \"some_access_policy\"
+  \"limit\": 123, // Limit the number of returned items
+  \"iterator\": \"some_access_policy\" // The iterator returned from a prior invocation
 }\n\nExample response:
 {
   \"data\": [{\"id\": \"some_access_policy\", \"description\": \"...\", \"rules\": [{\"effect\": \"allow\", \"resource\": \"...\", \"actions\": [\"...\"]}], \"created\": 1234567890123, \"updated\": 1234567890123}],
