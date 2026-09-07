@@ -184,7 +184,7 @@ pub async fn initialize_raft(
         cfg.cluster.log_sync_interval_auto,
         cfg.cluster.log_sync_mode,
         cfg.fsync_mode,
-        crate::shutting_down_token(),
+        app_state.shutdown_token.clone(),
     )
     .await
     .context("setting up log store")?;
@@ -229,7 +229,7 @@ pub async fn initialize_raft(
         logs.clone(),
         id,
         time.clone(),
-        crate::shutting_down_token(),
+        app_state.shutdown_token.clone(),
         state_watcher.clone(),
     )
     .await?;
@@ -256,6 +256,7 @@ pub async fn initialize_raft(
         cfg: cfg.clone(),
         metrics: metrics.clone(),
         state_watcher,
+        shutdown_token: app_state.shutdown_token.clone(),
     };
     tokio::spawn({
         let handle = handle.clone();
@@ -272,7 +273,7 @@ pub async fn initialize_raft(
                     ?err,
                     "raft administrative process died; shutting everything down"
                 );
-                crate::start_shut_down()
+                handle.shutdown_token.cancel()
             }
         }
     });
@@ -295,7 +296,7 @@ pub async fn initialize_raft(
                     ?err,
                     "raft administrative process died; shutting everything down"
                 );
-                crate::start_shut_down()
+                handle.shutdown_token.cancel()
             }
         }
     });
