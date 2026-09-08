@@ -53,6 +53,7 @@ jobs:
           skip_annotations: true
           check_name: 'Diom CI JUnit'
           job_name: 'Diom CI'
+          pr_id: ${{ github.event.workflow_run.pull_requests[0].number }}
 
       - name: Parse coverage.json
         id: parse_coverage
