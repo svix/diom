@@ -27,7 +27,6 @@ jobs:
               repo,
               run_id: ${{ github.event.workflow_run.id }},
             });
-            console.log(response);
             return response?.artifacts?.[0]?.id?.toString()
 
       - name: Download Test Report
