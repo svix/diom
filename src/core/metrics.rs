@@ -832,9 +832,11 @@ impl TokioMetrics {
         let first_reported_bucket =
             total_buckets.saturating_sub(NUM_REPORTED_POLL_HISTOGRAM_BUCKETS);
 
-        for worker in 0..metrics.num_workers() {
-            let prev_values = &mut ctx.previous_poll_histogram_bucket_values[worker];
-
+        for (worker, prev_values) in ctx
+            .previous_poll_histogram_bucket_values
+            .iter_mut()
+            .enumerate()
+        {
             for (bucket, prev) in prev_values.iter_mut().enumerate() {
                 let underlying_bucket = first_reported_bucket + bucket;
                 let bucket_range = metrics.poll_time_histogram_bucket_range(underlying_bucket);
