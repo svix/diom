@@ -6,7 +6,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use diom_error::Error;
 
 use crate::{cfg::Configuration, core::cluster::RaftState};
-use diom_core::shutdown::{shutting_down_token, start_shut_down};
 
 pub mod bootstrap;
 pub mod cfg;

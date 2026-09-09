@@ -8,9 +8,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::cfg::PeerAddr;
 
+use diom_operations::FeatureVersion;
+
 use super::{
     ClusterId, LogId, NodeId,
     handle::{RequestWithContext, Response},
+    version::VersionRange,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -25,18 +28,31 @@ pub(super) struct DiscoverClusterResponse {
     pub known_peers: BTreeMap<NodeId, PeerAddr>,
     pub state: ServerState,
     pub last_committed_log_id: Option<LogId>,
+    /// The feature version the cluster has committed to. A joining node must support this version.
+    /// Defaults to `0` from a peer that predates the version handshake.
+    #[serde(default)]
+    pub feature_version: FeatureVersion,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(super) struct DiscoverResponse {
     pub node_id: NodeId,
     pub cluster: Option<DiscoverClusterResponse>,
+    /// The feature versions the responding node's build supports. The leader polls this from each
+    /// voter to decide when to advance the cluster feature version. Defaults to `0..=0` from a peer
+    /// that predates the version handshake.
+    #[serde(default)]
+    pub supported_versions: VersionRange,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(super) struct AddLearnerRequest {
     pub node_id: NodeId,
     pub address: PeerAddr,
+    /// The feature versions the joining node supports. Defaults to `0..=0` from a peer that predates
+    /// the version handshake.
+    #[serde(default)]
+    pub supported_versions: VersionRange,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -45,6 +61,10 @@ pub(super) struct AddLearnerResponse {}
 #[derive(Debug, Deserialize, Serialize)]
 pub(super) struct UpgradeLearnerRequest {
     pub node_id: NodeId,
+    /// The feature versions the promoting node supports. Defaults to `0..=0` from a peer that
+    /// predates the version handshake.
+    #[serde(default)]
+    pub supported_versions: VersionRange,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

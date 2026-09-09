@@ -27,6 +27,7 @@ pub enum ClusterAdminCommands {
     #[command(after_help = "Example response:
 {
   \"cluster_id\": \"...\",
+  \"feature_version\": 123,
   \"cluster_name\": \"...\",
   \"this_node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",
   \"this_node_state\": \"leader\",

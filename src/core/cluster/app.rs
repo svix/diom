@@ -221,6 +221,7 @@ async fn discover(
 ) -> MsgPackOrJson<DiscoverResponse> {
     let cluster_name = app_state.cfg.cluster.name.clone();
     let cluster_id = raft_state.state_machine.cluster_id().await;
+    let feature_version = raft_state.state_machine.feature_version().await;
     let cluster = raft_state
         .raft
         .with_raft_state(move |state| DiscoverClusterResponse {
@@ -245,6 +246,7 @@ async fn discover(
                     }
                 })
                 .collect(),
+            feature_version,
         })
         .await
         .tap_err(|err| tracing::warn!(?err, "failed to find local cluster state"))
@@ -252,6 +254,7 @@ async fn discover(
     let response = DiscoverResponse {
         node_id: raft_state.node_id,
         cluster,
+        supported_versions: app_state.cfg.cluster.supported_versions(),
     };
     MsgPackOrJson(response)
 }
@@ -259,10 +262,22 @@ async fn discover(
 async fn add_learner(
     Extension(state): Extension<RaftState>,
     MsgPack(request): MsgPack<AddLearnerRequest>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, crate::Error> {
     tracing::info!(node_id=?request.node_id, address=?request.address, "adding a learner");
+    let feature_version = state.state_machine.feature_version().await;
+    if !request.supported_versions.includes(feature_version) {
+        return Err(crate::Error::bad_request(
+            "incompatible-version",
+            format!(
+                "refusing learner {:?}: its supported versions {} do not include the cluster feature version {feature_version}",
+                request.node_id, request.supported_versions
+            ),
+        ));
+    }
     let node = Node::from(request.address);
-    rpc_response(state.raft.add_learner(request.node_id, node, true).await)
+    Ok(rpc_response(
+        state.raft.add_learner(request.node_id, node, true).await,
+    ))
 }
 
 async fn remove_node(
@@ -276,10 +291,24 @@ async fn remove_node(
 async fn upgrade_learner(
     Extension(raft_state): Extension<RaftState>,
     MsgPack(request): MsgPack<UpgradeLearnerRequest>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, crate::Error> {
     tracing::info!(node_id=?request.node_id, "upgrading learner to follower");
-    let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
-    rpc_response(raft_state.raft.change_membership(request, true).await)
+    // The cluster may have advanced its feature version while this node caught up as a learner, so
+    // re-check compatibility before it becomes a voter (add_learner only checked at join time).
+    let feature_version = raft_state.state_machine.feature_version().await;
+    if !request.supported_versions.includes(feature_version) {
+        return Err(crate::Error::bad_request(
+            "incompatible-version",
+            format!(
+                "refusing to promote {:?}: its supported versions {} do not include the cluster feature version {feature_version}",
+                request.node_id, request.supported_versions
+            ),
+        ));
+    }
+    let change = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
+    Ok(rpc_response(
+        raft_state.raft.change_membership(change, true).await,
+    ))
 }
 
 async fn go_away(

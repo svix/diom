@@ -364,6 +364,7 @@ mod tests {
                 timestamp: ts(2000),
                 log_index: 1,
                 term: 1,
+                feature_version: 0,
             };
             Ok(request.apply(raft_state, &ctx).await)
         }
@@ -451,6 +452,7 @@ mod tests {
             timestamp: ts(1000),
             log_index: 1,
             term: 1,
+            feature_version: 0,
         };
         let op: MsgsOperation = create_op.into();
         let _ = op.apply(raft_state, &ctx).await;
@@ -494,6 +496,7 @@ mod tests {
             timestamp: ts(3000),
             log_index: 2,
             term: 1,
+            feature_version: 0,
         };
         let op: MsgsOperation = receive_op.into();
         let response = op.apply(raft_state, &ctx).await;

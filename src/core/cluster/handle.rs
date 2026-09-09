@@ -26,6 +26,7 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tokio::sync::mpsc::Sender;
+use tokio_util::sync::CancellationToken;
 
 tokio::task_local! {
     pub(super) static APPLIED_LOG_ID: Mutex<Option<LogId>>;
@@ -350,6 +351,7 @@ pub struct RaftState {
     pub time: Monotime,
     pub metrics: ClusterMetrics,
     pub state_watcher: super::raft::RaftStateWatcher,
+    pub shutdown_token: CancellationToken,
 }
 
 impl RaftState {
@@ -482,8 +484,14 @@ impl RaftState {
                 ?server_state,
                 "node is not live in cluster; kicking off discovery"
             );
-            let disco =
-                Discovery::new(self.cfg.clone(), self.raft.clone(), self.node_id, network).await?;
+            let disco = Discovery::new(
+                self.cfg.clone(),
+                self.raft.clone(),
+                self.node_id,
+                network,
+                app_state.shutdown_token.clone(),
+            )
+            .await?;
             if let Err(err) = disco.discover_cluster().await {
                 tracing::error!(
                     ?err,
@@ -609,7 +617,7 @@ impl RaftState {
             .or_internal_error()?;
         tracing::error!("this node has been removed from a cluster and will now shut down");
         if self.cfg.cluster.shut_down_on_go_away {
-            crate::start_shut_down();
+            self.shutdown_token.cancel();
         }
         Ok(())
     }

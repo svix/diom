@@ -61,6 +61,10 @@ pub(super) const fn cluster_discovery_timeout() -> NonZeroDurationMs {
     NonZeroDurationMs::from_secs(30).unwrap()
 }
 
+pub(super) const fn cluster_feature_version_advance_interval() -> NonZeroDurationMs {
+    NonZeroDurationMs::from_secs(60).unwrap()
+}
+
 pub(super) const fn cluster_startup_discovery_delay() -> DurationMs {
     DurationMs::from_millis(10)
 }

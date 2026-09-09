@@ -5,6 +5,7 @@ mod cache;
 mod cluster;
 mod cluster_admin;
 mod common;
+mod feature_version;
 mod health;
 mod idempotency;
 mod jwt_auth;
