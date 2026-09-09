@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use diom_authorization::api::{AccessPolicyId, AccessRule, RoleId};
 use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::Result;
-use diom_operations::OpContext;
+use diom_operations::{OpContext, VERSIONS};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -47,6 +47,7 @@ impl ConfigureRoleOperation {
         self,
         state: &State,
         now: UnixTimestampMs,
+        last_configured: Option<UnixTimestampMs>,
     ) -> Result<ConfigureRoleResponseData> {
         let model = state
             .controller
@@ -57,6 +58,7 @@ impl ConfigureRoleOperation {
                 policies: self.policies,
                 context: self.context,
                 now,
+                last_configured,
             })
             .await?;
         Ok(ConfigureRoleResponseData { model })
@@ -65,6 +67,12 @@ impl ConfigureRoleOperation {
 
 impl AdminAuthRequest for ConfigureRoleOperation {
     async fn apply(self, state: AdminAuthRaftState<'_>, ctx: &OpContext) -> ConfigureRoleResponse {
-        ConfigureRoleResponse::new(self.apply_real(state.state, ctx.timestamp).await)
+        // Gate the new column on the committed feature version, read deterministically from the
+        // apply context. Until every node has advanced to feature version VERSIONS[1] this stays None.
+        let last_configured = (ctx.feature_version >= VERSIONS[1]).then_some(ctx.timestamp);
+        ConfigureRoleResponse::new(
+            self.apply_real(state.state, ctx.timestamp, last_configured)
+                .await,
+        )
     }
 }

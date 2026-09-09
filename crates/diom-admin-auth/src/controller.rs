@@ -43,6 +43,7 @@ pub struct UpsertRoleInput {
     pub policies: Vec<AccessPolicyId>,
     pub context: HashMap<String, String>,
     pub now: UnixTimestampMs,
+    pub last_configured: Option<UnixTimestampMs>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -133,6 +134,7 @@ impl AdminAuthController {
                 context: input.context,
                 created,
                 updated: input.now,
+                last_configured: input.last_configured,
             };
             keyspace.insert(RoleKey::build_key(row.id.as_str()), row.to_fjall_value()?)?;
             Ok(RoleModel::from(row))

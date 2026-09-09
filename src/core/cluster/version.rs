@@ -3,11 +3,14 @@
 //! Each build supports a contiguous range of feature versions. Nodes advertise their range during
 //! discovery and health checks so an incompatible node parks instead of joining a cluster it cannot
 //! interoperate with.
-use diom_operations::FeatureVersion;
+use diom_operations::{FeatureVersion, VERSIONS};
 use serde::{Deserialize, Serialize};
 
 /// The range of feature versions this build can operate at.
-pub(crate) const SUPPORTED_VERSION_RANGE: VersionRange = VersionRange { min: 0, max: 0 };
+pub(crate) const SUPPORTED_VERSION_RANGE: VersionRange = VersionRange {
+    min: VERSIONS[0],
+    max: VERSIONS.last().copied().unwrap(),
+};
 
 /// An inclusive range of feature versions a node supports.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
