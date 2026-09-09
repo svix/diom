@@ -4,6 +4,11 @@ use diom_core::types::UnixTimestampMs;
 /// the writing of certain data across nodes that may have a different version during an upgrade.
 pub type FeatureVersion = u32;
 
+/// Every feature version this codebase knows about, in increasing order. Code gates new behavior by
+/// comparing against a named entry here (for example `VERSIONS[1]`) rather than a bare number, so the
+/// set of versions lives in one place.
+pub const VERSIONS: [FeatureVersion; 2] = [0, 1];
+
 #[derive(Debug, Clone)]
 pub struct OpContext {
     /// The (monotonic) timestamp at which this object was enqueued for application.

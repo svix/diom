@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use diom_authorization::api::{AccessPolicyId, AccessRule, RoleId};
 use diom_core::{PersistableVersioned, types::UnixTimestampMs};
+use diom_operations::VERSIONS;
 use fjall_utils::FjallKey;
 
 /// These values can never change. Only additions are allowed.
@@ -23,6 +24,11 @@ pub struct RoleRow {
     pub context: HashMap<String, String>,
     pub created: UnixTimestampMs,
     pub updated: UnixTimestampMs,
+    /// Demonstrates a feature-version-gated column. It is written only once the whole cluster has
+    /// advanced to feature version VERSIONS[1], so older nodes never have to understand it and a
+    /// rollback before the cluster advances loses nothing. Older rows read back as None.
+    #[since(VERSIONS[1])]
+    pub last_configured: Option<UnixTimestampMs>,
 }
 
 #[derive(FjallKey)]

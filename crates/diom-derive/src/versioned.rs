@@ -1,21 +1,20 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
-    DeriveInput, Expr, Ident, LitInt, Token,
+    DeriveInput, Expr, Ident, Token,
     parse::{Parse, ParseStream},
     spanned::Spanned,
 };
 
-/// Parsed `#[since(N)]` or `#[since(N, default = EXPR)]` field attribute.
+/// Parsed `#[since(EXPR)]` or `#[since(EXPR, default = EXPR)]` field attribute.
 struct SinceAttr {
-    version: u32,
+    version: Expr,
     default: Option<Expr>,
 }
 
 impl Parse for SinceAttr {
     fn parse(input: ParseStream<'_>) -> Result<Self, syn::Error> {
-        let lit: LitInt = input.parse()?;
-        let version = lit.base10_parse()?;
+        let version: Expr = input.parse()?;
         let mut default = None;
         if input.peek(Token![,]) {
             let _: Token![,] = input.parse()?;
@@ -33,9 +32,16 @@ impl Parse for SinceAttr {
 struct VersionedField {
     ident: Ident,
     ty: syn::Type,
-    since: u32,
+    since: Option<Expr>,
     default: Option<Expr>,
     nested: bool,
+}
+
+fn since_value(field: &VersionedField) -> TokenStream {
+    match &field.since {
+        Some(expr) => quote! { (#expr) as u32 },
+        None => quote! { 0u32 },
+    }
 }
 
 fn parse_since(field: &syn::Field) -> Result<Option<SinceAttr>, syn::Error> {
@@ -98,8 +104,8 @@ fn collect_fields(input: &DeriveInput) -> Result<Vec<VersionedField>, syn::Error
     for field in fields.named.iter() {
         let ident = field.ident.clone().expect("named field");
         let (since, default) = match parse_since(field)? {
-            Some(a) => (a.version, a.default),
-            None => (0, None),
+            Some(a) => (Some(a.version), a.default),
+            None => (None, None),
         };
         out.push(VersionedField {
             ident,
@@ -108,22 +114,6 @@ fn collect_fields(input: &DeriveInput) -> Result<Vec<VersionedField>, syn::Error
             default,
             nested: parse_nested(field),
         });
-    }
-
-    // Fields are read positionally, so a version-`v` reader must be able to stop right after the
-    // last field with `since <= v`. That only works if fields are declared in non-decreasing
-    // `since` order.
-    for w in out.windows(2) {
-        if w[1].since < w[0].since {
-            return Err(syn::Error::new(
-                w[1].ident.span(),
-                format!(
-                    "field `{}` (since {}) must not precede a field with a higher `since` ({}); \
-                     declare fields in non-decreasing `since` order",
-                    w[1].ident, w[1].since, w[0].since
-                ),
-            ));
-        }
     }
 
     Ok(out)
@@ -136,7 +126,35 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     let name = &input.ident;
     let field_count = fields.len();
     let tuple_len = field_count + 1;
-    let write_version = fields.iter().map(|f| f.since).max().unwrap_or(0);
+
+    // The written schema version is the highest `since` across the fields. Fields must be declared
+    // in non-decreasing `since` order (asserted below at const-eval), so that is the last field's
+    // value. This is computed at const-eval rather than macro time so `since` can be a const
+    // expression rather than a literal.
+    let write_version = fields
+        .last()
+        .map(since_value)
+        .unwrap_or_else(|| quote! { 0u32 });
+
+    // Fields are read positionally, so a version-`v` reader must be able to stop right after the last
+    // field with `since <= v`. That only works if fields are declared in non-decreasing `since`
+    // order. Because `since` may now be an opaque const expression, we cannot compare the values at
+    // macro time, so we enforce the ordering with a const assertion instead.
+    let order_assert = {
+        let checks = fields.windows(2).map(|w| {
+            let a = since_value(&w[0]);
+            let b = since_value(&w[1]);
+            let msg = format!(
+                "field `{}` must not precede a field with a higher `since`; declare fields in \
+                 non-decreasing `since` order",
+                w[1].ident
+            );
+            quote! { ::core::assert!(#a <= #b, #msg); }
+        });
+        quote! {
+            const _: () = { #(#checks)* };
+        }
+    };
 
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
@@ -216,20 +234,23 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
                     .ok_or_else(|| <A::Error as ::serde::de::Error>::custom(#missing))?
             }
         };
-        if f.since == 0 {
-            quote! { let #ident: #ty = #read_expr; }
-        } else {
-            let since = f.since;
-            let default_expr = match &f.default {
-                Some(expr) => quote! { #expr },
-                None => quote! { ::core::default::Default::default() },
-            };
-            quote! {
-                let #ident: #ty = if __version >= #since {
-                    #read_expr
-                } else {
-                    #default_expr
+        match &f.since {
+            // Version-0 fields are always present, so read them unconditionally.
+            None => quote! { let #ident: #ty = #read_expr; },
+            // Later fields are present only when the record was written at or above their `since`;
+            // otherwise fall back to the default.
+            Some(since) => {
+                let default_expr = match &f.default {
+                    Some(expr) => quote! { #expr },
+                    None => quote! { ::core::default::Default::default() },
                 };
+                quote! {
+                    let #ident: #ty = if __version >= ((#since) as u32) {
+                        #read_expr
+                    } else {
+                        #default_expr
+                    };
+                }
             }
         }
     });
@@ -247,7 +268,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
             let member_name = f.ident.to_string();
             let ty = &f.ty;
             let ty_str = quote!(#ty).to_string();
-            let since = f.since;
+            let since = since_value(f);
             let nested = f.nested;
             quote! {
                 diom_core::schema_shape::MemberShape {
@@ -273,6 +294,8 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     };
 
     Ok(quote! {
+        #order_assert
+
         #[automatically_derived]
         impl #impl_generics ::serde::Serialize for #name #ty_generics #where_clause {
             fn serialize<__S: ::serde::Serializer>(
@@ -281,7 +304,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
             ) -> ::core::result::Result<__S::Ok, __S::Error> {
                 use ::serde::ser::SerializeTuple as _;
                 let mut __tup = __serializer.serialize_tuple(#tuple_len)?;
-                __tup.serialize_element(&(#write_version as u32))?;
+                __tup.serialize_element(&Self::WRITE_VERSION)?;
                 #(#serialize_elems)*
                 __tup.end()
             }

@@ -30,6 +30,7 @@ diom_admin_auth::storage::RoleRow (versioned)
     context: HashMap<String, String>
     created: UnixTimestampMs
     updated: UnixTimestampMs
+    last_configured: Option<UnixTimestampMs> since=1
 diom_auth_token::entities::TokenHashed (value-struct)
     0: [u8; 32]
 diom_auth_token::operations::AuthTokenOperation (value-enum)

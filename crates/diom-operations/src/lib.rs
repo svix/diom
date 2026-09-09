@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tokio::task::JoinError;
 
 mod context;
-pub use context::{FeatureVersion, OpContext};
+pub use context::{FeatureVersion, OpContext, VERSIONS};
 pub mod workers;
 
 #[derive(Debug)]
