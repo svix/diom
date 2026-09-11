@@ -33,6 +33,11 @@
             "jsonPath": ".status.conditions[?(@.type=='Ready')].reason",
             "name": "Status",
             "type": "string"
+          },
+          {
+            "jsonPath": ".status.currentLeader",
+            "name": "Current Leader",
+            "type": "string"
           }
         ],
         "name": "v1alpha1",
@@ -1668,6 +1673,10 @@
                       "type": "object"
                     },
                     "type": "array"
+                  },
+                  "currentLeader": {
+                    "nullable": true,
+                    "type": "string"
                   },
                   "observedGeneration": {
                     "default": 0,

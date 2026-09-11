@@ -36,7 +36,8 @@ fn default_replicas() -> i32 {
     shortname = "cc",
     printcolumn = r#"{"name":"Replicas","type":"integer","jsonPath":".spec.replicas"}"#,
     printcolumn = r#"{"name":"Ready","type":"integer","jsonPath":".status.readyReplicas"}"#,
-    printcolumn = r#"{"name":"Status","type":"string","jsonPath":".status.conditions[?(@.type=='Ready')].reason"}"#
+    printcolumn = r#"{"name":"Status","type":"string","jsonPath":".status.conditions[?(@.type=='Ready')].reason"}"#,
+    printcolumn = r#"{"name":"Current Leader","type":"string","jsonPath":".status.currentLeader"}"#
 )]
 pub struct DiomClusterSpec {
     /// Cluster/replication configuration.
@@ -388,6 +389,9 @@ pub struct DiomClusterStatus {
 
     #[serde(default)]
     pub conditions: Vec<Condition>,
+
+    #[serde(default)]
+    pub current_leader: Option<String>,
 }
 
 /// Source for the admin token.

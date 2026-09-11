@@ -23,6 +23,7 @@ operator-e2e = []
 
 [dependencies]
 anyhow.workspace = true
+diom.workspace = true
 diom-backend.workspace = true
 futures-util.workspace = true
 k8s-openapi = { workspace = true, features = ["schemars"] }

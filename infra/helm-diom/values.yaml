@@ -29,6 +29,13 @@ operator:
   # logLevel: info
   # logFormat: default
 
+  # Optional Diom admin token for use by the cluster. If provided, the Operator will query and report
+  # cluster status:
+  # adminToken:
+  #   valueFrom:
+  #     name: diom-secrets
+  #     key: admin-token
+
   extraEnv: []
 
   podAnnotations: {}

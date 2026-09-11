@@ -2,6 +2,7 @@
 
 use std::{sync::Arc, time::Duration};
 
+use diom::models::{ClusterStatusOut, ServerState};
 use k8s_openapi::{
     apimachinery::pkg::apis::meta::v1::{Condition, Time},
     jiff::{SignedDuration, Timestamp},
@@ -94,6 +95,22 @@ impl ReadyState {
             Self::Failed => "Reconcile failing".to_string(),
         }
     }
+}
+
+fn pod_name_from_node_addr(node_addr: &str) -> Option<&str> {
+    node_addr
+        .strip_prefix("https://")
+        .or_else(|| node_addr.strip_prefix("http://"))
+        .and_then(|addr| addr.split('.').next())
+}
+
+fn leader_from_cluster_status(status: &ClusterStatusOut) -> Option<String> {
+    status
+        .nodes
+        .iter()
+        .find(|node| matches!(node.state, ServerState::Leader))
+        .and_then(|node| pod_name_from_node_addr(&node.address))
+        .map(|s| s.to_owned())
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -242,6 +259,17 @@ impl Reconciler {
             .iter()
             .any(|c| c.type_ == RECONCILING_CONDITION || c.type_ == STALLED_CONDITION);
 
+        let current_leader = if let Some(diom_client) = self.ctx.diom_client.clone() {
+            diom_client
+                .cluster_admin()
+                .status()
+                .await
+                .ok()
+                .and_then(|status| leader_from_cluster_status(&status))
+        } else {
+            None
+        };
+
         if ready_replicas == previous_status.ready_replicas
             && generation == previous_status.observed_generation
             && !ready_cond_changed
@@ -254,6 +282,7 @@ impl Reconciler {
             ready_replicas,
             observed_generation: generation,
             conditions: vec![new_ready_condition],
+            current_leader,
         })
         .await
     }
@@ -614,5 +643,61 @@ mod tests {
             ),
             FailureState::StalledTimeout { .. }
         ));
+    }
+
+    #[test]
+    fn test_pod_name_from_node_addr() {
+        let input = [
+            "http://diom-0.diom-headless.diom.svc.cluster.local:8625",
+            "https://diom-0.diom-headless.diom.svc.cluster.local:8625",
+        ];
+
+        for i in input {
+            assert_eq!(pod_name_from_node_addr(i), Some("diom-0"));
+        }
+    }
+
+    #[test]
+    fn test_leader_from_cluster_status_out() {
+        let status: ClusterStatusOut = serde_json::from_str(
+            r#"{
+                "cluster_id": "1851b1591e72454597774b0bd69a2ce8",
+                "cluster_name": "diom",
+                "this_node_id": "c6a61a46be9a480ba8e2985b2882676f",
+                "this_node_state": "follower",
+                "this_node_last_committed_timestamp": 1789162527823,
+                "this_node_last_snapshot_id": "1045-1102-1036408880",
+                "this_node_last_purged_log_index": 1036407880,
+                "nodes": [
+                {
+                    "node_id": "c6a61a46be9a480ba8e2985b2882676f",
+                    "address": "http://diom-0.diom-headless.diom.svc.cluster.local:8625",
+                    "state": "follower",
+                    "last_committed_log_index": 1036425138,
+                    "last_committed_term": 1102
+                },
+                {
+                    "node_id": "ba9df4a1d5c141f4826203d75c334f5e",
+                    "address": "http://diom-1.diom-headless.diom.svc.cluster.local:8625",
+                    "state": "leader",
+                    "last_committed_log_index": 1036425138,
+                    "last_committed_term": 1102
+                },
+                {
+                    "node_id": "e46e9270b6bc4ce289e1060156274bb7",
+                    "address": "http://diom-2.diom-headless.diom.svc.cluster.local:8625",
+                    "state": "follower",
+                    "last_committed_log_index": 1036425138,
+                    "last_committed_term": 1102
+                }
+                ]
+            }"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            leader_from_cluster_status(&status),
+            Some("diom-1".to_owned())
+        );
     }
 }

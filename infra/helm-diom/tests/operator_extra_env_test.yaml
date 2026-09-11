@@ -45,6 +45,48 @@ tests:
             name: LOG_FORMAT
             value: "json"
 
+  - it: does not set DIOM_ADMIN_TOKEN by default
+    set:
+      operator.image.tag: test
+      cluster.enabled: false
+      operator.logFormat: json
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DIOM_ADMIN_TOKEN
+
+  - it: sets DIOM_ADMIN_TOKEN from a plaintext value
+    set:
+      operator.image.tag: test
+      cluster.enabled: false
+      operator.adminToken:
+        value: super-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DIOM_ADMIN_TOKEN
+            value: super-secret
+
+  - it: sets DIOM_ADMIN_TOKEN from a secret
+    set:
+      operator.image.tag: test
+      cluster.enabled: false
+      operator.adminToken:
+        valueFrom:
+          name: diom-secrets
+          key: admin-token
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DIOM_ADMIN_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: diom-secrets
+                key: admin-token
+
   - it: supports multiple extra env vars
     set:
       operator.image.tag: test

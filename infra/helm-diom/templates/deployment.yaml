@@ -45,6 +45,18 @@ spec:
             - name: LOG_FORMAT
               value: {{ . | quote }}
             {{- end }}
+            {{- with .Values.operator.adminToken }}
+            {{- if .value }}
+            - name: DIOM_ADMIN_TOKEN
+              value: {{ .value | quote }}
+            {{- else if .valueFrom }}
+            - name: DIOM_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .valueFrom.name }}
+                  key: {{ .valueFrom.key }}
+            {{- end }}
+            {{- end }}
             {{- with .Values.operator.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
