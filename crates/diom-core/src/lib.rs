@@ -22,11 +22,12 @@ pub use self::monotime::Monotime;
 
 #[doc(hidden)]
 pub mod __reexport {
+    pub use postcard;
     pub use regex;
     pub use schemars;
     pub use serde;
     pub use serde_json;
 }
 
-pub use diom_derive::PersistableValue;
+pub use diom_derive::{PersistableValue, PersistableVersioned};
 pub use persistable_value::PersistableValue;

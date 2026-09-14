@@ -1719,6 +1719,7 @@ dependencies = [
  "jiff",
  "parking_lot",
  "pastey",
+ "postcard",
  "rand 0.10.2",
  "regex",
  "schemars",
