@@ -6,6 +6,7 @@ extern crate self as fjall_utils;
 mod db;
 pub mod duration_millis;
 mod fixed_key;
+pub mod fixtures;
 mod fjall_key_able;
 mod options;
 mod readonly_db;
