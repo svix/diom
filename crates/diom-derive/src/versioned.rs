@@ -93,12 +93,6 @@ fn collect_fields(input: &DeriveInput) -> Result<Vec<VersionedField>, syn::Error
             "PersistableVersioned requires named fields",
         ));
     };
-    if !input.generics.params.is_empty() {
-        return Err(syn::Error::new(
-            input.generics.span(),
-            "PersistableVersioned does not support generic types",
-        ));
-    }
 
     let mut out = Vec::with_capacity(fields.named.len());
     for field in fields.named.iter() {
@@ -144,13 +138,37 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     let tuple_len = field_count + 1;
     let write_version = fields.iter().map(|f| f.since).max().unwrap_or(0);
 
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+
+    // The Deserialize impl and its visitor need a `'de` lifetime alongside the type's own generics.
+    let mut de_generics = input.generics.clone();
+    de_generics.params.insert(0, syn::parse_quote!('de));
+    let (de_impl_generics, _, _) = de_generics.split_for_impl();
+
+    // PhantomData over every generic param so the visitor can name the type's generics.
+    let phantom_params = input.generics.params.iter().map(|p| match p {
+        syn::GenericParam::Lifetime(l) => {
+            let lt = &l.lifetime;
+            quote! { & #lt () }
+        }
+        syn::GenericParam::Type(t) => {
+            let id = &t.ident;
+            quote! { #id }
+        }
+        syn::GenericParam::Const(c) => {
+            let id = &c.ident;
+            quote! { [(); #id] }
+        }
+    });
+    let visitor_phantom = quote! { ::core::marker::PhantomData<( #(#phantom_params,)* )> };
+
     // When `#[versioned(row_type = ...)]` is present, generate the TableRow impl so the row uses the
     // versioned envelope (its own leading version tag) instead of V0Wrapper. Types without the
     // attribute get only the serde impls, for use as nested (non-row) values.
     let table_row_impl = row_type.map(|row_type| {
         quote! {
             #[automatically_derived]
-            impl ::fjall_utils::TableRow for #name {
+            impl #impl_generics ::fjall_utils::TableRow for #name #ty_generics #where_clause {
                 const ROW_TYPE: u8 = (#row_type) as u8;
                 const VERSIONED: bool = true;
             }
@@ -220,38 +238,43 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     let inner_types = fields.iter().map(|f| &f.ty);
     let expecting = format!("{name} versioned tuple");
 
-    // Register this type's shape so the schema detection and checks in CI
-    // will work.
-    let type_name_str = name.to_string();
-    let member_shapes = fields.iter().map(|f| {
-        let member_name = f.ident.to_string();
-        let ty = &f.ty;
-        let ty_str = quote!(#ty).to_string();
-        let since = f.since;
-        let nested = f.nested;
+    // Register this type's shape for the schema snapshot test. Generics are skipped, since
+    // can't register a specific instantiation (concrete instances are guarded by byte
+    // fixtures instead).
+    let schema_submit = if input.generics.params.is_empty() {
+        let type_name_str = name.to_string();
+        let member_shapes = fields.iter().map(|f| {
+            let member_name = f.ident.to_string();
+            let ty = &f.ty;
+            let ty_str = quote!(#ty).to_string();
+            let since = f.since;
+            let nested = f.nested;
+            quote! {
+                diom_core::schema_shape::MemberShape {
+                    name: #member_name,
+                    ty: #ty_str,
+                    since: #since,
+                    nested: #nested,
+                }
+            }
+        });
         quote! {
-            diom_core::schema_shape::MemberShape {
-                name: #member_name,
-                ty: #ty_str,
-                since: #since,
-                nested: #nested,
+            diom_core::__reexport::inventory::submit! {
+                diom_core::schema_shape::SchemaShape {
+                    module_path: ::core::module_path!(),
+                    type_name: #type_name_str,
+                    kind: "versioned",
+                    members: &[ #(#member_shapes),* ],
+                }
             }
         }
-    });
-    let schema_submit = quote! {
-        diom_core::__reexport::inventory::submit! {
-            diom_core::schema_shape::SchemaShape {
-                module_path: ::core::module_path!(),
-                type_name: #type_name_str,
-                kind: "versioned",
-                members: &[ #(#member_shapes),* ],
-            }
-        }
+    } else {
+        quote! {}
     };
 
     Ok(quote! {
         #[automatically_derived]
-        impl ::serde::Serialize for #name {
+        impl #impl_generics ::serde::Serialize for #name #ty_generics #where_clause {
             fn serialize<__S: ::serde::Serializer>(
                 &self,
                 __serializer: __S,
@@ -265,13 +288,13 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
         }
 
         #[automatically_derived]
-        impl<'de> ::serde::Deserialize<'de> for #name {
+        impl #de_impl_generics ::serde::Deserialize<'de> for #name #ty_generics #where_clause {
             fn deserialize<__D: ::serde::Deserializer<'de>>(
                 __deserializer: __D,
             ) -> ::core::result::Result<Self, __D::Error> {
-                struct __Visitor;
-                impl<'de> ::serde::de::Visitor<'de> for __Visitor {
-                    type Value = #name;
+                struct __Visitor #impl_generics ( #visitor_phantom ) #where_clause;
+                impl #de_impl_generics ::serde::de::Visitor<'de> for __Visitor #ty_generics #where_clause {
+                    type Value = #name #ty_generics;
 
                     fn expecting(
                         &self,
@@ -293,12 +316,12 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
                         ::core::result::Result::Ok(#name { #(#field_idents),* })
                     }
                 }
-                __deserializer.deserialize_tuple(#tuple_len, __Visitor)
+                __deserializer.deserialize_tuple(#tuple_len, __Visitor(::core::marker::PhantomData))
             }
         }
 
         #[automatically_derived]
-        impl #name {
+        impl #impl_generics #name #ty_generics #where_clause {
             /// Schema version this build writes as the leading tag on new records.
             ///
             /// Reads accept any version from 0 up to this value. Bumped automatically by adding a
@@ -307,7 +330,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
         }
 
         #[automatically_derived]
-        impl diom_core::persistable_value::PersistableStruct for #name {
+        impl #impl_generics diom_core::persistable_value::PersistableStruct for #name #ty_generics #where_clause {
             type INNER = ( #(#inner_types,)* );
         }
 
