@@ -272,6 +272,7 @@ impl Reconciler {
 
         if ready_replicas == previous_status.ready_replicas
             && generation == previous_status.observed_generation
+            && current_leader == previous_status.current_leader
             && !ready_cond_changed
             && !prior_error_conditions
         {
