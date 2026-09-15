@@ -36,6 +36,9 @@ The CRD is enabled by default. The chart will attempt to manage upgrades of the 
 | `operator.rbac.create` | Create ClusterRole and ClusterRoleBinding for the operator. | `true` |
 | `operator.logLevel` | Operator log level (`info`, `debug`, `trace`). | `info` |
 | `operator.logFormat` | Operator log format (`default`, `json`). | `default` |
+| `operator.adminToken.value` | (Optional) Plaintext token for the operator Diom admin API access. Only recommended for testing. | `""` |
+| `operator.adminToken.valueFrom.name` | (Optional) Name of the Kubernetes Secret containing the admin token. If provided, the Operator will use the token to query and report cluster status. | `""` |
+| `operator.adminToken.valueFrom.key` | (Optional) Key within the Secret to use as the admin token. | `""` |
 | `operator.extraEnv` | Additional environment variables to add to the operator container. | `[]` |
 | `operator.podAnnotations` | Annotations to add to the operator pod. | `{}` |
 | `operator.resources` | Resource requests/limits for the operator pod. | request cpu: 100m, memory: 128Mi, no limits |
