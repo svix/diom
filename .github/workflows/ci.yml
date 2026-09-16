@@ -41,10 +41,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - uses: taiki-e/install-action@84f5ac3124727fb3d284d4d22ee9ab3654fd09a6 # v2.87.7
+      - uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         with:
           tool: cargo-sort
-      - uses: taiki-e/install-action@84f5ac3124727fb3d284d4d22ee9ab3654fd09a6 # v2.87.7
+      - uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         with:
           tool: cargo-machete
       - run: cargo sort --check --no-format --workspace -o package,lib,bin,features,dependencies,build-dependencies,dev-dependencies,lints,workspace
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
       - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
   test:
     name: Test
@@ -84,10 +84,10 @@ jobs:
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
           components: llvm-tools-preview
-      - uses: taiki-e/install-action@84f5ac3124727fb3d284d4d22ee9ab3654fd09a6 # v2.87.7
+      - uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         with:
           tool: cargo-llvm-cov
-      - uses: taiki-e/install-action@84f5ac3124727fb3d284d4d22ee9ab3654fd09a6 # v2.87.7
+      - uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         with:
           tool: cargo-nextest
       - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
