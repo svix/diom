@@ -166,7 +166,7 @@ diom-namespace.path = "crates/diom-namespace"
 diom-operations.path = "crates/diom-operations"
 diom-proto.path = "crates/diom-proto"
 diom-rate-limit.path = "crates/rate-limit"
-dirs = "6.0.0"
+dirs = "7.0.0"
 dotenvy = "0.15.7"
 eyeball = "0.8.8"
 fjall = { version = "3.0.1", features = ["lz4", "metrics"] }
