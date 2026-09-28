@@ -1494,7 +1494,7 @@ dependencies = [
 name = "diom-auth-token"
 version = "0.2.4"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.1",
  "diom-core",
  "diom-error",
  "diom-id",
