@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct MsgsSvixPollerArgs {
+pub(crate) struct MsgsSvixPollerArgs {
     #[command(subcommand)]
     pub command: MsgsSvixPollerCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum MsgsSvixPollerCommands {
+pub(crate) enum MsgsSvixPollerCommands {
     /// Create a Svix poller configuration for a topic.
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -89,7 +89,7 @@ pub enum MsgsSvixPollerCommands {
 }
 
 impl MsgsSvixPollerCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Create {
                 svix_poller_create_in,

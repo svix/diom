@@ -9,13 +9,13 @@ use yansi::Paint;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct ClusterAdminArgs {
+pub(crate) struct ClusterAdminArgs {
     #[command(subcommand)]
     pub command: ClusterCommands,
 }
 
 #[derive(Args)]
-pub struct RemoveNodeArgs {
+pub(crate) struct RemoveNodeArgs {
     node_id: String,
     /// This command is dangerous
     #[arg(long)]
@@ -23,7 +23,7 @@ pub struct RemoveNodeArgs {
 }
 
 #[derive(Subcommand)]
-pub enum ClusterCommands {
+pub(crate) enum ClusterCommands {
     /// Print information about the cluster and its nodes
     Status {
         /// Output results as JSON instead of a table
@@ -37,7 +37,7 @@ pub enum ClusterCommands {
 }
 
 impl ClusterCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Status { json } => print_status(json, client).await,
             Self::RemoveNode(args) => remove_node(args, client).await,
@@ -101,11 +101,9 @@ async fn print_status(json: bool, client: &DiomClient) -> anyhow::Result<()> {
         [
             Cell::new("Last Snapshot ID").add_attribute(Attribute::Bold),
             Cell::new({
-                if let Some(id) = raw_status.this_node_last_snapshot_id {
-                    id.clone()
-                } else {
-                    "(none)".to_string()
-                }
+                raw_status
+                    .this_node_last_snapshot_id
+                    .unwrap_or_else(|| "(none)".to_owned())
             }),
         ],
     ]);
@@ -178,12 +176,12 @@ async fn initialize(client: &DiomClient) -> anyhow::Result<()> {
         .initialize(ClusterInitializeIn::default())
         .await
     {
-        Ok(ClusterInitializeOut { cluster_id, .. }) => {
+        Ok(ClusterInitializeOut { cluster_id }) => {
             println!("cluster successfully initialized with ID {cluster_id}");
             Ok(())
         }
         Err(err) => {
-            anyhow::bail!("error initializing cluster: {:?}", err);
+            anyhow::bail!("error initializing cluster: {err:?}");
         }
     }
 }

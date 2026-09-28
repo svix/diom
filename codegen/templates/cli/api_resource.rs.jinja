@@ -77,14 +77,14 @@ use super::{
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct {{ resource_type_name }}Args {
+pub(crate) struct {{ resource_type_name }}Args {
     #[command(subcommand)]
     pub command: {{ resource_type_name }}Commands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum {{ resource_type_name }}Commands {
+pub(crate) enum {{ resource_type_name }}Commands {
     {% for name, sub in resource.subresources | items -%}
         {{ name | to_upper_camel_case }}({{ sub.name | to_upper_camel_case }}Args),
     {% endfor -%}
@@ -146,7 +146,7 @@ pub enum {{ resource_type_name }}Commands {
 }
 
 impl {{ resource_type_name }}Commands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             {% for name, _ in resource.subresources | items -%}
                 Self::{{ name | to_upper_camel_case }}(args) => {

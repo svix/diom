@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct AdminMetricsArgs {
+pub(crate) struct AdminMetricsArgs {
     #[command(subcommand)]
     pub command: AdminMetricsCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum AdminMetricsCommands {
+pub(crate) enum AdminMetricsCommands {
     /// Dump the current metrics (which would otherwise be sent to the OTLP metrics receiver)
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -32,7 +32,7 @@ pub enum AdminMetricsCommands {
 }
 
 impl AdminMetricsCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Get {} => {
                 let resp = client.admin().metrics().get().await?;

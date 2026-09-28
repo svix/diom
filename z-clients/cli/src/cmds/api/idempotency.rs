@@ -8,14 +8,14 @@ use crate::prelude::*;
 use super::IdempotencyNamespaceArgs;
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct IdempotencyArgs {
+pub(crate) struct IdempotencyArgs {
     #[command(subcommand)]
     pub command: IdempotencyCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum IdempotencyCommands {
+pub(crate) enum IdempotencyCommands {
     Namespace(IdempotencyNamespaceArgs),
     /// Start an idempotent request
     #[command(help_template = concat!(
@@ -81,7 +81,7 @@ pub enum IdempotencyCommands {
 }
 
 impl IdempotencyCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
                 args.command.exec(client).await?;

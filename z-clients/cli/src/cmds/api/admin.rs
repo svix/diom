@@ -8,14 +8,14 @@ use crate::prelude::*;
 use super::{AdminAuthPolicyArgs, AdminAuthRoleArgs, AdminAuthTokenArgs, AdminMetricsArgs};
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct AdminArgs {
+pub(crate) struct AdminArgs {
     #[command(subcommand)]
     pub command: AdminCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum AdminCommands {
+pub(crate) enum AdminCommands {
     AuthPolicy(AdminAuthPolicyArgs),
     AuthRole(AdminAuthRoleArgs),
     AuthToken(AdminAuthTokenArgs),
@@ -23,7 +23,7 @@ pub enum AdminCommands {
 }
 
 impl AdminCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::AuthPolicy(args) => {
                 args.command.exec(client).await?;

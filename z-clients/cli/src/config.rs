@@ -7,7 +7,7 @@ use config::FileFormat;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct Config {
+pub(crate) struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub auth_token: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -18,7 +18,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load(cli: &Cli) -> anyhow::Result<Config> {
+    pub(crate) fn load(cli: &Cli) -> anyhow::Result<Config> {
         let cfg_file = get_config_file_path()?;
         let cfg_file = cfg_file
             .as_os_str()
@@ -43,11 +43,11 @@ impl Config {
             .context("failed to extract configuration")
     }
 
-    pub fn server_url(&self) -> Option<&str> {
+    pub(crate) fn server_url(&self) -> Option<&str> {
         self.server_url.as_deref()
     }
 
-    pub fn auth_token(&self) -> String {
+    pub(crate) fn auth_token(&self) -> String {
         self.auth_token.as_deref().unwrap_or("xxx").to_owned()
     }
 }
@@ -60,6 +60,6 @@ fn get_folder() -> anyhow::Result<PathBuf> {
         .join("diom"))
 }
 
-pub fn get_config_file_path() -> anyhow::Result<PathBuf> {
+fn get_config_file_path() -> anyhow::Result<PathBuf> {
     Ok(get_folder()?.join(FILE_NAME))
 }

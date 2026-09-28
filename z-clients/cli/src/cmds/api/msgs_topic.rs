@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct MsgsTopicArgs {
+pub(crate) struct MsgsTopicArgs {
     #[command(subcommand)]
     pub command: MsgsTopicCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum MsgsTopicCommands {
+pub(crate) enum MsgsTopicCommands {
     /// Configures the number of partitions for a topic.
     ///
     /// Partition count can only be increased, never decreased. The default for a new topic is 1.
@@ -41,7 +41,7 @@ pub enum MsgsTopicCommands {
 }
 
 impl MsgsTopicCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Configure {
                 topic,

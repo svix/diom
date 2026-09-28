@@ -8,14 +8,14 @@ use crate::prelude::*;
 use super::RateLimitNamespaceArgs;
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct RateLimitArgs {
+pub(crate) struct RateLimitArgs {
     #[command(subcommand)]
     pub command: RateLimitCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum RateLimitCommands {
+pub(crate) enum RateLimitCommands {
     Namespace(RateLimitNamespaceArgs),
     /// Rate Limiter Check and Consume
     #[command(help_template = concat!(
@@ -86,7 +86,7 @@ pub enum RateLimitCommands {
 }
 
 impl RateLimitCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
                 args.command.exec(client).await?;

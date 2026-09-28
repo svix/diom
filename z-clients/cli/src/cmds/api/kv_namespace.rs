@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct KvNamespaceArgs {
+pub(crate) struct KvNamespaceArgs {
     #[command(subcommand)]
     pub command: KvNamespaceCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum KvNamespaceCommands {
+pub(crate) enum KvNamespaceCommands {
     /// Configure KV namespace
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -60,7 +60,7 @@ pub enum KvNamespaceCommands {
 }
 
 impl KvNamespaceCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Configure {
                 kv_configure_namespace_in,
