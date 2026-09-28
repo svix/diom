@@ -243,7 +243,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["a
 tracing-test = "0.2"
 url = { version = "2.2.2", features = ["serde"] }
 uuid = { version = "1.19.0", features = ["v4", "v7", "serde"] }
-validator = { version = "0.20.0", features = ["derive"] }
+validator = { version = "0.21.0", features = ["derive"] }
 which = "8"
 wiremock = "0.6"
 yansi = "1.0.1"
