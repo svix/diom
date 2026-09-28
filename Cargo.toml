@@ -198,11 +198,11 @@ mime = "0.3"
 openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "23994cce27a8806d907044ebcc0446dfc8d6796e" }
 openraft = { version = "=0.10.0-alpha.34", default-features = false, features = ["tracing-log", "anyhow", "serde", "tokio-rt"] }
 openraft-legacy = { version = "=0.10.0-alpha.34", features = ["serde"] }
-opentelemetry = { version = "0.32.0", features = ["metrics"] }
-opentelemetry-http = "0.32.0"
-opentelemetry-otlp = { version = "0.32.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto"] }
-opentelemetry-semantic-conventions = "0.32.0"
-opentelemetry_sdk = { version = "0.32.0", features = ["metrics", "rt-tokio", "rt-tokio-current-thread", "experimental_metrics_periodicreader_with_async_runtime", "experimental_trace_batch_span_processor_with_async_runtime"] }
+opentelemetry = { version = "0.33.0", features = ["metrics"] }
+opentelemetry-http = "0.33.0"
+opentelemetry-otlp = { version = "0.33.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto"] }
+opentelemetry-semantic-conventions = "0.33.0"
+opentelemetry_sdk = { version = "0.33.0", features = ["metrics", "rt-tokio", "rt-tokio-current-thread", "experimental_metrics_periodicreader_with_async_runtime", "experimental_trace_batch_span_processor_with_async_runtime"] }
 parking_lot = { version = "0.12", features = ["arc_lock", "send_guard"] }
 pastey = "0.2"
 pnet = "0.35"
@@ -238,7 +238,7 @@ tower-http = { version = "0.6.1", features = ["catch-panic", "compression-full",
 tower-service = "0.3.3"
 tracing = "0.1.44"
 tracing-log = "0.2.0"
-tracing-opentelemetry = "0.33.0"
+tracing-opentelemetry = "0.34.0"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "local-time", "fmt", "registry", "std"] }
 tracing-test = "0.2"
 url = { version = "2.2.2", features = ["serde"] }
