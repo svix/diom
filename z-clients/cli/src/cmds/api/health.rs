@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct HealthArgs {
+pub(crate) struct HealthArgs {
     #[command(subcommand)]
     pub command: HealthCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum HealthCommands {
+pub(crate) enum HealthCommands {
     /// Verify the server is up and running.
     ///
     /// This endpoint only checks the server itself, not the cluster mechanism, and should not be used
@@ -60,7 +60,7 @@ pub enum HealthCommands {
 }
 
 impl HealthCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Ping {} => {
                 let resp = client.health().ping().await?;

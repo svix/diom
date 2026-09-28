@@ -8,7 +8,7 @@ mod format;
 use self::format::PrettyFormatter;
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct JsonOf<T>(T);
+pub(crate) struct JsonOf<T>(T);
 
 impl<T: DeserializeOwned> FromStr for JsonOf<T> {
     type Err = Error;
@@ -92,12 +92,12 @@ fn strip_json_comments(input: &str) -> String {
 }
 
 impl<T> JsonOf<T> {
-    pub fn into_inner(self) -> T {
+    pub(crate) fn into_inner(self) -> T {
         self.0
     }
 }
 
-pub fn print_json_output<T>(val: &T) -> Result<()>
+pub(crate) fn print_json_output<T>(val: &T) -> Result<()>
 where
     T: Serialize,
 {

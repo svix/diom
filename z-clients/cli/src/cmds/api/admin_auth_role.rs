@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct AdminAuthRoleArgs {
+pub(crate) struct AdminAuthRoleArgs {
     #[command(subcommand)]
     pub command: AdminAuthRoleCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum AdminAuthRoleCommands {
+pub(crate) enum AdminAuthRoleCommands {
     /// Create or update a role
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -110,7 +110,7 @@ pub enum AdminAuthRoleCommands {
 }
 
 impl AdminAuthRoleCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Configure {
                 admin_role_configure_in,

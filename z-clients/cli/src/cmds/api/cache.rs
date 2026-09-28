@@ -8,14 +8,14 @@ use crate::prelude::*;
 use super::CacheNamespaceArgs;
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct CacheArgs {
+pub(crate) struct CacheArgs {
     #[command(subcommand)]
     pub command: CacheCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum CacheCommands {
+pub(crate) enum CacheCommands {
     Namespace(CacheNamespaceArgs),
     /// Cache Set
     #[command(help_template = concat!(
@@ -83,7 +83,7 @@ pub enum CacheCommands {
 }
 
 impl CacheCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
                 args.command.exec(client).await?;

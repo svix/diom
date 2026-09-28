@@ -11,14 +11,14 @@ use super::{
 };
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct MsgsArgs {
+pub(crate) struct MsgsArgs {
     #[command(subcommand)]
     pub command: MsgsCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum MsgsCommands {
+pub(crate) enum MsgsCommands {
     Namespace(MsgsNamespaceArgs),
     Queue(MsgsQueueArgs),
     Sink(MsgsSinkArgs),
@@ -50,7 +50,7 @@ pub enum MsgsCommands {
 }
 
 impl MsgsCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
                 args.command.exec(client).await?;

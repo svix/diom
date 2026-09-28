@@ -34,7 +34,7 @@ use tokio::sync::Barrier;
 type BenchHistogram = Histogram<u64>;
 
 #[derive(Debug, Clone)]
-pub enum Concurrency {
+pub(crate) enum Concurrency {
     Single(Option<u64>),
     Range(u64, u64),
     Several(VecDeque<u64>),
@@ -110,7 +110,7 @@ impl Iterator for Concurrency {
 }
 
 #[derive(Args)]
-pub struct BenchmarkArgs {
+pub(crate) struct BenchmarkArgs {
     /// Server URL to benchmark against (overrides config)
     #[arg(value_name = "URL")]
     pub server_url: Option<String>,
@@ -139,7 +139,7 @@ pub struct BenchmarkArgs {
 }
 
 impl BenchmarkArgs {
-    pub async fn exec(self, client: Arc<DiomClient>) -> Result<()> {
+    pub(crate) async fn exec(self, client: Arc<DiomClient>) -> Result<()> {
         let iterations = self.iterations;
         let concurrency_values = self.concurrency;
         let batch_size = self.batch_size;
@@ -318,7 +318,7 @@ fn fmt_us<T: TimeResult>(us: T) -> String {
     } else if us >= 2_000.0 {
         format!("{:.1}ms", us / 2_000.0)
     } else {
-        format!("{:.1}µs", us)
+        format!("{us:.1}µs")
     }
 }
 
@@ -330,11 +330,11 @@ fn format_bytes<T: TimeResult>(n: T) -> String {
 
     for unit in &["B", "KB", "MB", "GB", "TB", "PB"] {
         if n.abs() < 1000.0 {
-            return format!("{:.2} {}", n, unit);
+            return format!("{n:.2} {unit}");
         }
         n /= 1000.0;
     }
-    format!("{:.1} EB", n)
+    format!("{n:.1} EB")
 }
 
 fn print_table(all_stats: &[Stats]) {

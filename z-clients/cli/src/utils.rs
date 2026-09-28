@@ -1,6 +1,6 @@
 use std::io::{BufRead, IsTerminal, Write};
 
-pub fn prompt(message: impl AsRef<str>) -> anyhow::Result<bool> {
+pub(crate) fn prompt(message: impl AsRef<str>) -> anyhow::Result<bool> {
     let message = message.as_ref();
     if !std::io::stdin().is_terminal() {
         anyhow::bail!("stdin is not a terminal");

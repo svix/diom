@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct AdminAuthTokenArgs {
+pub(crate) struct AdminAuthTokenArgs {
     #[command(subcommand)]
     pub command: AdminAuthTokenCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum AdminAuthTokenCommands {
+pub(crate) enum AdminAuthTokenCommands {
     /// Create an auth token
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -166,7 +166,7 @@ pub enum AdminAuthTokenCommands {
 }
 
 impl AdminAuthTokenCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Create {
                 admin_auth_token_create_in,
