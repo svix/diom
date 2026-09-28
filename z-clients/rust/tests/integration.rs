@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-use assert_matches2::assert_let;
 use diom::{
     DiomClient, DiomOptions, ErrorKind,
     models::{CacheDeleteIn, CacheGetIn, CacheSetIn, KvDeleteIn, KvGetIn, KvSetIn},
 };
+use strass::assert_let;
 
 fn client() -> DiomClient {
     let token = std::env::var("DIOM_TOKEN").expect("DIOM_TOKEN must be set");
