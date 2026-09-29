@@ -60,7 +60,7 @@ dependencies = [
  "axum",
  "bytes",
  "cfg-if",
- "http 1.5.0",
+ "http",
  "indexmap",
  "schemars",
  "serde",
@@ -403,7 +403,7 @@ dependencies = [
  "bytes",
  "form_urlencoded",
  "futures-util",
- "http 1.5.0",
+ "http",
  "http-body",
  "http-body-util",
  "hyper",
@@ -434,7 +434,7 @@ checksum = "08c78f31d7b1291f7ee735c1c6780ccde7785daae9a9206026862dab7d8792d1"
 dependencies = [
  "bytes",
  "futures-core",
- "http 1.5.0",
+ "http",
  "http-body",
  "http-body-util",
  "mime",
@@ -457,7 +457,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "headers",
- "http 1.5.0",
+ "http",
  "http-body",
  "http-body-util",
  "mime",
@@ -1452,7 +1452,7 @@ name = "diom"
 version = "0.2.4"
 dependencies = [
  "headers",
- "http 1.5.0",
+ "http",
  "http-body-util",
  "hyper",
  "hyper-rustls",
@@ -1553,7 +1553,7 @@ dependencies = [
  "futures-util",
  "headers",
  "hex",
- "http 1.5.0",
+ "http",
  "idna_adapter",
  "indexmap",
  "itertools 0.15.0",
@@ -1811,7 +1811,7 @@ dependencies = [
  "diom-error",
  "diom-proto",
  "futures-util",
- "http 1.5.0",
+ "http",
  "http-serde",
  "opentelemetry",
  "pastey",
@@ -1854,7 +1854,7 @@ dependencies = [
  "bytes",
  "diom-authorization",
  "futures-util",
- "http 1.5.0",
+ "http",
  "http-body-util",
  "mime",
  "reqwest",
@@ -1900,7 +1900,7 @@ dependencies = [
  "diom-core",
  "dotenvy",
  "fs-err",
- "http 1.5.0",
+ "http",
  "mimalloc",
  "opentelemetry",
  "opentelemetry-http",
@@ -2428,7 +2428,7 @@ dependencies = [
  "fnv",
  "futures-core",
  "futures-sink",
- "http 1.5.0",
+ "http",
  "indexmap",
  "slab",
  "tokio",
@@ -2511,7 +2511,7 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "headers-core",
- "http 1.5.0",
+ "http",
  "httpdate",
  "mime",
  "sha1 0.10.7",
@@ -2523,7 +2523,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54b4a22553d4242c49fddb9ba998a99962b5cc6f22cb5a3482bec22522403ce4"
 dependencies = [
- "http 1.5.0",
+ "http",
 ]
 
 [[package]]
@@ -2656,17 +2656,6 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "0.2.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "601cbb57e577e2f5ef5be8e7b83f0f63994f25aa94d673e54a92d5c516d101f1"
-dependencies = [
- "bytes",
- "fnv",
- "itoa",
-]
-
-[[package]]
-name = "http"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "918d3568bebf352712bc2ef3d46a8bcf1a75b373be6539de198e9105cbbf9ce0"
@@ -2682,7 +2671,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca2a8f2913ee65f60facd6a5905613afaa448497a0230cc41ce022d93290bc2c"
 dependencies = [
  "bytes",
- "http 1.5.0",
+ "http",
 ]
 
 [[package]]
@@ -2693,7 +2682,7 @@ checksum = "23169fe34a5fbcdd3f3862e78fb9b6fccd5f02a6dc6f732547005d45631ce71c"
 dependencies = [
  "bytes",
  "futures-core",
- "http 1.5.0",
+ "http",
  "http-body",
  "pin-project-lite",
 ]
@@ -2710,7 +2699,7 @@ version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f056c8559e3757392c8d091e796416e4649d8e49e88b8d76df6c002f05027fd"
 dependencies = [
- "http 1.5.0",
+ "http",
  "serde",
 ]
 
@@ -2752,7 +2741,7 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "h2",
- "http 1.5.0",
+ "http",
  "http-body",
  "httparse",
  "httpdate",
@@ -2769,7 +2758,7 @@ version = "0.27.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfa8e654703247911e29c23fbeaa261834bd9bb74efba2f9acddc37bfb127f53"
 dependencies = [
- "http 1.5.0",
+ "http",
  "hyper",
  "hyper-util",
  "log",
@@ -2819,7 +2808,7 @@ dependencies = [
  "bytes",
  "futures-channel",
  "futures-util",
- "http 1.5.0",
+ "http",
  "http-body",
  "httparse",
  "hyper",
@@ -3144,11 +3133,11 @@ dependencies = [
 
 [[package]]
 name = "js_option"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68421373957a1593a767013698dbf206e2b221eefe97a44d98d18672ff38423c"
+checksum = "c7dd3e281add16813cf673bf74a32249b0aa0d1c8117519a17b3ada5e8552b3c"
 dependencies = [
- "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -3240,7 +3229,7 @@ dependencies = [
  "bytes",
  "either",
  "futures",
- "http 1.5.0",
+ "http",
  "http-body",
  "http-body-util",
  "hyper",
@@ -3273,7 +3262,7 @@ checksum = "f126d2db7a8b532ec1d839ece2a71e2485dc3bbca6cc3c3f929becaa810e719e"
 dependencies = [
  "derive_more",
  "form_urlencoded",
- "http 1.5.0",
+ "http",
  "jiff",
  "json-patch",
  "k8s-openapi",
@@ -3939,7 +3928,7 @@ checksum = "ee2c3625b8aa04209f7e01e513bc8044da9687fa38a9eacf59628ca5f3b87300"
 dependencies = [
  "async-trait",
  "bytes",
- "http 1.5.0",
+ "http",
  "opentelemetry",
 ]
 
@@ -3949,7 +3938,7 @@ version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "699a67345e21962a231955b9059a157e428b219fa5df8efe11f08346fb23a344"
 dependencies = [
- "http 1.5.0",
+ "http",
  "httpdate",
  "opentelemetry",
  "opentelemetry-http",
@@ -4788,7 +4777,7 @@ dependencies = [
  "futures-util",
  "h2",
  "hickory-resolver",
- "http 1.5.0",
+ "http",
  "http-body",
  "http-body-util",
  "hyper",
@@ -5459,14 +5448,14 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "svix"
-version = "1.99.1"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0655a5a6d2d8bbb444d725a35d1654bec559a8aa75f61334f196397f2ea7115d"
+checksum = "16b130b118eaf5c1e212492687c331ba13e6a6e59f3032b41a96b3d3b939cc88"
 dependencies = [
  "base64 0.22.1",
+ "chrono",
  "hmac-sha256",
- "http 0.2.12",
- "http 1.5.0",
+ "http",
  "http-body-util",
  "hyper",
  "hyper-rustls",
@@ -5599,7 +5588,7 @@ dependencies = [
  "diom-backend",
  "diom-core",
  "futures-util",
- "http 1.5.0",
+ "http",
  "http-body-util",
  "jiff",
  "reqwest",
@@ -5825,7 +5814,7 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "h2",
- "http 1.5.0",
+ "http",
  "http-body",
  "http-body-util",
  "hyper",
@@ -5896,7 +5885,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-util",
- "http 1.5.0",
+ "http",
  "http-body",
  "http-body-util",
  "http-range-header",
@@ -6725,7 +6714,7 @@ dependencies = [
  "base64 0.22.1",
  "deadpool",
  "futures",
- "http 1.5.0",
+ "http",
  "http-body-util",
  "hyper",
  "hyper-util",

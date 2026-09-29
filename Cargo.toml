@@ -223,7 +223,7 @@ serde_path_to_error = "0.1.7"
 sha2 = "0.11.0"
 strass = "0.2.2"
 strum = { version = "0.28.0", features = ["derive"] }
-svix = "1.96.1"
+svix = "2.6.0"
 syn = "3.0.6"
 sysinfo = "0.39.0"
 tap = "1"
