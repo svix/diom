@@ -1499,7 +1499,7 @@ dependencies = [
  "jiff",
  "rand 0.10.3",
  "serde",
- "sha2",
+ "sha2 0.11.0",
  "tempfile",
  "tokio",
  "tracing",
@@ -1575,7 +1575,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
- "sha2",
+ "sha2 0.11.0",
  "strum",
  "sysinfo",
  "tap",
@@ -1780,7 +1780,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
- "sha2",
+ "sha2 0.11.0",
  "svix",
  "tempfile",
  "test-utils",
@@ -3450,7 +3450,7 @@ version = "0.16.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca93e534d1142d1d0dcca6d25fe302508a5dfb40b302802904577725ea0b695b"
 dependencies = [
- "sha2",
+ "sha2 0.11.0",
 ]
 
 [[package]]
@@ -3797,8 +3797,9 @@ dependencies = [
 
 [[package]]
 name = "openraft"
-version = "0.10.0-alpha.34"
-source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
+version = "0.10.0-alpha.36"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "858ce506e827306c40820757d94bcf086b5ad54f7c8b9c47578362e4c048e842"
 dependencies = [
  "anyerror",
  "anyhow",
@@ -3814,6 +3815,7 @@ dependencies = [
  "openraft-rt",
  "openraft-rt-tokio",
  "peel-off",
+ "quorum-set",
  "rand 0.10.3",
  "serde",
  "smallvec",
@@ -3824,8 +3826,9 @@ dependencies = [
 
 [[package]]
 name = "openraft-legacy"
-version = "0.10.0-alpha.34"
-source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
+version = "0.10.0-alpha.36"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed7cd03a9781c02e11be6fe50f9a4b57ab5daa909f0eeb3c8963e365637b62b7"
 dependencies = [
  "anyerror",
  "derive_more",
@@ -3841,8 +3844,9 @@ dependencies = [
 
 [[package]]
 name = "openraft-macros"
-version = "0.10.0-alpha.34"
-source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
+version = "0.10.0-alpha.36"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42fc48f8dcdcc206509d53b6f2422fc46a70dfd202730dc15ebe6ccbc1a8781b"
 dependencies = [
  "chrono",
  "proc-macro2",
@@ -3853,8 +3857,9 @@ dependencies = [
 
 [[package]]
 name = "openraft-rt"
-version = "0.10.0-alpha.34"
-source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
+version = "0.10.0-alpha.36"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f8a245bd4d29b256d371c1334a5456974938526cef59d10bc7c592d12161b68"
 dependencies = [
  "futures-channel",
  "futures-util",
@@ -3865,8 +3870,9 @@ dependencies = [
 
 [[package]]
 name = "openraft-rt-tokio"
-version = "0.10.0-alpha.34"
-source = "git+https://github.com/databendlabs/openraft.git?rev=70c7bc30680b9abc9a14beca5bf074948b98d62e#70c7bc30680b9abc9a14beca5bf074948b98d62e"
+version = "0.10.0-alpha.36"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1158d0170cec7f1fad2eab6d974ad1aec145858f12906821be2dc9779e1332f4"
 dependencies = [
  "futures-util",
  "openraft-rt",
@@ -4574,6 +4580,16 @@ dependencies = [
  "socket2",
  "tracing",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "quorum-set"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13a9adf2ebd80012835895cc8257f411c7cc9d8f72bbfbe17fa9be519c56e105"
+dependencies = [
+ "sha2 0.10.9",
+ "validit",
 ]
 
 [[package]]
@@ -5294,6 +5310,17 @@ dependencies = [
  "cfg-if",
  "cpufeatures 0.3.1",
  "digest 0.11.3",
+]
+
+[[package]]
+name = "sha2"
+version = "0.10.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.2.17",
+ "digest 0.10.7",
 ]
 
 [[package]]
