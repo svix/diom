@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct MsgsStreamArgs {
+pub(crate) struct MsgsStreamArgs {
     #[command(subcommand)]
     pub command: MsgsStreamCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum MsgsStreamCommands {
+pub(crate) enum MsgsStreamCommands {
     /// Receives messages from a topic using a consumer group.
     ///
     /// Each consumer in the group reads from all partitions. Messages are locked by leases for the
@@ -123,7 +123,7 @@ pub enum MsgsStreamCommands {
 }
 
 impl MsgsStreamCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Receive {
                 topic,

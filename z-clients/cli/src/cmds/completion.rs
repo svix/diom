@@ -3,7 +3,7 @@ use clap_complete::{Shell, generate as generate_, shells};
 
 use crate::BIN_NAME;
 
-pub fn generate(shell: &Shell) -> anyhow::Result<()> {
+pub(crate) fn generate(shell: &Shell) -> anyhow::Result<()> {
     let mut writer = std::io::stdout().lock();
     let mut cmd = crate::Cli::command();
     match shell {

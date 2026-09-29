@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct IdempotencyNamespaceArgs {
+pub(crate) struct IdempotencyNamespaceArgs {
     #[command(subcommand)]
     pub command: IdempotencyNamespaceCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum IdempotencyNamespaceCommands {
+pub(crate) enum IdempotencyNamespaceCommands {
     /// Configure idempotency namespace
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -61,7 +61,7 @@ pub enum IdempotencyNamespaceCommands {
 }
 
 impl IdempotencyNamespaceCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Configure {
                 idempotency_configure_namespace_in,

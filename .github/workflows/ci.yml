@@ -64,7 +64,9 @@ jobs:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - run: cargo clippy --workspace --all-features --all-targets
+      # don't use --all-features as enabling both TLS backends for the SDK results in warnings
+      # because of hyper-tls ending up unused.
+      - run: cargo clippy --workspace --all-targets --features generate,openapi,operator-e2e,tokio-console
   prek:
     name: Validate prek
     runs-on: ubuntu-24.04

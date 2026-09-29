@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct MsgsSinkArgs {
+pub(crate) struct MsgsSinkArgs {
     #[command(subcommand)]
     pub command: MsgsSinkCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum MsgsSinkCommands {
+pub(crate) enum MsgsSinkCommands {
     /// Create or update a sink for a topic. Overwrites any existing sink with the same id.
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -91,7 +91,7 @@ pub enum MsgsSinkCommands {
 }
 
 impl MsgsSinkCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Configure { sink_configure_in } => {
                 let resp = client

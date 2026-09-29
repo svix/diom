@@ -48,7 +48,6 @@ dirs.workspace = true
 futures-util.workspace = true
 glob = "0.3.3"
 hdrhistogram = "7.5.4"
-idna_adapter.workspace = true
 indicatif = "0.18.4"
 itertools.workspace = true
 jiff.workspace = true
@@ -65,3 +64,12 @@ yansi.workspace = true
 
 [build-dependencies]
 rust-executable-metadata.workspace = true
+
+[dev-dependencies]
+# not actually used as a dev-dependency, this is just to pin its version.
+# used to be done with a normal dependency, but this way it doesn't trigger
+# Cargo's new builtin unused-dependencies lint
+idna_adapter.workspace = true
+
+[lints]
+workspace = true

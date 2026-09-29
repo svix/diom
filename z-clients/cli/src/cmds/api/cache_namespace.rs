@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct CacheNamespaceArgs {
+pub(crate) struct CacheNamespaceArgs {
     #[command(subcommand)]
     pub command: CacheNamespaceCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum CacheNamespaceCommands {
+pub(crate) enum CacheNamespaceCommands {
     /// Configure cache namespace
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -63,7 +63,7 @@ pub enum CacheNamespaceCommands {
 }
 
 impl CacheNamespaceCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Configure {
                 cache_configure_namespace_in,

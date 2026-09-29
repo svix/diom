@@ -14,7 +14,7 @@ lint: clippy machete fmt sort vacuum-openapi vacuum-operator-openapi audit
 [group('lint')]
 clippy:
     # keep this beta to keep it in sync with CI
-    cargo +beta clippy --workspace --fix --allow-dirty --all-features --all-targets
+    cargo +beta clippy --workspace --fix --allow-dirty --all-targets --features generate,openapi,operator-e2e,tokio-console
 
 # run cargo-machete in --fix mode
 [group('lint')]

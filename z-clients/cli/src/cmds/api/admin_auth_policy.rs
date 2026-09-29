@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct AdminAuthPolicyArgs {
+pub(crate) struct AdminAuthPolicyArgs {
     #[command(subcommand)]
     pub command: AdminAuthPolicyCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum AdminAuthPolicyCommands {
+pub(crate) enum AdminAuthPolicyCommands {
     /// Create or update an access policy
     #[command(help_template = concat!(
             "{about-with-newline}\n",
@@ -108,7 +108,7 @@ pub enum AdminAuthPolicyCommands {
 }
 
 impl AdminAuthPolicyCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Configure {
                 admin_access_policy_configure_in,

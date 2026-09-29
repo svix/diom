@@ -7,14 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct MsgsQueueArgs {
+pub(crate) struct MsgsQueueArgs {
     #[command(subcommand)]
     pub command: MsgsQueueCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum MsgsQueueCommands {
+pub(crate) enum MsgsQueueCommands {
     /// Receives messages from a topic as competing consumers.
     ///
     /// Messages are individually leased for the specified duration. Multiple consumers can receive
@@ -165,7 +165,7 @@ pub enum MsgsQueueCommands {
 }
 
 impl MsgsQueueCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Receive {
                 topic,

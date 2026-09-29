@@ -8,14 +8,14 @@ use crate::prelude::*;
 use super::KvNamespaceArgs;
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct KvArgs {
+pub(crate) struct KvArgs {
     #[command(subcommand)]
     pub command: KvCommands,
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum KvCommands {
+pub(crate) enum KvCommands {
     Namespace(KvNamespaceArgs),
     /// KV Set
     #[command(help_template = concat!(
@@ -88,7 +88,7 @@ pub enum KvCommands {
 }
 
 impl KvCommands {
-    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
+    pub(crate) async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
                 args.command.exec(client).await?;
