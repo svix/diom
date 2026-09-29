@@ -1,9 +1,9 @@
 use std::{future::Future, sync::Arc};
 
 use svix::{
-    api::{PollerV2PollOut, SinkInCommon},
     autoconfig::decode_autoconfig_token_v1,
     autoconfig_consumer::{AutoConfigConsumer, MessagePollerv2ConsumerPollOptions},
+    models::{PollerV2PollOut, SinkInCommon},
 };
 
 // We can't use `async fn ...` here, because we need to add the `+ Send` bound.
@@ -18,14 +18,14 @@ pub trait SvixAutoConfigClient: Send + Sync + Clone + 'static {
     fn receive(
         &self,
         consumer_id: &str,
-        limit: Option<i32>,
-        lease_duration_ms: Option<i32>,
+        limit: Option<u64>,
+        lease_duration_ms: Option<u64>,
     ) -> impl Future<Output = Result<PollerV2PollOut, SvixClientError>> + Send;
 
     fn commit(
         &self,
         consumer_id: &str,
-        offset: i32,
+        offset: u64,
     ) -> impl Future<Output = Result<(), SvixClientError>> + Send;
 }
 
@@ -79,8 +79,8 @@ impl SvixAutoConfigClient for RealSvixAutoConfigClient {
     async fn receive(
         &self,
         consumer_id: &str,
-        limit: Option<i32>,
-        lease_duration_ms: Option<i32>,
+        limit: Option<u64>,
+        lease_duration_ms: Option<u64>,
     ) -> Result<PollerV2PollOut, SvixClientError> {
         let options = MessagePollerv2ConsumerPollOptions {
             limit,
@@ -93,7 +93,7 @@ impl SvixAutoConfigClient for RealSvixAutoConfigClient {
             .map_err(|e| SvixClientError::new(e.to_string()))
     }
 
-    async fn commit(&self, consumer_id: &str, offset: i32) -> Result<(), SvixClientError> {
+    async fn commit(&self, consumer_id: &str, offset: u64) -> Result<(), SvixClientError> {
         self.consumer
             .commit(consumer_id.to_owned(), offset, None)
             .await

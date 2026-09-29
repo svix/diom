@@ -12,7 +12,7 @@ use diom_core::{
 };
 use diom_operations::{BackgroundResult, OperationWriter};
 use fjall_utils::{FjallKey, TableRow};
-use svix::api::PollerV2MessageOut;
+use svix::models::PollerV2MessageOut;
 use tracing::instrument;
 
 use crate::{
@@ -48,22 +48,22 @@ pub(crate) async fn poll_from_config(
     key: &SvixPollerKey,
     max_messages: usize,
     lease_duration: Duration,
-) -> Result<(Vec<MsgIn>, Option<i32>), SvixClientError> {
+) -> Result<(Vec<MsgIn>, Option<u64>), SvixClientError> {
     tracing::trace!("Polling from AutoConfig");
 
     let consumer_id = key.consumer_id();
 
-    let limit = i32::try_from(max_messages).unwrap_or(i32::MAX);
+    let limit = u64::try_from(max_messages).unwrap_or(u64::MAX);
 
-    let lease_duration_ms: i32 = lease_duration.as_millis().try_into().unwrap_or(i32::MAX);
+    let lease_duration_ms: u64 = lease_duration.as_millis().try_into().unwrap_or(u64::MAX);
 
     let response = client
         .receive(&consumer_id, Some(limit), Some(lease_duration_ms))
         .await?;
 
-    let span = tracing::Span::current();
-    span.record("count", response.data.len());
-    span.record("success", true);
+    tracing::Span::current()
+        .record("count", response.data.len())
+        .record("success", true);
 
     let last_offset = response.data.last().map(|msg| msg.offset);
 
@@ -277,7 +277,7 @@ mod tests {
     };
     use diom_id::NamespaceId;
     use diom_operations::OpContext;
-    use svix::api::{PollerV2MessageOut, PollerV2PollOut};
+    use svix::models::{PollerV2MessageOut, PollerV2PollOut};
 
     use crate::{
         entities::{ConsumerGroup, SeekPosition, TopicIn, TopicName},
@@ -322,8 +322,8 @@ mod tests {
         async fn receive(
             &self,
             _consumer_id: &str,
-            limit: Option<i32>,
-            _lease_duration_ms: Option<i32>,
+            limit: Option<u64>,
+            _lease_duration_ms: Option<u64>,
         ) -> Result<PollerV2PollOut, SvixClientError> {
             // Once drained, subsequent polls are empty, ending the drain loop.
             if self.drained.swap(true, Ordering::SeqCst) {
@@ -332,12 +332,12 @@ mod tests {
                     done: true,
                 });
             }
-            let limit = limit.unwrap_or(i32::MAX) as usize;
+            let limit = limit.unwrap_or(u64::MAX) as usize;
             let data: Vec<_> = self.messages.iter().take(limit).cloned().collect();
             Ok(PollerV2PollOut { data, done: true })
         }
 
-        async fn commit(&self, _consumer_id: &str, _offset: i32) -> Result<(), SvixClientError> {
+        async fn commit(&self, _consumer_id: &str, _offset: u64) -> Result<(), SvixClientError> {
             Ok(())
         }
     }
@@ -372,15 +372,20 @@ mod tests {
     fn make_pollerv2_msg(
         event_type: &str,
         payload: serde_json::Value,
-        offset: i32,
+        offset: u64,
     ) -> PollerV2MessageOut {
-        PollerV2MessageOut::new(
-            event_type.to_owned(),
-            "msg_test123".to_owned(),
+        PollerV2MessageOut {
             offset,
+            event_type: event_type.to_owned(),
             payload,
-            "2024-01-01T00:00:00Z".to_owned(),
-        )
+            id: "msg_test123".to_owned(),
+            timestamp: "2024-01-01T00:00:00Z".parse().unwrap(),
+            headers: None,
+            event_id: None,
+            tags: None,
+            channels: None,
+            deliver_at: None,
+        }
     }
 
     #[tokio::test]
