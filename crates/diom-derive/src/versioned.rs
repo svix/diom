@@ -220,6 +220,35 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     let inner_types = fields.iter().map(|f| &f.ty);
     let expecting = format!("{name} versioned tuple");
 
+    // Register this type's shape so the schema detection and checks in CI
+    // will work.
+    let type_name_str = name.to_string();
+    let member_shapes = fields.iter().map(|f| {
+        let member_name = f.ident.to_string();
+        let ty = &f.ty;
+        let ty_str = quote!(#ty).to_string();
+        let since = f.since;
+        let nested = f.nested;
+        quote! {
+            diom_core::schema_shape::MemberShape {
+                name: #member_name,
+                ty: #ty_str,
+                since: #since,
+                nested: #nested,
+            }
+        }
+    });
+    let schema_submit = quote! {
+        diom_core::__reexport::inventory::submit! {
+            diom_core::schema_shape::SchemaShape {
+                module_path: ::core::module_path!(),
+                type_name: #type_name_str,
+                kind: "versioned",
+                members: &[ #(#member_shapes),* ],
+            }
+        }
+    };
+
     Ok(quote! {
         #[automatically_derived]
         impl ::serde::Serialize for #name {
@@ -283,5 +312,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
         }
 
         #table_row_impl
+
+        #schema_submit
     })
 }

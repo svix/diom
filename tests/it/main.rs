@@ -12,6 +12,7 @@ mod kv;
 mod msgpack;
 mod msgs;
 mod rate_limit;
+mod schema_snapshot;
 
 #[ctor::ctor]
 fn test_setup() {
