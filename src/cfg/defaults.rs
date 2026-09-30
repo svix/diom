@@ -138,8 +138,8 @@ pub(super) fn default_database_size() -> MemorySize {
 }
 
 pub(super) const fn default_max_body_size() -> usize {
-    // 2 MB
-    2 * 1000 * 1000
+    // 6 MB
+    6 * 1000 * 1000
 }
 
 pub(super) const fn graceful_shutdown_time() -> NonZeroDurationMs {
