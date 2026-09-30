@@ -5,7 +5,7 @@
 # Using https://github.com/LukeMathWalker/cargo-chef for better layer caching
 
 # Base image for planner and build - keep in sync with root Dockerfile
-FROM docker.io/rust:1.97.1-slim-trixie AS chef
+FROM docker.io/rust:1.98.1-slim-trixie AS chef
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN cargo install --locked cargo-chef@0.1.77
 WORKDIR /app

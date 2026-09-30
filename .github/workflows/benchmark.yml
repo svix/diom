@@ -6,7 +6,7 @@ on:
 
 env:
   # Keep this in sync with server/ee.Dockerfile
-  ci_toolchain_rust: "1.97.1"
+  ci_toolchain_rust: "1.98.1"
 
 jobs:
   benchmark:

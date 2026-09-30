@@ -7,7 +7,7 @@ on:
 env:
   DIOM_ADMIN_TOKEN: admin_abcdefghijlmnopqrstuvwxyz012345
   # Keep this in sync with Dockerfile
-  ci_toolchain_rust: '1.97.1'
+  ci_toolchain_rust: '1.98.1'
 
 jobs:
   build-server:
