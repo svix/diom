@@ -48,7 +48,7 @@ log_level = "info"
 # This should be set to a large enough value to handle all real requests that you receive,
 # but small enough not to consume all of your RAM. Requests more than 2x this size will
 # be ungracefully terminated.
-max_body_size = 2000000
+max_body_size = 6000000
 
 # Maximum number of topic sinks that can be drained concurrently.
 #
