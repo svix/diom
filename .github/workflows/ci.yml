@@ -64,6 +64,8 @@ jobs:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "clippy"
       # don't use --all-features as enabling both TLS backends for the SDK results in warnings
       # because of hyper-tls ending up unused.
       - run: cargo clippy --workspace --all-targets --features generate,openapi,operator-e2e,tokio-console
@@ -94,7 +96,11 @@ jobs:
           tool: cargo-nextest
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "test-${{ env.ci_toolchain_rust }}"
       - name: Run tests
         id: test
         run: bash .github/test-report.sh
@@ -122,7 +128,11 @@ jobs:
           components: rustfmt
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "codegen-${{ env.ci_toolchain_rust }}"
       - name: Regerate openapi.json and SDKs
         run: cargo codegen
       - name: Regerate config.defaults.toml
@@ -163,7 +173,11 @@ jobs:
           toolchain: ${{ env.ci_toolchain_rust }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "check-crd-${{ env.ci_toolchain_rust }}"
       - name: Regenerate CRD JSON
         run: cargo run -p diom-operator -- --print-crd-json > infra/helm-diom/charts/crds/crds/diomclusters.json
       - name: Check for uncommitted changes
@@ -193,7 +207,11 @@ jobs:
           toolchain: ${{ env.ci_toolchain_rust }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "operator-e2e-${{ env.ci_toolchain_rust }}"
       - uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
       - name: Run operator e2e tests
         run: cargo test -p diom-operator --features operator-e2e
