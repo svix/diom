@@ -699,6 +699,12 @@ pub struct ConfigurationInner {
     #[serde(default = "defaults::default_max_body_size")]
     #[validate(range(min = 10_000))]
     pub max_body_size: usize,
+
+    /// Use the experimental fast-path for clearing fjall keyspaces on snapshot load
+    #[serde(default)]
+    #[env_overridable(skip)]
+    #[dumpable_config(skip)]
+    pub fast_clear: bool,
 }
 
 impl ConfigurationInner {

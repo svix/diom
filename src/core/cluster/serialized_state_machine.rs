@@ -154,6 +154,7 @@ fn deserialize_keyspace<R: Read + Seek>(
     db: &Database,
     keyspace: &Keyspace,
     chunks: Vec<Chunk>,
+    fast_clear: bool,
 ) -> anyhow::Result<()> {
     tracing::info!(
         name = %keyspace.name(),
@@ -164,7 +165,7 @@ fn deserialize_keyspace<R: Read + Seek>(
     if !keyspace.is_empty()? {
         // TODO: remove this slow path after
         // https://github.com/fjall-rs/fjall/issues/277 is fixed
-        if keyspace.is_kv_separated() {
+        if keyspace.is_kv_separated() && !fast_clear {
             if !keyspace.is_empty()? {
                 tracing::warn!("falling back to slow path to clear k-v separated database");
                 while !keyspace.is_empty()? {
@@ -264,6 +265,7 @@ pub(crate) fn serialize_to_file<F: Write + Seek>(
 pub(crate) fn load_from_file<F: Read + Seek>(
     dbs: &Databases,
     f: &mut F,
+    fast_clear: bool,
 ) -> anyhow::Result<Option<ClusterId>> {
     let mut magic = [0u8; 6];
     f.read_exact(&mut magic)?;
@@ -293,7 +295,7 @@ pub(crate) fn load_from_file<F: Read + Seek>(
                 .keyspace_schemas
                 .options_for_keyspace(&keyspace_name);
             let keyspace = db.keyspace(&keyspace_name, || options)?;
-            deserialize_keyspace(&mut z, db, &keyspace, chunks)?;
+            deserialize_keyspace(&mut z, db, &keyspace, chunks, fast_clear)?;
             db.persist(fjall::PersistMode::SyncAll)?;
         }
     }
@@ -358,7 +360,7 @@ mod tests {
 
         let mut cursor = Cursor::new(out);
 
-        let found_cluster_id = load_from_file(&databases, &mut cursor)?;
+        let found_cluster_id = load_from_file(&databases, &mut cursor, true)?;
         assert_eq!(found_cluster_id, Some(cluster_id));
 
         let found_keyspaces = db2
@@ -431,7 +433,7 @@ mod tests {
 
         let mut cursor = Cursor::new(out);
 
-        load_from_file(&databases, &mut cursor)?;
+        load_from_file(&databases, &mut cursor, true)?;
 
         let schemas = SchemaManifest::load_from_db(&db2)?;
         assert!(schemas.contains("keyspace1"));
@@ -509,7 +511,7 @@ mod tests {
 
         let mut cursor = Cursor::new(out);
 
-        load_from_file(&databases, &mut cursor)?;
+        load_from_file(&databases, &mut cursor, true)?;
 
         assert_eq!(
             databases
