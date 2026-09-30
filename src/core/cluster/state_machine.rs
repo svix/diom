@@ -521,11 +521,12 @@ impl Store {
         }
         let mut f = snapshot.file.try_clone().await?.into_std().await;
         f.seek(SeekFrom::Start(0))?;
+        let fast_clear = self.state.cfg.fast_clear;
         let cluster_id = spawn_blocking_in_current_span({
             let handle = self.stores.clone();
             move || -> anyhow::Result<_> {
                 let stores = handle.write();
-                serialized_state_machine::load_from_file(&stores.databases, &mut f)
+                serialized_state_machine::load_from_file(&stores.databases, &mut f, fast_clear)
             }
         })
         .await??;
