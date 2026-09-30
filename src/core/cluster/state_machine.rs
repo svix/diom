@@ -532,6 +532,8 @@ impl Store {
         // do not call .load_information() here, because we don't include the raft metadata keyspace
         // in the snapshot; instead, we need to load the individual fields from the metadata.
 
+        tracing::debug!("loading metadata after snapshot installation");
+
         // load the cluster ID
         if let Some(new_cluster_id) = cluster_id {
             if let Some(existing_cluster_id) = self.cluster_id {

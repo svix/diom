@@ -208,6 +208,10 @@ fn deserialize_keyspace<R: Read + Seek>(
         i.finish()?;
         db.persist(fjall::PersistMode::Buffer)?;
     }
+    tracing::debug!(
+        name = %keyspace.name(),
+        "finished deserializing keyspace"
+    );
     db.persist(fjall::PersistMode::SyncAll)?;
     Ok(())
 }
