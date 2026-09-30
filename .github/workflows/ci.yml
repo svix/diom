@@ -23,7 +23,7 @@ env:
   RUST_BACKTRACE: 1
   CARGO_BUILD_WARNINGS: deny
   # Keep this in sync with Dockerfile
-  ci_toolchain_rust: '1.97.1'
+  ci_toolchain_rust: '1.98.1'
 
 jobs:
   check-fmt:
@@ -59,11 +59,13 @@ jobs:
         with:
           toolchain: beta
           components: clippy
-      - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "clippy"
       # don't use --all-features as enabling both TLS backends for the SDK results in warnings
       # because of hyper-tls ending up unused.
       - run: cargo clippy --workspace --all-targets --features generate,openapi,operator-e2e,tokio-console
@@ -92,9 +94,13 @@ jobs:
       - uses: taiki-e/install-action@4cef1412cce204788f482e778a0b9187f9626a29 # v2.87.21
         with:
           tool: cargo-nextest
-      - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "test-${{ env.ci_toolchain_rust }}"
       - name: Run tests
         id: test
         run: bash .github/test-report.sh
@@ -120,9 +126,13 @@ jobs:
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
           components: rustfmt
-      - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "codegen-${{ env.ci_toolchain_rust }}"
       - name: Regerate openapi.json and SDKs
         run: cargo codegen
       - name: Regerate config.defaults.toml
@@ -161,9 +171,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # v1
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
-      - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "check-crd-${{ env.ci_toolchain_rust }}"
       - name: Regenerate CRD JSON
         run: cargo run -p diom-operator -- --print-crd-json > infra/helm-diom/charts/crds/crds/diomclusters.json
       - name: Check for uncommitted changes
@@ -190,10 +204,14 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # v1
         with:
-          toolchain: stable
-      - uses: ubicloud/rust-cache@65b3ff06b9bcc69d88c25e212f1ae3d14a0953c3 # v2.7.5
+          toolchain: ${{ env.ci_toolchain_rust }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
+          # include relevant information in the cache name
+          prefix-key: "operator-e2e-${{ env.ci_toolchain_rust }}"
       - uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
       - name: Run operator e2e tests
         run: cargo test -p diom-operator --features operator-e2e
