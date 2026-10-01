@@ -76,8 +76,9 @@ struct LastSnapshot {
     path: PathBuf,
 }
 
-fn io_err(e: anyhow::Error) -> std::io::Error {
-    std::io::Error::other(e)
+fn log_io_err(err: anyhow::Error) -> std::io::Error {
+    tracing::warn!(%err, "unhandled I/O error");
+    std::io::Error::other(err)
 }
 
 fn tempfile() -> tempfile::Builder<'static, 'static> {
@@ -884,7 +885,7 @@ impl RaftSnapshotBuilder<TypeConfig> for StoreSnapshotHandle {
     type SnapshotData = StoredSnapshot;
 
     async fn build_snapshot(&mut self) -> StorageResult<Snapshot> {
-        self.build_snapshot_().await.map_err(io_err)
+        self.build_snapshot_().await.map_err(log_io_err)
     }
 }
 
@@ -929,7 +930,7 @@ impl StoreSnapshotHandle {
             .set_last_snapshot_(meta.clone(), path)
             .await
             .context("failed to set last snapshot")
-            .map_err(io_err)?;
+            .map_err(log_io_err)?;
 
         Ok(Snapshot { meta, snapshot })
     }
@@ -953,7 +954,7 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
             .await
             .apply_(entries)
             .await
-            .map_err(io_err)
+            .map_err(log_io_err)
     }
 
     async fn get_snapshot_builder(&mut self) -> Self::SnapshotBuilder {
@@ -977,7 +978,7 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
             .await
             .get_current_snapshot_()
             .await
-            .map_err(io_err)
+            .map_err(log_io_err)
     }
 
     #[tracing::instrument(skip_all)]
@@ -987,7 +988,9 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
         snapshot: StoredSnapshot,
     ) -> StorageResult<()> {
         let mut this = self.inner.write().await;
-        this.install_snapshot_(meta, snapshot).await.map_err(io_err)
+        this.install_snapshot_(meta, snapshot)
+            .await
+            .map_err(log_io_err)
     }
 }
 
@@ -1000,7 +1003,7 @@ impl openraft_legacy::network_v1::SnapshotReceiverFactory<TypeConfig> for StoreH
             .await
             .begin_receiving_snapshot_()
             .await
-            .map_err(io_err)
+            .map_err(log_io_err)
     }
 }
 
