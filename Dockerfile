@@ -61,30 +61,18 @@ RUN <<EOF
 EOF
 
 # shared base image with dependencies
-FROM docker.io/debian:trixie-20260824-slim AS base
+FROM docker.io/debian:trixie-20260918-slim AS base
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
-ARG __BUST_DOCKER_BUILD_CACHE=2026-09-14
+ARG __BUST_DOCKER_BUILD_CACHE=2026-10-01
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -q
+    apt-get upgrade -y
     apt-get install -y \
         ca-certificates=20250419 \
         --no-install-recommends
     update-ca-certificates
-EOF
-
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update -q
-    apt-get install -y --only-upgrade \
-        libc-bin=2.41-12+deb13u4 \
-        libc6=2.41-12+deb13u4 \
-        perl-base=5.40.1-6+deb13u1 \
-        gzip=1.13-1+deb13u1 \
-        libpcre2-8-0=10.46-1~deb13u2 \
-        libsqlite3-0=3.46.1-7+deb13u2 \
-        --no-install-recommends
 EOF
 
 RUN <<EOF
