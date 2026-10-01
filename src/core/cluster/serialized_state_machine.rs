@@ -185,6 +185,7 @@ fn deserialize_keyspace<R: Read + Seek>(
             keyspace.clear()?;
         }
         db.persist(fjall::PersistMode::SyncAll)?;
+        tracing::debug!(name = %keyspace.name(), "finished clearing keyspace");
     }
     let mut key_buf = vec![];
     let mut value_buf = vec![];
