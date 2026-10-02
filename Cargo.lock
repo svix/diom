@@ -2141,9 +2141,9 @@ checksum = "aedcfb3409746eddb02b9e19ebda1c3394f759a152e48ee875a0844d1b955484"
 
 [[package]]
 name = "fjall"
-version = "3.1.10"
+version = "3.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd201c93927cdf4712e8f7d4c9c8d34d68c7534380c05d4a58864a309f91c33f"
+checksum = "4fd4a2cf22dddc9cbeeda616eb55c8163f7f7da0c84346dfbf425bb94c40bf30"
 dependencies = [
  "byteorder-lite",
  "byteview",
