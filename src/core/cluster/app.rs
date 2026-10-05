@@ -296,7 +296,7 @@ async fn downgrade_voter(
     Extension(raft_state): Extension<RaftState>,
     MsgPack(request): MsgPack<DowngradeVoterRequest>,
 ) -> impl IntoResponse {
-    tracing::info!(node_id=?request.node_id, "upgrading voter to learner");
+    tracing::info!(node_id=?request.node_id, "downgrading voter to learner");
     let request = ChangeMembers::RemoveVoters([request.node_id].into_iter().collect());
     rpc_response(
         raft_state
