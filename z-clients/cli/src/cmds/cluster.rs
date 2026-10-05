@@ -2,7 +2,10 @@ use clap::{Args, Subcommand};
 use comfy_table::{Attribute, Cell, Table};
 use diom::{
     DiomClient,
-    models::{ClusterInitializeIn, ClusterInitializeOut, ClusterRemoveNodeIn},
+    models::{
+        ClusterForceNodeDowngradeIn, ClusterForceNodeUpgradeIn, ClusterInitializeIn,
+        ClusterInitializeOut, ClusterRemoveNodeIn,
+    },
 };
 use itertools::Itertools;
 use yansi::Paint;
@@ -22,6 +25,14 @@ pub(crate) struct RemoveNodeArgs {
     yes_i_know_what_im_doing: bool,
 }
 
+#[derive(Args)]
+pub(crate) struct ChangeNodeArgs {
+    node_id: String,
+    /// This command is dangerous
+    #[arg(long)]
+    yes_i_know_what_im_doing: bool,
+}
+
 #[derive(Subcommand)]
 pub(crate) enum ClusterCommands {
     /// Print information about the cluster and its nodes
@@ -32,6 +43,10 @@ pub(crate) enum ClusterCommands {
     },
     /// Remove a node immediately from the cluster
     RemoveNode(RemoveNodeArgs),
+    /// Attempt to upgrade a node from Learner to Voter
+    UpgradeNode(ChangeNodeArgs),
+    /// Attempt to downgrade a node from Voter to Learner
+    DowngradeNode(ChangeNodeArgs),
     /// Initialize a new single-node cluster
     Initialize,
 }
@@ -41,6 +56,8 @@ impl ClusterCommands {
         match self {
             Self::Status { json } => print_status(json, client).await,
             Self::RemoveNode(args) => remove_node(args, client).await,
+            Self::UpgradeNode(args) => upgrade_node(args, client).await,
+            Self::DowngradeNode(args) => downgrade_node(args, client).await,
             Self::Initialize => initialize(client).await,
         }
     }
@@ -167,6 +184,62 @@ async fn remove_node(args: RemoveNodeArgs, client: &DiomClient) -> anyhow::Resul
             node_id: args.node_id,
         })
         .await?;
+    Ok(())
+}
+
+async fn upgrade_node(args: ChangeNodeArgs, client: &DiomClient) -> anyhow::Result<()> {
+    let status = client.cluster_admin().status().await?;
+    let Some(node) = status.nodes.iter().find(|n| n.node_id == args.node_id) else {
+        anyhow::bail!("unable to find node {}", args.node_id);
+    };
+    if !args.yes_i_know_what_im_doing
+        && !crate::utils::prompt(format!(
+            "Are you sure you want to upgrade node {} ({})",
+            args.node_id, node.address
+        ))?
+    {
+        anyhow::bail!("aborting");
+    }
+    tracing::info!(
+        node_id = args.node_id,
+        address = node.address,
+        "upgrading node"
+    );
+    let response = client
+        .cluster_admin()
+        .force_node_upgrade(ClusterForceNodeUpgradeIn {
+            node_id: args.node_id,
+        })
+        .await?;
+    tracing::debug!(?response, "done upgrading node");
+    Ok(())
+}
+
+async fn downgrade_node(args: ChangeNodeArgs, client: &DiomClient) -> anyhow::Result<()> {
+    let status = client.cluster_admin().status().await?;
+    let Some(node) = status.nodes.iter().find(|n| n.node_id == args.node_id) else {
+        anyhow::bail!("unable to find node {}", args.node_id);
+    };
+    if !args.yes_i_know_what_im_doing
+        && !crate::utils::prompt(format!(
+            "Are you sure you want to downgrade node {} ({})",
+            args.node_id, node.address
+        ))?
+    {
+        anyhow::bail!("aborting");
+    }
+    tracing::info!(
+        node_id = args.node_id,
+        address = node.address,
+        "downgrading node"
+    );
+    let response = client
+        .cluster_admin()
+        .force_node_downgrade(ClusterForceNodeDowngradeIn {
+            node_id: args.node_id,
+        })
+        .await?;
+    tracing::debug!(?response, "done downgrading node");
     Ok(())
 }
 

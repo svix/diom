@@ -729,6 +729,39 @@ impl RaftState {
     pub(crate) async fn wait_for_up(&self) -> bool {
         self.state_watcher.wait_for_up().await
     }
+
+    async fn client_for_leader(&self) -> diom_error::Result<super::network::NetworkClient> {
+        let leader_id = self
+            .raft
+            .current_leader()
+            .await
+            .ok_or_else(|| diom_error::Error::not_ready("no leader"))?;
+        let leader_node = self
+            .raft
+            .with_raft_state(move |s| {
+                let membership = s.membership_state.effective();
+                membership.get_node(&leader_id).cloned()
+            })
+            .await
+            .map_err(diom_error::Error::internal)?
+            .ok_or_else(|| diom_error::Error::not_ready("no leader"))?;
+        Ok(self.network.client_for(leader_id, &leader_node))
+    }
+
+    pub async fn upgrade_learner(&self, node_id: NodeId) -> diom_error::Result<()> {
+        self.client_for_leader()
+            .await?
+            .upgrade_learner(super::proto::UpgradeLearnerRequest { node_id })
+            .await?;
+        Ok(())
+    }
+    pub async fn downgrade_voter(&self, node_id: NodeId) -> diom_error::Result<()> {
+        self.client_for_leader()
+            .await?
+            .downgrade_voter(super::proto::DowngradeVoterRequest { node_id })
+            .await?;
+        Ok(())
+    }
 }
 
 impl diom_operations::OperationWriterBase for RaftState {

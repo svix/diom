@@ -12,6 +12,10 @@ import java.util.Map;
 import java.util.Set;
 import com.svix.diom.models.ClusterForceElectionIn;
 import com.svix.diom.models.ClusterForceElectionOut;
+import com.svix.diom.models.ClusterForceNodeDowngradeIn;
+import com.svix.diom.models.ClusterForceNodeDowngradeOut;
+import com.svix.diom.models.ClusterForceNodeUpgradeIn;
+import com.svix.diom.models.ClusterForceNodeUpgradeOut;
 import com.svix.diom.models.ClusterForceSnapshotIn;
 import com.svix.diom.models.ClusterForceSnapshotOut;
 import com.svix.diom.models.ClusterInitializeIn;
@@ -136,6 +140,43 @@ public class ClusterAdmin {
     ) throws DiomException {
         return this.forceElection(
             new ClusterForceElectionIn()
+        );
+    }
+
+    /**
+* Request that the cluster upgrade the given node from "learner" to "voter"
+* 
+* This should only be invoked if a partition occurs during a learner process
+* and you don't want to re-bootstrap the affected node.
+*/
+    public ClusterForceNodeUpgradeOut forceNodeUpgrade(
+        final ClusterForceNodeUpgradeIn clusterForceNodeUpgradeIn
+    ) throws DiomException {
+
+        return this.client.executeRequest(
+            "POST",
+            "/api/v1.cluster-admin.force-node-upgrade",
+            null,
+            clusterForceNodeUpgradeIn,
+            ClusterForceNodeUpgradeOut.class
+        );
+    }
+
+    /**
+* Request that the cluster upgrade the given node from "voter" to "learner"
+* 
+* This should only be invoked if you are testing the replication system
+*/
+    public ClusterForceNodeDowngradeOut forceNodeDowngrade(
+        final ClusterForceNodeDowngradeIn clusterForceNodeDowngradeIn
+    ) throws DiomException {
+
+        return this.client.executeRequest(
+            "POST",
+            "/api/v1.cluster-admin.force-node-downgrade",
+            null,
+            clusterForceNodeDowngradeIn,
+            ClusterForceNodeDowngradeOut.class
         );
     }
 }

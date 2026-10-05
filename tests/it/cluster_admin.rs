@@ -2,6 +2,7 @@ use diom_backend::core::cluster::NodeId;
 use serde_json::json;
 use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestResult,
+    retry::run_with_retries,
     server::{TestContext, TestServerBuilder, start_cluster},
 };
 
@@ -154,6 +155,81 @@ async fn test_cluster_force_election() -> TestResult {
     assert_eq!(previous_leader, leader);
     let new_leader: NodeId = resp["new_leader_id"].assert_str().parse().unwrap();
     assert!(context.node_ids().contains(&new_leader));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_cluster_upgrade_downgrade() -> TestResult {
+    let context = start_cluster(3).await;
+    let follower = context.get_follower_id().await;
+    let leader_client = context.leader_client().await;
+
+    let initial_cluster_status = leader_client
+        .get("v1.cluster-admin.status")
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    for row in initial_cluster_status["nodes"].assert_array() {
+        assert!(
+            row["state"] == "follower" || row["state"] == "leader",
+            "{} should be either a follower or a leader",
+            row["node_id"]
+        )
+    }
+
+    // downgrade to learner
+    leader_client
+        .post("v1.cluster-admin.force-node-downgrade")
+        .json(json!({ "node_id": follower }))
+        .await?
+        .expect(StatusCode::OK);
+
+    run_with_retries(async || {
+        let status = leader_client
+            .get("v1.cluster-admin.status")
+            .await?
+            .expect(StatusCode::OK)
+            .json();
+        for row in status["nodes"].assert_array() {
+            if row["node_id"].assert_str() == follower.to_string() {
+                anyhow::ensure!(row["state"] == "learner", "{follower} should be a learner");
+            } else {
+                anyhow::ensure!(
+                    row["state"] == "follower" || row["state"] == "leader",
+                    "{} should be either a follower or a leader",
+                    row["node_id"]
+                )
+            }
+        }
+        Ok(())
+    })
+    .await?;
+
+    // and upgrade again to follower
+    leader_client
+        .post("v1.cluster-admin.force-node-upgrade")
+        .json(json!({ "node_id": follower }))
+        .await?
+        .expect(StatusCode::OK);
+
+    run_with_retries(async || {
+        let status = leader_client
+            .get("v1.cluster-admin.status")
+            .await?
+            .expect(StatusCode::OK)
+            .json();
+        for row in status["nodes"].assert_array() {
+            anyhow::ensure!(
+                row["state"] == "follower" || row["state"] == "leader",
+                "{} should be either a follower or a leader",
+                row["node_id"]
+            )
+        }
+        Ok(())
+    })
+    .await?;
 
     Ok(())
 }

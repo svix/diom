@@ -43,6 +43,10 @@ mod cache_set_in;
 mod cache_set_out;
 mod cluster_force_election_in;
 mod cluster_force_election_out;
+mod cluster_force_node_downgrade_in;
+mod cluster_force_node_downgrade_out;
+mod cluster_force_node_upgrade_in;
+mod cluster_force_node_upgrade_out;
 mod cluster_force_snapshot_in;
 mod cluster_force_snapshot_out;
 mod cluster_initialize_in;
@@ -179,6 +183,10 @@ pub use self::{
     cache_get_out::CacheGetOut, cache_set_in::CacheSetIn, cache_set_out::CacheSetOut,
     cluster_force_election_in::ClusterForceElectionIn,
     cluster_force_election_out::ClusterForceElectionOut,
+    cluster_force_node_downgrade_in::ClusterForceNodeDowngradeIn,
+    cluster_force_node_downgrade_out::ClusterForceNodeDowngradeOut,
+    cluster_force_node_upgrade_in::ClusterForceNodeUpgradeIn,
+    cluster_force_node_upgrade_out::ClusterForceNodeUpgradeOut,
     cluster_force_snapshot_in::ClusterForceSnapshotIn,
     cluster_force_snapshot_out::ClusterForceSnapshotOut,
     cluster_initialize_in::ClusterInitializeIn, cluster_initialize_out::ClusterInitializeOut,

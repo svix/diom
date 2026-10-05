@@ -545,6 +545,224 @@
         ]
       }
     },
+    "/api/v1.cluster-admin.force-node-upgrade": {
+      "post": {
+        "tags": [
+          "ClusterAdmin"
+        ],
+        "summary": "Cluster Force Node Upgrade",
+        "description": "Request that the cluster upgrade the given node from \"learner\" to \"voter\"\n\nThis should only be invoked if a partition occurs during a learner process\nand you don't want to re-bootstrap the affected node.",
+        "operationId": "v1.cluster-admin.force-node-upgrade",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClusterForceNodeUpgradeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterForceNodeUpgradeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cluster-admin force-node-upgrade '{\n    \"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.ClusterAdmin.ForceNodeUpgrade(\n    ctx,\n    ClusterForceNodeUpgradeIn{\n        NodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getClusterAdmin.forceNodeUpgrade(\n    new ClusterForceNodeUpgradeIn()\n        .nodeId(\"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.clusterAdmin.forceNodeUpgrade({\n    nodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cluster_admin.force_node_upgrade(\n    ClusterForceNodeUpgradeIn(\n        node_id = \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.cluster_admin()\n    .force_node_upgrade(\n        ClusterForceNodeUpgradeIn::new(\"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
+    "/api/v1.cluster-admin.force-node-downgrade": {
+      "post": {
+        "tags": [
+          "ClusterAdmin"
+        ],
+        "summary": "Cluster Force Node Downgrade",
+        "description": "Request that the cluster upgrade the given node from \"voter\" to \"learner\"\n\nThis should only be invoked if you are testing the replication system",
+        "operationId": "v1.cluster-admin.force-node-downgrade",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClusterForceNodeDowngradeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterForceNodeDowngradeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom cluster-admin force-node-downgrade '{\n    \"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.ClusterAdmin.ForceNodeDowngrade(\n    ctx,\n    ClusterForceNodeDowngradeIn{\n        NodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getClusterAdmin.forceNodeDowngrade(\n    new ClusterForceNodeDowngradeIn()\n        .nodeId(\"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.clusterAdmin.forceNodeDowngrade({\n    nodeId: \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.cluster_admin.force_node_downgrade(\n    ClusterForceNodeDowngradeIn(\n        node_id = \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.cluster_admin()\n    .force_node_downgrade(\n        ClusterForceNodeDowngradeIn::new(\"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
     "/api/v1.admin.auth-token.create": {
       "post": {
         "tags": [
@@ -8983,6 +9201,60 @@
             "nullable": true
           }
         }
+      },
+      "ClusterForceNodeDowngradeIn": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "example": "a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8"
+          }
+        },
+        "required": [
+          "node_id"
+        ]
+      },
+      "ClusterForceNodeDowngradeOut": {
+        "type": "object",
+        "properties": {
+          "initial_node_state": {
+            "$ref": "#/components/schemas/ServerState"
+          },
+          "final_node_state": {
+            "$ref": "#/components/schemas/ServerState"
+          }
+        },
+        "required": [
+          "initial_node_state",
+          "final_node_state"
+        ]
+      },
+      "ClusterForceNodeUpgradeIn": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "example": "a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8"
+          }
+        },
+        "required": [
+          "node_id"
+        ]
+      },
+      "ClusterForceNodeUpgradeOut": {
+        "type": "object",
+        "properties": {
+          "initial_node_state": {
+            "$ref": "#/components/schemas/ServerState"
+          },
+          "final_node_state": {
+            "$ref": "#/components/schemas/ServerState"
+          }
+        },
+        "required": [
+          "initial_node_state",
+          "final_node_state"
+        ]
       },
       "ClusterForceSnapshotIn": {
         "type": "object"

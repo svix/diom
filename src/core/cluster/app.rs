@@ -69,6 +69,7 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
         .route("/repl/raft/last-id", post(last_id))
         .route("/repl/raft/admin/add-learner", post(add_learner))
         .route("/repl/raft/admin/upgrade-learner", post(upgrade_learner))
+        .route("/repl/raft/admin/downgrade-voter", post(downgrade_voter))
         .route("/repl/raft/admin/remove-node", post(remove_node))
         .route("/repl/raft/go-away", post(go_away))
         .route(
@@ -279,7 +280,34 @@ async fn upgrade_learner(
 ) -> impl IntoResponse {
     tracing::info!(node_id=?request.node_id, "upgrading learner to follower");
     let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
-    rpc_response(raft_state.raft.change_membership(request, true).await)
+    rpc_response(
+        raft_state
+            .raft
+            .change_membership(request, true)
+            .await
+            .map(|response| {
+                tracing::debug!(?response, "done running upgrade");
+                UpgradeLearnerResponse {}
+            }),
+    )
+}
+
+async fn downgrade_voter(
+    Extension(raft_state): Extension<RaftState>,
+    MsgPack(request): MsgPack<DowngradeVoterRequest>,
+) -> impl IntoResponse {
+    tracing::info!(node_id=?request.node_id, "upgrading voter to learner");
+    let request = ChangeMembers::RemoveVoters([request.node_id].into_iter().collect());
+    rpc_response(
+        raft_state
+            .raft
+            .change_membership(request, true)
+            .await
+            .map(|response| {
+                tracing::debug!(?response, "done running downgrade");
+                DowngradeVoterResponse {}
+            }),
+    )
 }
 
 async fn go_away(

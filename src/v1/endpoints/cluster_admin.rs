@@ -144,7 +144,7 @@ async fn cluster_status(
             let purged = s.log_ids.purged().map(|l| l.index);
             let members = s.membership_state.effective().membership();
             let voters = members.voter_ids().collect::<BTreeSet<NodeId>>();
-            let learners = members.voter_ids().collect::<BTreeSet<NodeId>>();
+            let learners = members.learner_ids().collect::<BTreeSet<NodeId>>();
             let nodes = members
                 .nodes()
                 .map(|(node_id, node)| {
@@ -397,6 +397,125 @@ async fn cluster_force_election(
     }))
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct ClusterForceNodeUpgradeIn {
+    node_id: NodeId,
+}
+
+request_input!(ClusterForceNodeUpgradeIn, "force-node-upgrade");
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct ClusterForceNodeUpgradeOut {
+    initial_node_state: ServerState,
+    final_node_state: ServerState,
+}
+
+async fn get_node_state(repl: &RaftState, node_id: NodeId) -> Result<ServerState> {
+    let leader_id = repl.raft.current_leader().await;
+    repl.raft
+        .with_raft_state(move |s| {
+            let membership = s.membership_state.effective().membership();
+            if leader_id == Some(node_id) {
+                ServerState::Leader
+            } else if membership.voter_ids().any(|n| n == node_id) {
+                ServerState::Follower
+            } else if membership.learner_ids().any(|n| n == node_id) {
+                ServerState::Learner
+            } else {
+                ServerState::Unknown
+            }
+        })
+        .await
+        .map_err(Error::internal)
+}
+
+async fn wait_until_state_change(
+    repl: RaftState,
+    node_id: NodeId,
+    previous: ServerState,
+) -> Result<ServerState> {
+    let mut interval = tokio::time::interval(Duration::from_millis(250));
+    loop {
+        let state = get_node_state(&repl, node_id).await?;
+        if state != previous {
+            return Ok(state);
+        }
+        interval.tick().await;
+    }
+}
+
+/// Request that the cluster upgrade the given node from "learner" to "voter"
+///
+/// This should only be invoked if a partition occurs during a learner process
+/// and you don't want to re-bootstrap the affected node.
+#[aide_annotate(op_id = "v1.cluster-admin.force-node-upgrade")]
+async fn cluster_force_node_upgrade(
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<ClusterForceNodeUpgradeIn>,
+) -> Result<MsgPackOrJson<ClusterForceNodeUpgradeOut>> {
+    let previous = get_node_state(&repl, data.node_id).await?;
+
+    repl.upgrade_learner(data.node_id).await?;
+
+    // give it a bit
+    let shutting_down = diom_core::shutdown::shutting_down_token();
+    let node_state = shutting_down
+        .run_until_cancelled(tokio::time::timeout(
+            Duration::from_secs(5),
+            wait_until_state_change(repl, data.node_id, previous),
+        ))
+        .await
+        .ok_or_else(Error::shutting_down)?
+        .unwrap_or(Ok(ServerState::Unknown))?;
+
+    Ok(MsgPackOrJson(ClusterForceNodeUpgradeOut {
+        initial_node_state: previous,
+        final_node_state: node_state,
+    }))
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct ClusterForceNodeDowngradeIn {
+    node_id: NodeId,
+}
+
+request_input!(ClusterForceNodeDowngradeIn, "force-node-upgrade");
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct ClusterForceNodeDowngradeOut {
+    initial_node_state: ServerState,
+    final_node_state: ServerState,
+}
+
+/// Request that the cluster upgrade the given node from "voter" to "learner"
+///
+/// This should only be invoked if you are testing the replication system
+#[aide_annotate(op_id = "v1.cluster-admin.force-node-downgrade")]
+async fn cluster_force_node_downgrade(
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<ClusterForceNodeDowngradeIn>,
+) -> Result<MsgPackOrJson<ClusterForceNodeDowngradeOut>> {
+    let previous = get_node_state(&repl, data.node_id).await?;
+
+    repl.downgrade_voter(data.node_id).await?;
+
+    // give it a bit
+    let shutting_down = diom_core::shutdown::shutting_down_token();
+    let node_state = shutting_down
+        .run_until_cancelled(tokio::time::timeout(
+            Duration::from_secs(5),
+            wait_until_state_change(repl, data.node_id, previous),
+        ))
+        .await
+        .ok_or_else(Error::shutting_down)?
+        .unwrap_or(Ok(ServerState::Unknown))?;
+
+    Ok(MsgPackOrJson(ClusterForceNodeDowngradeOut {
+        initial_node_state: previous,
+        final_node_state: node_state,
+    }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("ClusterAdmin");
 
@@ -424,6 +543,22 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             cluster_force_election_path,
             post_with(cluster_force_election, cluster_force_election_operation),
+            &tag,
+        )
+        .api_route_with(
+            cluster_force_node_upgrade_path,
+            post_with(
+                cluster_force_node_upgrade,
+                cluster_force_node_upgrade_operation,
+            ),
+            &tag,
+        )
+        .api_route_with(
+            cluster_force_node_downgrade_path,
+            post_with(
+                cluster_force_node_downgrade,
+                cluster_force_node_downgrade_operation,
+            ),
             &tag,
         )
 }

@@ -1703,6 +1703,7 @@ dependencies = [
  "diom-proto",
  "fjall",
  "hyper",
+ "openraft",
  "tokio",
  "tracing",
 ]

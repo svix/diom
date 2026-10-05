@@ -51,6 +51,14 @@ pub(super) struct UpgradeLearnerRequest {
 pub(super) struct UpgradeLearnerResponse {}
 
 #[derive(Debug, Deserialize, Serialize)]
+pub(super) struct DowngradeVoterRequest {
+    pub node_id: NodeId,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct DowngradeVoterResponse {}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub(super) struct RemoveNodeRequest {
     pub node_id: NodeId,
 }
