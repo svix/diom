@@ -120,6 +120,52 @@ pub(crate) enum ClusterAdminCommands {
         cluster_force_election_in:
             Option<crate::json::JsonOf<diom::models::ClusterForceElectionIn>>,
     },
+    /// Request that the cluster upgrade the given node from "learner" to "voter"
+    ///
+    /// This should only be invoked if a partition occurs during a learner process
+    /// and you don't want to re-bootstrap the affected node.
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cluster-admin force-node-upgrade {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "Example body:
+{
+  \"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\"
+}\n\nExample response:
+{
+  \"initial_node_state\": \"leader\",
+  \"final_node_state\": \"leader\"
+}\n")]
+    ForceNodeUpgrade {
+        cluster_force_node_upgrade_in: crate::json::JsonOf<diom::models::ClusterForceNodeUpgradeIn>,
+    },
+    /// Request that the cluster upgrade the given node from "voter" to "learner"
+    ///
+    /// This should only be invoked if you are testing the replication system
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom cluster-admin force-node-downgrade {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "Example body:
+{
+  \"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\"
+}\n\nExample response:
+{
+  \"initial_node_state\": \"leader\",
+  \"final_node_state\": \"leader\"
+}\n")]
+    ForceNodeDowngrade {
+        cluster_force_node_downgrade_in:
+            crate::json::JsonOf<diom::models::ClusterForceNodeDowngradeIn>,
+    },
 }
 
 impl ClusterAdminCommands {
@@ -162,6 +208,24 @@ impl ClusterAdminCommands {
                 let resp = client
                     .cluster_admin()
                     .force_election(cluster_force_election_in.unwrap_or_default().into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp)?;
+            }
+            Self::ForceNodeUpgrade {
+                cluster_force_node_upgrade_in,
+            } => {
+                let resp = client
+                    .cluster_admin()
+                    .force_node_upgrade(cluster_force_node_upgrade_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp)?;
+            }
+            Self::ForceNodeDowngrade {
+                cluster_force_node_downgrade_in,
+            } => {
+                let resp = client
+                    .cluster_admin()
+                    .force_node_downgrade(cluster_force_node_downgrade_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

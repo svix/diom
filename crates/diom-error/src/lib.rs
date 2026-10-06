@@ -294,3 +294,18 @@ impl From<JoinError> for Error {
         Self::internal(format!("{e:?}"))
     }
 }
+
+impl<T: openraft::RaftTypeConfig, E: error::Error> From<openraft::errors::RPCError<T, E>>
+    for Error
+{
+    #[track_caller]
+    fn from(e: openraft::errors::RPCError<T, E>) -> Self {
+        match e {
+            openraft::errors::RPCError::RemoteError(inner) => {
+                tracing::warn!(err=%inner, "error forwarded from remote Raft instance");
+                Self::internal(inner)
+            }
+            e => Self::internal(e),
+        }
+    }
+}

@@ -41,6 +41,10 @@ from .cache_set_in import CacheSetIn
 from .cache_set_out import CacheSetOut
 from .cluster_force_election_in import ClusterForceElectionIn
 from .cluster_force_election_out import ClusterForceElectionOut
+from .cluster_force_node_downgrade_in import ClusterForceNodeDowngradeIn
+from .cluster_force_node_downgrade_out import ClusterForceNodeDowngradeOut
+from .cluster_force_node_upgrade_in import ClusterForceNodeUpgradeIn
+from .cluster_force_node_upgrade_out import ClusterForceNodeUpgradeOut
 from .cluster_force_snapshot_in import ClusterForceSnapshotIn
 from .cluster_force_snapshot_out import ClusterForceSnapshotOut
 from .cluster_initialize_in import ClusterInitializeIn
@@ -189,6 +193,10 @@ __all__ = [
     "CacheSetOut",
     "ClusterForceElectionIn",
     "ClusterForceElectionOut",
+    "ClusterForceNodeDowngradeIn",
+    "ClusterForceNodeDowngradeOut",
+    "ClusterForceNodeUpgradeIn",
+    "ClusterForceNodeUpgradeOut",
     "ClusterForceSnapshotIn",
     "ClusterForceSnapshotOut",
     "ClusterInitializeIn",

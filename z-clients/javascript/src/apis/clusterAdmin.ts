@@ -9,6 +9,22 @@ import {
     ClusterForceElectionOutSerializer,
 } from '../models/clusterForceElectionOut';
 import {
+    type ClusterForceNodeDowngradeIn,
+    ClusterForceNodeDowngradeInSerializer,
+} from '../models/clusterForceNodeDowngradeIn';
+import {
+    type ClusterForceNodeDowngradeOut,
+    ClusterForceNodeDowngradeOutSerializer,
+} from '../models/clusterForceNodeDowngradeOut';
+import {
+    type ClusterForceNodeUpgradeIn,
+    ClusterForceNodeUpgradeInSerializer,
+} from '../models/clusterForceNodeUpgradeIn';
+import {
+    type ClusterForceNodeUpgradeOut,
+    ClusterForceNodeUpgradeOutSerializer,
+} from '../models/clusterForceNodeUpgradeOut';
+import {
     type ClusterForceSnapshotIn,
     ClusterForceSnapshotInSerializer,
 } from '../models/clusterForceSnapshotIn';
@@ -116,6 +132,43 @@ export class ClusterAdmin {
         return request.send(
             this.requestCtx,
             ClusterForceElectionOutSerializer._fromJsonObject,
+        );
+    }/**
+* Request that the cluster upgrade the given node from "learner" to "voter"
+* 
+* This should only be invoked if a partition occurs during a learner process
+* and you don't want to re-bootstrap the affected node.
+*/
+    public forceNodeUpgrade(
+        clusterForceNodeUpgradeIn: ClusterForceNodeUpgradeIn,
+    ): Promise<ClusterForceNodeUpgradeOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cluster-admin.force-node-upgrade");
+
+        request.setBody(
+            ClusterForceNodeUpgradeInSerializer._toJsonObject(clusterForceNodeUpgradeIn)
+        );
+        
+        return request.send(
+            this.requestCtx,
+            ClusterForceNodeUpgradeOutSerializer._fromJsonObject,
+        );
+    }/**
+* Request that the cluster upgrade the given node from "voter" to "learner"
+* 
+* This should only be invoked if you are testing the replication system
+*/
+    public forceNodeDowngrade(
+        clusterForceNodeDowngradeIn: ClusterForceNodeDowngradeIn,
+    ): Promise<ClusterForceNodeDowngradeOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cluster-admin.force-node-downgrade");
+
+        request.setBody(
+            ClusterForceNodeDowngradeInSerializer._toJsonObject(clusterForceNodeDowngradeIn)
+        );
+        
+        return request.send(
+            this.requestCtx,
+            ClusterForceNodeDowngradeOutSerializer._fromJsonObject,
         );
     }
 }

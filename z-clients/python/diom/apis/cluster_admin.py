@@ -4,6 +4,10 @@ from ..internal.api_common import ApiBase
 from ..models import (
     ClusterForceElectionIn,
     ClusterForceElectionOut,
+    ClusterForceNodeDowngradeIn,
+    ClusterForceNodeDowngradeOut,
+    ClusterForceNodeUpgradeIn,
+    ClusterForceNodeUpgradeOut,
     ClusterForceSnapshotIn,
     ClusterForceSnapshotOut,
     ClusterInitializeIn,
@@ -88,6 +92,39 @@ class ClusterAdminAsync(ApiBase):
             response_type=ClusterForceElectionOut,
         )
 
+    async def force_node_upgrade(
+        self,
+        cluster_force_node_upgrade_in: ClusterForceNodeUpgradeIn,
+    ) -> ClusterForceNodeUpgradeOut:
+        """Request that the cluster upgrade the given node from "learner" to "voter"
+
+        This should only be invoked if a partition occurs during a learner process
+        and you don't want to re-bootstrap the affected node."""
+        body = cluster_force_node_upgrade_in.model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1.cluster-admin.force-node-upgrade",
+            body=body,
+            response_type=ClusterForceNodeUpgradeOut,
+        )
+
+    async def force_node_downgrade(
+        self,
+        cluster_force_node_downgrade_in: ClusterForceNodeDowngradeIn,
+    ) -> ClusterForceNodeDowngradeOut:
+        """Request that the cluster upgrade the given node from "voter" to "learner"
+
+        This should only be invoked if you are testing the replication system"""
+        body = cluster_force_node_downgrade_in.model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1.cluster-admin.force-node-downgrade",
+            body=body,
+            response_type=ClusterForceNodeDowngradeOut,
+        )
+
 
 class ClusterAdmin(ApiBase):
     def status(
@@ -161,4 +198,37 @@ class ClusterAdmin(ApiBase):
             path="/api/v1.cluster-admin.force-election",
             body=body,
             response_type=ClusterForceElectionOut,
+        )
+
+    def force_node_upgrade(
+        self,
+        cluster_force_node_upgrade_in: ClusterForceNodeUpgradeIn,
+    ) -> ClusterForceNodeUpgradeOut:
+        """Request that the cluster upgrade the given node from "learner" to "voter"
+
+        This should only be invoked if a partition occurs during a learner process
+        and you don't want to re-bootstrap the affected node."""
+        body = cluster_force_node_upgrade_in.model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1.cluster-admin.force-node-upgrade",
+            body=body,
+            response_type=ClusterForceNodeUpgradeOut,
+        )
+
+    def force_node_downgrade(
+        self,
+        cluster_force_node_downgrade_in: ClusterForceNodeDowngradeIn,
+    ) -> ClusterForceNodeDowngradeOut:
+        """Request that the cluster upgrade the given node from "voter" to "learner"
+
+        This should only be invoked if you are testing the replication system"""
+        body = cluster_force_node_downgrade_in.model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1.cluster-admin.force-node-downgrade",
+            body=body,
+            response_type=ClusterForceNodeDowngradeOut,
         )

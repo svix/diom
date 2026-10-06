@@ -264,8 +264,16 @@ impl NetworkClient {
     pub(super) async fn upgrade_learner(
         &self,
         req: proto::UpgradeLearnerRequest,
-    ) -> Result<proto::UpgradeLearnerResponse, RPCError> {
+    ) -> RPCResult<proto::UpgradeLearnerResponse> {
         self.send_request("/repl/raft/admin/upgrade-learner", req)
+            .await
+    }
+
+    pub(super) async fn downgrade_voter(
+        &self,
+        req: proto::DowngradeVoterRequest,
+    ) -> RPCResult<proto::DowngradeVoterResponse> {
+        self.send_request("/repl/raft/admin/downgrade-voter", req)
             .await
     }
 

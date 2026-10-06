@@ -66,4 +66,37 @@ impl<'a> ClusterAdmin<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// Request that the cluster upgrade the given node from "learner" to "voter"
+    ///
+    /// This should only be invoked if a partition occurs during a learner process
+    /// and you don't want to re-bootstrap the affected node.
+    pub async fn force_node_upgrade(
+        &self,
+        cluster_force_node_upgrade_in: ClusterForceNodeUpgradeIn,
+    ) -> Result<ClusterForceNodeUpgradeOut> {
+        crate::request::Request::new(
+            http::Method::POST,
+            "/api/v1.cluster-admin.force-node-upgrade",
+        )
+        .with_body(cluster_force_node_upgrade_in)
+        .execute(self.cfg)
+        .await
+    }
+
+    /// Request that the cluster upgrade the given node from "voter" to "learner"
+    ///
+    /// This should only be invoked if you are testing the replication system
+    pub async fn force_node_downgrade(
+        &self,
+        cluster_force_node_downgrade_in: ClusterForceNodeDowngradeIn,
+    ) -> Result<ClusterForceNodeDowngradeOut> {
+        crate::request::Request::new(
+            http::Method::POST,
+            "/api/v1.cluster-admin.force-node-downgrade",
+        )
+        .with_body(cluster_force_node_downgrade_in)
+        .execute(self.cfg)
+        .await
+    }
 }

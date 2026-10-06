@@ -12,6 +12,7 @@ axum.workspace = true
 diom-proto.workspace = true
 fjall.workspace = true
 hyper.workspace = true
+openraft.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 

@@ -91,3 +91,36 @@ func (clusterAdmin ClusterAdmin) ForceElection(
 		&clusterForceElectionIn,
 	)
 }
+
+// Request that the cluster upgrade the given node from "learner" to "voter"
+//
+// This should only be invoked if a partition occurs during a learner process
+// and you don't want to re-bootstrap the affected node.
+func (clusterAdmin ClusterAdmin) ForceNodeUpgrade(
+	ctx context.Context,
+	clusterForceNodeUpgradeIn diom_models.ClusterForceNodeUpgradeIn,
+) (*diom_models.ClusterForceNodeUpgradeOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.ClusterForceNodeUpgradeIn, diom_models.ClusterForceNodeUpgradeOut](
+		ctx,
+		clusterAdmin.client,
+		"POST",
+		"/api/v1.cluster-admin.force-node-upgrade",
+		&clusterForceNodeUpgradeIn,
+	)
+}
+
+// Request that the cluster upgrade the given node from "voter" to "learner"
+//
+// This should only be invoked if you are testing the replication system
+func (clusterAdmin ClusterAdmin) ForceNodeDowngrade(
+	ctx context.Context,
+	clusterForceNodeDowngradeIn diom_models.ClusterForceNodeDowngradeIn,
+) (*diom_models.ClusterForceNodeDowngradeOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.ClusterForceNodeDowngradeIn, diom_models.ClusterForceNodeDowngradeOut](
+		ctx,
+		clusterAdmin.client,
+		"POST",
+		"/api/v1.cluster-admin.force-node-downgrade",
+		&clusterForceNodeDowngradeIn,
+	)
+}
