@@ -147,7 +147,7 @@ pub trait StringWrapper {
 string_wrapper!(EntityKey {
     min_length: 1,
     max_length: 256,
-    pattern: r"^[a-zA-Z0-9\-/_.=+:]+$",
+    pattern: r"^[a-zA-Z0-9\-/_.=+:{}]+$",
     example: "some_key"
 });
 
