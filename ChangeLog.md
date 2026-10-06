@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased Changes
+* CLI: Allow loading a JSON argument from a file by specifying it prefixed with the `@` argument on the command-line;
+  e.g., `diom kv set key value @options.json` to load the options from `options.json`. Note that this can only be used for arguments
+  which take a JSON body (where the leading `@` is unambiguous) and cannot currently be used for strings like K/V keys or values.
 
 ## Version 0.2.4
 * CLI: Remove underlining from schema examples on `--help` messages due to portability issues
