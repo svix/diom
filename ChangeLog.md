@@ -1,7 +1,19 @@
 # Changelog
 
 ## Unreleased Changes
+
+## Version 0.2.5
 * Server: Add `/api/v1.msgs.topic.list` operation to list all topics
+* Server: Add the ability to subscribe to a Svix AutoConfig endpoint and append messages from it to a Diom topic
+* Server: Add the ability to automatically emit messages from a Diom topic to an arbitrary HTTP server
+* Server: Add a set of endpoints exposing the current values of all OpenTelemetry metrics, for polling
+* Server: Make body size limit configurable with `max_body_size`
+* Server: Improve reliability of cluster bootstrapping and snapshots; snapshots now include Cluster UUID metadata
+* Server: Add a dedicated "readiness" endpoint
+* Server: Expose some internal Tokio metrics to OpenTelemetry (thanks @KaustubhOG)
+* Operator: Expose `currentLeader` as a status variable on `diomcluster` objects if an admin token is exposed
+* CLI: Ignore `EPIPE` to make it easier to use the CLI in shell pipelines
+* CLI: Allow parsing input as JSONC in addition to JSON (thanks @KaustubhOG)
 * CLI: Allow loading a JSON argument from a file by specifying it prefixed with the `@` argument on the command-line;
   e.g., `diom kv set key value @options.json` to load the options from `options.json`. Note that this can only be used for arguments
   which take a JSON body (where the leading `@` is unambiguous) and cannot currently be used for strings like K/V keys or values.
