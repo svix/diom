@@ -479,7 +479,7 @@ struct ClusterForceNodeDowngradeIn {
     node_id: NodeId,
 }
 
-request_input!(ClusterForceNodeDowngradeIn, "force-node-upgrade");
+request_input!(ClusterForceNodeDowngradeIn, "force-node-downgrade");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterForceNodeDowngradeOut {
