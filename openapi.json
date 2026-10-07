@@ -6905,6 +6905,115 @@
         ]
       }
     },
+    "/api/v1.msgs.topic.list": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Topic List",
+        "description": "List available topics in the given namespace",
+        "operationId": "v1.msgs.topic.list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgTopicListIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponseMsgTopicListOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs topic list '{\n    \"namespace\": \"some_namespace\",\n    \"consistency\": \"strong\",\n    \"limit\": 1,\n    \"iterator\": \"topiciter_c29tZV90b3BpY19uYW1l\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Topic.List(\n    ctx,\n    MsgTopicListIn{\n        Namespace: new(\"some_namespace\"),\n        Consistency: new(CONSISTENCY_STRONG),\n        Limit: new(uint64(1)),\n        Iterator: new(\"topiciter_c29tZV90b3BpY19uYW1l\"),\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getTopic.list(\n    new MsgTopicListIn()\n        .namespace(\"some_namespace\")\n        .consistency(\n            Consistency.Strong\n        )\n        .limit(1L)\n        .iterator(\"topiciter_c29tZV90b3BpY19uYW1l\")\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.topic.list({\n    namespace: \"some_namespace\",\n    consistency: Consistency.Strong,\n    limit: 1,\n    iterator: \"topiciter_c29tZV90b3BpY19uYW1l\",\n});"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.topic.list(\n    MsgTopicListIn(\n        namespace = \"some_namespace\",\n        consistency = Consistency.STRONG,\n        limit = 1,\n        iterator = \"topiciter_c29tZV90b3BpY19uYW1l\",\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .topic()\n    .list(\n        MsgTopicListIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_consistency(Consistency::Strong)\n            .with_limit(1)\n            .with_iterator(\"topiciter_c29tZV90b3BpY19uYW1l\".to_owned()),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
     "/api/v1.msgs.svix-poller.create": {
       "post": {
         "tags": [
@@ -10139,6 +10248,32 @@
           "done"
         ]
       },
+      "ListResponseMsgTopicListOut": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MsgTopicListOut"
+            }
+          },
+          "iterator": {
+            "type": "string",
+            "nullable": true
+          },
+          "prev_iterator": {
+            "type": "string",
+            "nullable": true
+          },
+          "done": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data",
+          "done"
+        ]
+      },
       "ListResponseSinkOut": {
         "type": "object",
         "properties": {
@@ -10996,6 +11131,61 @@
           }
         },
         "required": [
+          "partitions"
+        ]
+      },
+      "MsgTopicListIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "consistency": {
+            "default": "strong",
+            "$ref": "#/components/schemas/Consistency"
+          },
+          "limit": {
+            "description": "Limit the number of returned items",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "maximum": 250,
+            "default": 50
+          },
+          "iterator": {
+            "description": "The iterator returned from a prior invocation",
+            "type": "string",
+            "example": "topiciter_c29tZV90b3BpY19uYW1l",
+            "nullable": true
+          }
+        }
+      },
+      "MsgTopicListOut": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "topic_06etngr201xwv7qj08mt4cs03w"
+          },
+          "name": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "partitions": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "name",
           "partitions"
         ]
       },

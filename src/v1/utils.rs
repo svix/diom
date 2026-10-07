@@ -79,7 +79,7 @@ impl<T: ListResponseItem> ListResponse<T> {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Serialize, Deserialize, JsonSchema, Debug)]
 pub struct Pagination<T> {
     /// Limit the number of returned items
     #[serde(default)]

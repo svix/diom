@@ -87,6 +87,7 @@ type (
 	ListResponseAdminAccessPolicyOut = diom_models.ListResponseAdminAccessPolicyOut
 	ListResponseAdminAuthTokenOut    = diom_models.ListResponseAdminAuthTokenOut
 	ListResponseAdminRoleOut         = diom_models.ListResponseAdminRoleOut
+	ListResponseMsgTopicListOut      = diom_models.ListResponseMsgTopicListOut
 	ListResponseSinkOut              = diom_models.ListResponseSinkOut
 	ListResponseSvixPollerOut        = diom_models.ListResponseSvixPollerOut
 	MetricOut                        = diom_models.MetricOut
@@ -121,6 +122,8 @@ type (
 	MsgStreamSeekOut                 = diom_models.MsgStreamSeekOut
 	MsgTopicConfigureIn              = diom_models.MsgTopicConfigureIn
 	MsgTopicConfigureOut             = diom_models.MsgTopicConfigureOut
+	MsgTopicListIn                   = diom_models.MsgTopicListIn
+	MsgTopicListOut                  = diom_models.MsgTopicListOut
 	NodeStatusOut                    = diom_models.NodeStatusOut
 	OperationBehavior                = diom_models.OperationBehavior
 	PingOut                          = diom_models.PingOut

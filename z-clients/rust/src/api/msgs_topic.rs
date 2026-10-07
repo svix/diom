@@ -29,4 +29,15 @@ impl<'a> MsgsTopic<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// List available topics in the given namespace
+    pub async fn list(
+        &self,
+        msg_topic_list_in: MsgTopicListIn,
+    ) -> Result<ListResponseMsgTopicListOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1.msgs.topic.list")
+            .with_body(msg_topic_list_in)
+            .execute(self.cfg)
+            .await
+    }
 }

@@ -39,3 +39,17 @@ func (msgsTopic MsgsTopic) Configure(
 		&body,
 	)
 }
+
+// List available topics in the given namespace
+func (msgsTopic MsgsTopic) List(
+	ctx context.Context,
+	msgTopicListIn diom_models.MsgTopicListIn,
+) (*diom_models.ListResponseMsgTopicListOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.MsgTopicListIn, diom_models.ListResponseMsgTopicListOut](
+		ctx,
+		msgsTopic.client,
+		"POST",
+		"/api/v1.msgs.topic.list",
+		&msgTopicListIn,
+	)
+}

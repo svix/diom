@@ -10,7 +10,7 @@ use super::{Id, PublicIdMarker};
 use crate::UuidV7RandomBytes;
 
 /// serde wrapper for ID types that uses a verbose format (using `M`s prefix).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Public<T>(T);
 
 impl<T> Public<T> {

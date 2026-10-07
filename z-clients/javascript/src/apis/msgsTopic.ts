@@ -1,6 +1,10 @@
 // this file is @generated
 
 import {
+    type ListResponseMsgTopicListOut,
+    ListResponseMsgTopicListOutSerializer,
+} from '../models/listResponseMsgTopicListOut';
+import {
     type MsgTopicConfigureIn,
     MsgTopicConfigureInSerializer,
 } from '../models/msgTopicConfigureIn';
@@ -8,6 +12,10 @@ import {
     type MsgTopicConfigureOut,
     MsgTopicConfigureOutSerializer,
 } from '../models/msgTopicConfigureOut';
+import {
+    type MsgTopicListIn,
+    MsgTopicListInSerializer,
+} from '../models/msgTopicListIn';
 import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class MsgsTopic {
@@ -34,6 +42,20 @@ export class MsgsTopic {
         return request.send(
             this.requestCtx,
             MsgTopicConfigureOutSerializer._fromJsonObject,
+        );
+    }/** List available topics in the given namespace */
+    public list(
+        msgTopicListIn: MsgTopicListIn,
+    ): Promise<ListResponseMsgTopicListOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.msgs.topic.list");
+
+        request.setBody(
+            MsgTopicListInSerializer._toJsonObject(msgTopicListIn)
+        );
+        
+        return request.send(
+            this.requestCtx,
+            ListResponseMsgTopicListOutSerializer._fromJsonObject,
         );
     }
 }

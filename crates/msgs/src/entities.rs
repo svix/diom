@@ -6,13 +6,15 @@ use std::{
     str::FromStr,
 };
 
+use base64::prelude::{BASE64_URL_SAFE, Engine as _};
 use diom_core::{
     PersistableValue,
     template_str::Template,
     types::{ByteString, DurationMs, UnixTimestampMs},
 };
 use diom_error::Error;
-use fjall_utils::FjallKeyComponent;
+use diom_id::{NamespaceId, TopicId};
+use fjall_utils::{FjallKey as _, FjallKeyComponent};
 use schemars::{JsonSchema, json_schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use sha2::{Digest, Sha256};
@@ -103,6 +105,10 @@ impl TopicName {
     pub fn name(&self) -> &Self {
         self
     }
+
+    pub fn as_iteration_key(&self) -> TopicIterationKey {
+        TopicIterationKey(self.clone())
+    }
 }
 
 /// Derefs to the topic name (without namespace or partition).
@@ -117,6 +123,12 @@ impl Deref for TopicName {
 impl fmt::Display for TopicName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl AsRef<[u8]> for TopicName {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
     }
 }
 
@@ -154,6 +166,78 @@ impl JsonSchema for TopicName {
             "example": "some_topic_name",
         })
     }
+}
+
+/// A key to use for paginating topics
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TopicIterationKey(TopicName);
+
+impl TopicIterationKey {
+    const PREFIX: &str = "topiciter_";
+
+    pub(crate) fn into_fjall_iterator(self, namespace_id: NamespaceId) -> fjall_utils::UserKey {
+        crate::storage::TopicKey {
+            namespace_id,
+            topic: self.0,
+        }
+        .fjall_key()
+    }
+}
+
+impl Serialize for TopicIterationKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_str(self)
+    }
+}
+
+impl fmt::Display for TopicIterationKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let encoded = format!("{}{}", Self::PREFIX, BASE64_URL_SAFE.encode(&self.0));
+        write!(f, "{encoded}")
+    }
+}
+
+impl<'de> Deserialize<'de> for TopicIterationKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        if let Some(suffix) = s.strip_prefix(Self::PREFIX) {
+            let raw = BASE64_URL_SAFE.decode(suffix).map_err(de::Error::custom)?;
+            let string = String::from_utf8(raw).map_err(de::Error::custom)?;
+            Ok(Self(TopicName::new(string).map_err(de::Error::custom)?))
+        } else {
+            Err(de::Error::custom("invalid iterator"))
+        }
+    }
+}
+
+impl JsonSchema for TopicIterationKey {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        String::schema_name()
+    }
+
+    fn inline_schema() -> bool {
+        true
+    }
+
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        json_schema!({
+            "type": "string",
+            "example": format!("{}c29tZV90b3BpY19uYW1l", Self::PREFIX)
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TopicListOut {
+    pub id: TopicId,
+    pub name: TopicName,
+    pub partitions: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]

@@ -2,8 +2,10 @@
 
 from ..internal.api_common import ApiBase
 from ..models import (
+    ListResponseMsgTopicListOut,
     MsgTopicConfigureIn,
     MsgTopicConfigureOut,
+    MsgTopicListIn,
 )
 
 from ..models.msg_topic_configure_in import _MsgTopicConfigureIn
@@ -31,6 +33,20 @@ class MsgsTopicAsync(ApiBase):
             response_type=MsgTopicConfigureOut,
         )
 
+    async def list(
+        self,
+        msg_topic_list_in: MsgTopicListIn = MsgTopicListIn(),
+    ) -> ListResponseMsgTopicListOut:
+        """List available topics in the given namespace"""
+        body = msg_topic_list_in.model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1.msgs.topic.list",
+            body=body,
+            response_type=ListResponseMsgTopicListOut,
+        )
+
 
 class MsgsTopic(ApiBase):
     def configure(
@@ -52,4 +68,18 @@ class MsgsTopic(ApiBase):
             path="/api/v1.msgs.topic.configure",
             body=body,
             response_type=MsgTopicConfigureOut,
+        )
+
+    def list(
+        self,
+        msg_topic_list_in: MsgTopicListIn = MsgTopicListIn(),
+    ) -> ListResponseMsgTopicListOut:
+        """List available topics in the given namespace"""
+        body = msg_topic_list_in.model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1.msgs.topic.list",
+            body=body,
+            response_type=ListResponseMsgTopicListOut,
         )

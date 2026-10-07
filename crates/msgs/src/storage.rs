@@ -8,10 +8,11 @@ use std::collections::HashMap;
 use diom_error::{OptionExt, Result};
 use fjall_utils::{FjallKey, TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
+use tap::Pipe;
 
 use crate::entities::{
     ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, SinkListItem, SinkSettings,
-    SvixPollerListItem, TopicName, obfuscate_token,
+    SvixPollerListItem, TopicIterationKey, TopicListOut, TopicName, obfuscate_token,
 };
 
 /// Prefixes for rows stored in the `metadata_tables` keyspace.
@@ -38,6 +39,16 @@ pub(crate) struct TopicRow {
     pub id: TopicId,
     pub name: TopicName,
     pub partitions: u16,
+}
+
+impl From<TopicRow> for TopicListOut {
+    fn from(value: TopicRow) -> Self {
+        Self {
+            id: value.id,
+            name: value.name,
+            partitions: value.partitions as _,
+        }
+    }
 }
 
 impl TableRow for TopicRow {
@@ -97,6 +108,30 @@ impl TopicRow {
         batch.insert_row(metadata_tables, key, &row)?;
         Ok(row)
     }
+}
+
+/// Lists topics
+///
+/// Returns up to `limit` items whose topic ID sorts after `iterator`
+/// (exclusive). An unknown topic yields an empty list.
+#[tracing::instrument(skip(metadata_keyspace))]
+pub fn list_topics(
+    metadata_keyspace: &impl fjall_utils::ReadableKeyspace,
+    namespace_id: NamespaceId,
+    limit: usize,
+    iterator: Option<TopicIterationKey>,
+) -> Result<Vec<TopicListOut>> {
+    let prefix = TopicKey::prefix_namespace_id(&namespace_id);
+    TopicRow::list_range(
+        metadata_keyspace,
+        &prefix,
+        iterator.map(|i| i.into_fjall_iterator(namespace_id)),
+        limit,
+    )?
+    .into_iter()
+    .map(|(_, row)| row.into())
+    .collect::<Vec<TopicListOut>>()
+    .pipe(Ok)
 }
 
 #[derive(Serialize, Deserialize, PersistableValue)]

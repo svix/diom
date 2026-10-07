@@ -83,6 +83,7 @@ mod kv_set_out;
 mod list_response_admin_access_policy_out;
 mod list_response_admin_auth_token_out;
 mod list_response_admin_role_out;
+mod list_response_msg_topic_list_out;
 mod list_response_sink_out;
 mod list_response_svix_poller_out;
 mod metric_out;
@@ -117,6 +118,8 @@ mod msg_stream_seek_in;
 mod msg_stream_seek_out;
 mod msg_topic_configure_in;
 mod msg_topic_configure_out;
+mod msg_topic_list_in;
+mod msg_topic_list_out;
 mod node_status_out;
 mod operation_behavior;
 mod ping_out;
@@ -208,6 +211,7 @@ pub use self::{
     kv_set_out::KvSetOut, list_response_admin_access_policy_out::ListResponseAdminAccessPolicyOut,
     list_response_admin_auth_token_out::ListResponseAdminAuthTokenOut,
     list_response_admin_role_out::ListResponseAdminRoleOut,
+    list_response_msg_topic_list_out::ListResponseMsgTopicListOut,
     list_response_sink_out::ListResponseSinkOut,
     list_response_svix_poller_out::ListResponseSvixPollerOut, metric_out::MetricOut,
     metric_type::MetricType, msg_in::MsgIn, msg_namespace_configure_in::MsgNamespaceConfigureIn,
@@ -226,7 +230,8 @@ pub use self::{
     msg_stream_commit_out::MsgStreamCommitOut, msg_stream_receive_in::MsgStreamReceiveIn,
     msg_stream_receive_out::MsgStreamReceiveOut, msg_stream_seek_in::MsgStreamSeekIn,
     msg_stream_seek_out::MsgStreamSeekOut, msg_topic_configure_in::MsgTopicConfigureIn,
-    msg_topic_configure_out::MsgTopicConfigureOut, node_status_out::NodeStatusOut,
+    msg_topic_configure_out::MsgTopicConfigureOut, msg_topic_list_in::MsgTopicListIn,
+    msg_topic_list_out::MsgTopicListOut, node_status_out::NodeStatusOut,
     operation_behavior::OperationBehavior, ping_out::PingOut, queue_msg_out::QueueMsgOut,
     rate_limit_check_in::RateLimitCheckIn, rate_limit_check_out::RateLimitCheckOut,
     rate_limit_config::RateLimitConfig,

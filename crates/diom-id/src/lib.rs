@@ -43,9 +43,9 @@ pub type TopicId = Id<m::Topic>;
 mod m {
     // Markers for internal-only IDs
     id_marker!(Namespace);
-    id_marker!(Topic);
 
     // Markers for public IDs
+    id_marker!(Topic, "topic_");
     id_marker!(AuthToken, "key_");
 }
 

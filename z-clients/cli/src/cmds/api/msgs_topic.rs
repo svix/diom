@@ -38,6 +38,31 @@ pub(crate) enum MsgsTopicCommands {
         topic: String,
         msg_topic_configure_in: crate::json::JsonOf<diom::models::MsgTopicConfigureIn>,
     },
+    /// List available topics in the given namespace
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs topic list {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "Example body:
+{
+  \"namespace\": \"some_namespace\",
+  \"consistency\": \"strong\",
+  \"limit\": 123, // Limit the number of returned items
+  \"iterator\": \"topiciter_c29tZV90b3BpY19uYW1l\" // The iterator returned from a prior invocation
+}\n\nExample response:
+{
+  \"data\": [{\"id\": \"topic_06etngr201xwv7qj08mt4cs03w\", \"name\": \"some_topic_name\", \"partitions\": 123}],
+  \"iterator\": \"...\",
+  \"prev_iterator\": \"...\",
+  \"done\": true
+}\n")]
+    List {
+        msg_topic_list_in: Option<crate::json::JsonOf<diom::models::MsgTopicListIn>>,
+    },
 }
 
 impl MsgsTopicCommands {
@@ -51,6 +76,14 @@ impl MsgsTopicCommands {
                     .msgs()
                     .topic()
                     .configure(topic, msg_topic_configure_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp)?;
+            }
+            Self::List { msg_topic_list_in } => {
+                let resp = client
+                    .msgs()
+                    .topic()
+                    .list(msg_topic_list_in.unwrap_or_default().into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }
