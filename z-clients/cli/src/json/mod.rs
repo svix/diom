@@ -21,6 +21,8 @@ impl<T: DeserializeOwned> FromStr for JsonOf<T> {
                 .read_to_string(&mut input)
                 .context("Error reading stdin for '-' argument")?;
             input
+        } else if let Some(filename) = s.strip_prefix("@") {
+            fs_err::read_to_string(filename).context(format!("Error reading {filename}"))?
         } else {
             s.to_owned()
         };
@@ -114,16 +116,17 @@ where
 #[cfg(test)]
 mod tests {
     use serde::Deserialize;
+    use std::io::Write;
 
     use super::*;
 
-    #[derive(Debug, Deserialize, PartialEq)]
+    #[derive(Debug, Deserialize, PartialEq, Eq)]
     struct Pair {
         a: u32,
         b: u32,
     }
 
-    #[derive(Debug, Deserialize, PartialEq)]
+    #[derive(Debug, Deserialize, PartialEq, Eq)]
     struct Note {
         url: String,
         note: String,
@@ -192,5 +195,24 @@ mod tests {
         // Error should point at line 4, where the invalid token actually is.
         let err = JsonOf::<Pair>::from_str(input).unwrap_err();
         assert!(err.to_string().contains("line 4"), "got: {err}");
+    }
+
+    #[test]
+    fn reads_from_a_file() -> Result<()> {
+        let mut file = tempfile::NamedTempFile::new()?;
+        file.as_file_mut().write_all(b"{\"a\": 1, \"b\": 2}\n")?;
+        let input = format!("@{}", file.path().display());
+        let value: Pair = parse(&input);
+        assert_eq!(value, Pair { a: 1, b: 2 });
+        Ok(())
+    }
+
+    #[test]
+    fn returns_nice_errors_from_a_file() -> Result<()> {
+        let path = "/this/path/does/not/exist";
+        let input = format!("@{path}");
+        let err = JsonOf::<Pair>::from_str(&input).expect_err("Should return a nice error");
+        assert!(err.to_string().contains(path));
+        Ok(())
     }
 }
