@@ -12,16 +12,16 @@ use axum::{
     http::{HeaderMap, header::AUTHORIZATION},
 };
 use diom_authorization::RequestedOperation;
-use diom_core::types::{DurationMs, UnixTimestampMs};
+use diom_core::types::{Consistency, DurationMs, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{Error, OptionExt, Result, ResultExt};
-use diom_id::Module;
+use diom_id::{Module, Public, TopicId};
 use diom_msgs::{
     MsgsNamespace,
     entities::{
         ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, QueueMsgOut, Retention, SeekPosition,
-        SinkListItem, SinkSettings, StreamMsgOut, SvixPollerListItem, TopicIn, TopicName,
-        TopicPartition,
+        SinkListItem, SinkSettings, StreamMsgOut, SvixPollerListItem, TopicIn, TopicIterationKey,
+        TopicName, TopicPartition,
     },
     operations::{
         ConfigureNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
@@ -850,6 +850,93 @@ async fn topic_configure(
     }))
 }
 
+#[derive(Clone, Debug, Deserialize, JsonSchema)]
+struct MsgTopicListIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    #[serde(default = "Consistency::strong")]
+    pub consistency: Consistency,
+    #[serde(flatten)]
+    pub pagination: Pagination<TopicIterationKey>,
+}
+
+impl RequestInput for MsgTopicListIn {
+    fn access_metadata(&self) -> AccessMetadata<'_> {
+        AccessMetadata::RuleProtected(RequestedOperation {
+            module: Module::Msgs,
+            namespace: self.namespace.as_ref().map(|n| n.as_str()),
+            key: None,
+            action: "list",
+        })
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct MsgTopicListOut {
+    pub id: Public<TopicId>,
+    pub name: TopicName,
+    pub partitions: usize,
+}
+
+impl ListResponseItem for MsgTopicListOut {
+    // Topics need to be paginated by TopicIterationKey, not by id, because that's how they're
+    // ordered on-disk
+    fn id(&self) -> String {
+        self.name.as_iteration_key().to_string()
+    }
+}
+
+impl From<diom_msgs::entities::TopicListOut> for MsgTopicListOut {
+    fn from(value: diom_msgs::entities::TopicListOut) -> Self {
+        Self {
+            id: value.id.public(),
+            name: value.name,
+            partitions: value.partitions,
+        }
+    }
+}
+
+/// List available topics in the given namespace
+#[aide_annotate(op_id = "v1.msgs.topic.list")]
+async fn topic_list(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgTopicListIn>,
+) -> Result<MsgPackOrJson<ListResponse<MsgTopicListOut>>> {
+    if data.consistency.linearizable() {
+        repl.wait_linearizable().await.or_internal_error()?;
+    }
+
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let limit: usize = data.pagination.limit.into();
+    let iterator = data.pagination.iterator;
+
+    let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
+    let metadata_ks = ro_db
+        .keyspace(diom_msgs::METADATA_KEYSPACE)
+        .or_internal_error()?;
+
+    let items = diom_core::task::spawn_blocking_in_current_span({
+        let iterator = iterator.clone();
+        move || diom_msgs::list_topics(&metadata_ks, namespace.id, limit + 1, iterator)
+    })
+    .await
+    .or_internal_error()??
+    .into_iter()
+    .map(MsgTopicListOut::from)
+    .collect();
+
+    Ok(MsgPackOrJson(ListResponse::create(
+        items,
+        limit,
+        iterator.map(|s| s.to_string()),
+    )))
+}
+
 // ---------------------------------------------------------------------------
 // svix_poller
 
@@ -1271,6 +1358,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             topic_configure_path,
             post_with(topic_configure, topic_configure_operation),
+            &tag,
+        )
+        .api_route_with(
+            topic_list_path,
+            post_with(topic_list, topic_list_operation),
             &tag,
         )
         .api_route_with(

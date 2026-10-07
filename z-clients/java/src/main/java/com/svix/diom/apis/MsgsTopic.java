@@ -10,8 +10,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.svix.diom.models.ListResponseMsgTopicListOut;
 import com.svix.diom.models.MsgTopicConfigureIn;
 import com.svix.diom.models.MsgTopicConfigureOut;
+import com.svix.diom.models.MsgTopicListIn;
 import com.svix.diom.models.MsgTopicConfigureIn_;
 
 public class MsgsTopic {
@@ -42,6 +44,29 @@ public class MsgsTopic {
             null,
             body,
             MsgTopicConfigureOut.class
+        );
+    }
+
+    /** List available topics in the given namespace */
+    public ListResponseMsgTopicListOut list(
+        final MsgTopicListIn msgTopicListIn
+    ) throws DiomException {
+
+        return this.client.executeRequest(
+            "POST",
+            "/api/v1.msgs.topic.list",
+            null,
+            msgTopicListIn,
+            ListResponseMsgTopicListOut.class
+        );
+    }
+
+    /** List available topics in the given namespace */
+    public ListResponseMsgTopicListOut list(
+        
+    ) throws DiomException {
+        return this.list(
+            new MsgTopicListIn()
         );
     }
 }

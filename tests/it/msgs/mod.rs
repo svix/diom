@@ -1,3 +1,4 @@
+mod list;
 mod namespace;
 mod publish;
 mod queue;

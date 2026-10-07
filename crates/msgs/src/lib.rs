@@ -28,7 +28,7 @@ pub(crate) mod storage;
 pub mod svix_poller;
 mod topic_publish_notifier;
 
-pub use storage::{list_sinks, list_svix_pollers};
+pub use storage::{list_sinks, list_svix_pollers, list_topics};
 pub use topic_publish_notifier::*;
 
 pub const MSG_KEYSPACE: &str = "mod_msgs";

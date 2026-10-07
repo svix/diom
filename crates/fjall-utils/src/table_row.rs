@@ -84,18 +84,22 @@ pub trait TableRow:
     ///
     /// `iterator` is an exclusive start key: pass `None` to start from the beginning of the
     /// prefix, or `Some(key)` to resume after that key.
-    fn list_range<K: ReadableKeyspace>(
+    fn list_range<K: ReadableKeyspace, I: AsRef<[u8]>>(
         keyspace: &K,
         prefix: &[u8],
-        iterator: Option<Vec<u8>>,
+        iterator: Option<I>,
         limit: usize,
     ) -> Result<Vec<(fjall::Slice, Self)>> {
-        let start = match iterator {
-            None => Bound::Included(prefix.to_vec()),
+        let iterator_ref = iterator.as_ref().map(|r| r.as_ref());
+        let start = match iterator_ref {
+            None => Bound::Included(prefix),
             Some(key) => Bound::Excluded(key),
         };
         let mut results = Vec::new();
-        for item in keyspace.range((start, Bound::Unbounded)).take(limit) {
+        for item in keyspace
+            .range::<&[u8], _>((start, Bound::Unbounded))
+            .take(limit)
+        {
             let (key, value) = item.into_inner()?;
             if !key.starts_with(prefix) {
                 break;
