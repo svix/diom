@@ -3,7 +3,7 @@ import type { XOR } from "./util";
 import { ConnectionError, type DiomError, type ErrorBody, makeErrorFromResponse, OtherError } from "./error";
 import type { DiomOptions } from "./options";
 
-export const LIB_VERSION = "0.2.4";
+export const LIB_VERSION = "0.2.5";
 const USER_AGENT = `svix-libs/${LIB_VERSION}/javascript`;
 
 /**
