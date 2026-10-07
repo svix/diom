@@ -191,7 +191,7 @@ impl FromStr for KeyPatternSegment {
             return Ok(Self::Placeholder(placeholder.to_owned()));
         }
 
-        if s.contains(['$', '{', '}']) {
+        if s.contains(['$']) {
             // FIXME: could use a better error message
             return Err("invalid key pattern segment");
         }

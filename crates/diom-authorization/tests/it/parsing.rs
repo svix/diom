@@ -20,7 +20,7 @@ fn test_parse_invalid_key_wildcard() {
 
 #[test]
 fn test_parse_invalid_key_placeholder() {
-    for invalid_pat in ["kv::$", "kv::${/", "kv::foo/$x", "kv::foo/{y}"] {
+    for invalid_pat in ["kv::$", "kv::${/", "kv::foo/$x"] {
         let err = invalid_pat.parse::<ResourcePattern>().unwrap_err();
         assert_eq!(err, "invalid key pattern segment", "{invalid_pat}");
     }
