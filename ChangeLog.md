@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased Changes
+* Server: Add `/api/v1.msgs.topic.list` operation to list all topics
 * CLI: Allow loading a JSON argument from a file by specifying it prefixed with the `@` argument on the command-line;
   e.g., `diom kv set key value @options.json` to load the options from `options.json`. Note that this can only be used for arguments
   which take a JSON body (where the leading `@` is unambiguous) and cannot currently be used for strings like K/V keys or values.
