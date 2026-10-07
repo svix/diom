@@ -1,5 +1,7 @@
 # Changelog
 
+See also [the diom-operator ChangeLog](./infra/operator/ChangeLog.md) for changes to the Kubernetes infrastructure.
+
 ## Unreleased Changes
 
 ## Version 0.2.5
@@ -11,7 +13,6 @@
 * Server: Improve reliability of cluster bootstrapping and snapshots; snapshots now include Cluster UUID metadata
 * Server: Add a dedicated "readiness" endpoint
 * Server: Expose some internal Tokio metrics to OpenTelemetry (thanks @KaustubhOG)
-* Operator: Expose `currentLeader` as a status variable on `diomcluster` objects if an admin token is exposed
 * CLI: Ignore `EPIPE` to make it easier to use the CLI in shell pipelines
 * CLI: Allow parsing input as JSONC in addition to JSON (thanks @KaustubhOG)
 * CLI: Allow loading a JSON argument from a file by specifying it prefixed with the `@` argument on the command-line;
