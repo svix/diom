@@ -13,7 +13,7 @@ jq '{
 }' "$root/infra/helm-diom/charts/crds/crds/diomclusters.json" |
     docker run --rm -i \
         -v "$root":/work:ro \
-        dshanley/vacuum lint \
+        docker.io/dshanley/vacuum:v0.32.0 lint \
         /dev/stdin \
         --fail-severity error \
         --ruleset infra/operator/.vacuum.yaml \

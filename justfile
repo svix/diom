@@ -1,6 +1,7 @@
 set quiet
 
 HERE := justfile_directory()
+VACUUM_VERSION := "v0.32.0"
 
 # The first recipe runs when you invoke `just` without args.
 _default:
@@ -37,19 +38,19 @@ sort:
 vacuum-openapi:
     # keep this in sync with lint-openapi.yml
     docker run --rm \
-            -v .:/work:ro \
-            dshanley/vacuum lint \
-            openapi.json \
-            --no-banner \
-            --errors \
-            --all-results \
-            --details \
-            --silent \
-            --no-clip \
-            --no-message \
-            --fail-severity error \
-            --ruleset .vacuum.yaml \
-            --min-score 0
+        -v .:/work:ro \
+        docker.io/dshanley/vacuum:{{ VACUUM_VERSION }} lint \
+        openapi.json \
+        --no-banner \
+        --errors \
+        --all-results \
+        --details \
+        --silent \
+        --no-clip \
+        --no-message \
+        --fail-severity error \
+        --ruleset .vacuum.yaml \
+        --min-score 0
 
 # run `vacuum` to check operator CRD openapi schema
 [group('lint')]
@@ -61,15 +62,15 @@ vacuum-operator-openapi:
 vacuum-openapi-details:
     # keep this in sync with lint-openapi.yml
     docker run --rm \
-            -v .:/work:ro \
-            dshanley/vacuum lint \
-            openapi.json \
-            --no-banner \
-            --details \
-            --all-results \
-            --fail-severity error \
-            --ruleset .vacuum.yaml \
-            --min-score 0
+        -v .:/work:ro \
+        docker.io/dshanley/vacuum:{{ VACUUM_VERSION }} lint \
+        openapi.json \
+        --no-banner \
+        --details \
+        --all-results \
+        --fail-severity error \
+        --ruleset .vacuum.yaml \
+        --min-score 0
 
 # run security lints
 [group('lint')]
