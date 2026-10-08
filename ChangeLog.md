@@ -4,6 +4,9 @@ See also [the diom-operator ChangeLog](./infra/operator/ChangeLog.md) for change
 
 ## Unreleased Changes
 
+## Version 0.2.6
+* Internal release to fix Maven publishing for Java SDK; no changes to other SDKs
+
 ## Version 0.2.5
 * Server: Add `/api/v1.msgs.topic.list` operation to list all topics
 * Server: Add the ability to subscribe to a Svix AutoConfig endpoint and append messages from it to a Diom topic

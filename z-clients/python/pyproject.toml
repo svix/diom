@@ -1,6 +1,6 @@
 [project]
 name = "diom"
-version = "0.2.5"
+version = "0.2.6"
 description = "Diom Python client library"
 requires-python = ">=3.10"
 license = "MIT"
