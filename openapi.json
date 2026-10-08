@@ -7014,6 +7014,115 @@
         ]
       }
     },
+    "/api/v1.msgs.topic.describe": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Topic Describe",
+        "description": "Show information about the given topic",
+        "operationId": "v1.msgs.topic.describe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgTopicDescribeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgTopicDescribeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "CLI",
+            "source": "diom msgs topic describe \"some_topic_name\" '{\n    \"namespace\": \"some_namespace\",\n    \"consistency\": \"strong\"\n}'"
+          },
+          {
+            "lang": "Go",
+            "label": "Go",
+            "source": "response, err := diom.Msgs.Topic.Describe(\n    ctx,\n    \"some_topic_name\",\n    MsgTopicDescribeIn{\n        Namespace: new(\"some_namespace\"),\n        Consistency: new(CONSISTENCY_STRONG),\n    },\n)"
+          },
+          {
+            "lang": "Java",
+            "label": "Java",
+            "source": "var response = diom.getMsgs.getTopic.describe(\n    \"some_topic_name\",\n    new MsgTopicDescribeIn()\n        .namespace(\"some_namespace\")\n        .consistency(\n            Consistency.Strong\n        )\n);"
+          },
+          {
+            "lang": "TypeScript",
+            "label": "JavaScript",
+            "source": "const response = await diom.msgs.topic.describe(\n    \"some_topic_name\",\n    {\n        namespace: \"some_namespace\",\n        consistency: Consistency.Strong,\n    },\n);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "response = diom.msgs.topic.describe(\n    \"some_topic_name\",\n    MsgTopicDescribeIn(\n        namespace = \"some_namespace\",\n        consistency = Consistency.STRONG,\n    ),\n);"
+          },
+          {
+            "lang": "Rust",
+            "label": "Rust",
+            "source": "let response = diom.msgs()\n    .topic()\n    .describe(\n        \"some_topic_name\".to_owned(),\n        MsgTopicDescribeIn::new()\n            .with_namespace(\"some_namespace\".to_owned())\n            .with_consistency(Consistency::Strong),\n    )\n    .await?;"
+          }
+        ]
+      }
+    },
     "/api/v1.msgs.svix-poller.create": {
       "post": {
         "tags": [
@@ -11134,6 +11243,59 @@
           "partitions"
         ]
       },
+      "MsgTopicDescribeIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "consistency": {
+            "default": "strong",
+            "$ref": "#/components/schemas/Consistency"
+          }
+        },
+        "required": [
+          "topic"
+        ],
+        "x-positional": [
+          "topic"
+        ]
+      },
+      "MsgTopicDescribeOut": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The unique internal ID of this topic\n\nThis can useful for debugging",
+            "type": "string",
+            "example": "topic_06etngr201xwv7qj08mt4cs03w"
+          },
+          "name": {
+            "type": "string",
+            "example": "some_topic_name"
+          },
+          "partitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MsgTopicPartitionDescribeOut"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "partitions"
+        ]
+      },
       "MsgTopicListIn": {
         "type": "object",
         "properties": {
@@ -11187,6 +11349,27 @@
           "id",
           "name",
           "partitions"
+        ]
+      },
+      "MsgTopicPartitionDescribeOut": {
+        "type": "object",
+        "properties": {
+          "partition_id": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "high_water_mark": {
+            "description": "The next offset to be committed to this partition",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "partition_id",
+          "high_water_mark"
         ]
       },
       "NodeStatusOut": {

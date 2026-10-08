@@ -13,6 +13,14 @@ import {
     MsgTopicConfigureOutSerializer,
 } from '../models/msgTopicConfigureOut';
 import {
+    type MsgTopicDescribeIn,
+    MsgTopicDescribeInSerializer,
+} from '../models/msgTopicDescribeIn';
+import {
+    type MsgTopicDescribeOut,
+    MsgTopicDescribeOutSerializer,
+} from '../models/msgTopicDescribeOut';
+import {
     type MsgTopicListIn,
     MsgTopicListInSerializer,
 } from '../models/msgTopicListIn';
@@ -56,6 +64,24 @@ export class MsgsTopic {
         return request.send(
             this.requestCtx,
             ListResponseMsgTopicListOutSerializer._fromJsonObject,
+        );
+    }/** Show information about the given topic */
+    public describe(
+        topic: string,
+        msgTopicDescribeIn: MsgTopicDescribeIn,
+    ): Promise<MsgTopicDescribeOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.msgs.topic.describe");
+
+        request.setBody(
+            MsgTopicDescribeInSerializer._toJsonObject({
+                ...msgTopicDescribeIn,
+                topic: topic,
+            })
+        );
+        
+        return request.send(
+            this.requestCtx,
+            MsgTopicDescribeOutSerializer._fromJsonObject,
         );
     }
 }

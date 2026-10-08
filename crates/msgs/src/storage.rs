@@ -3,7 +3,7 @@ use diom_core::{
     types::{AsMillisecond, ByteString, UnixTimestampMs},
 };
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use diom_error::{OptionExt, Result};
 use fjall_utils::{FjallKey, TableRow, WriteBatchExt};
@@ -132,6 +132,51 @@ pub fn list_topics(
     .map(|(_, row)| row.into())
     .collect::<Vec<TopicListOut>>()
     .pipe(Ok)
+}
+
+#[derive(Clone, Debug)]
+pub struct TopicPartitionDescribeOut {
+    pub high_water_mark: u64,
+}
+
+#[derive(Clone, Debug)]
+pub struct TopicDescribeOut {
+    pub id: TopicId,
+    pub partitions: BTreeMap<Partition, TopicPartitionDescribeOut>,
+}
+
+/// Describe a single topic
+///
+/// WARNING: This method internally uses the fjall database reference in the State,
+/// which (if accessed outside of a Raft commit lifecycle but during a snapshot-restore operation)
+/// may be inconsistent.
+#[tracing::instrument(skip(metadata_keyspace, state))]
+pub fn describe_topic(
+    metadata_keyspace: &impl fjall_utils::ReadableKeyspace,
+    namespace_id: NamespaceId,
+    topic: TopicName,
+    state: &super::State,
+) -> Result<TopicDescribeOut> {
+    let key = TopicKey {
+        namespace_id,
+        topic,
+    };
+    let topic = TopicRow::fetch(metadata_keyspace, key)?.ok_or_not_found("topic  not found")?;
+    let mut partitions = BTreeMap::new();
+    for partition in topic.partitions() {
+        let partition_id = partition?;
+        let hwm = state.next_offset(topic.id, partition_id)?;
+        partitions.insert(
+            partition_id,
+            TopicPartitionDescribeOut {
+                high_water_mark: hwm,
+            },
+        );
+    }
+    Ok(TopicDescribeOut {
+        id: topic.id,
+        partitions,
+    })
 }
 
 #[derive(Serialize, Deserialize, PersistableValue)]

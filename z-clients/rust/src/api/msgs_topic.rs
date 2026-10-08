@@ -40,4 +40,22 @@ impl<'a> MsgsTopic<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// Show information about the given topic
+    pub async fn describe(
+        &self,
+        topic: String,
+        msg_topic_describe_in: MsgTopicDescribeIn,
+    ) -> Result<MsgTopicDescribeOut> {
+        let msg_topic_describe_in = MsgTopicDescribeIn_ {
+            namespace: msg_topic_describe_in.namespace,
+            topic,
+            consistency: msg_topic_describe_in.consistency,
+        };
+
+        crate::request::Request::new(http::Method::POST, "/api/v1.msgs.topic.describe")
+            .with_body(msg_topic_describe_in)
+            .execute(self.cfg)
+            .await
+    }
 }

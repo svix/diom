@@ -63,6 +63,29 @@ pub(crate) enum MsgsTopicCommands {
     List {
         msg_topic_list_in: Option<crate::json::JsonOf<diom::models::MsgTopicListIn>>,
     },
+    /// Show information about the given topic
+    #[command(help_template = concat!(
+            "{about-with-newline}\n",
+            "{usage-heading} {usage}\n\n",
+            "Example: diom msgs topic describe TOPIC {...}\n",
+            "{after-help}",
+            "\n",
+            "{all-args}",
+        ))]
+    #[command(after_help = "Example body:
+{
+  \"namespace\": \"some_namespace\",
+  \"consistency\": \"strong\"
+}\n\nExample response:
+{
+  \"id\": \"topic_06etngr201xwv7qj08mt4cs03w\", // The unique internal ID of this topic
+  \"name\": \"some_topic_name\",
+  \"partitions\": [{\"partition_id\": 123, \"high_water_mark\": 123}]
+}\n")]
+    Describe {
+        topic: String,
+        msg_topic_describe_in: Option<crate::json::JsonOf<diom::models::MsgTopicDescribeIn>>,
+    },
 }
 
 impl MsgsTopicCommands {
@@ -84,6 +107,20 @@ impl MsgsTopicCommands {
                     .msgs()
                     .topic()
                     .list(msg_topic_list_in.unwrap_or_default().into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp)?;
+            }
+            Self::Describe {
+                topic,
+                msg_topic_describe_in,
+            } => {
+                let resp = client
+                    .msgs()
+                    .topic()
+                    .describe(
+                        topic,
+                        msg_topic_describe_in.unwrap_or_default().into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

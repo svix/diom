@@ -19,9 +19,9 @@ use diom_id::{Module, Public, TopicId};
 use diom_msgs::{
     MsgsNamespace,
     entities::{
-        ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, QueueMsgOut, Retention, SeekPosition,
-        SinkListItem, SinkSettings, StreamMsgOut, SvixPollerListItem, TopicIn, TopicIterationKey,
-        TopicName, TopicPartition,
+        ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, QueueMsgOut, Retention,
+        SeekPosition, SinkListItem, SinkSettings, StreamMsgOut, SvixPollerListItem, TopicIn,
+        TopicIterationKey, TopicName, TopicPartition,
     },
     operations::{
         ConfigureNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
@@ -937,6 +937,78 @@ async fn topic_list(
     )))
 }
 
+#[derive(Clone, Debug, Deserialize, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic"]))]
+struct MsgTopicDescribeIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicName,
+    #[serde(default = "Consistency::strong")]
+    pub consistency: Consistency,
+}
+
+request_input!(MsgTopicDescribeIn, "describe");
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct MsgTopicPartitionDescribeOut {
+    partition_id: Partition,
+    /// The next offset to be committed to this partition
+    high_water_mark: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct MsgTopicDescribeOut {
+    /// The unique internal ID of this topic
+    ///
+    /// This can useful for debugging
+    pub id: Public<TopicId>,
+    pub name: TopicName,
+    pub partitions: Vec<MsgTopicPartitionDescribeOut>,
+}
+
+/// Show information about the given topic
+#[aide_annotate(op_id = "v1.msgs.topic.describe")]
+async fn topic_describe(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgTopicDescribeIn>,
+) -> Result<MsgPackOrJson<MsgTopicDescribeOut>> {
+    if data.consistency.linearizable() {
+        repl.wait_linearizable().await.or_internal_error()?;
+    }
+
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_ref())?
+        .ok_or_not_found("namespace")?;
+
+    let msgs_state = repl.state_machine.msgs_store().await;
+
+    let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
+    let metadata_ks = ro_db
+        .keyspace(diom_msgs::METADATA_KEYSPACE)
+        .or_internal_error()?;
+
+    let result = diom_core::task::spawn_blocking_in_current_span({
+        let topic_name = data.topic.clone();
+        move || diom_msgs::describe_topic(&metadata_ks, namespace.id, topic_name, &msgs_state)
+    })
+    .await??;
+
+    Ok(MsgPackOrJson(MsgTopicDescribeOut {
+        id: result.id.public(),
+        name: data.topic,
+        partitions: result
+            .partitions
+            .into_iter()
+            .map(|(partition_id, value)| MsgTopicPartitionDescribeOut {
+                partition_id,
+                high_water_mark: value.high_water_mark,
+            })
+            .collect(),
+    }))
+}
+
 // ---------------------------------------------------------------------------
 // svix_poller
 
@@ -1363,6 +1435,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             topic_list_path,
             post_with(topic_list, topic_list_operation),
+            &tag,
+        )
+        .api_route_with(
+            topic_describe_path,
+            post_with(topic_describe, topic_describe_operation),
             &tag,
         )
         .api_route_with(

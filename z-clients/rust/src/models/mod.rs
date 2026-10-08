@@ -118,8 +118,11 @@ mod msg_stream_seek_in;
 mod msg_stream_seek_out;
 mod msg_topic_configure_in;
 mod msg_topic_configure_out;
+mod msg_topic_describe_in;
+mod msg_topic_describe_out;
 mod msg_topic_list_in;
 mod msg_topic_list_out;
+mod msg_topic_partition_describe_out;
 mod node_status_out;
 mod operation_behavior;
 mod ping_out;
@@ -230,8 +233,10 @@ pub use self::{
     msg_stream_commit_out::MsgStreamCommitOut, msg_stream_receive_in::MsgStreamReceiveIn,
     msg_stream_receive_out::MsgStreamReceiveOut, msg_stream_seek_in::MsgStreamSeekIn,
     msg_stream_seek_out::MsgStreamSeekOut, msg_topic_configure_in::MsgTopicConfigureIn,
-    msg_topic_configure_out::MsgTopicConfigureOut, msg_topic_list_in::MsgTopicListIn,
-    msg_topic_list_out::MsgTopicListOut, node_status_out::NodeStatusOut,
+    msg_topic_configure_out::MsgTopicConfigureOut, msg_topic_describe_in::MsgTopicDescribeIn,
+    msg_topic_describe_out::MsgTopicDescribeOut, msg_topic_list_in::MsgTopicListIn,
+    msg_topic_list_out::MsgTopicListOut,
+    msg_topic_partition_describe_out::MsgTopicPartitionDescribeOut, node_status_out::NodeStatusOut,
     operation_behavior::OperationBehavior, ping_out::PingOut, queue_msg_out::QueueMsgOut,
     rate_limit_check_in::RateLimitCheckIn, rate_limit_check_out::RateLimitCheckOut,
     rate_limit_config::RateLimitConfig,
@@ -262,6 +267,6 @@ pub(crate) use self::{
     msg_queue_receive_in::MsgQueueReceiveIn_, msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn_,
     msg_stream_cancel_lease_in::MsgStreamCancelLeaseIn_, msg_stream_commit_in::MsgStreamCommitIn_,
     msg_stream_receive_in::MsgStreamReceiveIn_, msg_stream_seek_in::MsgStreamSeekIn_,
-    msg_topic_configure_in::MsgTopicConfigureIn_, sink_list_in::SinkListIn_,
-    svix_poller_list_in::SvixPollerListIn_,
+    msg_topic_configure_in::MsgTopicConfigureIn_, msg_topic_describe_in::MsgTopicDescribeIn_,
+    sink_list_in::SinkListIn_, svix_poller_list_in::SvixPollerListIn_,
 };
