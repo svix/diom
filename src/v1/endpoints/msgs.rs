@@ -337,7 +337,7 @@ struct MsgStreamCommitIn {
     pub namespace: Option<NamespaceName>,
     pub topic: TopicPartition,
     pub consumer_group: ConsumerGroup,
-    pub offset: u64,
+    pub offset: Offset,
 }
 
 request_input!(MsgStreamCommitIn, "stream.commit");
@@ -953,7 +953,7 @@ request_input!(MsgTopicDescribeIn, "describe");
 struct MsgTopicPartitionDescribeOut {
     partition_id: Partition,
     /// The next offset to be committed to this partition
-    high_water_mark: u64,
+    high_water_mark: Offset,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
