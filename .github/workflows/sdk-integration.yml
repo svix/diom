@@ -76,7 +76,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15.0rc2", "pypy@3.11"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "pypy@3.11"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
@@ -85,7 +85,7 @@ jobs:
           path: /tmp
       - name: Start Diom server
         run: scripts/start-diom-server.sh /tmp/diom-server
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run Python SDK integration tests
