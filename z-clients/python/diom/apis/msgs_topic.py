@@ -5,10 +5,13 @@ from ..models import (
     ListResponseMsgTopicListOut,
     MsgTopicConfigureIn,
     MsgTopicConfigureOut,
+    MsgTopicDescribeIn,
+    MsgTopicDescribeOut,
     MsgTopicListIn,
 )
 
 from ..models.msg_topic_configure_in import _MsgTopicConfigureIn
+from ..models.msg_topic_describe_in import _MsgTopicDescribeIn
 
 
 class MsgsTopicAsync(ApiBase):
@@ -47,6 +50,25 @@ class MsgsTopicAsync(ApiBase):
             response_type=ListResponseMsgTopicListOut,
         )
 
+    async def describe(
+        self,
+        topic: str,
+        msg_topic_describe_in: MsgTopicDescribeIn = MsgTopicDescribeIn(),
+    ) -> MsgTopicDescribeOut:
+        """Show information about the given topic"""
+        body = _MsgTopicDescribeIn(
+            namespace=msg_topic_describe_in.namespace,
+            topic=topic,
+            consistency=msg_topic_describe_in.consistency,
+        ).model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1.msgs.topic.describe",
+            body=body,
+            response_type=MsgTopicDescribeOut,
+        )
+
 
 class MsgsTopic(ApiBase):
     def configure(
@@ -82,4 +104,23 @@ class MsgsTopic(ApiBase):
             path="/api/v1.msgs.topic.list",
             body=body,
             response_type=ListResponseMsgTopicListOut,
+        )
+
+    def describe(
+        self,
+        topic: str,
+        msg_topic_describe_in: MsgTopicDescribeIn = MsgTopicDescribeIn(),
+    ) -> MsgTopicDescribeOut:
+        """Show information about the given topic"""
+        body = _MsgTopicDescribeIn(
+            namespace=msg_topic_describe_in.namespace,
+            topic=topic,
+            consistency=msg_topic_describe_in.consistency,
+        ).model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1.msgs.topic.describe",
+            body=body,
+            response_type=MsgTopicDescribeOut,
         )

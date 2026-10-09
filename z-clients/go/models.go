@@ -122,8 +122,11 @@ type (
 	MsgStreamSeekOut                 = diom_models.MsgStreamSeekOut
 	MsgTopicConfigureIn              = diom_models.MsgTopicConfigureIn
 	MsgTopicConfigureOut             = diom_models.MsgTopicConfigureOut
+	MsgTopicDescribeIn               = diom_models.MsgTopicDescribeIn
+	MsgTopicDescribeOut              = diom_models.MsgTopicDescribeOut
 	MsgTopicListIn                   = diom_models.MsgTopicListIn
 	MsgTopicListOut                  = diom_models.MsgTopicListOut
+	MsgTopicPartitionDescribeOut     = diom_models.MsgTopicPartitionDescribeOut
 	NodeStatusOut                    = diom_models.NodeStatusOut
 	OperationBehavior                = diom_models.OperationBehavior
 	PingOut                          = diom_models.PingOut

@@ -13,8 +13,11 @@ import java.util.Set;
 import com.svix.diom.models.ListResponseMsgTopicListOut;
 import com.svix.diom.models.MsgTopicConfigureIn;
 import com.svix.diom.models.MsgTopicConfigureOut;
+import com.svix.diom.models.MsgTopicDescribeIn;
+import com.svix.diom.models.MsgTopicDescribeOut;
 import com.svix.diom.models.MsgTopicListIn;
 import com.svix.diom.models.MsgTopicConfigureIn_;
+import com.svix.diom.models.MsgTopicDescribeIn_;
 
 public class MsgsTopic {
     private final HttpClient client;
@@ -67,6 +70,36 @@ public class MsgsTopic {
     ) throws DiomException {
         return this.list(
             new MsgTopicListIn()
+        );
+    }
+
+    /** Show information about the given topic */
+    public MsgTopicDescribeOut describe(
+        String topic,
+        final MsgTopicDescribeIn msgTopicDescribeIn
+    ) throws DiomException {
+        MsgTopicDescribeIn_ body = new MsgTopicDescribeIn_(
+            msgTopicDescribeIn.getNamespace(),
+            topic,
+            msgTopicDescribeIn.getConsistency()
+        );
+
+        return this.client.executeRequest(
+            "POST",
+            "/api/v1.msgs.topic.describe",
+            null,
+            body,
+            MsgTopicDescribeOut.class
+        );
+    }
+
+    /** Show information about the given topic */
+    public MsgTopicDescribeOut describe(
+        String topic
+    ) throws DiomException {
+        return this.describe(
+            topic,
+            new MsgTopicDescribeIn()
         );
     }
 }

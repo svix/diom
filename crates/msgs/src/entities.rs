@@ -41,8 +41,10 @@ pub const TOPIC_PARTITION_DELIMITER: &str = "~";
     Deserialize,
     FjallKeyComponent,
     PersistableValue,
+    JsonSchema,
 )]
 #[serde(transparent)]
+#[schemars(transparent)]
 pub struct Partition(u16);
 
 impl Partition {

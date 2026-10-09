@@ -3,12 +3,13 @@
 See also [the diom-operator ChangeLog](./infra/operator/ChangeLog.md) for changes to the Kubernetes infrastructure.
 
 ## Unreleased Changes
+* Server: Add `v1.msgs.topic.describe` operation to show metadata about a topic
 
 ## Version 0.2.6
 * Internal release to fix Maven publishing for Java SDK; no changes to other SDKs
 
 ## Version 0.2.5
-* Server: Add `/api/v1.msgs.topic.list` operation to list all topics
+* Server: Add `v1.msgs.topic.list` operation to list all topics
 * Server: Add the ability to subscribe to a Svix AutoConfig endpoint and append messages from it to a Diom topic
 * Server: Add the ability to automatically emit messages from a Diom topic to an arbitrary HTTP server
 * Server: Add a set of endpoints exposing the current values of all OpenTelemetry metrics, for polling

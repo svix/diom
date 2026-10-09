@@ -116,8 +116,11 @@ from .msg_stream_seek_in import MsgStreamSeekIn
 from .msg_stream_seek_out import MsgStreamSeekOut
 from .msg_topic_configure_in import MsgTopicConfigureIn
 from .msg_topic_configure_out import MsgTopicConfigureOut
+from .msg_topic_describe_in import MsgTopicDescribeIn
+from .msg_topic_describe_out import MsgTopicDescribeOut
 from .msg_topic_list_in import MsgTopicListIn
 from .msg_topic_list_out import MsgTopicListOut
+from .msg_topic_partition_describe_out import MsgTopicPartitionDescribeOut
 from .node_status_out import NodeStatusOut
 from .operation_behavior import OperationBehavior
 from .ping_out import PingOut
@@ -271,8 +274,11 @@ __all__ = [
     "MsgStreamSeekOut",
     "MsgTopicConfigureIn",
     "MsgTopicConfigureOut",
+    "MsgTopicDescribeIn",
+    "MsgTopicDescribeOut",
     "MsgTopicListIn",
     "MsgTopicListOut",
+    "MsgTopicPartitionDescribeOut",
     "NodeStatusOut",
     "OperationBehavior",
     "PingOut",

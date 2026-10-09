@@ -53,3 +53,24 @@ func (msgsTopic MsgsTopic) List(
 		&msgTopicListIn,
 	)
 }
+
+// Show information about the given topic
+func (msgsTopic MsgsTopic) Describe(
+	ctx context.Context,
+	topic string,
+	msgTopicDescribeIn diom_models.MsgTopicDescribeIn,
+) (*diom_models.MsgTopicDescribeOut, error) {
+	body := diom_models.MsgTopicDescribeIn_{
+		Namespace:   msgTopicDescribeIn.Namespace,
+		Topic:       topic,
+		Consistency: msgTopicDescribeIn.Consistency,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgTopicDescribeIn_, diom_models.MsgTopicDescribeOut](
+		ctx,
+		msgsTopic.client,
+		"POST",
+		"/api/v1.msgs.topic.describe",
+		&body,
+	)
+}
