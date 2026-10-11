@@ -441,6 +441,14 @@ pub struct ClusterConfiguration {
     /// increases the size of raft logs, and may result in confusing traces when there are multiple
     /// nodes in a cluster.
     pub forward_opentelemetry_context: bool,
+
+    #[serde(default)]
+    /// Use the openraft `broadcast_submitted_on_append` feature
+    ///
+    /// This can decrease p99 latency but will increase p50/average latency and decrease throughput,
+    /// depending on your workload and other configuration; particularly, when fsyncs of both logs
+    /// and data are enabled, this will substantially decrease latency.
+    pub broadcast_submitted_on_append: bool,
 }
 
 impl ClusterConfiguration {

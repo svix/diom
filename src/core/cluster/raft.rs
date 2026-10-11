@@ -203,6 +203,9 @@ pub async fn initialize_raft(
         #[allow(deprecated)]
         send_snapshot_timeout: cfg.cluster.send_snapshot_timeout.as_millis(),
         install_snapshot_timeout: cfg.cluster.send_snapshot_timeout.as_millis(),
+
+        broadcast_submitted_on_append: Some(cfg.cluster.broadcast_submitted_on_append),
+
         ..Default::default()
     };
     let config = Arc::new(config.validate().context("configuring openraft")?);
