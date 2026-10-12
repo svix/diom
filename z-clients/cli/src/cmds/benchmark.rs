@@ -609,7 +609,7 @@ impl BenchShard for BenchKvSet {
             .set(
                 key.clone(),
                 value,
-                KvSetIn::new().with_ttl(Duration::from_millis(500)),
+                KvSetIn::new().with_ttl(Duration::from_secs(600)),
             )
             .await?;
         self.bench_result.process(t.elapsed(), bytes)?;
