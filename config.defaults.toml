@@ -96,6 +96,13 @@ sync_mode = "buffer"
 # If you initialize all peers at exactly the same time, this can potentially cause errors.
 auto_initialize = true
 
+# Use the openraft `broadcast_submitted_on_append` feature
+#
+# This can decrease p99 latency but will increase p50/average latency and decrease throughput,
+# depending on your workload and other configuration; particularly, when fsyncs of both logs
+# and data are enabled, this will substantially decrease latency.
+broadcast_submitted_on_append = false
+
 # Timeout for new connections.
 #
 # If you want to be tolerant of dropped packets, this should be set to at least TO + ε,

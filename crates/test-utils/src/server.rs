@@ -357,6 +357,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             send_snapshot_timeout: NonZeroDurationMs::from_secs(3).unwrap(),
             forward_opentelemetry_context: false,
             minimum_snapshot_interval: NonZeroDurationMs::from_secs(10).unwrap(),
+            broadcast_submitted_on_append: false,
         },
         background_cleanup_interval: NonZeroDurationMs::from_secs(10).unwrap(),
         svix_poller_max_concurrency: 32.try_into().unwrap(),
