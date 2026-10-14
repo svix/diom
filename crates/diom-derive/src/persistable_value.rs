@@ -50,6 +50,65 @@ fn check_serde_field_attrs(field: &Field) -> Result<(), syn::Error> {
     Ok(())
 }
 
+/// Builds the `inventory::submit!` that registers this type's shape for the schema-manifest guard.
+/// Generic types are skipped, since one registration cannot describe every instantiation.
+fn schema_submit(input: &DeriveInput, kind: &str, members: Vec<TokenStream>) -> TokenStream {
+    if !input.generics.params.is_empty() {
+        return quote! {};
+    }
+    let type_name = input.ident.to_string();
+    quote! {
+        diom_core::__reexport::inventory::submit! {
+            diom_core::schema_shape::SchemaShape {
+                module_path: ::core::module_path!(),
+                type_name: #type_name,
+                kind: #kind,
+                members: &[ #(#members),* ],
+            }
+        }
+    }
+}
+
+fn struct_members(obj: &DataStruct) -> Vec<TokenStream> {
+    obj.fields
+        .iter()
+        .enumerate()
+        .map(|(i, field)| {
+            let name = field
+                .ident
+                .as_ref()
+                .map(|id| id.to_string())
+                .unwrap_or_else(|| i.to_string());
+            let ty = &field.ty;
+            let ty_str = quote!(#ty).to_string();
+            quote! {
+                diom_core::schema_shape::MemberShape { name: #name, ty: #ty_str, since: 0u32, nested: false }
+            }
+        })
+        .collect()
+}
+
+fn enum_members(obj: &DataEnum) -> Vec<TokenStream> {
+    obj.variants
+        .iter()
+        .map(|variant| {
+            let name = variant.ident.to_string();
+            let ty_str = variant
+                .fields
+                .iter()
+                .map(|f| {
+                    let ty = &f.ty;
+                    quote!(#ty).to_string()
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
+            quote! {
+                diom_core::schema_shape::MemberShape { name: #name, ty: #ty_str, since: 0u32, nested: false }
+            }
+        })
+        .collect()
+}
+
 fn parse_struct(obj: &DataStruct, input: &DeriveInput) -> Result<TokenStream, syn::Error> {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
@@ -66,12 +125,16 @@ fn parse_struct(obj: &DataStruct, input: &DeriveInput) -> Result<TokenStream, sy
 
     let ident = &input.ident;
 
+    let submit = schema_submit(input, "value-struct", struct_members(obj));
+
     Ok(quote! {
         #[allow(unsafe_code)]
         #[automatically_derived]
         impl #impl_generics diom_core::persistable_value::PersistableStruct for #ident #ty_generics #where_clause {
             type INNER = ( #(#inner,)* );
         }
+
+        #submit
     })
 }
 
@@ -94,12 +157,16 @@ fn parse_enum(obj: &DataEnum, input: &DeriveInput) -> Result<TokenStream, syn::E
 
     let ident = &input.ident;
 
+    let submit = schema_submit(input, "value-enum", enum_members(obj));
+
     Ok(quote! {
         #[allow(unsafe_code)]
         #[automatically_derived]
         impl #impl_generics diom_core::persistable_value::PersistableStruct for #ident #ty_generics #where_clause {
             type INNER = ( #(#inner,)* );
         }
+
+        #submit
     })
 }
 

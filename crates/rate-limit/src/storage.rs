@@ -27,3 +27,20 @@ pub(crate) struct TokenBucketKey {
     #[key(1)]
     pub(crate) identifier: String,
 }
+
+#[cfg(test)]
+mod byte_fixtures {
+    use super::*;
+    use fjall_utils::fixtures::decode_row;
+    #[test]
+    fn token_bucket_row_v0() {
+        // bytes come from a serialized TokenBucketRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: TokenBucketRow = decode_row("002a80d095ffbc31");
+        assert_eq!(row.tokens, 42);
+        assert_eq!(
+            row.last_refill,
+            UnixTimestampMs::try_from_millisecond(1_700_000_000_000).unwrap()
+        );
+    }
+}
