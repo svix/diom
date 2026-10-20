@@ -144,7 +144,7 @@ comfy-table = "7"
 concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 console-subscriber = "0.5"
-constant_time_eq = "0.4"
+constant_time_eq = "0.6"
 criterion = "0.8.2"
 ctor = "0.10.0"
 dashmap = "6"
@@ -247,7 +247,7 @@ validator = { version = "0.21.0", features = ["derive"] }
 which = "8"
 wiremock = "0.6"
 yansi = "1.0.1"
-zip = "8.5.1"
+zip = "9.0.5"
 
 [workspace.lints.rust]
 # Can't forbid as we use at least one macro that expands to unsafe code
