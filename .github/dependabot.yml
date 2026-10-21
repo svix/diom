@@ -26,6 +26,4 @@ updates:
         patterns:
           - '*'
     schedule:
-      interval: "cron"
-      # Every fourth Wednesday of the month at 08:00 UTC
-      cronjob: "0 8 22-28 * 3"
+      interval: "monthly"
