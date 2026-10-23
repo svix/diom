@@ -5,6 +5,7 @@ See also [the diom-operator ChangeLog](./infra/operator/ChangeLog.md) for change
 ## Unreleased Changes
 * Server: Add `v1.msgs.topic.describe` operation to show metadata about a topic
 * Libs/Python: Retry on errors correctly; add test coverage
+* Libs/Rust: Also retry on 5xx status codes with un-parseable bodies (e.g., from a load balancer)
 
 ## Version 0.2.6
 * Internal release to fix Maven publishing for Java SDK; no changes to other SDKs

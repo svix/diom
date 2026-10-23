@@ -1454,6 +1454,7 @@ dependencies = [
 name = "diom"
 version = "0.2.6"
 dependencies = [
+ "anyhow",
  "headers",
  "http",
  "http-body-util",
@@ -1472,6 +1473,7 @@ dependencies = [
  "tokio",
  "tower-service",
  "tracing",
+ "wiremock",
 ]
 
 [[package]]

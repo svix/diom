@@ -105,7 +105,20 @@ impl Error {
                 let mime: headers::Mime = content_type.into();
                 let body = match deserialize_body(http_status, mime, &bytes) {
                     Ok(b) => b,
-                    Err(e) => return Self::new(op_id, ErrorKind::Other(e)),
+                    Err(e) => {
+                        // even if we can't deserialize the response, still treat a server error
+                        // as a server error so that retry it accordingly
+                        if http_status.is_server_error() {
+                            ErrorBody {
+                                type_: ErrorType::ServerError,
+                                code: "unparsable error response".to_owned(),
+                                location: None,
+                                detail: e.inner.to_string(),
+                            }
+                        } else {
+                            return Self::new(op_id, ErrorKind::Other(e));
+                        }
+                    }
                 };
 
                 let res = ErrorResponse {
