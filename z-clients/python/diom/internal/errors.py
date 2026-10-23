@@ -37,7 +37,7 @@ class ServerError(DiomError):
 
 @dataclass
 class OtherError(DiomError):
-    pass
+    message: str | None = None
 
 
 class ErrorBody(BaseModel):
