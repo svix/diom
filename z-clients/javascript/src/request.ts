@@ -1,6 +1,12 @@
 import { Packr } from "msgpackr";
 import type { XOR } from "./util";
-import { ConnectionError, type DiomError, type ErrorBody, makeErrorFromResponse, OtherError } from "./error";
+import {
+  ConnectionError,
+  type DiomError,
+  type ErrorBody,
+  makeErrorFromResponse,
+  OtherError,
+} from "./error";
 import type { DiomOptions } from "./options";
 
 export const LIB_VERSION = "0.2.6";
@@ -39,7 +45,7 @@ export type DiomRequestContext = {
   /** The 'bearer' scheme access token */
   token: string;
   /** Time in milliseconds to wait for requests to get a response. */
-  timeout?: number;
+  timeout: number;
   /**
    * Custom fetch implementation to use for HTTP requests.
    * Useful for testing, adding custom middleware, or running in non-standard environments.
@@ -61,12 +67,13 @@ export type DiomRequestContext = {
 
 export function makeRequestContext(token: string, options: DiomOptions) {
   const baseUrl = options.serverUrl ?? "http://localhost:8624";
+  const timeout = options.requestTimeout ?? 15000;
 
   if (options.retryScheduleInMs) {
     return {
       baseUrl,
       token,
-      timeout: options.requestTimeout,
+      timeout,
       retryScheduleInMs: options.retryScheduleInMs,
       fetch: options.fetch,
     };
@@ -75,7 +82,7 @@ export function makeRequestContext(token: string, options: DiomOptions) {
     return {
       baseUrl,
       token,
-      timeout: options.requestTimeout,
+      timeout,
       numRetries: options.numRetries,
       fetch: options.fetch,
     };
@@ -83,7 +90,7 @@ export function makeRequestContext(token: string, options: DiomOptions) {
   return {
     baseUrl,
     token,
-    timeout: options.requestTimeout,
+    timeout,
     fetch: options.fetch,
   };
 }
@@ -92,7 +99,7 @@ export class DiomRequest {
   constructor(
     private readonly method: HttpMethod,
     private path: string
-  ) { }
+  ) {}
 
   private body?: BodyInit;
 
@@ -117,7 +124,12 @@ export class DiomRequest {
   ): Promise<R> {
     const operationId = this.operationId();
     const response = await this.sendInner(ctx, operationId);
-    const decoded = await readMsgpackResponse(response, operationId);
+    let decoded: unknown;
+    if (response.headers.get("Content-Type") === "application/json") {
+      decoded = await response.json();
+    } else {
+      decoded = await readMsgpackResponse(response, operationId);
+    }
     return parseResponseBody(decoded);
   }
 
@@ -135,7 +147,10 @@ export class DiomRequest {
     }
   }
 
-  private async sendInner(ctx: DiomRequestContext, operationId: string): Promise<Response> {
+  private async sendInner(
+    ctx: DiomRequestContext,
+    operationId: string
+  ): Promise<Response> {
     const url = new URL(ctx.baseUrl + this.path);
     const randomId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
 
@@ -145,8 +160,8 @@ export class DiomRequest {
     const isCredentialsSupported = "credentials" in Request.prototype;
 
     const headers: Record<string, string> = {
-      "accept": APPLICATION_MSGPACK,
-      "authorization": `Bearer ${ctx.token}`,
+      accept: APPLICATION_MSGPACK,
+      authorization: `Bearer ${ctx.token}`,
       "user-agent": USER_AGENT,
       "diom-req-id": randomId.toString(),
     };
@@ -163,31 +178,39 @@ export class DiomRequest {
           body: this.body,
           headers,
           credentials: isCredentialsSupported ? "same-origin" : undefined,
-          signal: ctx.timeout !== undefined ? AbortSignal.timeout(ctx.timeout) : undefined,
         },
+        ctx.timeout,
         ctx.retryScheduleInMs,
         ctx.retryScheduleInMs?.[0],
         ctx.retryScheduleInMs?.length || ctx.numRetries,
         ctx.fetch
       );
-    } catch(err) {
+    } catch (err) {
       throw new ConnectionError(operationId, err);
     }
     return filterResponseForErrors(operationId, response);
   }
 }
 
-async function filterResponseForErrors(operationId: string, response: Response): Promise<Response> {
+async function filterResponseForErrors(
+  operationId: string,
+  response: Response
+): Promise<Response> {
   if (response.status < 300) {
     return response;
   }
 
-  const decoded = await readMsgpackResponse(response, operationId);
+  let decoded: unknown;
+  if (response.headers.get("Content-Type") === "application/json") {
+    decoded = await response.json();
+  } else {
+    decoded = await readMsgpackResponse(response, operationId);
+  }
 
   let error: DiomError;
   try {
     error = makeErrorFromResponse(operationId, decoded as ErrorBody);
-  } catch(err) {
+  } catch (err) {
     // if an error happens during field access on the resulting object, throw 'OtherError'
     throw new OtherError(operationId, err);
   }
@@ -195,7 +218,10 @@ async function filterResponseForErrors(operationId: string, response: Response):
   throw error;
 }
 
-async function readMsgpackResponse(response: Response, operationId: string): Promise<unknown> {
+async function readMsgpackResponse(
+  response: Response,
+  operationId: string
+): Promise<unknown> {
   let raw: Uint8Array;
   try {
     raw = new Uint8Array(await response.arrayBuffer());
@@ -205,7 +231,7 @@ async function readMsgpackResponse(response: Response, operationId: string): Pro
 
   try {
     return decodeMsgpackBody(raw);
-  } catch(err) {
+  } catch (err) {
     throw new OtherError(operationId, err);
   }
 }
@@ -224,6 +250,7 @@ type SvixRequestInit = RequestInit & {
 async function sendWithRetry(
   url: URL,
   init: SvixRequestInit,
+  timeout: number,
   retryScheduleInMs?: number[],
   // FIXME: Are the defaults here ever used? It seems like only retryCount is.
   nextInterval = 50,
@@ -233,6 +260,8 @@ async function sendWithRetry(
 ): Promise<Response> {
   const sleep = (interval: number) =>
     new Promise((resolve) => setTimeout(resolve, interval));
+
+  init.signal = AbortSignal.timeout(timeout);
 
   try {
     const response = await fetchImpl(url, init);
@@ -251,6 +280,7 @@ async function sendWithRetry(
   return await sendWithRetry(
     url,
     init,
+    timeout,
     retryScheduleInMs,
     nextInterval,
     --triesLeft,

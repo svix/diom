@@ -21,6 +21,8 @@ export DIOM_SERVER_URL="${DIOM_SERVER_URL:-http://localhost:8624}"
 export DIOM_TOKEN="$DIOM_TOKEN"
 export DIOM_SERVER_URL="$DIOM_SERVER_URL"
 
+export IN_SDK_TEST=1
+
 ALL_SDKS=(rust python javascript go java)
 
 run_rust() {
@@ -35,7 +37,7 @@ run_python() {
 
 run_javascript() {
     echo "==> Running JavaScript SDK integration tests"
-    (cd "$ROOT_DIR/z-clients/javascript" && npm ci && npm run build && npm run bundle && node --test tests/integration.test.mjs)
+    (cd "$ROOT_DIR/z-clients/javascript" && npm ci && npm run build && npm run bundle && npm test)
 }
 
 run_go() {
