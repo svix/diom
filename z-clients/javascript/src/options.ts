@@ -3,7 +3,7 @@ import type { XOR } from "./util";
 export type DiomOptions = {
   serverUrl?: string;
   debug?: boolean;
-  /** Time in milliseconds to wait for requests to get a response. */
+  /** Time in milliseconds to wait for requests to get a response. Default 15000. */
   requestTimeout?: number;
   /**
    * Custom fetch implementation to use for HTTP requests.
