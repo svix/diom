@@ -41,8 +41,10 @@ tower-service.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+anyhow.workspace = true
 strass.workspace = true
 tokio = { workspace = true, features = ["macros"] }
+wiremock.workspace = true
 
 [lints]
 workspace = true
