@@ -142,6 +142,26 @@ class ApiBase:
         response = self._request_sync_inner(method, path, op_id, header_params, body)
         check_response(response, op_id)
 
+    async def _attempt_asyncio_request(
+        self, op_id: str, httpx_kwargs: dict[str, t.Any]
+    ) -> httpx.Response | httpx.RequestError:
+        try:
+            return await self._httpx_async_client.request(**httpx_kwargs)
+        except httpx.RequestError as exc:
+            return exc
+        except Exception:
+            raise ConnError(op_id)
+
+    def _attempt_sync_request(
+        self, op_id: str, httpx_kwargs: dict[str, t.Any]
+    ) -> httpx.Response | httpx.RequestError:
+        try:
+            return self._httpx_client.request(**httpx_kwargs)
+        except httpx.RequestError as exc:
+            return exc
+        except Exception:
+            raise ConnError(op_id)
+
     async def _request_asyncio_inner(
         self,
         method: str,
@@ -160,23 +180,21 @@ class ApiBase:
         except Exception:
             raise OtherError(op_id)
 
-        try:
-            response = await self._httpx_async_client.request(**httpx_kwargs)
-        except Exception:
-            raise ConnError(op_id)
+        response = await self._attempt_asyncio_request(op_id, httpx_kwargs)
 
         for retry_count, sleep_time in enumerate(self._client.retry_schedule):
-            if response.status_code < 500:
-                break
+            if isinstance(response, httpx.Response) and response.status_code < 500:
+                return response
 
             await asyncio.sleep(sleep_time)
             httpx_kwargs["headers"]["diom-retry-count"] = str(retry_count)
-            try:
-                response = await self._httpx_async_client.request(**httpx_kwargs)
-            except Exception:
-                raise ConnError(op_id)
-
-        return response
+            response = await self._attempt_asyncio_request(op_id, httpx_kwargs)
+        if isinstance(response, httpx.Response) and response.status_code < 500:
+            return response
+        elif isinstance(response, httpx.RequestError):
+            raise ConnError(op_id)
+        else:
+            raise OtherError(op_id, f"Server returned HTTP {response.status_code}")
 
     def _request_sync_inner(
         self,
@@ -194,25 +212,24 @@ class ApiBase:
                 body=body,
             )
         except Exception:
-            raise OtherError(op_id)
+            raise OtherError(op_id, "Error constructing request body")
 
-        try:
-            response = self._httpx_client.request(**httpx_kwargs)
-        except Exception:
-            raise ConnError(op_id)
+        response = self._attempt_sync_request(op_id, httpx_kwargs)
 
         for retry_count, sleep_time in enumerate(self._client.retry_schedule):
-            if response.status_code < 500:
-                break
+            if isinstance(response, httpx.Response) and response.status_code < 500:
+                return response
 
             time.sleep(sleep_time)
             httpx_kwargs["headers"]["diom-retry-count"] = str(retry_count)
-            try:
-                response = self._httpx_client.request(**httpx_kwargs)
-            except Exception:
-                raise ConnError(op_id)
+            response = self._attempt_sync_request(op_id, httpx_kwargs)
 
-        return response
+        if isinstance(response, httpx.Response) and response.status_code < 500:
+            return response
+        elif isinstance(response, httpx.RequestError):
+            raise ConnError(op_id)
+        else:
+            raise OtherError(op_id, f"Server returned HTTP {response.status_code}")
 
 
 def op_id_from_path(path: str) -> str:
