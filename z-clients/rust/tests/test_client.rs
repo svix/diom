@@ -35,7 +35,7 @@ async fn test_basic_json() -> Result<()> {
             .register(
                 Mock::given(method("GET"))
                     .and(path("/api/v1.health.ping"))
-                    .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true}))),
+                    .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "ok": true }))),
             )
             .await;
         let res = ctx.diom.health().ping().await?;
@@ -82,7 +82,7 @@ async fn test_retries_on_5xx() -> Result<()> {
             .await;
         Mock::given(method("GET"))
             .and(path("/api/v1.health.ping"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "ok": true })))
             .mount(&ctx.mock_server)
             .await;
         let res = ctx.diom.health().ping().await?;
@@ -130,7 +130,12 @@ async fn test_not_retries_on_4xx() -> Result<()> {
     Context::run_test(async move |ctx| {
         Mock::given(method("GET"))
             .and(path("/api/v1.health.ping"))
-            .respond_with(ResponseTemplate::new(422).set_body_json(json!({"type": "invalid-input", "code": "BAD_REQUEST", "detail": "whatever", "location": null})))
+            .respond_with(ResponseTemplate::new(422).set_body_json(json!({
+                "type": "invalid-input",
+                "code": "BAD_REQUEST",
+                "detail": "whatever",
+                "location": null
+            })))
             .mount(&ctx.mock_server)
             .await;
         let res = ctx.diom.health().ping().await.expect_err("should fail");
@@ -155,7 +160,7 @@ async fn test_retries_on_timeout() -> Result<()> {
             .and(path("/api/v1.health.ping"))
             .respond_with(
                 ResponseTemplate::new(200)
-                    .set_body_json(json!({"ok": true}))
+                    .set_body_json(json!({ "ok": true }))
                     .set_delay(Duration::from_secs(3)),
             )
             .up_to_n_times(1)
@@ -164,7 +169,7 @@ async fn test_retries_on_timeout() -> Result<()> {
             .await;
         Mock::given(method("GET"))
             .and(path("/api/v1.health.ping"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "ok": true })))
             .mount(&ctx.mock_server)
             .await;
         let res = ctx.diom.health().ping().await?;
