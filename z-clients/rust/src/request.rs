@@ -3,7 +3,7 @@
 
 use std::time::Duration;
 
-use headers::{ContentType, Header as _};
+use headers::{ContentType, Header as _, Mime};
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HeaderValue, USER_AGENT};
 use http_body_util::{BodyExt as _, Full};
 use hyper::body::Bytes;
@@ -71,11 +71,21 @@ impl Request {
             // T::default() here instead since () implements that, but then we'd
             // need to impl default for all models.
             None => Ok(rmp_serde::from_slice(&[0xc0]).expect("serde null value")),
-            Some(bytes) => Ok(rmp_serde::from_slice(&bytes).map_err(|e| Error::other(op_id, e))?),
+            Some((content_type, bytes)) => {
+                let object = if content_type == "application/json" {
+                    serde_json::from_slice(&bytes).map_err(|e| Error::other(op_id, e))?
+                } else {
+                    rmp_serde::from_slice(&bytes).map_err(|e| Error::other(op_id, e))?
+                };
+                Ok(object)
+            }
         }
     }
 
-    async fn execute_with_backoff(self, conf: &Configuration) -> Result<Option<Bytes>, Error> {
+    async fn execute_with_backoff(
+        self,
+        conf: &Configuration,
+    ) -> Result<Option<(Mime, Bytes)>, Error> {
         let no_return_type = self.no_return_type;
         let op_id = self.op_id;
 
@@ -106,10 +116,10 @@ impl Request {
                 .map_err(|e| Error::connection(op_id, e))?;
 
             let status = response.status();
+            let mut values = response.headers().get_all(CONTENT_TYPE).iter();
+            let content_type =
+                ContentType::decode(&mut values).unwrap_or_else(|_| ContentType::json());
             if !status.is_success() {
-                let mut values = response.headers().get_all(CONTENT_TYPE).iter();
-                let content_type =
-                    ContentType::decode(&mut values).unwrap_or_else(|_| ContentType::json());
                 Err(Error::from_response(op_id, status, response.into_body(), content_type).await)
             } else if no_return_type {
                 Ok(None)
@@ -120,7 +130,7 @@ impl Request {
                     .await
                     .map_err(|e| Error::connection(op_id, e))?
                     .to_bytes();
-                Ok(Some(bytes))
+                Ok(Some((content_type.into(), bytes)))
             }
         };
 
