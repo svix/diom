@@ -5,8 +5,19 @@
 # Using https://github.com/LukeMathWalker/cargo-chef for better layer caching
 
 # Base image for planner and build - keep in sync with .github/workflows/server-ci.yml
-FROM docker.io/rust:1.98.1-slim-trixie AS chef
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+FROM cgr.dev/chainguard/wolfi-base@sha256:0feab531471d2edfcca55f18883441cb7df598e724fa2dedf9985273f532eed7 AS chef
+SHELL ["/bin/sh", "-eux", "-c"]
+RUN --mount=target=/var/cache/apk,type=cache,sharing=locked --mount=target=/tmp,type=cache,sharing=locked <<EOF
+    apk add rust~1.98.1 \
+        build-base~1 \
+        openssl-dev~4 \
+        zlib-dev~1.3 \
+        cmake~4 \
+        shadow~4 \
+        git~2
+EOF
+
+SHELL ["/bin/sh", "-eux", "-c"]
 RUN <<EOF
     cargo install --locked cargo-chef@0.1.77
     cargo install --locked cargo-sbom@0.10.0
@@ -22,8 +33,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 # Build environment
 FROM chef AS build-base
 
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
-ARG __BUST_DOCKER_BUILD_CACHE=2026-09-14
+SHELL ["/bin/sh", "-eux", "-c"]
 
 COPY --from=planner /app/recipe.json recipe.json
 
@@ -61,29 +71,24 @@ RUN <<EOF
 EOF
 
 # shared base image with dependencies
-FROM docker.io/debian:trixie-20260918-slim AS base
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+FROM cgr.dev/chainguard/wolfi-base@sha256:0feab531471d2edfcca55f18883441cb7df598e724fa2dedf9985273f532eed7 AS base
+SHELL ["/bin/sh", "-eux", "-c"]
 
-ARG __BUST_DOCKER_BUILD_CACHE=2026-10-01
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update -q
-    apt-get upgrade -y
-    apt-get install -y \
-        ca-certificates=20250419 \
-        --no-install-recommends
-    # disable compromised emsign certificates
-    sed -i  -e '/emSign.*3/ s/^/!/' -e '/Comodo_AAA_Services_root.crt/ s/^/!/' /etc/ca-certificates.conf
+RUN --mount=target=/var/cache/apk,type=cache,sharing=locked --mount=target=/tmp,type=cache,sharing=locked <<EOF
+    apk update
+    apk add \
+        ca-certificates~20260909-r3 \
+        openssl~4
     update-ca-certificates
 EOF
 
 RUN <<EOF
     mkdir -p /app
-    groupadd -g 1000 appgroup
-    useradd -u 1000 -g appgroup appuser
-    chown -R appuser: /app
+    addgroup -S -g 1000 appgroup
+    adduser -G appgroup -S -u 1000 appuser
+    chown -R appuser:appgroup /app
     mkdir -p /home/appuser
-    chown -R appuser: /home/appuser
+    chown -R appuser:appgroup /home/appuser
     mkdir -p /usr/local/share
 EOF
 
@@ -104,7 +109,7 @@ LABEL org.opencontainers.image.authors="support@svix.com" \
       org.opencontainers.image.title="diom-cli" \
       org.opencontainers.image.vendor="Svix" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.base.name="docker.io/debian:trixie"
+      org.opencontainers.image.base.name="cgr.dev/chainguard/wolfi-base"
 
 ENTRYPOINT ["/usr/local/bin/diom"]
 
@@ -116,7 +121,6 @@ FROM cli-prod AS prod
 USER root
 
 RUN <<EOF
-    #!/bin/bash
     mkdir -p /storage
     chown -R appuser: /storage
 EOF
@@ -142,6 +146,6 @@ LABEL org.opencontainers.image.authors="support@svix.com" \
       org.opencontainers.image.title="diom-server" \
       org.opencontainers.image.vendor="Svix" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.base.name="docker.io/debian:trixie"
+      org.opencontainers.image.base.name="cgr.dev/chainguard/wolfi-base"
 
 ENTRYPOINT ["/usr/local/bin/diom-server"]
