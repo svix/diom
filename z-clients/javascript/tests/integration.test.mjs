@@ -6,8 +6,11 @@ import { Temporal } from "temporal-polyfill-lite";
 const TOKEN = process.env.DIOM_TOKEN;
 const SERVER_URL = process.env.DIOM_SERVER_URL;
 
-if (!TOKEN || !SERVER_URL) {
-  throw new Error("DIOM_TOKEN and DIOM_SERVER_URL environment variables must be set");
+const skipIntegrationTests = !TOKEN || !SERVER_URL;
+if (process.env.IN_SDK_TEST && skipIntegrationTests) {
+  throw new Error(
+    "DIOM_TOKEN and DIOM_SERVER_URL environment variables must be set",
+  );
 }
 
 function makeClient() {
@@ -18,7 +21,7 @@ function toBytes(str) {
   return Array.from(Buffer.from(str));
 }
 
-describe("SDK Integration Tests", () => {
+describe("SDK Integration Tests", { skip: skipIntegrationTests }, () => {
   it("test_health_ping", async () => {
     const client = makeClient();
     const resp = await client.health.ping();
@@ -54,7 +57,7 @@ describe("SDK Integration Tests", () => {
     const ttl = Temporal.Duration.from({ seconds: 60 }); // 60 second TTL
 
     // Set
-    await client.cache.set(key, value, {ttl: ttl});
+    await client.cache.set(key, value, { ttl: ttl });
 
     // Get
     const getResp = await client.cache.get(key, {});
@@ -71,10 +74,13 @@ describe("SDK Integration Tests", () => {
 
   it("server_error", async () => {
     const client = makeClient();
-    await assert.rejects(async () => await client.health.error(), (err) => {
-      assert(err instanceof ServerError);
-      assert.strictEqual(err.code, "internal");
-      return true;
-    });
+    await assert.rejects(
+      async () => await client.health.error(),
+      (err) => {
+        assert(err instanceof ServerError);
+        assert.strictEqual(err.code, "internal");
+        return true;
+      },
+    );
   });
 });

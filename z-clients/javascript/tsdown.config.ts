@@ -7,7 +7,7 @@ export default defineConfig({
   format: {
     esm: {
       target: ["es2022"],
-    }
+    },
   },
   sourcemap: true,
   outputOptions: {
