@@ -18,6 +18,7 @@ RUN --mount=target=/var/cache/apk,type=cache,sharing=locked --mount=target=/tmp,
 EOF
 
 SHELL ["/bin/sh", "-eux", "-c"]
+
 RUN <<EOF
     cargo install --locked cargo-chef@0.1.77
     cargo install --locked cargo-sbom@0.10.0
@@ -109,6 +110,7 @@ LABEL org.opencontainers.image.authors="support@svix.com" \
       org.opencontainers.image.title="diom-cli" \
       org.opencontainers.image.vendor="Svix" \
       org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/svix/diom" \
       org.opencontainers.image.base.name="cgr.dev/chainguard/wolfi-base"
 
 ENTRYPOINT ["/usr/local/bin/diom"]
@@ -146,6 +148,7 @@ LABEL org.opencontainers.image.authors="support@svix.com" \
       org.opencontainers.image.title="diom-server" \
       org.opencontainers.image.vendor="Svix" \
       org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/svix/diom" \
       org.opencontainers.image.base.name="cgr.dev/chainguard/wolfi-base"
 
 ENTRYPOINT ["/usr/local/bin/diom-server"]
