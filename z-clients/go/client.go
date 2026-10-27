@@ -13,6 +13,7 @@ type DiomOptions struct {
 	ServerUrl     *url.URL
 	HTTPClient    *http.Client
 	RetrySchedule *[]time.Duration
+	Timeout       time.Duration
 	Debug         bool
 }
 
@@ -37,6 +38,10 @@ func New(token string, options *DiomOptions) (*Diom, error) {
 
 		if options.HTTPClient != nil {
 			httpClient.HTTPClient = options.HTTPClient
+		}
+
+		if options.Timeout != 0 {
+			httpClient.HTTPClient.Timeout = options.Timeout
 		}
 
 		httpClient.Debug = options.Debug
