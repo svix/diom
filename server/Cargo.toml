@@ -9,6 +9,12 @@ publish = false
 [package.metadata.dist]
 dist = false
 
+[package.metadata.cargo-machete]
+ignored = [
+    # we add this to customize its features even though we don't use it directly
+    "log",
+]
+
 [features]
 tokio-console = ["dep:console-subscriber"]
 
@@ -24,6 +30,7 @@ diom-core.workspace = true
 dotenvy.workspace = true
 fs-err.workspace = true
 http.workspace = true
+log = { version = "0.4", features = ["release_max_level_debug"] }
 mimalloc.workspace = true
 opentelemetry.workspace = true
 opentelemetry-http.workspace = true

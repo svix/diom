@@ -1911,6 +1911,7 @@ dependencies = [
  "dotenvy",
  "fs-err",
  "http",
+ "log",
  "mimalloc",
  "opentelemetry",
  "opentelemetry-http",
