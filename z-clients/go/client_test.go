@@ -205,7 +205,6 @@ func Test_retries_on_io_error(t *testing.T) {
 		atomic.AddInt32(&dialCount, 1)
 		if dialCount == 1 {
 			return nil, &net.DNSError{
-				UnwrapErr:   nil,
 				Err:         "no such host",
 				Name:        "localhost",
 				Server:      "localhost",
