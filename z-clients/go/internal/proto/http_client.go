@@ -32,7 +32,7 @@ func DefaultHttpClient(defaultBaseUrl string) HttpClient {
 	return HttpClient{
 		DefaultHeaders: map[string]string{},
 		HTTPClient: &http.Client{
-			Timeout:   60 * time.Second,
+			Timeout:   15 * time.Second,
 			Transport: tr,
 		},
 		RetrySchedule: []time.Duration{},
@@ -132,6 +132,14 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		if err == nil && resp.StatusCode < 500 {
 			break
 		}
+		// don't retry if the caller cancelled the request or its deadline passed
+		if request.Context().Err() != nil {
+			break
+		}
+		if resp != nil {
+			resp.Body.Close()
+		}
+
 		if bodyBytes != nil {
 			request.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
