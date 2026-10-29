@@ -2,8 +2,8 @@ name: CI on PR
 
 on:
   pull_request:
-    branches: ['*']
-
+    # Use to filter on `branches: ['*']`, but that wouldn't work with stacked PRs.
+    # Removing the filter is the most expedient thing.
 jobs:
   filter:
     runs-on: ubuntu-24.04

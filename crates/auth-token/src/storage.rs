@@ -208,3 +208,30 @@ impl AuthTokenEntity {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod byte_fixtures {
+    use super::*;
+    use fjall_utils::fixtures::decode_row;
+    #[test]
+    fn auth_token_row_v0() {
+        // bytes come from a serialized AuthTokenRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: AuthTokenRow = decode_row(
+            "001000000000000000000000000000000000086d792d746f6b656e0000056f776e65720104726561640180d095ffbc3181d095ffbc31",
+        );
+        assert_eq!(row.id, AuthTokenId::nil());
+        assert_eq!(row.name, "my-token");
+        assert_eq!(row.owner_id, "owner");
+        assert_eq!(row.scopes, vec!["read".to_string()]);
+        assert!(row.enabled);
+    }
+    #[test]
+    fn id_index_row_v0() {
+        // bytes come from a serialized IdIndexRow.
+        // If a backwards INcompatible change to the row is introduced, this test will fail.
+        let row: IdIndexRow =
+            decode_row("000707070707070707070707070707070707070707070707070707070707070707");
+        assert_eq!(row.token_hashed.inner(), &[7u8; 32]);
+    }
+}
