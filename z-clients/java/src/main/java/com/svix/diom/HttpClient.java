@@ -1,12 +1,12 @@
 package com.svix.diom;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -197,24 +197,35 @@ public class HttpClient {
         throw HttpClient.newResponseException(opId, errorBody);
     }
 
+    private static boolean shouldRetry(int statusCode) {
+        return statusCode >= 500;
+    }
+
     private Response executeRequestWithRetry(Request request) throws IOException {
-        Response response = client.newCall(request).execute();
+        Request currentRequest = request;
+        for (int retryCount = 0; retryCount < retrySchedule.size(); retryCount++) {
+            try {
+                Response response = client.newCall(currentRequest).execute();
+                if (!shouldRetry(response.code())) {
+                    return response;
+                }
+                response.close();
+            } catch (IOException e) {
+            }
 
-        int retryCount = 0;
-        while (response.code() >= 500 && retryCount < retrySchedule.size()) {
-            response.close();
+            try {
+                Thread.sleep(retrySchedule.get(retryCount));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new InterruptedIOException("Request was interrupted");
+            }
 
-            // Use LockSupport for precise parking instead of Thread.sleep
-            LockSupport.parkNanos(retrySchedule.get(retryCount) * 1_000_000); // Convert ms to ns
-
-            Request retryRequest =
+            currentRequest =
                     request.newBuilder()
                             .header("diom-retry-count", String.valueOf(retryCount + 1))
                             .build();
-            response = client.newCall(retryRequest).execute();
-            retryCount++;
         }
-        return response;
+        return client.newCall(currentRequest).execute();
     }
 
     private static DiomException newResponseException(final String opId, final ErrorBody body) {
