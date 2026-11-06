@@ -1,4 +1,4 @@
-name: Diom CI
+name: Benchmarks
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ jobs:
   benchmark:
     name: Benchmark
     timeout-minutes: 15
-    runs-on: ubicloud-standard-8-ubuntu-2404
+    runs-on: codspeed-macro-arm64-graviton-ubuntu-22-04
     defaults:
       run:
         working-directory: ./benchmarks
@@ -25,23 +25,9 @@ jobs:
         with:
           # include relevant information in the cache name
           prefix-key: "benchmarks-${{ env.ci_toolchain_rust }}"
-      - name: Install cargo-criterion
-        run: cargo install cargo-criterion
-      - name: Run benchmarks
-        # For some weird reason, it seems to log test output
-        # to stderr:
-        run: cargo criterion --output-format bencher 2>&1 | tee output.txt
-      - name: Download previous benchmark data
-        uses: actions/cache@v6.1.0
+      - name: Build the benchmarks
+        run: cargo codspeed build
+      - uses: CodSpeedHQ/action@v5
         with:
-          path: ./cache
-          key: ${{ runner.os }}-benchmark
-      - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
-        with:
-          tool: 'cargo'
-          output-file-path: ./benchmarks/output.txt
-          external-data-json-path: ./cache/benchmark-data.json
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          summary-always: true
-          fail-on-alert: true
+          mode: walltime
+          run: cargo codspeed run

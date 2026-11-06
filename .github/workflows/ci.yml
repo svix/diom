@@ -36,6 +36,7 @@ jobs:
           toolchain: nightly
           components: rustfmt
       - run: cargo fmt -- --check
+
   check-manifests:
     name: Check cargo manifests
     runs-on: ubuntu-24.04
@@ -49,6 +50,7 @@ jobs:
           tool: cargo-machete
       - run: cargo sort --check --no-format --workspace -o package,lib,bin,features,dependencies,build-dependencies,dev-dependencies,lints,workspace
       - run: cargo machete
+
   clippy:
     name: Clippy
     runs-on: ubicloud-standard-4-ubuntu-2404
@@ -69,6 +71,7 @@ jobs:
       # don't use --all-features as enabling both TLS backends for the SDK results in warnings
       # because of hyper-tls ending up unused.
       - run: cargo clippy --workspace --all-targets --features generate,openapi,operator-e2e,tokio-console
+
   prek:
     name: Validate prek
     runs-on: ubuntu-24.04
@@ -76,6 +79,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - uses: j178/prek-action@44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d # v3.1.0
+
   test:
     name: Test
     runs-on: ubicloud-standard-4-ubuntu-2404
@@ -115,6 +119,7 @@ jobs:
             ./coverage.json
             ./coverage-html
           retention-days: 7
+
   check-codegen:
     name: Check openapi.json, SDK, and default config freshness
     runs-on: ubicloud-standard-4-ubuntu-2404
@@ -152,8 +157,10 @@ jobs:
           else
             echo 'all good.'
           fi
+
   sdk-integration:
     uses: ./.github/workflows/sdk-integration.yml
+
   helm-test:
     name: Helm chart unit tests
     runs-on: ubuntu-24.04
@@ -163,6 +170,7 @@ jobs:
         run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.0.3
       - name: Run Helm unit tests
         run: helm unittest ./infra/helm-diom
+
   check-crd:
     name: Check CRD JSON freshness
     runs-on: ubicloud-standard-4-ubuntu-2404
@@ -192,6 +200,10 @@ jobs:
           else
             echo 'all good.'
           fi
+
+  benchmark:
+    uses: ./.github/workflows/benchmark.yml
+
   operator-e2e:
     name: Operator e2e tests
     if: ${{ inputs.run_operator_e2e }}
@@ -215,6 +227,7 @@ jobs:
       - uses: helm/kind-action@1544676c07bb3570fcb70166beaa07c4528fd4aa # v1.15.1
       - name: Run operator e2e tests
         run: cargo test -p diom-operator --features operator-e2e
+
   security-audit:
     runs-on: ubuntu-24.04
     steps:

@@ -1,5 +1,5 @@
-# Ubicloud runners
 self-hosted-runner:
   labels:
+    - codspeed-macro-arm64-graviton-ubuntu-22-04
     - ubicloud-standard-4-ubuntu-2404
     - ubicloud-standard-8-ubuntu-2404
