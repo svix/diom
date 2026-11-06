@@ -1,7 +1,6 @@
-use diom_core::{PersistableValue, types::UnixTimestampMs};
+use diom_core::{PersistableVersioned, types::UnixTimestampMs};
 use diom_id::NamespaceId;
-use fjall_utils::{FjallKey, TableRow};
-use serde::{Deserialize, Serialize};
+use fjall_utils::FjallKey;
 
 /// These values can never change. Only additions are allowed.
 #[repr(u8)]
@@ -9,14 +8,11 @@ enum RowType {
     TokenBucket = 0,
 }
 
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, PersistableValue)]
+#[derive(Debug, Eq, PartialEq, PersistableVersioned)]
+#[versioned(row_type = RowType::TokenBucket)]
 pub struct TokenBucketRow {
     pub tokens: u64,
     pub last_refill: UnixTimestampMs,
-}
-
-impl TableRow for TokenBucketRow {
-    const ROW_TYPE: u8 = RowType::TokenBucket as u8;
 }
 
 #[derive(FjallKey)]

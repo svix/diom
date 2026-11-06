@@ -1,6 +1,6 @@
 use crate::entities::TokenHashed;
 use diom_core::{
-    PersistableValue,
+    PersistableValue, PersistableVersioned,
     types::{Metadata, UnixTimestampMs},
 };
 use diom_error::Result;
@@ -17,7 +17,8 @@ enum RowType {
 }
 
 /// Primary row. Keyed by (namespace_id, token_hashed) — the hot verify path.
-#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
+#[derive(Debug, Clone, PersistableVersioned)]
+#[versioned(row_type = RowType::Token)]
 pub struct AuthTokenRow {
     pub id: AuthTokenId,
     pub name: String,
@@ -31,10 +32,6 @@ pub struct AuthTokenRow {
     pub updated: UnixTimestampMs,
 }
 
-impl TableRow for AuthTokenRow {
-    const ROW_TYPE: u8 = RowType::Token as u8;
-}
-
 #[derive(FjallKey)]
 #[table_key(prefix = RowType::Token)]
 pub(crate) struct AuthTokenKey {
@@ -45,13 +42,10 @@ pub(crate) struct AuthTokenKey {
 }
 
 /// Secondary index: maps (namespace_id, id) → token_hashed for ID-based lookups.
-#[derive(Clone, Serialize, Deserialize, PersistableValue)]
+#[derive(Clone, PersistableVersioned)]
+#[versioned(row_type = RowType::IdIndex)]
 pub struct IdIndexRow {
     pub token_hashed: TokenHashed,
-}
-
-impl TableRow for IdIndexRow {
-    const ROW_TYPE: u8 = RowType::IdIndex as u8;
 }
 
 #[derive(FjallKey)]

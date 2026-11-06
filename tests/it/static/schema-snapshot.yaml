@@ -48,7 +48,7 @@
     ty: RoleId
 - module_path: diom_admin_auth::storage
   type_name: AccessPolicyRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: description
     ty: String
@@ -60,7 +60,7 @@
     ty: UnixTimestampMs
 - module_path: diom_admin_auth::storage
   type_name: RoleRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: id
     ty: RoleId
@@ -180,7 +180,7 @@
     ty: Option<bool>
 - module_path: diom_auth_token::storage
   type_name: AuthTokenRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: id
     ty: AuthTokenId
@@ -202,7 +202,7 @@
     ty: UnixTimestampMs
 - module_path: diom_auth_token::storage
   type_name: IdIndexRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: token_hashed
     ty: TokenHashed
@@ -532,7 +532,7 @@
   members: []
 - module_path: diom_kv::storage
   type_name: KvPairRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: value
     ty: ByteString
@@ -917,19 +917,19 @@
     ty: UuidV7RandomBytes
 - module_path: diom_msgs::storage
   type_name: HighWaterMarkRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: next_offset
     ty: Offset
 - module_path: diom_msgs::storage
   type_name: IdempotencyRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: expiry
     ty: UnixTimestampMs
 - module_path: diom_msgs::storage
   type_name: MsgRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: value
     ty: ByteString
@@ -941,7 +941,7 @@
     ty: Option<UnixTimestampMs>
 - module_path: diom_msgs::storage
   type_name: QueueConfigRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: retry_schedule
     ty: Vec<u64>
@@ -949,7 +949,7 @@
     ty: Option<TopicName>
 - module_path: diom_msgs::storage
   type_name: QueueLeaseRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: expiry
     ty: UnixTimestampMs
@@ -959,7 +959,7 @@
     ty: u32
 - module_path: diom_msgs::storage
   type_name: SinkRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: topic
     ty: TopicName
@@ -967,7 +967,7 @@
     ty: SinkSettings
 - module_path: diom_msgs::storage
   type_name: StreamLeaseRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: offset
     ty: u64
@@ -977,7 +977,7 @@
     ty: Offset
 - module_path: diom_msgs::storage
   type_name: SvixPollerRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: topic
     ty: TopicName
@@ -985,7 +985,7 @@
     ty: String
 - module_path: diom_msgs::storage
   type_name: TopicRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: id
     ty: TopicId
@@ -1080,7 +1080,7 @@
     ty: TokenBucket
 - module_path: diom_rate_limit::storage
   type_name: TokenBucketRow
-  kind: value-struct
+  kind: versioned
   members:
   - name: tokens
     ty: u64
