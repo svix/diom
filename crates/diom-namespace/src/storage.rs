@@ -1,9 +1,8 @@
-use diom_core::{PersistableValue, types::UnixTimestampMs};
+use diom_core::{PersistableVersioned, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use fjall::Keyspace;
 use fjall_utils::{FjallKey, TableRow};
-use serde::{Deserialize, Serialize};
 
 use crate::entities::{ModuleConfig, NamespaceName};
 
@@ -22,8 +21,8 @@ pub(crate) struct NamespaceKey {
     pub(crate) name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, PersistableValue)]
-#[serde(bound = "C: ModuleConfig")]
+#[derive(PersistableVersioned, Debug)]
+#[versioned(row_type = RowType::Namespace)]
 pub struct Namespace<C: ModuleConfig> {
     pub id: NamespaceId,
     pub name: NamespaceName,
@@ -33,10 +32,6 @@ pub struct Namespace<C: ModuleConfig> {
 
     // Module-specific
     pub config: C,
-}
-
-impl<C: ModuleConfig> TableRow for Namespace<C> {
-    const ROW_TYPE: u8 = RowType::Namespace as u8;
 }
 
 impl<C: ModuleConfig> Namespace<C> {
