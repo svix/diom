@@ -929,7 +929,7 @@ mod tests {
         use TopicId;
         let topic_id = TopicId::new(UnixTimestampMs::UNIX_EPOCH, UuidV7RandomBytes::new_random());
         let partition = Partition::ZERO;
-        let cg = ConsumerGroup::try_from("my-group").unwrap();
+        let cg: ConsumerGroup = "my-group".parse().unwrap();
         let key = StreamLeaseKey::build_key(&topic_id, &partition, &cg);
         assert_eq!(
             &*StreamLeaseKey::extract_consumer_group(&key).unwrap(),

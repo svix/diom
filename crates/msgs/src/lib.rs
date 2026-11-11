@@ -328,9 +328,7 @@ pub(crate) mod test_fixture {
 
     use super::*;
     use crate::{
-        entities::{
-            ConsumerGroup, MsgIn, Partition, SeekPosition, TopicIn, TopicName, TopicPartition,
-        },
+        entities::{MsgIn, Partition, SeekPosition, TopicIn, TopicName, TopicPartition},
         operations::{
             MsgsRaftState, PublishOperation, PublishResponseData, QueueReceiveOperation, Response,
             StreamReceiveOperation,
@@ -524,7 +522,7 @@ pub(crate) mod test_fixture {
             let op = QueueReceiveOperation::new(
                 namespace_id,
                 TopicIn::TopicName(TopicName::new(topic.to_owned()).unwrap()),
-                ConsumerGroup::try_from(consumer_group).unwrap(),
+                consumer_group.parse().unwrap(),
                 NonZeroU16::new(10).unwrap(),
                 DurationMs::from_secs(30),
                 retention,
@@ -554,7 +552,7 @@ pub(crate) mod test_fixture {
             let op = StreamReceiveOperation::new(
                 namespace_id,
                 TopicIn::TopicName(TopicName::new(topic.to_owned()).unwrap()),
-                ConsumerGroup::try_from(consumer_group).unwrap(),
+                consumer_group.parse().unwrap(),
                 NonZeroU16::new(10).unwrap(),
                 DurationMs::from_secs(30),
                 SeekPosition::Earliest,

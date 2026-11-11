@@ -450,7 +450,7 @@ mod tests {
             UnixTimestampMs::UNIX_EPOCH,
             UuidV7RandomBytes::new_random(),
         );
-        let cg = ConsumerGroup::try_from("my-group").unwrap();
+        let cg: ConsumerGroup = "my-group".parse().unwrap();
         let partition = Partition::ZERO;
 
         insert_topic(&db, &meta, &topic_row);
