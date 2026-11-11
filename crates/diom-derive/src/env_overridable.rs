@@ -57,15 +57,15 @@ impl EoField {
                     if value.trim_start().is_empty() {
                         if !current_docstring.is_empty() {
                             docstring_lines.push(current_docstring.trim().to_owned());
-                            current_docstring = String::new();
+                            current_docstring.clear();
                         }
                     } else {
                         if !(current_docstring.is_empty()
                             || current_docstring.ends_with(|f: char| f.is_whitespace()))
                         {
-                            current_docstring.push(' ')
+                            current_docstring.push(' ');
                         }
-                        current_docstring.push_str(value.trim_start())
+                        current_docstring.push_str(value.trim_start());
                     }
                 }
             } else if attr.path().is_ident("env_overridable") {

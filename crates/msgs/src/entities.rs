@@ -730,10 +730,10 @@ impl TryFrom<String> for ConsumerGroup {
     }
 }
 
-impl TryFrom<&str> for ConsumerGroup {
-    type Error = &'static str;
+impl FromStr for ConsumerGroup {
+    type Err = &'static str;
 
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::validate_str(s)?;
         Ok(Self(s.to_owned()))
     }

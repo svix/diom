@@ -280,7 +280,7 @@ mod tests {
     use svix::models::{PollerV2MessageOut, PollerV2PollOut};
 
     use crate::{
-        entities::{ConsumerGroup, SeekPosition, TopicIn, TopicName},
+        entities::{SeekPosition, TopicIn, TopicName},
         operations::{
             MsgsOperation, MsgsRaftState, Response, StreamReceiveOperation,
             SvixPollerCreateOperation,
@@ -484,7 +484,7 @@ mod tests {
         let receive_op = StreamReceiveOperation::new(
             ns_id,
             TopicIn::TopicName(TopicName::new("webhooks".to_owned()).unwrap()),
-            ConsumerGroup::try_from("test-group").unwrap(),
+            "test-group".parse().unwrap(),
             NonZeroU16::new(10).unwrap(),
             DurationMs::from_secs(30),
             SeekPosition::Earliest,
