@@ -9,12 +9,6 @@ jobs:
     uses: ./.github/workflows/ci.yml
     secrets: inherit
 
-  # Disabling for now because results are too inconsistent
-  # on github runners. Will revisit later.
-  #  benchmark:
-  #    uses: ./.github/workflows/benchmark.yml
-  #    secrets: inherit
-
   java:
     uses: ./.github/workflows/java.yml
 
