@@ -201,9 +201,6 @@ jobs:
             echo 'all good.'
           fi
 
-  benchmark:
-    uses: ./.github/workflows/benchmark.yml
-
   operator-e2e:
     name: Operator e2e tests
     if: ${{ inputs.run_operator_e2e }}
