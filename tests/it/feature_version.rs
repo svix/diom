@@ -1,6 +1,5 @@
 use std::{net::SocketAddr, time::Duration};
 
-use diom_backend::cfg::VersionRange;
 use diom_core::types::NonZeroDurationMs;
 use diom_operations::FeatureVersion;
 use serde_json::json;
@@ -28,7 +27,7 @@ async fn feature_version(client: &TestClient) -> anyhow::Result<FeatureVersion> 
 async fn feature_version_advances_when_all_voters_support_it() -> TestResult {
     // Every node supports up to v1, so the leader should raise the committed feature version to 1.
     let cluster = start_cluster_with(3, |_idx, cfg| {
-        cfg.cluster.supported_feature_versions = Some(VersionRange::new(0, 1));
+        cfg.cluster.supported_feature_version_max = Some(1);
         cfg.cluster.feature_version_advance_interval = fast_advance_interval();
     })
     .await;
@@ -51,7 +50,7 @@ async fn feature_version_does_not_advance_with_a_lagging_voter() -> TestResult {
     // so every node can join.
     let cluster = start_cluster_with(3, |idx, cfg| {
         let max = if idx == 0 { 0 } else { 1 };
-        cfg.cluster.supported_feature_versions = Some(VersionRange::new(0, max));
+        cfg.cluster.supported_feature_version_max = Some(max);
         cfg.cluster.feature_version_advance_interval = fast_advance_interval();
     })
     .await;
@@ -74,7 +73,7 @@ async fn feature_version_does_not_advance_with_a_lagging_voter() -> TestResult {
 async fn incompatible_node_is_refused() -> TestResult {
     // Every node supports v1, so the cluster advances its committed feature version to 1.
     let cluster = start_cluster_with(3, |_idx, cfg| {
-        cfg.cluster.supported_feature_versions = Some(VersionRange::new(0, 1));
+        cfg.cluster.supported_feature_version_max = Some(1);
         cfg.cluster.feature_version_advance_interval = fast_advance_interval();
     })
     .await;
@@ -98,7 +97,7 @@ async fn incompatible_node_is_refused() -> TestResult {
         .tap_cfg(move |cfg| {
             cfg.cluster.auto_initialize = false;
             cfg.cluster.seed_nodes = cluster_peers.iter().copied().map(Into::into).collect();
-            cfg.cluster.supported_feature_versions = Some(VersionRange::new(0, 0));
+            cfg.cluster.supported_feature_version_max = Some(0);
         })
         .build_uninitialized()
         .await;
@@ -130,7 +129,7 @@ async fn feature_version_survives_snapshot_install() -> TestResult {
         .token(TEST_ADMIN_TOKEN.to_owned())
         .tap_cfg(|cfg| {
             cfg.cluster.auto_initialize = true;
-            cfg.cluster.supported_feature_versions = Some(VersionRange::new(0, 1));
+            cfg.cluster.supported_feature_version_max = Some(1);
             cfg.cluster.feature_version_advance_interval = fast_advance_interval();
             cfg.cluster.minimum_snapshot_interval = NonZeroDurationMs::from_secs(3).unwrap();
             cfg.cluster.snapshot_after_writes = 10.into();
@@ -174,7 +173,7 @@ async fn feature_version_survives_snapshot_install() -> TestResult {
         .token(TEST_ADMIN_TOKEN.to_owned())
         .tap_cfg(|cfg| {
             cfg.cluster.auto_initialize = true;
-            cfg.cluster.supported_feature_versions = Some(VersionRange::new(0, 1));
+            cfg.cluster.supported_feature_version_max = Some(1);
             cfg.cluster.feature_version_advance_interval = fast_advance_interval();
             cfg.cluster.seed_nodes = vec![s1.repl_addr.into()];
         })

@@ -20,6 +20,8 @@ use tracing::Level;
 use tracing_subscriber::Layer;
 use validator::Validate;
 
+use diom_operations::FeatureVersion;
+
 pub use crate::core::cluster::version::VersionRange;
 use crate::{
     core::cluster::version::SUPPORTED_VERSION_RANGE,
@@ -454,14 +456,24 @@ pub struct ClusterConfiguration {
     /// and data are enabled, this will substantially decrease latency.
     pub broadcast_submitted_on_append: bool,
 
-    /// Override for the feature-version range this node advertises as supported.
+    /// Overrides the minimum feature version this node advertises as supported.
     ///
-    /// This should only be set when testing the feature-version subsystem. When unset, the
-    /// compiled-in supported range is used.
+    /// Leave unset in normal operation, where the value the build was compiled with is used. This
+    /// exists mainly for testing the feature version subsystem and for symmetry with the max
+    /// override.
     #[serde(default)]
-    #[env_overridable(skip)]
-    #[dumpable_config(skip)]
-    pub supported_feature_versions: Option<VersionRange>,
+    pub supported_feature_version_min: Option<FeatureVersion>,
+
+    /// Caps the maximum feature version this node advertises as supported, holding the cluster back
+    /// from advancing past it.
+    ///
+    /// Leave unset in normal operation, where the value the build was compiled with is used. To
+    /// stage a feature version bump across a rolling upgrade, set this on every voter to the current
+    /// max (one below the new build's max) before upgrading, let the cluster bake, then unset it and
+    /// restart so the cluster advances. The value must fall inside the range the build was compiled
+    /// with and be at most one below that maximum. It is validated at startup.
+    #[serde(default)]
+    pub supported_feature_version_max: Option<FeatureVersion>,
 
     /// How often the leader polls voters to decide whether to advance the cluster feature version.
     ///
@@ -492,10 +504,12 @@ impl ClusterConfiguration {
         }
     }
 
-    /// The feature-version range this node advertises, honoring the debug override if set.
+    /// The feature version range this node advertises, honoring the min and max overrides if set.
     pub(crate) fn supported_versions(&self) -> VersionRange {
-        self.supported_feature_versions
-            .unwrap_or(SUPPORTED_VERSION_RANGE)
+        SUPPORTED_VERSION_RANGE.with_overrides(
+            self.supported_feature_version_min,
+            self.supported_feature_version_max,
+        )
     }
 }
 
@@ -1242,7 +1256,7 @@ pub fn describe_environment() -> Vec<Variable> {
 mod tests {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
-    use super::{OpenTelemetryProtocol, PeerAddr, load_toml};
+    use super::{OpenTelemetryProtocol, PeerAddr, SUPPORTED_VERSION_RANGE, load_toml};
 
     #[test]
     fn test_opentelemetry_protocol_from_str() {
@@ -1278,6 +1292,28 @@ persistent_db = { path = "/2", filename = "fjall_persistent" }
             config.persistent_db.filename,
             "fjall_persistent".to_string()
         );
+    }
+
+    #[test]
+    fn feature_version_override_is_validated() {
+        let base = r#"
+ephemeral_db = { path = "/1", filename = "test1" }
+persistent_db = { path = "/2", filename = "fjall_persistent" }
+"#;
+
+        // Pinning the max to the compiled-in max is a valid subset and loads.
+        let valid = format!(
+            "{base}cluster = {{ supported_feature_version_max = {} }}\n",
+            SUPPORTED_VERSION_RANGE.max
+        );
+        assert!(load_toml(Some(&valid)).is_ok());
+
+        // Advertising past the compiled-in max would claim support the build lacks, so it is refused.
+        let out_of_range = format!(
+            "{base}cluster = {{ supported_feature_version_max = {} }}\n",
+            SUPPORTED_VERSION_RANGE.max + 1
+        );
+        assert!(load_toml(Some(&out_of_range)).is_err());
     }
 
     #[test]
