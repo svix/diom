@@ -15,7 +15,7 @@ use headers::{Authorization, authorization::Bearer};
 use http::StatusCode;
 use openraft::{
     ChangeMembers,
-    raft::{AppendEntriesRequest, TransferLeaderRequest, VoteRequest},
+    raft::{AppendEntriesRequest, AppendEntriesResponse, TransferLeaderRequest, VoteRequest},
 };
 use openraft_legacy::network_v1::InstallSnapshotRequest;
 use serde::Serialize;
@@ -150,7 +150,12 @@ async fn append_entries(
         leader_commit = ?body.leader_commit,
         "appending some entries to the log",
     );
-    state.raft.append_entries(body).await.pipe(rpc_response)
+    state
+        .raft
+        .append_entries(body)
+        .await
+        .map(AppendEntriesResponse::from)
+        .pipe(rpc_response)
 }
 
 #[tracing::instrument(skip_all)]
