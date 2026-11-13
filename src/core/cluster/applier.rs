@@ -65,6 +65,7 @@ pub(super) async fn apply_request(
         timestamp: request.timestamp,
         log_index: log_id.index,
         term: log_id.leader_id.term,
+        feature_version: state_machine.feature_version(),
     };
 
     let request = Arc::unwrap_or_clone(request);

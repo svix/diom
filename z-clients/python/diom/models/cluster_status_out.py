@@ -14,6 +14,9 @@ class ClusterStatusOut(BaseModel):
 
     This value is populated on cluster initialization and will never change."""
 
+    feature_version: int
+    """The cluster's committed feature version, as seen by the node servicing this request."""
+
     cluster_name: str | None = None
     """The name of this cluster (as defined in the config)
 

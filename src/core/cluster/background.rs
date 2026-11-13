@@ -7,12 +7,18 @@ use std::{
 };
 
 use super::{
-    LogId,
+    LogId, NodeId,
+    discovery::fetch_discover,
     handle::{BackgroundCommand, RaftState},
+    network::build_client,
     operations::{RecordLogTimestampOperation, TickOperation},
     raft::TypeConfig,
 };
-use crate::{cfg::Configuration, core::cluster::operations::SetClusterUuidOperation};
+use crate::{
+    cfg::{Configuration, PeerAddr},
+    core::cluster::operations::{AdvanceFeatureVersionOperation, SetClusterUuidOperation},
+};
+use anyhow::Context;
 use diom_error::CanFailExt;
 use diom_operations::{
     BackgroundError, BackgroundResult, OperationWriter, workers::BackgroundWorker,
@@ -121,6 +127,79 @@ impl BackgroundWorker for RefreshClusterUuid {
     }
 }
 
+/// Leader-only worker that advances the cluster feature version once every voter's build supports a
+/// higher one. It polls each voter's advertised range and advances to the highest version all voters
+/// (and this node) support. If any voter cannot be reached, it does not advance.
+#[derive(Clone)]
+struct AdvanceFeatureVersion {
+    handle: RaftState,
+}
+
+impl AdvanceFeatureVersion {
+    async fn try_advance(&self, client: &reqwest::Client) -> anyhow::Result<()> {
+        let current = self.handle.state_machine.feature_version().await;
+        let my_node_id = self.handle.node_id;
+        let voters: Vec<(NodeId, PeerAddr)> = self
+            .handle
+            .raft
+            .with_raft_state(move |s| {
+                let membership = s.membership_state.committed().membership();
+                membership
+                    .voter_ids()
+                    .filter(|id| *id != my_node_id)
+                    .filter_map(|id| {
+                        let peer: PeerAddr = membership.get_node(&id)?.clone().try_into().ok()?;
+                        Some((id, peer))
+                    })
+                    .collect()
+            })
+            .await?;
+
+        // Our own build caps the target; every other voter must also support it, or we do not
+        // advance. An unreachable voter aborts this round.
+        let mut target = self.handle.cfg.cluster.supported_versions().max;
+        for (node_id, peer) in voters {
+            let response = fetch_discover(client, &peer)
+                .await
+                .with_context(|| format!("polling voter {node_id:?} for its supported versions"))?;
+            target = target.min(response.supported_versions.max);
+        }
+
+        if target > current {
+            tracing::info!(
+                from = current,
+                to = target,
+                "all voters support a higher feature version; advancing"
+            );
+            self.handle
+                .write_request(AdvanceFeatureVersionOperation(target))
+                .await?;
+        }
+        Ok(())
+    }
+}
+
+impl BackgroundWorker for AdvanceFeatureVersion {
+    const NAME: &str = "advance-feature-version";
+
+    async fn run(self) -> BackgroundResult<()> {
+        let client = build_client(
+            &self.handle.cfg,
+            Some(self.handle.cfg.cluster.discovery_request_timeout.into()),
+            true,
+        )
+        .map_err(|e| BackgroundError::Other(diom_error::Error::internal(e)))?;
+        let interval = self.handle.cfg.cluster.feature_version_advance_interval;
+        let mut ticker = tokio::time::interval(interval.into());
+        loop {
+            ticker.tick().await;
+            if let Err(err) = self.try_advance(&client).await {
+                tracing::warn!(?err, "feature-version advance check failed");
+            }
+        }
+    }
+}
+
 struct BackgroundJobRunner {
     jobs: JoinSet<BackgroundResult<()>>,
     cfg: Configuration,
@@ -158,6 +237,9 @@ impl BackgroundJobRunner {
             handle: handle.clone(),
         });
         self.spawn_job(RefreshClusterUuid {
+            handle: handle.clone(),
+        });
+        self.spawn_job(AdvanceFeatureVersion {
             handle: handle.clone(),
         });
         self.spawn_job(diom_kv::LeaderWorker::new(
@@ -284,7 +366,7 @@ pub(super) async fn run_background_jobs_on_leader(
     handle: RaftState,
 ) -> anyhow::Result<()> {
     let mut runner = BackgroundJobRunner::new(cfg.clone(), handle.clone());
-    let shutdown = crate::shutting_down_token();
+    let shutdown = handle.shutdown_token.clone();
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(5);
 
@@ -478,7 +560,7 @@ pub(super) async fn run_background_jobs_on_all_nodes(
         .with_raft_state(|st| st.local_committed().copied())
         .await?;
     let mut ticker = tokio::time::interval(cfg.cluster.minimum_snapshot_interval.into());
-    let shutdown = crate::shutting_down_token();
+    let shutdown = handle.shutdown_token.clone();
 
     loop {
         let event = tokio::select! {

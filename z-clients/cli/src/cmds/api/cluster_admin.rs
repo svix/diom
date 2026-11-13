@@ -27,6 +27,7 @@ pub(crate) enum ClusterAdminCommands {
     #[command(after_help = "Example response:
 {
   \"cluster_id\": \"...\", // The unique ID of this cluster.
+  \"feature_version\": 123, // The feature version the cluster has advanced to
   \"cluster_name\": \"...\", // The name of this cluster (as defined in the config)
   \"this_node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\", // The unique ID of the node servicing this request
   \"this_node_state\": \"leader\", // The cluster state of the node servicing this request

@@ -1,12 +1,13 @@
 use std::sync::Arc;
 
 use diom_authorization::{AccessRuleList, Permissions};
-use diom_core::Monotime;
+use diom_core::{Monotime, shutdown::shutting_down_token};
 use diom_msgs::TopicPublishNotifier;
 use diom_proto::{InternalClient, InternalRequestError};
 use fjall_utils::{Databases, ReadonlyDatabases};
 use opentelemetry::metrics::Meter;
 use serde::{Serialize, de::DeserializeOwned};
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     cfg::Configuration,
@@ -37,6 +38,12 @@ pub struct AppState {
     pub(crate) topic_publish_notifier: TopicPublishNotifier,
 
     pub(crate) metrics: Option<MostRecentMetricStore>,
+
+    /// Per-node shutdown signal. A child of the process-global shutdown token, so an OS-signal
+    /// shutdown still cascades here, but a single node can shut itself down (for example when it
+    /// reaches a feature version it cannot support) without disturbing other nodes in the same
+    /// process (as happens in integration tests).
+    pub(crate) shutdown_token: CancellationToken,
 }
 
 impl AppState {
@@ -86,6 +93,7 @@ impl AppState {
             time,
             topic_publish_notifier: TopicPublishNotifier::new(),
             metrics,
+            shutdown_token: shutting_down_token().child_token(),
         }
     }
 

@@ -6,7 +6,8 @@ type ClusterStatusOut struct {
 	// The unique ID of this cluster.
 	//
 	// This value is populated on cluster initialization and will never change.
-	ClusterId *string `msgpack:"cluster_id,omitempty"`
+	ClusterId      *string `msgpack:"cluster_id,omitempty"`
+	FeatureVersion uint32  `msgpack:"feature_version"` // The cluster's committed feature version, as seen by the node servicing this request.
 	// The name of this cluster (as defined in the config)
 	//
 	// This value is not replicated and should only be used for debugging.

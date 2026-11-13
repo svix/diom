@@ -1,6 +1,7 @@
 use validator::ValidationError;
 
 use crate::cfg::ClusterConfiguration;
+use crate::core::cluster::version::SUPPORTED_VERSION_RANGE;
 use diom_core::types::NonZeroDurationMs;
 
 pub(super) fn validate_admin_token(token: &str) -> Result<(), ValidationError> {
@@ -32,6 +33,12 @@ pub(super) fn validate_cluster_configuration(
         tracing::warn!(
             "setting log_sync_interval_commits > 1 and a long log_sync_interval_duration will make bootstrap extremely slow!"
         )
+    }
+
+    if c.supported_feature_version_min.is_some() || c.supported_feature_version_max.is_some() {
+        c.supported_versions()
+            .validate_as_override_of(&SUPPORTED_VERSION_RANGE)
+            .map_err(ValidationError::new)?;
     }
 
     Ok(())
