@@ -1,10 +1,13 @@
 use std::time::Duration;
 
+use diom_core::types::NonZeroDurationMs;
 use serde_json::json;
 use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestClient, TestResult, U64Ext,
-    server::{TestContext, start_server},
+    proxy::start_replication_proxy,
+    server::{TestContext, start_cluster, start_server},
 };
+use tokio::net::TcpListener;
 
 async fn kv_set(
     client: &TestClient,
@@ -74,6 +77,54 @@ async fn kv_not_found(client: &TestClient, key: &str) -> anyhow::Result<()> {
         .ensure(StatusCode::OK)?
         .json();
     anyhow::ensure!(response["value"].is_null(), "key should be not-found");
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_kv_get_waits_for_namespace_replication() -> TestResult {
+    // Create a 3 node cluster: 2 nodes + 1 replication follower
+    let context = start_cluster(2).await;
+    let leader = &context.handles[&context.get_leader_id().await];
+
+    // We'll cut off this replication proxy to starve the follower later.
+    let listener = TcpListener::bind("127.0.0.1:0").await?;
+    let (proxy_address, proxy) = start_replication_proxy(listener.local_addr()?).await?;
+
+    let follower = TestContext::builder()
+        .repl_listener(listener)
+        .tap_cfg(|cfg| {
+            cfg.cluster.auto_initialize = false;
+            cfg.cluster.seed_nodes = vec![leader.repl_addr.into()];
+            cfg.cluster.advertised_address = Some(proxy_address.into());
+            cfg.cluster.election_timeout_min = NonZeroDurationMs::from_secs(5).unwrap();
+            cfg.cluster.election_timeout_max = NonZeroDurationMs::from_secs(10).unwrap();
+        })
+        .build()
+        .await;
+
+    // Stop replication to the follower node while the other 2 nodes retain quorum
+    proxy.abort();
+    let _ = proxy.await;
+
+    leader
+        .client
+        .post("v1.kv.namespace.configure")
+        .json(json!({ "name": "new-namespace" }))
+        .await?
+        .ensure(StatusCode::OK)?;
+
+    // A strong read must fail to synchronize rather than report stale namespace metadata
+    follower
+        .client
+        .post("v1.kv.get")
+        .json(json!({
+            "namespace": "new-namespace",
+            "key": "missing-key",
+            "consistency": "strong",
+        }))
+        .await?
+        .ensure(StatusCode::INTERNAL_SERVER_ERROR)?;
+
     Ok(())
 }
 

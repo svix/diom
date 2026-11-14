@@ -122,7 +122,9 @@ impl TestServerBuilder {
             let mut cfg = self.cfg;
             cfg.listen_address = addr;
             cfg.cluster.listen_address = repl_addr;
-            cfg.cluster.advertised_address = Some(repl_addr.into());
+            cfg.cluster
+                .advertised_address
+                .get_or_insert(repl_addr.into());
             Arc::new(cfg)
         };
 
