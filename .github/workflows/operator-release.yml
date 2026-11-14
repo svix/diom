@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Read version from Cargo.toml
         id: version
@@ -59,7 +59,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: Create and push tag
         run: |
           TAG="operator-${{ needs.operator-release.outputs.version }}"

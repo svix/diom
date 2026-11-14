@@ -24,7 +24,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           filter: tree:0

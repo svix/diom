@@ -10,6 +10,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - name: Run vacuum lint
         run: ./scripts/vacuum-operator-openapi.sh --pipeline-output

@@ -41,14 +41,16 @@ repos:
     rev: 99470f5e12208ff0fb17ab81c3c494f7620a1d8d # frozen: v0.11.0
     hooks:
       - id: shellcheck
-  - repo: https://github.com/hyland/github-actions-ensure-sha-pinned-actions
-    rev: 7957efb76aba0eec7580a9c0392d3e5bec381359 # frozen: v2.0.1
-    hooks:
-      - id: gha-sha-convert
-        args: ["--allowlist", "actions/*"]
+
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 6b63472e72e1a91ed8a2f6d483790dfb644fa1d3 # frozen: 0.37.4
     hooks:
       - id: check-dependabot
+
+  - repo: https://github.com/zendern/pre-commit-hooks
+    rev: cb3feef6aa5b1864d521e8bc84acc35391146974 # frozen: v1.3.0
+    hooks:
+      - id: gh-actions-lock-verify-local
+      - id: gh-actions-lock-verify # manual stage: run in CI with GH_TOKEN
 
 # hadolint *not* included here because of system dependencies

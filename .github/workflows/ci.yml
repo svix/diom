@@ -30,8 +30,8 @@ jobs:
     name: Formatting
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: nightly
           components: rustfmt
@@ -41,11 +41,11 @@ jobs:
     name: Check cargo manifests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
+      - uses: actions/checkout@v7.0.1
+      - uses: taiki-e/install-action@v2.88.0
         with:
           tool: cargo-sort@2.1.3
-      - uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
+      - uses: taiki-e/install-action@v2.88.0
         with:
           tool: cargo-machete
       - run: cargo sort --check --no-format --workspace -o package,lib,bin,features,dependencies,build-dependencies,dev-dependencies,lints,workspace
@@ -55,13 +55,13 @@ jobs:
     name: Clippy
     runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       # Use beta toolchain for a middle ground between effective caching and the latest lints
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: beta
           components: clippy
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: Swatinem/rust-cache@v2.9.3
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
@@ -76,9 +76,15 @@ jobs:
     name: Validate prek
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-      - uses: j178/prek-action@44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d # v3.1.0
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: j178/prek-action@v3.1.0
+      - name: Verify the workflow lockfile
+        uses: j178/prek-action@v3.1.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          extra-args: "--hook-stage manual gh-actions-lock-verify --all-files"
 
   test:
     name: Test
@@ -87,18 +93,18 @@ jobs:
     env:
       DIOM_LOG_LEVEL: debug
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
           components: llvm-tools-preview
-      - uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
+      - uses: taiki-e/install-action@v2.88.0
         with:
           tool: cargo-llvm-cov
-      - uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
+      - uses: taiki-e/install-action@v2.88.0
         with:
           tool: cargo-nextest
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: Swatinem/rust-cache@v2.9.3
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
@@ -109,7 +115,7 @@ jobs:
         id: test
         run: bash .github/test-report.sh
       - name: Upload Test Report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         id: upload-report
         if: always()
         with:
@@ -126,12 +132,12 @@ jobs:
     env:
       CODEGEN_OCI_RUNNER: docker
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
           components: rustfmt
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: Swatinem/rust-cache@v2.9.3
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
@@ -165,7 +171,7 @@ jobs:
     name: Helm chart unit tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - name: Install helm-unittest plugin
         run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.0.3
       - name: Run Helm unit tests
@@ -175,11 +181,11 @@ jobs:
     name: Check CRD JSON freshness
     runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: Swatinem/rust-cache@v2.9.3
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
@@ -210,25 +216,25 @@ jobs:
     env:
       DIOM_LOG_LEVEL: debug
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: Swatinem/rust-cache@v2.9.3
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
           # include relevant information in the cache name
           prefix-key: "operator-e2e-${{ env.ci_toolchain_rust }}"
-      - uses: helm/kind-action@1544676c07bb3570fcb70166beaa07c4528fd4aa # v1.15.1
+      - uses: helm/kind-action@v1.15.1
       - name: Run operator e2e tests
         run: cargo test -p diom-operator --features operator-e2e
 
   security-audit:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+      - uses: actions/checkout@v7.0.1
+      - uses: EmbarkStudios/cargo-deny-action@v2.1.1
         with:
           manifest-path: Cargo.toml
