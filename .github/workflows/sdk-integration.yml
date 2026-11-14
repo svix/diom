@@ -14,11 +14,11 @@ jobs:
     name: Build Server Binary
     runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ env.ci_toolchain_rust }}
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: Swatinem/rust-cache@v2.9.3
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
@@ -29,7 +29,7 @@ jobs:
         run: |
           cargo build --package diom-server --bin diom-server
           strip target/debug/diom-server
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: diom-server-binary
           path: target/debug/diom-server
@@ -45,17 +45,17 @@ jobs:
       matrix:
         rust: [stable, beta]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: diom-server-binary
           path: /tmp
       - name: Start Diom server
         run: scripts/start-diom-server.sh /tmp/diom-server
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
-      - uses: Swatinem/rust-cache@c8037a86dde8214a8310e9f54a8fc61ab362aa31 # v2
+      - uses: Swatinem/rust-cache@master
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
@@ -78,14 +78,14 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "pypy@3.11"]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: diom-server-binary
           path: /tmp
       - name: Start Diom server
         run: scripts/start-diom-server.sh /tmp/diom-server
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run Python SDK integration tests
@@ -104,8 +104,8 @@ jobs:
       matrix:
         node-version: ['24', '26']
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: diom-server-binary
           path: /tmp
@@ -130,8 +130,8 @@ jobs:
       matrix:
         go-version: ['1.22', 'stable']
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: diom-server-binary
           path: /tmp
@@ -156,8 +156,8 @@ jobs:
       matrix:
         java-version: ['8', '11', '17', '21']
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: diom-server-binary
           path: /tmp

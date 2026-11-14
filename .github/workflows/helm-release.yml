@@ -21,7 +21,7 @@ jobs:
       chart_version: ${{ steps.versions.outputs.chart_version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: Read versions from values.yaml
         id: versions
         run: |
@@ -54,7 +54,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: Create and push tag
         run: |
           TAG="helm-v${{ needs.read-versions.outputs.chart_version }}"
