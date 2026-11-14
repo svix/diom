@@ -103,7 +103,6 @@ workflows:
         - 'actions/upload-artifact@v7.0.2'
         - 'astral-sh/setup-uv@v10.3.3'
         - 'dtolnay/rust-toolchain@v1'
-        - 'swatinem/rust-cache@master'
         - 'swatinem/rust-cache@v2.9.3'
 dependencies:
     'actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7':
@@ -261,11 +260,6 @@ dependencies:
         commit: 'sha1-3268eb413133e2960fa4ae0e963ca76380c54cd9'
         owner_id: 5430905
         repo_id: 1008931044
-    'swatinem/rust-cache@master':
-        ref: 'master'
-        commit: 'sha1-c8037a86dde8214a8310e9f54a8fc61ab362aa31'
-        owner_id: 580492
-        repo_id: 298565987
     'swatinem/rust-cache@v2.9.3':
         ref: 'v2.9.3'
         commit: 'sha1-d1527c8f67ef9af357290475d4af4b0fab8f12e0'
