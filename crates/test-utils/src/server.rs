@@ -505,6 +505,8 @@ pub async fn start_replication_follower(
             cfg.cluster.auto_initialize = false;
             cfg.cluster.seed_nodes = vec![leader.repl_addr.into()];
             cfg.cluster.advertised_address = Some(proxy_address.into());
+            // We extend election timeout, since this doohicky is
+            // meant to test pathological cases and not self-heal.
             cfg.cluster.election_timeout_min = NonZeroDurationMs::from_secs(5).unwrap();
             cfg.cluster.election_timeout_max = NonZeroDurationMs::from_secs(10).unwrap();
         })

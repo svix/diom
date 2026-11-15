@@ -78,7 +78,8 @@ async fn kv_not_found(client: &TestClient, key: &str) -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn test_kv_get_waits_for_namespace_replication() -> TestResult {
+async fn test_kv_get_namespace_obeys_strong_read() -> TestResult {
+    // start 2 nodes + 1 follower
     let cluster = start_cluster(2).await;
     let (follower, proxy) = start_replication_follower(&cluster).await?;
     let leader = cluster.leader_client().await;

@@ -33,7 +33,7 @@ async fn call_limit_token_bucket(
 }
 
 #[tokio::test]
-async fn test_get_remaining_waits_for_namespace_replication() -> TestResult {
+async fn test_get_remaining_namespace_obeys_strong_read() -> TestResult {
     // start 2 nodes + 1 follower
     let cluster = start_cluster(2).await;
     let (follower, proxy) = start_replication_follower(&cluster).await?;
