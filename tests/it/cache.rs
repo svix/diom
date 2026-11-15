@@ -1,7 +1,7 @@
 use serde_json::json;
 use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestClient, TestResult,
-    server::{TestContext, start_server},
+    server::{TestContext, start_cluster, start_replication_follower, start_server},
 };
 
 async fn cache_set(client: &TestClient, key: &str, expire_in: u64, value: &str) -> TestResult<()> {
@@ -28,6 +28,38 @@ async fn cache_get(client: &TestClient, key: &str) -> TestResult<serde_json::Val
         .expect(StatusCode::OK)
         .json();
     Ok(response)
+}
+
+#[tokio::test]
+async fn test_cache_get_waits_for_namespace_replication() -> TestResult {
+    // start 2 nodes + 1 follower
+    let cluster = start_cluster(2).await;
+    let (follower, proxy) = start_replication_follower(&cluster).await?;
+    let leader = cluster.leader_client().await;
+
+    // disconnect the follower node
+    proxy.abort();
+    let _ = proxy.await;
+
+    leader
+        .post("v1.cache.namespace.configure")
+        .json(json!({ "name": "new-namespace" }))
+        .await?
+        .ensure(StatusCode::OK)?;
+
+    // A strong read must fail to synchronize rather than report stale namespace metadata
+    follower
+        .client
+        .post("v1.cache.get")
+        .json(json!({
+            "namespace": "new-namespace",
+            "key": "missing-key",
+            "consistency": "strong",
+        }))
+        .await?
+        .ensure(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(())
 }
 
 #[tokio::test]

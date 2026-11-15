@@ -7,9 +7,8 @@ use tokio::{
 
 use crate::TestResult;
 
-/// Start a TCP relay whose task owns all forwarded connections.
-/// Aborting and awaiting the returned task also aborts those connections.
-/// This is useful to fault-inject replication for correctness checks.
+/// Start a simple TCP proxy that can be disconnected/aborted from its JoinHandle.
+/// This is useful to fault-inject cluster replication for correctness checks.
 #[tracing::instrument]
 pub async fn start_replication_proxy(
     target: SocketAddr,
@@ -17,6 +16,7 @@ pub async fn start_replication_proxy(
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     let address = listener.local_addr()?;
     let handle = tokio::spawn(async move {
+        // TODO this joinset will technically just keep ballooning and leak, if not disconnected...
         let mut connections = JoinSet::new();
         loop {
             let (mut incoming, _) = listener.accept().await.unwrap();
