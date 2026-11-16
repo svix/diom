@@ -49,5 +49,10 @@
   "dependencies": {
     "msgpackr": "^1.11.9",
     "temporal-polyfill-lite": "^0.3.3"
+  },
+  "overrides": {
+    "mockttp": {
+      "basic-ftp": "^6.2.4"
+    }
   }
 }
