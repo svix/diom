@@ -493,7 +493,11 @@ pub async fn start_cluster(num_nodes: usize) -> ClusterTestContext {
 pub async fn start_replication_follower(
     context: &ClusterTestContext,
 ) -> TestResult<(TestContext, JoinHandle<()>)> {
-    let leader = &context.handles[&context.get_leader_id().await];
+    let seed_nodes = context
+        .handles
+        .values()
+        .map(|node| node.repl_addr.into())
+        .collect();
 
     // We can cut off this replication proxy to starve the follower later.
     let listener = TcpListener::bind("127.0.0.1:0").await?;
@@ -503,7 +507,7 @@ pub async fn start_replication_follower(
         .repl_listener(listener)
         .tap_cfg(|cfg| {
             cfg.cluster.auto_initialize = false;
-            cfg.cluster.seed_nodes = vec![leader.repl_addr.into()];
+            cfg.cluster.seed_nodes = seed_nodes;
             cfg.cluster.advertised_address = Some(proxy_address.into());
             // We extend election timeout, since this doohicky is
             // meant to test pathological cases and not self-heal.
