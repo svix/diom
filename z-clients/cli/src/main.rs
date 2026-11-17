@@ -5,7 +5,7 @@ use clap::{Parser, Subcommand};
 use clap_complete::Shell;
 use concolor_clap::Color;
 use diom::{DEFAULT_URL, DiomClient, DiomOptions};
-use mimalloc::MiMalloc;
+use rustfs_mimalloc::MiMalloc;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
