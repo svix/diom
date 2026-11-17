@@ -10,7 +10,12 @@ targets = [
 db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "deny"
-ignore = []
+ignore = [
+    # TODO(15015): openraft still uses chrono and friends
+    "RUSTSEC-2026-0543",
+    "RUSTSEC-2026-0555",
+    "RUSTSEC-2026-0559",
+]
 
 [licenses]
 allow = [
