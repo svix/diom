@@ -199,9 +199,6 @@ pub async fn initialize_raft(
 
         snapshot_policy: openraft::SnapshotPolicy::Never,
 
-        // we're using the v1 version of snapshot sending for now
-        #[allow(deprecated)]
-        send_snapshot_timeout: cfg.cluster.send_snapshot_timeout.as_millis(),
         install_snapshot_timeout: cfg.cluster.send_snapshot_timeout.as_millis(),
 
         broadcast_submitted_on_append: Some(cfg.cluster.broadcast_submitted_on_append),

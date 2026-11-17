@@ -657,7 +657,7 @@ impl RaftState {
             .with_raft_state(move |s| {
                 let membership = s.membership_state.effective().membership();
                 let is_voter = membership.voter_ids().contains(&node_id);
-                let is_learner = membership.learner_ids().contains(&node_id);
+                let is_learner = membership.non_write_voter_ids().contains(&node_id);
                 let node = membership.get_node(&node_id).cloned();
                 (is_voter, is_learner, node)
             })

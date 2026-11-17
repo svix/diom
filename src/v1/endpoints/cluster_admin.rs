@@ -144,7 +144,7 @@ async fn cluster_status(
             let purged = s.log_ids.purged().map(|l| l.index);
             let members = s.membership_state.effective().membership();
             let voters = members.voter_ids().collect::<BTreeSet<NodeId>>();
-            let learners = members.learner_ids().collect::<BTreeSet<NodeId>>();
+            let learners = members.non_write_voter_ids().collect::<BTreeSet<NodeId>>();
             let nodes = members
                 .nodes()
                 .map(|(node_id, node)| {
@@ -419,7 +419,7 @@ async fn get_node_state(repl: &RaftState, node_id: NodeId) -> Result<ServerState
                 ServerState::Leader
             } else if membership.voter_ids().any(|n| n == node_id) {
                 ServerState::Follower
-            } else if membership.learner_ids().any(|n| n == node_id) {
+            } else if membership.non_write_voter_ids().any(|n| n == node_id) {
                 ServerState::Learner
             } else {
                 ServerState::Unknown

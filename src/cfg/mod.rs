@@ -301,7 +301,7 @@ pub struct ClusterConfiguration {
     )]
     pub election_timeout_max: NonZeroDurationMs,
 
-    /// The hard timeout for sending a snapshot
+    /// The hard timeout for sending/installing a snapshot
     ///
     /// This should be at least twice as long as it takes to send the entire copy of your
     /// database.
