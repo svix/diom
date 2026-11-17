@@ -107,7 +107,7 @@ async fn print_status(json: bool, client: &DiomClient) -> anyhow::Result<()> {
                 if now > ts {
                     let ago = now - ts;
                     let ago = ago
-                        .round(jiff::SpanRound::new().smallest(jiff::Unit::Millisecond))
+                        .round(jiff::SignedDurationRound::new().smallest(jiff::Unit::Millisecond))
                         .expect("rounding time should succeed");
                     format!("{ts} ({ago:#} ago)")
                 } else {
