@@ -31,13 +31,13 @@ dotenvy.workspace = true
 fs-err.workspace = true
 http.workspace = true
 log = { version = "0.4", features = ["release_max_level_debug"] }
-mimalloc.workspace = true
 opentelemetry.workspace = true
 opentelemetry-http.workspace = true
 opentelemetry-otlp.workspace = true
 opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk.workspace = true
 reqwest.workspace = true
+rustfs-mimalloc.workspace = true
 tokio.workspace = true
 tracing = { workspace = true, features = ["release_max_level_debug"] }
 tracing-log.workspace = true

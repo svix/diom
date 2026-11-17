@@ -9,7 +9,7 @@ use diom_backend::{
     run,
 };
 use dotenvy::dotenv;
-use mimalloc::MiMalloc;
+use rustfs_mimalloc::MiMalloc;
 use std::{
     fmt::Write as _,
     io::{BufWriter, Write},
