@@ -13,10 +13,6 @@ jobs:
     name: Java Release
     runs-on: ubuntu-latest
     environment: Release
-    env:
-      GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
-      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v7.0.1
@@ -26,24 +22,18 @@ jobs:
         uses: actions/setup-java@v6.1.0
         with:
           distribution: 'temurin'
-          java-version: |
-            8
-            11
+          java-version: '25'
           server-id: 'central'
-          server-username: NEXUS_USERNAME
-          server-password: NEXUS_PASSWORD
-
-      # Import GPG key
-      - name: Import GPG key
-        run: |
-          echo "${{ secrets.OSSRH_GPG_SECRET_KEY }}" > private.key
-          gpg --batch --import private.key
-          # Trust the key to avoid interactive "are you sure?" prompts
-          echo "5" | gpg --command-fd 0 --batch --yes --edit-key ${{ secrets.OSSRH_GPG_KEY_NAME }} trust
-        shell: bash
+          server-username-env-var: NEXUS_USERNAME
+          server-password-env-var: NEXUS_PASSWORD
+          gpg-passphrase-env-var: GPG_PASSPHRASE
+          gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
 
       - name: Build & Deploy
+        env:
+          GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: |
-          # Maven deploy - this will sign, upload to staging, and (if configured) release automatically
-          mvn clean deploy -P release-sign-artifacts -DskipITs
+          mvn -P release deploy -DskipITs
         working-directory: z-clients/java

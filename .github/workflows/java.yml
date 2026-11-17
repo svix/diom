@@ -8,9 +8,25 @@ jobs:
   build:
     name: Build Java SDK
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        java-version: ["11", "25"]
     defaults:
       run:
         working-directory: z-clients/java
+
     steps:
       - uses: actions/checkout@v7.0.1
-      - run: mvn --batch-mode package
+
+      - name: Setup Java
+        uses: actions/setup-java@v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java-version }}
+
+      - name: Build
+        run: mvn -B verify -DskipITs
+
+      - name: Release profile dry run
+        if: matrix.java-version == '25'
+        run: mvn -B -P release verify -DskipITs -Dgpg.skip
