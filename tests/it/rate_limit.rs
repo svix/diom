@@ -3,7 +3,7 @@ use std::time::Duration;
 use serde_json::json;
 use test_utils::{
     StatusCode, TestClient, TestResult,
-    server::{TestContext, start_server},
+    server::{TestContext, start_cluster, start_replication_follower, start_server},
 };
 
 #[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
@@ -30,6 +30,42 @@ async fn call_limit_token_bucket(
         .expect(StatusCode::OK)
         .json();
     Ok(response)
+}
+
+#[tokio::test]
+async fn test_get_remaining_namespace_obeys_strong_read() -> TestResult {
+    // start 2 nodes + 1 follower
+    let cluster = start_cluster(2).await;
+    let (follower, proxy) = start_replication_follower(&cluster).await?;
+    let leader = cluster.leader_client().await;
+
+    // disconnect the follower node
+    proxy.abort();
+    let _ = proxy.await;
+
+    leader
+        .post("v1.rate-limit.namespace.configure")
+        .json(json!({ "name": "new-namespace" }))
+        .await?
+        .ensure(StatusCode::OK)?;
+
+    // A strong read must fail to synchronize rather than report stale namespace metadata
+    follower
+        .client
+        .post("v1.rate-limit.get-remaining")
+        .json(json!({
+            "namespace": "new-namespace",
+            "key": "missing-key",
+            "config": {
+                "capacity": 10,
+                "refill_amount": 1,
+                "refill_interval_ms": 60000,
+            },
+        }))
+        .await?
+        .ensure(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(())
 }
 
 #[tokio::test]

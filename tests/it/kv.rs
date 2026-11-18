@@ -3,7 +3,7 @@ use std::time::Duration;
 use serde_json::json;
 use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestClient, TestResult, U64Ext,
-    server::{TestContext, start_server},
+    server::{TestContext, start_cluster, start_replication_follower, start_server},
 };
 
 async fn kv_set(
@@ -74,6 +74,38 @@ async fn kv_not_found(client: &TestClient, key: &str) -> anyhow::Result<()> {
         .ensure(StatusCode::OK)?
         .json();
     anyhow::ensure!(response["value"].is_null(), "key should be not-found");
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_kv_get_namespace_obeys_strong_read() -> TestResult {
+    // start 2 nodes + 1 follower
+    let cluster = start_cluster(2).await;
+    let (follower, proxy) = start_replication_follower(&cluster).await?;
+    let leader = cluster.leader_client().await;
+
+    // disconnect the follower node
+    proxy.abort();
+    let _ = proxy.await;
+
+    leader
+        .post("v1.kv.namespace.configure")
+        .json(json!({ "name": "new-namespace" }))
+        .await?
+        .ensure(StatusCode::OK)?;
+
+    // A strong read must fail to synchronize rather than report stale namespace metadata
+    follower
+        .client
+        .post("v1.kv.get")
+        .json(json!({
+            "namespace": "new-namespace",
+            "key": "missing-key",
+            "consistency": "strong",
+        }))
+        .await?
+        .ensure(StatusCode::INTERNAL_SERVER_ERROR)?;
+
     Ok(())
 }
 

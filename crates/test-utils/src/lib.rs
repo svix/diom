@@ -5,6 +5,7 @@ use std::fmt::{Debug, Display};
 pub use reqwest::StatusCode;
 
 pub mod json;
+pub mod proxy;
 pub mod retry;
 pub mod server;
 mod test_client;

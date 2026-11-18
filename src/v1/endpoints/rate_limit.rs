@@ -175,12 +175,12 @@ async fn rate_limit_get_remaining(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimitGetRemainingIn>,
 ) -> Result<MsgPackOrJson<RateLimitGetRemainingOut>> {
+    repl.wait_linearizable().await.or_internal_error()?;
+
     let namespace: RateLimitNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found("namespace")?;
-
-    repl.wait_linearizable().await.or_internal_error()?;
 
     let now = repl.time.now();
     let rate_limit_state = repl.state_machine.rate_limit_store().await;

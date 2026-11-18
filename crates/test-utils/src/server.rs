@@ -5,7 +5,10 @@ use std::{
     sync::Arc,
 };
 
-use crate::{TestClient, json::JsonFastAndLoose, retry::run_with_retries};
+use crate::{
+    TestClient, TestResult, json::JsonFastAndLoose, proxy::start_replication_proxy,
+    retry::run_with_retries,
+};
 use diom_backend::{
     Initialized,
     cfg::{
@@ -122,7 +125,9 @@ impl TestServerBuilder {
             let mut cfg = self.cfg;
             cfg.listen_address = addr;
             cfg.cluster.listen_address = repl_addr;
-            cfg.cluster.advertised_address = Some(repl_addr.into());
+            cfg.cluster
+                .advertised_address
+                .get_or_insert(repl_addr.into());
             Arc::new(cfg)
         };
 
@@ -481,4 +486,36 @@ pub async fn start_cluster(num_nodes: usize) -> ClusterTestContext {
         handles,
         admin_token,
     }
+}
+
+/// Start a follower node that can be disconnected from replication.
+/// Aborting the replication proxy returned by the JoinHandle will disconnect the node from replication.
+pub async fn start_replication_follower(
+    context: &ClusterTestContext,
+) -> TestResult<(TestContext, JoinHandle<()>)> {
+    let seed_nodes = context
+        .handles
+        .values()
+        .map(|node| node.repl_addr.into())
+        .collect();
+
+    // We can cut off this replication proxy to starve the follower later.
+    let listener = TcpListener::bind("127.0.0.1:0").await?;
+    let (proxy_address, proxy) = start_replication_proxy(listener.local_addr()?).await?;
+
+    let follower = TestContext::builder()
+        .repl_listener(listener)
+        .tap_cfg(|cfg| {
+            cfg.cluster.auto_initialize = false;
+            cfg.cluster.seed_nodes = seed_nodes;
+            cfg.cluster.advertised_address = Some(proxy_address.into());
+            // We extend election timeout, since this doohicky is
+            // meant to test pathological cases and not self-heal.
+            cfg.cluster.election_timeout_min = NonZeroDurationMs::from_secs(5).unwrap();
+            cfg.cluster.election_timeout_max = NonZeroDurationMs::from_secs(10).unwrap();
+        })
+        .build()
+        .await;
+
+    Ok((follower, proxy))
 }
