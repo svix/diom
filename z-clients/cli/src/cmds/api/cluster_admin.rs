@@ -33,6 +33,7 @@ pub(crate) enum ClusterAdminCommands {
   \"this_node_last_committed_timestamp\": 1234567890123, // The timestamp of the last transaction committed on this node
   \"this_node_last_snapshot_id\": \"...\", // The last snapshot taken on this node
   \"this_node_last_purged_log_index\": 123, // The last-purged log on this node
+  \"this_node_leader_last_contact_ms\": 60000, // The duration since the last time we heard from the leader
   \"nodes\": [{\"node_id\": \"a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8\", \"address\": \"...\", \"state\": \"leader\", \"last_committed_log_index\": 123, \"last_committed_term\": 123}] // A list of all nodes known to be in the cluster
 }\n")]
     Status {},

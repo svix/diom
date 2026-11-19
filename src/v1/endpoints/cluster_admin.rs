@@ -6,12 +6,13 @@ use aide::axum::{
 };
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_core::types::UnixTimestampMs;
+use diom_core::types::{DurationMs, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{Error, ResultExt};
 use diom_id::Module;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use futures_util::StreamExt;
+use openraft::Instant as _;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -117,6 +118,8 @@ pub struct ClusterStatusOut {
     pub this_node_last_snapshot_id: Option<String>,
     /// The last-purged log on this node
     pub this_node_last_purged_log_index: Option<u64>,
+    /// The duration since the last time we heard from the leader
+    pub this_node_leader_last_contact_ms: Option<DurationMs>,
     /// A list of all nodes known to be in the cluster
     pub nodes: Vec<NodeStatusOut>,
 }
@@ -136,7 +139,13 @@ async fn cluster_status(
 ) -> Result<MsgPackOrJson<ClusterStatusOut>> {
     // TODO: move all of this out of the endpoint at some point
     let leader_id = repl.raft.current_leader().await;
-    let (this_node_state, this_last_committed_log_index, this_last_purged_log_index, pnodes) = repl
+    let (
+        this_node_state,
+        this_last_committed_log_index,
+        this_last_purged_log_index,
+        this_node_leader_last_contact_ms,
+        pnodes,
+    ) = repl
         .raft
         .with_raft_state(move |s| {
             let this_node_state = s.server_state.into();
@@ -145,6 +154,11 @@ async fn cluster_status(
             let members = s.membership_state.effective().membership();
             let voters = members.voter_ids().collect::<BTreeSet<NodeId>>();
             let learners = members.non_write_voter_ids().collect::<BTreeSet<NodeId>>();
+            let last_leader_contact = s.last_leader_contact().and_then(|i| {
+                let now = openraft::TokioInstant::now();
+                let ms = u64::try_from(now.saturating_duration_since(i).as_millis()).ok()?;
+                Some(DurationMs::from_millis(ms))
+            });
             let nodes = members
                 .nodes()
                 .map(|(node_id, node)| {
@@ -166,7 +180,13 @@ async fn cluster_status(
                     }
                 })
                 .collect::<Vec<_>>();
-            (this_node_state, committed, purged, nodes)
+            (
+                this_node_state,
+                committed,
+                purged,
+                last_leader_contact,
+                nodes,
+            )
         })
         .await
         .or_internal_error()?;
@@ -216,6 +236,7 @@ async fn cluster_status(
         this_node_last_committed_timestamp: this_node_last_committed_timestamp.into(),
         this_node_last_snapshot_id,
         this_node_last_purged_log_index: this_last_purged_log_index,
+        this_node_leader_last_contact_ms,
         nodes,
     }))
 }

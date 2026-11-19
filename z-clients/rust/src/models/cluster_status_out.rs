@@ -35,6 +35,15 @@ pub struct ClusterStatusOut {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub this_node_last_purged_log_index: Option<u64>,
 
+    /// The duration since the last time we heard from the leader
+    #[serde(
+        rename = "this_node_leader_last_contact_ms",
+        skip_serializing_if = "Option::is_none",
+        default,
+        with = "crate::duration_ms_serde::optional"
+    )]
+    pub this_node_leader_last_contact: Option<std::time::Duration>,
+
     /// A list of all nodes known to be in the cluster
     pub nodes: Vec<NodeStatusOut>,
 }
@@ -54,6 +63,7 @@ impl ClusterStatusOut {
             this_node_last_committed_timestamp,
             this_node_last_snapshot_id: None,
             this_node_last_purged_log_index: None,
+            this_node_leader_last_contact: None,
             nodes,
         }
     }
@@ -75,6 +85,14 @@ impl ClusterStatusOut {
 
     pub fn with_this_node_last_purged_log_index(mut self, value: impl Into<Option<u64>>) -> Self {
         self.this_node_last_purged_log_index = value.into();
+        self
+    }
+
+    pub fn with_this_node_leader_last_contact(
+        mut self,
+        value: impl Into<Option<std::time::Duration>>,
+    ) -> Self {
+        self.this_node_leader_last_contact = value.into();
         self
     }
 }
