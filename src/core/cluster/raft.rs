@@ -172,6 +172,11 @@ pub async fn initialize_raft(
     time: Monotime,
     initialized: crate::Initialized,
 ) -> anyhow::Result<RaftState> {
+    let snapshot_path = cfg.cluster.snapshot_path(cfg)?;
+
+    super::serialized_state_machine::clear_old_snapshot_tempfiles_from(snapshot_path.as_path())
+        .await?;
+
     let mut logs = super::DiomLogs::new(
         cfg.cluster.log_path(cfg)?,
         cfg.cluster.log_sync_interval_commits,
@@ -219,7 +224,7 @@ pub async fn initialize_raft(
     let state_machine = super::state_machine::Store::new(
         db,
         edb,
-        cfg.cluster.snapshot_path(cfg)?,
+        snapshot_path,
         app_state.clone(),
         logs.clone(),
         id,

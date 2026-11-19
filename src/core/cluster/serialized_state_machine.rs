@@ -1,10 +1,13 @@
 use std::{
     collections::BTreeMap,
     io::{Read, Seek, Write},
+    path::Path,
+    time::{Duration, SystemTime},
 };
 
 use anyhow::Context;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use diom_error::CanFailExt;
 use fjall::{Database, Keyspace, Readable};
 use fjall_utils::{Databases, SchemaManifest, StorageType};
 use serde::{Deserialize, Serialize};
@@ -302,6 +305,49 @@ pub(crate) fn load_from_file<F: Read + Seek>(
     }
 
     Ok(manifest.cluster_id)
+}
+
+#[tracing::instrument(skip_all)]
+pub(crate) async fn clear_old_snapshot_tempfiles_from(path: &Path) -> anyhow::Result<()> {
+    const CLEAN_UP_AFTER: Duration = Duration::from_secs(86400);
+
+    let mut iterator = tokio::fs::read_dir(path).await?;
+    let mut to_delete = Vec::new();
+    let threshold = SystemTime::now() - CLEAN_UP_AFTER;
+    while let Some(record) = iterator.next_entry().await? {
+        if record
+            .file_name()
+            .to_str()
+            .is_some_and(|s| s.starts_with(".tmp"))
+        {
+            let metadata = match record.metadata().await {
+                Ok(m) => m,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                    // file was deleted while traversing; ok
+                    continue;
+                }
+                Err(e) => {
+                    tracing::warn!(path = %record.path().display(), error=%e, "unable to get metadata for temporary file");
+                    continue;
+                }
+            };
+            if let Ok(mtime) = metadata.modified()
+                && mtime < threshold
+            {
+                to_delete.push((record.path(), mtime));
+            } else {
+                tracing::debug!(path = %record.path().display(), mtime = ?metadata.modified(), "ignoring relatively-new temporary file");
+            }
+        }
+    }
+
+    for (path, mtime) in to_delete {
+        tracing::debug!(path = %path.display(), ?mtime, "deleting stale temporary file");
+        tokio::fs::remove_file(&path)
+            .await
+            .can_fail("removing old temporary file");
+    }
+    Ok(())
 }
 
 #[cfg(test)]
