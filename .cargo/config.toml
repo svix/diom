@@ -7,3 +7,6 @@ codegen = "run --package=codegen --features=generate --"
 # See https://github.com/rust-lang/cargo/issues/5376#issuecomment-2163350032
 [target.'cfg(true)']
 rustflags = ["--cfg", "tokio_unstable"]
+
+[registry]
+global-min-publish-age = "3 days"
