@@ -43,6 +43,7 @@ impl Workers {
     where
         W: BackgroundWorker + 'static,
     {
+        let shutdown_token = self.app_state.shutdown_token.clone();
         self.join_set.spawn(async move {
             match job.run_while_handling_panics().await {
                 Err(BackgroundError::TooManyPanics) => {
@@ -50,7 +51,7 @@ impl Workers {
                         job_name = W::NAME,
                         "background worker had too many panics, shutting down server"
                     );
-                    crate::start_shut_down();
+                    shutdown_token.cancel();
                     Ok(())
                 }
                 other => {

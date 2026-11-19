@@ -315,7 +315,7 @@ fn load_commands(
 }
 
 async fn wait_for_up(config: &AppConfig, raft_state: &RaftState) -> anyhow::Result<()> {
-    let shutdown = crate::shutting_down_token();
+    let shutdown = raft_state.shutdown_token.clone();
     let value = if let Some(time) = config.bootstrap_max_wait_time {
         tracing::debug!(max_wait_time=?time, "waiting for node to come up before bootstrapping...");
         shutdown
