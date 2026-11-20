@@ -9583,6 +9583,14 @@
             "minimum": 0,
             "nullable": true
           },
+          "this_node_leader_last_contact_ms": {
+            "description": "The duration since the last time we heard from the leader",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "DurationMs",
+            "nullable": true
+          },
           "nodes": {
             "description": "A list of all nodes known to be in the cluster",
             "type": "array",

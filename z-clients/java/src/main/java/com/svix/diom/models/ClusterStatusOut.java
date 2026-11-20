@@ -43,6 +43,7 @@ public class ClusterStatusOut {
     @JsonProperty("this_node_last_committed_timestamp") @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant thisNodeLastCommittedTimestamp;
     @JsonProperty("this_node_last_snapshot_id") private String thisNodeLastSnapshotId;
     @JsonProperty("this_node_last_purged_log_index") private Long thisNodeLastPurgedLogIndex;
+    @JsonProperty("this_node_leader_last_contact_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration thisNodeLeaderLastContact;
     @JsonProperty private List<NodeStatusOut> nodes;
     public ClusterStatusOut() {}
 
@@ -181,6 +182,25 @@ This value is not replicated and should only be used for debugging.
 
     public void setThisNodeLastPurgedLogIndex(Long thisNodeLastPurgedLogIndex) {
         this.thisNodeLastPurgedLogIndex = thisNodeLastPurgedLogIndex;
+    }
+
+    public ClusterStatusOut thisNodeLeaderLastContact(Duration thisNodeLeaderLastContact) {
+        this.thisNodeLeaderLastContact = thisNodeLeaderLastContact;
+        return this;
+    }
+
+    /**
+    * The duration since the last time we heard from the leader
+    *
+     * @return thisNodeLeaderLastContact
+     */
+    @javax.annotation.Nullable
+    public Duration getThisNodeLeaderLastContact() {
+        return thisNodeLeaderLastContact;
+    }
+
+    public void setThisNodeLeaderLastContact(Duration thisNodeLeaderLastContact) {
+        this.thisNodeLeaderLastContact = thisNodeLeaderLastContact;
     }
 
     public ClusterStatusOut nodes(List<NodeStatusOut> nodes) {

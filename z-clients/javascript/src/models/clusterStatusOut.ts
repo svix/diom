@@ -7,6 +7,7 @@ import {
     type ServerState,
     ServerStateSerializer,
 } from './serverState';
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface ClusterStatusOut {
     /**
@@ -31,6 +32,8 @@ export interface ClusterStatusOut {
     thisNodeLastSnapshotId?: string | null;
     /** The last-purged log on this node */
     thisNodeLastPurgedLogIndex?: number | null;
+    /** The duration since the last time we heard from the leader */
+    thisNodeLeaderLastContact?: Temporal.Duration | null;
     /** A list of all nodes known to be in the cluster */
     nodes: NodeStatusOut[];
 }
@@ -46,6 +49,7 @@ export const ClusterStatusOutSerializer = {
             thisNodeLastCommittedTimestamp: new Date(Number(object['this_node_last_committed_timestamp'])),
             thisNodeLastSnapshotId: object['this_node_last_snapshot_id'],
             thisNodeLastPurgedLogIndex: object['this_node_last_purged_log_index'],
+            thisNodeLeaderLastContact: object['this_node_leader_last_contact_ms'] != null ? Temporal.Duration.from({ milliseconds: object['this_node_leader_last_contact_ms'] }) : undefined,
             nodes: object['nodes'].map((item: NodeStatusOut) => NodeStatusOutSerializer._fromJsonObject(item)),
         };
     },
@@ -60,6 +64,7 @@ export const ClusterStatusOutSerializer = {
             'this_node_last_committed_timestamp': self.thisNodeLastCommittedTimestamp.getTime(),
             'this_node_last_snapshot_id': self.thisNodeLastSnapshotId,
             'this_node_last_purged_log_index': self.thisNodeLastPurgedLogIndex,
+            'this_node_leader_last_contact_ms': self.thisNodeLeaderLastContact != null ? self.thisNodeLeaderLastContact.total('millisecond') : undefined,
             'nodes': self.nodes.map((item) => NodeStatusOutSerializer._toJsonObject(item)),
         };
     }

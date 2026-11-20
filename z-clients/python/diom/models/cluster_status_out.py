@@ -1,8 +1,9 @@
 # this file is @generated
 import typing as t
+from pydantic import Field
 
 from ..internal.base_model import BaseModel
-from ..internal.types import UnixTimestampMs
+from ..internal.types import TimeDeltaMs, UnixTimestampMs
 
 from .node_status_out import NodeStatusOut
 from .server_state import ServerState
@@ -33,6 +34,11 @@ class ClusterStatusOut(BaseModel):
 
     this_node_last_purged_log_index: int | None = None
     """The last-purged log on this node"""
+
+    this_node_leader_last_contact: TimeDeltaMs | None = Field(
+        alias="this_node_leader_last_contact_ms", default=None
+    )
+    """The duration since the last time we heard from the leader"""
 
     nodes: t.List[NodeStatusOut]
     """A list of all nodes known to be in the cluster"""
