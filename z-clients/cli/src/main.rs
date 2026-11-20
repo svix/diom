@@ -3,7 +3,6 @@ use std::sync::Arc;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use clap_complete::Shell;
-use concolor_clap::Color;
 use diom::{DEFAULT_URL, DiomClient, DiomOptions};
 use rustfs_mimalloc::MiMalloc;
 
@@ -38,10 +37,10 @@ const BIN_NAME: &str = env!("CARGO_BIN_NAME");
 /// system's configuration directory (e.g., `~/.config` on Unix).
 #[derive(Parser)]
 #[command(version, bin_name = BIN_NAME)]
-#[clap(color = concolor_clap::color_choice())]
 struct Cli {
-    #[command(flatten)]
-    color: Color,
+    /// Controls when to use color.
+    #[arg(long, default_value_t = clap::ColorChoice::Auto, value_name = "WHEN", value_enum, global = true)]
+    color: clap::ColorChoice,
     #[arg(
         short,
         long,

@@ -141,7 +141,6 @@ byteview = "~0.10.1"
 clap = { version = "4.1.8", features = ["derive"] }
 clap_complete = "4.5.38"
 comfy-table = "7"
-concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 console-subscriber = "0.5"
 constant_time_eq = "0.6"

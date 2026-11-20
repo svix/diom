@@ -41,7 +41,6 @@ anyhow.workspace = true
 clap = { workspace = true, features = ["derive", "env"] }
 clap_complete.workspace = true
 comfy-table.workspace = true
-concolor-clap.workspace = true
 config.workspace = true
 diom.workspace = true
 dirs.workspace = true
