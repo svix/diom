@@ -161,14 +161,14 @@ async fn cache_get(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheGetIn>,
 ) -> Result<MsgPackOrJson<CacheGetOut>> {
+    if data.consistency.linearizable() {
+        repl.wait_linearizable().await.or_internal_error()?;
+    }
+
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found("namespace")?;
-
-    if data.consistency.linearizable() {
-        repl.wait_linearizable().await.or_internal_error()?;
-    }
 
     let cache_state = repl.state_machine.cache_store().await;
     let controller = cache_state.controller();

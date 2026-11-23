@@ -156,14 +156,14 @@ async fn kv_get(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvGetIn>,
 ) -> Result<MsgPackOrJson<KvGetOut>> {
+    if data.consistency.linearizable() {
+        repl.wait_linearizable().await.or_internal_error()?;
+    }
+
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found("namespace")?;
-
-    if data.consistency.linearizable() {
-        repl.wait_linearizable().await.or_internal_error()?;
-    }
 
     let kv_state = repl.state_machine.kv_store().await;
     let controller = kv_state.controller();
