@@ -1,5 +1,9 @@
 use diom_core::types::UnixTimestampMs;
 
+/// Monotonically increasing version flag, as recognized by the node and cluster. Used for gating
+/// the writing of certain data across nodes that may have a different version during an upgrade.
+pub type FeatureVersion = u32;
+
 #[derive(Debug, Clone)]
 pub struct OpContext {
     /// The (monotonic) timestamp at which this object was enqueued for application.
@@ -8,4 +12,7 @@ pub struct OpContext {
     pub log_index: u64,
     /// The raft term. This is monotonically-increasing with every leadership change.
     pub term: u64,
+    /// The cluster feature version in effect when this operation is applied. Read this for
+    /// deterministic apply-time gating of new behavior.
+    pub feature_version: FeatureVersion,
 }

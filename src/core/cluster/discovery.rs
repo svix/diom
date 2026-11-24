@@ -8,6 +8,7 @@ use futures_util::{StreamExt, stream};
 use itertools::Itertools;
 use openraft::ServerState;
 use tap::{Pipe, TapFallible};
+use tokio_util::sync::CancellationToken;
 
 use super::{Node, NodeId, network::build_client, raft::Raft, state_machine::ClusterId};
 use crate::{
@@ -19,7 +20,6 @@ use crate::{
             AddLearnerRequest, DiscoverClusterResponse, DiscoverResponse, UpgradeLearnerRequest,
         },
     },
-    shutting_down_token,
 };
 
 const CONCURRENT_FETCHES: usize = 8;
@@ -31,6 +31,21 @@ pub(super) struct Discovery {
     cfg: Configuration,
     my_addr: PeerAddr,
     network: NetworkFactory,
+    shutdown_token: CancellationToken,
+}
+
+/// GETs a peer's `/repl/discover` endpoint and decodes the response. Shared by the discovery poll and
+/// the feature-version advance worker, so the GET-and-decode lives in one place.
+pub(super) async fn fetch_discover(
+    client: &reqwest::Client,
+    peer: &PeerAddr,
+) -> anyhow::Result<DiscoverResponse> {
+    let url = peer
+        .as_base_url()
+        .join("/repl/discover")
+        .expect("discovery URL should be valid");
+    let response = client.get(url).send().await?.error_for_status()?;
+    Ok(response.msgpack().await?)
 }
 
 impl Discovery {
@@ -39,6 +54,7 @@ impl Discovery {
         raft: Raft,
         my_node_id: NodeId,
         network: NetworkFactory,
+        shutdown_token: CancellationToken,
     ) -> anyhow::Result<Self> {
         let client = build_client(
             &cfg,
@@ -53,26 +69,14 @@ impl Discovery {
             raft,
             my_node_id,
             network,
+            shutdown_token,
         })
     }
 
     async fn poll_node(&self, peer: &PeerAddr) -> Option<DiscoverResponse> {
-        let url = peer
-            .as_base_url()
-            .join("/repl/discover")
-            .expect("discovery URL should be valid");
-        self.client
-            .get(url)
-            .send()
+        fetch_discover(&self.client, peer)
             .await
             .tap_err(|err| tracing::warn!(?peer, ?err, "unable to poll seed node"))
-            .ok()?
-            .error_for_status()
-            .tap_err(|err| tracing::warn!(?peer, ?err, "got invalid HTTP response from seed"))
-            .ok()?
-            .msgpack()
-            .await
-            .tap_err(|err| tracing::warn!(?peer, ?err, "unable to read response body from seed"))
             .ok()
     }
 
@@ -112,6 +116,22 @@ impl Discovery {
         else {
             anyhow::bail!("failed to find any peers to join!");
         };
+        let supported = self.cfg.cluster.supported_versions();
+        if !supported.includes(leader_cluster.feature_version) {
+            // We cannot operate at the cluster's committed feature version and never will (it only
+            // rises), so shut down loudly
+            tracing::error!(
+                cluster_feature_version = leader_cluster.feature_version,
+                supported_versions = %supported,
+                "cannot join cluster, its feature version is outside this build's supported range, shutting down"
+            );
+            self.shutdown_token.cancel();
+            anyhow::bail!(
+                "refusing to join cluster at feature version {} outside supported range {}",
+                leader_cluster.feature_version,
+                supported
+            );
+        }
         let Some(log_id) = leader_cluster.last_committed_log_id else {
             anyhow::bail!("existing cluster has no logs");
         };
@@ -123,6 +143,7 @@ impl Discovery {
             .add_learner(AddLearnerRequest {
                 node_id: self.my_node_id,
                 address: self.my_addr.clone(),
+                supported_versions: supported,
             })
             .await
             .inspect_err(|err| tracing::warn!(?err, "add-learner request failed"))?;
@@ -135,6 +156,7 @@ impl Discovery {
         client
             .upgrade_learner(UpgradeLearnerRequest {
                 node_id: self.my_node_id,
+                supported_versions: supported,
             })
             .await?;
         Ok(())
@@ -175,7 +197,7 @@ impl Discovery {
 
         let deadline = Instant::now() + self.cfg.cluster.discovery_timeout.as_duration();
         // delay a little bit to allow simultaneous startups to finish
-        let token = shutting_down_token();
+        let token = self.shutdown_token.clone();
         if token
             .run_until_cancelled(tokio::time::sleep(
                 self.cfg.cluster.startup_discovery_delay.into(),
